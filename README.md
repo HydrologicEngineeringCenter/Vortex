@@ -1,6 +1,14 @@
 # Vortex
 
-Vortex is a collection of data processing utilities targeted for Hydrologic Engineering Center applications, e.g. HEC-HMS.
+Vortex is a collection of data processing utilities targeted for Hydrologic Engineering Center applications, e.g. HEC-HMS. The Vortex API uses [NetCDF Java](https://www.unidata.ucar.edu/software/thredds/current/netcdf-java/) and [GDAL](https://gdal.org/) libraries to perform operations on spatial data.
+
+The **importer** utility takes NetCDF, Grib, HDF, ASC, or HEC-DSS files as input, gives the user options for clipping, re-projecting, and resampling data, and writes to HEC-DSS format. 
+
+The **grid-to-point-converter** utility converts gridded data to basin-average time-series data.
+
+The **time-shifter** utility shifts grids in time.
+
+The **normalizer** utility normalizes volumes from one set of grids to another, e.g. normalize hourly QPE grids to daily [PRISM](http://www.prism.oregonstate.edu/) grids.
 
 ## Releases
 
@@ -12,7 +20,9 @@ These instructions demonstrate how to build, test, and run the source code on yo
 
 ### Prerequisites
 
-You will need JDK 8.  The version used for building releases is OpenJDK 8, from [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/what-is-corretto-8.html).
+You will need JDK 8.  The version used for building releases is OpenJDK 8, from [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/what-is-corretto-8.html). The [AdoptOpenJDK](https://adoptopenjdk.net/) does not include the JavaFX library; Attempts to build with AdoptOpenJDK will fail to compile.
+
+This repository includes a [Gradle](https://gradle.org/) Wrapper; No Gradle installation is required. The JAVA_HOME environment variable should be set to a project appropriate JDK.
 
 ### Build the project
 

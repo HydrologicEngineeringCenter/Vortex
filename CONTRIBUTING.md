@@ -74,7 +74,9 @@ By making a contribution to this project, I certify that:
 
 The Vortex repository includes the Vortex API along with several user interface utilities. Vortex is written in [Java](https://www.java.com/) and uses the [Gradle](https://gradle.org/) build tool.
 
-The JDK used for building releases is OpenJDK 8, from [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/what-is-corretto-8.html).
+You will need JDK 8.  The version used for building releases is OpenJDK 8, from [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/what-is-corretto-8.html). The [AdoptOpenJDK](https://adoptopenjdk.net/) does not include the JavaFX library; Attempts to build with AdoptOpenJDK will fail to compile.
+
+This repository includes a [Gradle](https://gradle.org/) Wrapper; No Gradle installation is required. The JAVA_HOME environment variable should be set to a project appropriate JDK.
 
 ### Making Changes
 
