@@ -4,7 +4,7 @@ Vortex is a collection of data processing utilities targeted for Hydrologic Engi
 
 ## Releases
 
-To download the latest release of the software see releases.
+To download the latest release of the software see [releases](https://github.com/HydrologicEngineeringCenter/Vortex/releases).
 
 ## Development version
 
