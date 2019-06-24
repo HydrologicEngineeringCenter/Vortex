@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>grid-to-point-converter.jar</jar>
+  <outfile>D:\projects\vortex\grid-to-point-converter\src\main\deploy\package\windows\grid-to-point-converter.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon>D:\projects\vortex\grid-to-point-converter\src\main\deploy\package\windows\vortex_black.ico</icon>
+  <var>PATH=%EXEDIR%\bin\gdal-2-4-0\bin;%PATH%</var>
+  <var>GDAL_DRIVER_PATH=%EXEDIR%\bin\gdal-2-4-0\bin\gdal\plugins</var>
+  <var>GDAL_DATA=%EXEDIR%\bin\gdal-2-4-0\bin\gdal-data</var>
+  <var>PROJ_LIB=%EXEDIR%\bin\gdal-2-4-0\bin\proj\SHARE</var>
+  <classPath>
+    <mainClass>converter.ConverterWizard</mainClass>
+    <cp>./lib/*.jar</cp>
+  </classPath>
+  <jre>
+    <path>%EXEDIR%/jre</path>
+    <bundledJre64Bit>true</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion></minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64/32</runtimeBits>
+    <opt>-Djava.library.path=&quot;%EXEDIR%\bin;%EXEDIR%\bin\gdal-2-4-0\bin\gdal\java&quot;</opt>
+  </jre>
+</launch4jConfig>

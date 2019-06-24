@@ -1,0 +1,6 @@
+.idea/
+.gradle
+build
+out
+src/test/resources/MRMS_GaugeCorr_QPE_01H
+.esri.gz
