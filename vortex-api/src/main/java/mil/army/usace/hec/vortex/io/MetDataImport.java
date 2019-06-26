@@ -65,22 +65,24 @@ public class MetDataImport {
         List<ProcessableUnit> processableUnits = new ArrayList<>();
         inFiles.forEach(file -> variables.forEach(variable -> {
             if (DataReader.getVariables(file).contains(variable)) {
+
                 DataReader reader = DataReader.builder()
                         .path(file)
                         .variable(variable)
                         .build();
+
                 ProcessableUnit processableUnit = ProcessableUnit.builder()
                         .reader(reader)
                         .geoOptions(geoOptions)
                         .destination(destination)
                         .writeOptions(writeOptions)
                         .build();
+
                 processableUnits.add(processableUnit);
             }
         }));
         processableUnits.parallelStream().forEach(ProcessableUnit::process);
     }
-
 }
 
 
