@@ -125,19 +125,20 @@ public class Normalizer {
         while (intervalStart.get().isBefore(endTime)){
             ZonedDateTime start = intervalStart.get();
             ZonedDateTime end = intervalStart.get().plus(interval);
-            List<VortexGrid> output = normalize(
-                    source.stream().filter(dto -> ((dto.startTime().isEqual(start)
-                            || dto.startTime().isAfter(start))
-                            && (dto.endTime().isEqual(end)
-                            || dto.endTime().isBefore(end)))).collect(Collectors.toList()),
-                    normals.stream().filter(dto -> ((dto.startTime().equals(start)
-                            || dto.startTime().isAfter(start))
-                            && (dto.endTime().isEqual(end)
-                            || dto.endTime().isBefore(end)))).collect(Collectors.toList()));
 
-            output.forEach(dto -> {
+            List<VortexGrid> output = normalize(
+
+                    source.stream().filter(grid -> ((grid.startTime().isEqual(start) || grid.startTime().isAfter(start))
+                            && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
+                            .collect(Collectors.toList()),
+
+                    normals.stream().filter(grid -> ((grid.startTime().equals(start) || grid.startTime().isAfter(start))
+                            && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
+                            .collect(Collectors.toList()));
+
+            output.forEach(grid -> {
                 List<VortexData> data = new ArrayList<>();
-                data.add(dto);
+                data.add(grid);
 
                 DataWriter writer = DataWriter.builder()
                         .data(data)
