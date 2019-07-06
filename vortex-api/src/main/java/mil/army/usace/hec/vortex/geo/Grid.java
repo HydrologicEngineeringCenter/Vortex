@@ -95,4 +95,38 @@ public class Grid {
         return gridCells;
     }
 
+    public double getOriginX() {
+        return originX;
+    }
+
+    public double getOriginY() {
+        return originY;
+    }
+
+    public double getDx() {
+        return dx;
+    }
+
+    public double getDy() {
+        return dy;
+    }
+
+    public int getNx() {
+        return nx;
+    }
+
+    public int getNy() {
+        return ny;
+    }
+
+    public Grid copy() {
+        return Grid.builder()
+                .originX(this.originX)
+                .originY(this.originY)
+                .dx(this.dx)
+                .dy(this.dy)
+                .nx(this.nx)
+                .ny(this.ny)
+                .build();
+    }
 }
