@@ -6,6 +6,7 @@ import hec.heclib.dss.HecDssCatalog;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
@@ -25,7 +26,7 @@ class DssDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexGrid> getDTOs() {
+    public List<VortexData> getDTOs() {
         HecDSSFileAccess.setDefaultDSSFileName(path.toString());
         String[] paths;
         if (variableName.contains("*")) {
@@ -36,7 +37,7 @@ class DssDataReader extends DataReader {
             paths = new String[1];
             paths[0] = variableName;
         }
-        List<VortexGrid> dtos = new ArrayList<>();
+        List<VortexData> dtos = new ArrayList<>();
         Arrays.stream(paths).forEach(path -> {
             int[] status = new int[1];
             GridData gridData = GridUtilities.retrieveGridFromDss(this.path.toString(), path, status);

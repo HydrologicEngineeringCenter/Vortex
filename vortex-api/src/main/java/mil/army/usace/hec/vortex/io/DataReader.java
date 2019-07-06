@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 
 import java.nio.file.FileSystems;
@@ -56,7 +57,7 @@ public abstract class DataReader {
 
     public static DataReaderBuilder builder(){return new DataReaderBuilder();}
 
-    public abstract List<VortexGrid> getDTOs();
+    public abstract List<VortexData> getDTOs();
 
     public static Set<String> getVariables(Path path){
         String fileName = path.getFileName().toString().toLowerCase();

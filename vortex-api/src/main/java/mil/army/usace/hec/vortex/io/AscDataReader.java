@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.GdalRegister;
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
@@ -24,7 +25,7 @@ class AscDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexGrid> getDTOs() {
+    public List<VortexData> getDTOs() {
 
         Dataset in = gdal.Open(path.toString());
         Vector<String>  options =  new Vector<>();
@@ -80,7 +81,7 @@ class AscDataReader extends DataReader {
                 .interval(Duration.between(startTime, endTime))
                 .build();
 
-        List<VortexGrid> list = new ArrayList<>();
+        List<VortexData> list = new ArrayList<>();
         list.add(dto);
         return list;
     }

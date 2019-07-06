@@ -13,6 +13,7 @@ import mil.army.usace.hec.vortex.io.DataWriter;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class GridToPointConverter {
 
@@ -84,7 +85,10 @@ public class GridToPointConverter {
                         .path(pathToGrids)
                         .variable(variable)
                         .build()
-                        .getDTOs()));
+                        .getDTOs()
+                        .stream()
+                        .map(grid -> (VortexGrid)grid)
+                        .collect(Collectors.toList())));
 
         AtomicReference<VortexGrid> maskedGrid = new AtomicReference<>();
         maskedGrid.set(grids.get(0));
