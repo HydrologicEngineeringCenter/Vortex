@@ -10,6 +10,10 @@ import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.geoloc.projection.Mercator;
 import ucar.unidata.geoloc.projection.Orthographic;
 import ucar.unidata.geoloc.projection.Sinusoidal;
+import ucar.unidata.util.Parameter;
+
+import java.util.List;
+import java.util.Optional;
 
 public class WktFactory {
 
@@ -23,21 +27,23 @@ public class WktFactory {
 
     public static String createWkt(ProjectionImpl projection) {
         if (projection instanceof LatLonProjection) {
+            LatLonProjection in = (LatLonProjection) projection;
             SpatialReference srs = new SpatialReference();
-            srs.SetWellKnownGeogCS( WGS84 );
+            setGcsParameters(in, srs);
             return srs.ExportToWkt();
 
         } else if (projection instanceof AlbersEqualArea) {
-            AlbersEqualArea aea = (AlbersEqualArea) projection;
+            AlbersEqualArea in = (AlbersEqualArea) projection;
             SpatialReference srs = new SpatialReference();
             srs.SetProjCS("Albers Equal Area Conic");
+            setGcsParameters(in, srs);
             srs.SetACEA(
-                    aea.getParallelOne(),
-                    aea.getParallelTwo(),
-                    aea.getOriginLat(),
-                    aea.getOriginLon(),
-                    aea.getFalseEasting(),
-                    aea.getFalseNorthing()
+                    in.getParallelOne(),
+                    in.getParallelTwo(),
+                    in.getOriginLat(),
+                    in.getOriginLon(),
+                    in.getFalseEasting(),
+                    in.getFalseNorthing()
             );
             srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
             return srs.ExportToWkt();
@@ -46,7 +52,7 @@ public class WktFactory {
             LambertConformal in = (LambertConformal) projection;
             SpatialReference srs = new SpatialReference();
             srs.SetProjCS("Lambert Conformal Conic 2SP");
-            srs.SetWellKnownGeogCS(WGS84);
+            setGcsParameters(in, srs);
             srs.SetLCC(
                     in.getParallelOne(),
                     in.getParallelTwo(),
@@ -61,7 +67,7 @@ public class WktFactory {
         } else if (projection instanceof Mercator) {
             Mercator in = (Mercator) projection;
             SpatialReference srs = new SpatialReference();
-            srs.SetWellKnownGeogCS(WGS84);
+            setGcsParameters(in, srs);
             srs.SetMercator(
                     in.getParallel(),
                     in.getOriginLon(),
@@ -75,7 +81,7 @@ public class WktFactory {
         } else if (projection instanceof Orthographic) {
             Orthographic in = (Orthographic) projection;
             SpatialReference srs = new SpatialReference();
-            srs.SetWellKnownGeogCS(WGS84);
+            setGcsParameters(in, srs);
             srs.SetOrthographic(
                     in.getOriginLat(),
                     in.getOriginLon(),
@@ -88,7 +94,7 @@ public class WktFactory {
         } else if (projection instanceof Sinusoidal) {
             Sinusoidal in = (Sinusoidal) projection;
             SpatialReference srs = new SpatialReference();
-            srs.SetWellKnownGeogCS(WGS84);
+            setGcsParameters(in, srs);
             srs.SetSinusoidal(
                     in.getCentMeridian(),
                     in.getFalseEasting(),
@@ -101,6 +107,37 @@ public class WktFactory {
             return "";
         }
 
+    }
+
+    private static void setGcsParameters(ProjectionImpl projection, SpatialReference srs) {
+        List<Parameter> parameters = projection.getProjectionParameters();
+        Optional<Parameter> semiMajor = parameters.stream()
+                .filter(parameter -> parameter.getName().equalsIgnoreCase("semi_major_axis"))
+                .findAny();
+        Optional<Parameter> semiMinor = parameters.stream()
+                .filter(parameter -> parameter.getName().equalsIgnoreCase("semi_minor_axis"))
+                .findAny();
+        Optional<Parameter> radius = parameters.stream()
+                .filter(parameter -> parameter.getName().equalsIgnoreCase("earth_radius"))
+                .findAny();
+        if (semiMajor.isPresent() && semiMinor.isPresent()){
+            double invFlattening = 1.0 / (1.0 - (semiMinor.get().getNumericValue()/semiMajor.get().getNumericValue()));
+            srs.SetGeogCS(
+                    "unknown",
+                    "unknown",
+                    "spheroid",
+                    semiMajor.get().getNumericValue(),
+                    invFlattening);
+        } else if (radius.isPresent()){
+            srs.SetGeogCS(
+                    "unknown",
+                    "unknown",
+                    "spheroid",
+                    radius.get().getNumericValue(),
+                    0);
+        } else {
+            srs.SetWellKnownGeogCS( WGS84 );
+        }
     }
 
     public static String create(String name) {
