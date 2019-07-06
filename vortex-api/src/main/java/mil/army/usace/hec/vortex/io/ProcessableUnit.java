@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ProcessableUnit {
 
@@ -83,7 +84,9 @@ public class ProcessableUnit {
             }
         }
 
-        for (VortexGrid dto : reader.getDTOs()){
+        List<VortexGrid> grids = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
+
+        for (VortexGrid grid : grids){
 
             String destWkt;
             double cellSize;
@@ -91,17 +94,17 @@ public class ProcessableUnit {
             if (geoOptions.containsKey("targetWkt")) {
                 destWkt = geoOptions.get("targetWkt");
             } else {
-                destWkt = dto.wkt();
+                destWkt = grid.wkt();
             }
 
             if (geoOptions.containsKey("targetCellSize")) {
                 cellSize = Double.parseDouble(geoOptions.get("targetCellSize"));
             } else {
-                cellSize = ((Math.abs(dto.dx()) + Math.abs(dto.dy())) / 2.0);
+                cellSize = ((Math.abs(grid.dx()) + Math.abs(grid.dy())) / 2.0);
             }
 
             VortexGrid processed = Resampler.builder()
-                    .grid(dto)
+                    .grid(grid)
                     .envelope(env)
                     .envelopeWkt(envWkt)
                     .targetWkt(destWkt)

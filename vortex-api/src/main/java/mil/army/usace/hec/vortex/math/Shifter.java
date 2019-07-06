@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Shifter {
 
@@ -73,7 +74,10 @@ public class Shifter {
                         .path(pathToFile)
                         .variable(grid)
                         .build()
-                        .getDTOs()));
+                        .getDTOs()
+                        .stream()
+                        .map(data -> (VortexGrid) data)
+                        .collect(Collectors.toList())));
 
         List<VortexGrid> output = new ArrayList<>();
         targets.parallelStream().forEach(dto -> output.add(shift(dto, shift)));

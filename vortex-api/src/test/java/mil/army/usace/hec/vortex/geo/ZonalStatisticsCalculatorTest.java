@@ -10,6 +10,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,7 +30,7 @@ class ZonalStatisticsCalculatorTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs();
+        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         VortexGrid dto = dtos.get(0);
 
         Path pathToShp = new File(getClass().getResource(
@@ -61,7 +62,7 @@ class ZonalStatisticsCalculatorTest {
                 .variable(variables.iterator().next())
                 .build();
 
-        List<VortexGrid> data = reader.getDTOs();
+        List<VortexGrid> data = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         VortexGrid dto = data.get(0);
 
         Path pathToShp = new File(getClass().getResource(

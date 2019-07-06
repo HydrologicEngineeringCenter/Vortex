@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,7 +23,7 @@ class DataReaderTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs();
+        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
         VortexGrid dto = dtos.get(0);
         double left = dto.originX();
         double top = dto.originY();

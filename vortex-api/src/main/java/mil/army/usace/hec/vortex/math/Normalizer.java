@@ -103,7 +103,7 @@ public class Normalizer {
     public static NormalizerBuilder builder() {return new NormalizerBuilder();}
 
     public void normalize(){
-        List<VortexGrid> source = new ArrayList<>();
+        List<VortexData> source = new ArrayList<>();
         sourceVariables.forEach(variable -> source.addAll(
                 DataReader.builder()
                         .path(pathToSource)
@@ -111,7 +111,7 @@ public class Normalizer {
                         .build()
                         .getDTOs()));
 
-        List<VortexGrid> normals = new ArrayList<>();
+        List<VortexData> normals = new ArrayList<>();
         normalsVariables.forEach(variable -> normals.addAll(
                 DataReader.builder()
                         .path(pathToNormals)
@@ -130,10 +130,12 @@ public class Normalizer {
 
                     source.stream().filter(grid -> ((grid.startTime().isEqual(start) || grid.startTime().isAfter(start))
                             && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
+                            .map(grid -> (VortexGrid)grid)
                             .collect(Collectors.toList()),
 
                     normals.stream().filter(grid -> ((grid.startTime().equals(start) || grid.startTime().isAfter(start))
                             && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
+                            .map(grid -> (VortexGrid)grid)
                             .collect(Collectors.toList()));
 
             output.forEach(grid -> {
