@@ -132,7 +132,7 @@ public class WktFactory {
             srs.SetGeogCS(
                     "unknown",
                     "unknown",
-                    "spheroid",
+                    "sphere",
                     radius.get().getNumericValue(),
                     0);
         } else {
