@@ -199,12 +199,20 @@ public class NetcdfDataReader extends DataReader {
             IntStream.range(0, (int) tAxis.getSize()).forEach(time -> {
                 ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
                 CalendarDate[] dates = tAxis.getCoordBoundsDate(time);
-                if (path.getFileName().toString().toLowerCase().contains("qpe_01h")) {
+
+                String fileName = path.getFileName().toString().toLowerCase();
+                if (fileName.matches(".*qpe.*01h.*")){
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
                 }
-                zonedDateTimes[1] = convert(dates[1]);
+
+                if (fileName.matches("hrrr.*wrfsfcf.*")){
+                    zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
+                } else {
+                    zonedDateTimes[1] = convert(dates[1]);
+                }
+
                 list.add(zonedDateTimes);
             });
             return list;
