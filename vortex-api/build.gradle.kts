@@ -43,3 +43,16 @@ tasks.test {
 tasks.named<Test>("test") {
     useJUnitPlatform()
 }
+
+tasks.register<Jar>("fatJar") {
+    archiveBaseName.set(rootProject.name + "-all")
+
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
+}
+
+tasks.getByName("build").dependsOn("fatJar")
