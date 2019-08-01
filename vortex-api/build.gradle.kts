@@ -32,11 +32,11 @@ project.version = project.version.toString()
 
 tasks.test {
     useJUnit()
-    environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin/gdal/plugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin/proj/SHARE")
-    jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal-2-4-0/bin/gdal/java",
+    environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
+    jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
             "-Djava.io.tmpdir=C:/Temp")
 }
 
