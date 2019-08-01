@@ -39,6 +39,7 @@ public class DssDataWriter extends DataWriter {
     }
 
     private static final int SECONDS_PER_MINUTE = 60;
+    private static final int SECONDS_PER_HOUR = 3600;
 
     @Override
     public void write() {
@@ -59,13 +60,17 @@ public class DssDataWriter extends DataWriter {
 
             Unit<?> units = getUnits(grid.units());
 
-            if (units.equals(MILLI(METRE).divide(SECOND))){
+            if (units.equals(MILLI(METRE).divide(SECOND)) || units.equals(MILLI(METRE).divide(HOUR))){
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
                 LocalDateTime startTime = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
                 LocalDateTime endTime = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
                 Duration interval = Duration.between(startTime, endTime);
                 float[] convertedData = new float[data.length];
-                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * interval.getSeconds());
+                if (units.equals(MILLI(METRE).divide(SECOND))) {
+                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * interval.getSeconds());
+                } else if (units.equals(MILLI(METRE).divide(HOUR))){
+                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * interval.getSeconds()/SECONDS_PER_HOUR);
+                }
 
                 gridInfo.setDataUnits("MM");
                 gridInfo.setDataType(DssDataType.PER_CUM.value());
@@ -278,6 +283,8 @@ public class DssDataWriter extends DataWriter {
         switch (units.toLowerCase()){
             case "kg.m-2.s-1":
                 return MILLI(METRE).divide(SECOND);
+            case "mm hr^-1":
+                return MILLI(METRE).divide(HOUR);
             case "kg.m-2":
             case "mm":
                 return MILLI(METRE);
