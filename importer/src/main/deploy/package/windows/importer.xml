@@ -3,7 +3,7 @@
   <dontWrapJar>true</dontWrapJar>
   <headerType>gui</headerType>
   <jar>importer.jar</jar>
-  <outfile>D:\projects\vortex\met-data-importer\src\main\deploy\package\windows\importer.exe</outfile>
+  <outfile>D:\projects\vortex\importer\src\main\deploy\package\windows\importer.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
@@ -13,11 +13,11 @@
   <stayAlive>false</stayAlive>
   <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
-  <icon>D:\projects\vortex\met-data-importer\src\main\deploy\package\windows\vortex_black.ico</icon>
-  <var>PATH=%EXEDIR%\bin\gdal-2-4-0\bin;%PATH%</var>
-  <var>GDAL_DRIVER_PATH=%EXEDIR%\bin\gdal-2-4-0\bin\gdal\plugins</var>
-  <var>GDAL_DATA=%EXEDIR%\bin\gdal-2-4-0\bin\gdal-data</var>
-  <var>PROJ_LIB=%EXEDIR%\bin\gdal-2-4-0\bin\proj\SHARE</var>
+  <icon>D:\projects\vortex\importer\src\main\deploy\package\windows\vortex_black.ico</icon>
+  <var>PATH=%EXEDIR%\bin\gdal;%PATH%</var>
+  <var>GDAL_DRIVER_PATH=%EXEDIR%\bin\gdal\gdalplugins</var>
+  <var>GDAL_DATA=%EXEDIR%\bin\gdal\gdal-data</var>
+  <var>PROJ_LIB=%EXEDIR%\bin\gdal\projlib</var>
   <classPath>
     <mainClass>importer.MetDataImportWizard</mainClass>
     <cp>./lib/*.jar</cp>
@@ -30,6 +30,6 @@
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
     <runtimeBits>64/32</runtimeBits>
-    <opt>-Djava.library.path=&quot;%EXEDIR%\bin;%EXEDIR%\bin\gdal-2-4-0\bin\gdal\java&quot;</opt>
+    <opt>-Djava.library.path=&quot;%EXEDIR%\bin;%EXEDIR%\bin\gdal&quot;</opt>
   </jre>
 </launch4jConfig>
