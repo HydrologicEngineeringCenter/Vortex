@@ -57,14 +57,14 @@ tasks.build{finalizedBy("copyResources")}
 
 application {
     mainClassName = "shifter.ShifterWizard"
-    applicationDefaultJvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal-2-4-0/bin/gdal/java")
+    applicationDefaultJvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
 }
 
 tasks.named<JavaExec>("run"){
-    environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin/gdal/plugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal-2-4-0/bin/proj/SHARE")
+    environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
 }
 
 tasks.getByName("startScripts").enabled = false
