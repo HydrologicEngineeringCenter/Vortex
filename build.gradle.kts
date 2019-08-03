@@ -54,5 +54,6 @@ tasks.getByPath(":build").finalizedBy(":copyNormalizer")
 tasks.getByPath(":build").finalizedBy(":copyShifter")
 tasks.getByPath(":build").finalizedBy(":copyGridToPointConverter")
 tasks.getByPath(":build").finalizedBy(":copyLicense")
+tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
 
 tasks.getByPath(":final").dependsOn(":build")
