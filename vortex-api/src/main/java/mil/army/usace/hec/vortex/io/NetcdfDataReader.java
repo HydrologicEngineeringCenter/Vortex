@@ -342,16 +342,7 @@ public class NetcdfDataReader extends DataReader {
     }
 
     private static Grid shiftGrid(Grid grid){
-        if (grid.getOriginX() == 0) {
-            return Grid.builder()
-                    .originX(grid.getOriginX() - 180)
-                    .originY(grid.getOriginY())
-                    .dx(grid.getDx())
-                    .dy(grid.getDy())
-                    .nx(grid.getNx())
-                    .ny(grid.getNy())
-                    .build();
-        } else if (grid.getOriginX() > 180) {
+        if (grid.getOriginX() > 180) {
             return Grid.builder()
                     .originX(grid.getOriginX() - 360)
                     .originY(grid.getOriginY())
