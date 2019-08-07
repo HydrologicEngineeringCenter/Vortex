@@ -40,7 +40,7 @@ tasks.register<Copy>("copyJar"){
     from ("$buildDir/libs") {
         include ("importer.jar")
     }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/${base.archivesBaseName}-$version")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version")
 }
 
 tasks.register<Copy>("copyResources"){
@@ -49,13 +49,13 @@ tasks.register<Copy>("copyResources"){
         exclude ("*.bmp")
         exclude ("*.xml")
     }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/${base.archivesBaseName}-$version")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version")
 }
 
 tasks.register<Copy>("copyRuntimeLibs"){
     from (configurations.runtimeClasspath)
             include ("*.jar")
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/${base.archivesBaseName}-$version/lib")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version/lib")
 }
 
 tasks.register<Copy>("copyMapserver"){
@@ -63,12 +63,12 @@ tasks.register<Copy>("copyMapserver"){
     from ("${rootProject.projectDir}/bin") {
         include ("gdal/**")
     }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/${base.archivesBaseName}-$version/bin")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version/bin")
 }
 
 tasks.register<Copy>("copyNatives"){
     from ("${rootProject.projectDir}/bin")
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/${base.archivesBaseName}-$version/bin")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version/bin")
 }
 
 tasks.build{finalizedBy("copyJar")}
