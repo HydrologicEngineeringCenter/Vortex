@@ -7,6 +7,7 @@ import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -83,7 +84,7 @@ public class Resampler {
         SpatialReference destSrs = new SpatialReference(targetWkt);
         destSrs.MorphFromESRI();
 
-        Dataset dataset = RasterUtils.getRasterFromDto(grid);
+        Dataset dataset = RasterUtils.getRasterFromVortexGrid(grid);
         Dataset resampled = resample(dataset, env, envSrs, destSrs, cellSize);
 
         double[] geoTransform = resampled.GetGeoTransform();
@@ -136,7 +137,7 @@ public class Resampler {
 
         SpatialReference srData = new SpatialReference(dataset.GetProjection());
         srData.MorphFromESRI();
-        Vector<String> options = new Vector<>();
+        ArrayList<String> options = new ArrayList<>();
         options.add("-of");
         options.add("MEM");
         options.add("-s_srs");
@@ -153,7 +154,7 @@ public class Resampler {
         options.add("-tr");
         options.add(Double.toString(cellSize));
         options.add(Double.toString(cellSize));
-        WarpOptions warpOptions = new WarpOptions(options);
+        WarpOptions warpOptions = new WarpOptions(new Vector<>(options));
         Dataset[] datasets = new Dataset[]{dataset};
         Dataset warped = gdal.Warp("warped", datasets, warpOptions);
         warped.FlushCache();
