@@ -15,7 +15,7 @@ The **normalizer** utility normalizes volumes from one set of grids to another, 
 
 To download the latest release of the software see [releases](https://github.com/HydrologicEngineeringCenter/Vortex/releases).
 
-For sample data retrieval scripts for QPE, RTMA, and HRRR data see the [data retrieval scripts](https://github.com/HydrologicEngineeringCenter/data-retrieval-scripts) repository.
+For sample data retrieval scripts for QPE, RTMA, and HRRR data, see the [data retrieval scripts](https://github.com/HydrologicEngineeringCenter/data-retrieval-scripts) repository.
 
 ## Building from source
 
