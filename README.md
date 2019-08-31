@@ -11,11 +11,13 @@ The **time-shifter** utility shifts grids in time.
 
 The **normalizer** utility normalizes volumes from one set of grids to another, e.g. normalize hourly QPE grids to daily [PRISM](http://www.prism.oregonstate.edu/) grids.
 
-## Releases
+## Release downloads
 
 To download the latest release of the software see [releases](https://github.com/HydrologicEngineeringCenter/Vortex/releases).
 
-## Development version
+For sample data retrieval scripts for QPE, RTMA, and HRRR data, see the [data retrieval scripts](https://github.com/HydrologicEngineeringCenter/data-retrieval-scripts) repository.
+
+## Building from source
 
 These instructions demonstrate how to build, test, and run the source code on your local machine.  
 
