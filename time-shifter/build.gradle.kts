@@ -40,7 +40,7 @@ tasks.register<Copy>("copyJar"){
     from ("$buildDir/libs") {
         include ("time-shifter.jar")
     }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/${base.archivesBaseName}-$version")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version")
 }
 
 tasks.register<Copy>("copyResources"){
@@ -49,7 +49,7 @@ tasks.register<Copy>("copyResources"){
         exclude ("*.bmp")
         exclude ("*.xml")
     }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/${base.archivesBaseName}-$version")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version")
 }
 
 tasks.build{finalizedBy("copyJar")}
