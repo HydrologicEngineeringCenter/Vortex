@@ -80,7 +80,7 @@ public class DssDataWriter extends DataWriter {
 
                 write(convertedData, gridInfo, dssPathname);
 
-            } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN)){
+            } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN)) {
                 UnitConverter converter;
                 try {
                     converter = units.getConverterToAny(CELSIUS);
@@ -293,6 +293,7 @@ public class DssDataWriter extends DataWriter {
             case "inches":
                 return INCH;
             case "celsius":
+            case "degrees c":
             case "deg c":
             case "c":
                 return CELSIUS;
@@ -311,6 +312,8 @@ public class DssDataWriter extends DataWriter {
                 return KILO(METRE).divide(HOUR);
             case "%":
                 return PERCENT;
+            case "hPa":
+                return HECTO(PASCAL);
             default:
                 return ONE;
         }
@@ -442,16 +445,20 @@ public class DssDataWriter extends DataWriter {
 
         gridInfo.setCellInfo(minX, minY, grid.nx(), grid.ny(), cellSize);
 
+        Unit<?> units = getUnits(grid.units());
+        String unitsString = getUnitsString(units);
+        gridInfo.setDataUnits(unitsString);
+
         ZonedDateTime startTime = grid.startTime();
         ZonedDateTime endTime = grid.endTime();
-        if (startTime.equals(endTime)){
+        if (!startTime.equals(endTime) && units.isCompatible(CELSIUS)) {
+            gridInfo.setDataType(DssDataType.PER_AVER.value());
+        } else if (startTime.equals(endTime)) {
             gridInfo.setDataType(DssDataType.INST_VAL.value());
         } else {
             gridInfo.setDataType(DssDataType.PER_CUM.value());
         }
-        Unit<?> units = getUnits(grid.units());
-        String unitsString = getUnitsString(units);
-        gridInfo.setDataUnits(unitsString);
+
         gridInfo.setGridTimes(getHecTime(startTime), getHecTime(endTime));
 
         return gridInfo;
