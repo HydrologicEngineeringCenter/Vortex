@@ -28,18 +28,49 @@ class AscDataReader extends DataReader {
     public List<VortexData> getDTOs() {
 
         Dataset in = gdal.Open(path.toString());
-        Vector<String>  options =  new Vector<>();
+        ArrayList<String>  options =  new ArrayList<>();
         options.add("-of");
         options.add("MEM");
-        TranslateOptions translateOptions = new TranslateOptions(options);
+        TranslateOptions translateOptions = new TranslateOptions(new Vector<>(options));
         Dataset raster = gdal.Translate("raster", in, translateOptions);
         raster.FlushCache();
 
-        String shortName = "";
-        String fullName = "";
-        if (path.toString().contains("ppt")){
+        String fileName = path.getFileName().toString();
+        String shortName;
+        String fullName;
+        String description;
+        if (fileName.contains("ppt")){
             shortName = "precipitation";
             fullName = "precipitation";
+            description = "precipitation";
+        } else if (fileName.contains("tmean")){
+            shortName = "mean temperature";
+            fullName = "mean temperature";
+            description = "mean temperature";
+        } else if (fileName.contains("tmin")){
+            shortName = "minimum temperature";
+            fullName = "minimum temperature";
+            description = "minimum temperature";
+        } else if (fileName.contains("tmax")){
+            shortName = "maximum temperature";
+            fullName = "maximum temperature";
+            description = "maximum temperature";
+        } else if (fileName.contains("tdmean")){
+            shortName = "mean dewpoint temperature";
+            fullName = "mean dewpoint temperature";
+            description = "mean dewpoint temperature";
+        } else if (fileName.contains("vpdmin")){
+            shortName = "minimum vapor pressure deficit";
+            fullName = "minimum vapor pressure deficit";
+            description = "minimum vapor pressure deficit";
+        } else if (fileName.contains("vpdmax")){
+            shortName = "maximum vapor pressure deficit";
+            fullName = "maximum vapor pressure deficit";
+            description = "maximum vapor pressure deficit";
+        }   else {
+            shortName = "";
+            fullName = "";
+            description = "";
         }
 
         String string1 = path.toString();
@@ -51,9 +82,23 @@ class AscDataReader extends DataReader {
         ZonedDateTime startTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(0, 0)), ZoneId.of("UTC"));
         ZonedDateTime endTime = ZonedDateTime.of(LocalDateTime.of(date.plusDays(1), LocalTime.of(0, 0)), ZoneId.of("UTC"));
 
-        String units = "";
-        if (path.toString().contains("ppt")){
+        String units;
+        if (fileName.contains("ppt")){
             units = "mm";
+        } else if (fileName.contains("tmean")){
+            units = "Degrees C";
+        } else if (fileName.contains("tmin")){
+            units = "Degrees C";
+        } else if (fileName.contains("tmax")){
+            units = "Degrees C";
+        } else if (fileName.contains("tdmean")){
+            units = "Degrees C";
+        } else if (fileName.contains("vpdmin")){
+            units = "hPa";
+        } else if (fileName.contains("vpdmax")){
+            units = "hPa";
+        } else {
+            units = "";
         }
 
         double[] geoTransform = raster.GetGeoTransform();
@@ -76,7 +121,7 @@ class AscDataReader extends DataReader {
                 .originX(ulx).originY(uly)
                 .wkt(wkt).data(data).units(units)
                 .fileName(path.toString()).shortName(shortName)
-                .fullName(fullName).description(path.toString())
+                .fullName(fullName).description(description)
                 .startTime(startTime).endTime(endTime)
                 .interval(Duration.between(startTime, endTime))
                 .build();
