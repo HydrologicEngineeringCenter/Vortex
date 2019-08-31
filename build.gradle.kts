@@ -7,38 +7,38 @@ val version = project.version.toString()
 
 tasks.register<Copy>("copyImporter") {
     from(project(":importer").projectDir.toString()
-            + "/build/distributions/importer-$version/importer-$version")
-    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version/${rootProject.name}-$version")
+            + "/build/distributions/importer-$version")
+    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version")
 }
 tasks.getByPath(":copyImporter").dependsOn(":importer:build")
 
 tasks.register<Copy>("copyNormalizer") {
     from(project(":normalizer").projectDir.toString()
-            + "/build/distributions/normalizer-$version/normalizer-$version"){
+            + "/build/distributions/normalizer-$version"){
         exclude ("bin/**")
         exclude ("lib/**")
     }
-    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version/${rootProject.name}-$version")
+    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version")
 }
 tasks.getByPath(":copyNormalizer").dependsOn(":normalizer:build")
 
 tasks.register<Copy>("copyShifter") {
     from(project(":time-shifter").projectDir.toString()
-            + "/build/distributions/time-shifter-$version/time-shifter-$version"){
+            + "/build/distributions/time-shifter-$version"){
         exclude ("bin/**")
         exclude ("lib/**")
     }
-    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version/${rootProject.name}-$version")
+    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version")
 }
 tasks.getByPath(":copyShifter").dependsOn(":time-shifter:build")
 
 tasks.register<Copy>("copyGridToPointConverter") {
     from(project(":grid-to-point-converter").projectDir.toString()
-            + "/build/distributions/grid-to-point-converter-$version/grid-to-point-converter-$version"){
+            + "/build/distributions/grid-to-point-converter-$version"){
         exclude ("bin/**")
         exclude ("lib/**")
     }
-    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version/${rootProject.name}-$version")
+    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version")
 }
 tasks.getByPath(":copyGridToPointConverter").dependsOn(":grid-to-point-converter:build")
 
@@ -46,7 +46,15 @@ tasks.register<Copy>("copyLicense") {
     from(project.rootDir){
         include ("LICENSE.md")
     }
-    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version/${rootProject.name}-$version")
+    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version")
+}
+
+tasks.register<Copy>("copyFatJar") {
+    from(project(":vortex-api").buildDir.toString()
+            + "/libs"){
+        include ("${rootProject.name}-all-$version")
+    }
+    into("${rootProject.projectDir}/build/distributions")
 }
 
 tasks.getByPath(":build").finalizedBy(":copyImporter")
@@ -55,5 +63,6 @@ tasks.getByPath(":build").finalizedBy(":copyShifter")
 tasks.getByPath(":build").finalizedBy(":copyGridToPointConverter")
 tasks.getByPath(":build").finalizedBy(":copyLicense")
 tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
+tasks.getByPath(":build").finalizedBy(":copyFatJar")
 
 tasks.getByPath(":final").dependsOn(":build")

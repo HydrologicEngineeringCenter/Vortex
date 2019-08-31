@@ -9,7 +9,7 @@ public enum GdalRegister {
         try {
             gdal.AllRegister();
         } catch (UnsatisfiedLinkError e){
-            System.exit(0);
+            System.out.println(e);
         }
     }
 
