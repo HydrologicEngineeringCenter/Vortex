@@ -15,7 +15,7 @@ import javafx.scene.Parent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
-import mil.army.usace.hec.vortex.io.MetDataImport;
+import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.util.DssUtil;
 import org.slf4j.Logger;
@@ -163,7 +163,7 @@ public class Step3Controller {
             writeOptions.add("partF", dssPathnamePartsController.getPartF());
         }
 
-        MetDataImport importer = MetDataImport.builder()
+        BatchImporter importer = BatchImporter.builder()
                 .inFiles(inFiles)
                 .variables(variables)
                 .geoOptions(geoOptions)
