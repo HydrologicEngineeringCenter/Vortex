@@ -33,10 +33,16 @@ public class Step1Controller {
     Button add;
 
     @FXML
-    ListView<String> availableVariables, selectedVariables;
+    ListView<String> availableVariables;
 
     @FXML
-    Button addButton, removeButton;
+    ListView<String> selectedVariables;
+
+    @FXML
+    Button addButton;
+
+    @FXML
+    Button removeButton;
 
     @Inject
     WizardData model;
