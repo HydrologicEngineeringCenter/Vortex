@@ -119,14 +119,14 @@ public class Transposer {
         double angleRad = Math.toRadians(angle);
 
         double adjustedCenterX;
-        if (stormCenterX != null){
+        if (stormCenterX != null && !Double.isNaN(stormCenterX)){
             adjustedCenterX = stormCenterX;
         } else {
             adjustedCenterX = centerX;
         }
 
         double adjustedCenterY;
-        if (stormCenterY != null){
+        if (stormCenterY != null && !Double.isNaN(stormCenterY)){
             adjustedCenterY = stormCenterY;
         } else {
             adjustedCenterY = centerY;

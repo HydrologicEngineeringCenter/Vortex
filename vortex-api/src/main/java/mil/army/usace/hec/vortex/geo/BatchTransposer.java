@@ -6,10 +6,11 @@ import mil.army.usace.hec.vortex.io.DataReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class BatchTransposer {
     private Path pathToInput;
-    private List<String> variables;
+    private Set<String> variables;
     private double angle;
     private Double stormCenterX;
     private Double stormCenterY;
@@ -29,7 +30,7 @@ public class BatchTransposer {
     public static class BatchTransposerBuilder {
 
         private Path pathToInput;
-        private List<String> variables;
+        private Set<String> variables;
         private double angle;
         private Double stormCenterX;
         private Double stormCenterY;
@@ -41,7 +42,7 @@ public class BatchTransposer {
             return this;
         }
 
-        public BatchTransposerBuilder variables(List<String> variables) {
+        public BatchTransposerBuilder variables(Set<String> variables) {
             this.variables = variables;
             return this;
         }
