@@ -84,6 +84,7 @@ class TransposableUnit {
 
         grids.forEach(grid -> {
             VortexGrid transposed = Transposer.builder()
+                    .grid(grid)
                     .angle(angle)
                     .stormCenterX(stormCenterX)
                     .stormCenterY(stormCenterY)
