@@ -13,7 +13,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MetDataImportTest {
+class BatchImporterTest {
 
     @Test
     void MrmsPrecipPassesRegression() {
@@ -37,7 +37,7 @@ class MetDataImportTest {
         File outFile = new File(getClass().getResource(
                 "/regression/mrms/mrms.dss").getFile());
 
-        MetDataImport importer = MetDataImport.builder()
+        BatchImporter importer = BatchImporter.builder()
                 .inFiles(inFiles)
                 .variables(variables)
                 .geoOptions(options)
@@ -114,7 +114,7 @@ class MetDataImportTest {
         File outFile = new File(getClass().getResource(
                 "/regression/rtma/rtma.dss").getFile());
 
-        MetDataImport importer = MetDataImport.builder()
+        BatchImporter importer = BatchImporter.builder()
                 .inFiles(inFiles)
                 .variables(variables)
                 .geoOptions(options)
