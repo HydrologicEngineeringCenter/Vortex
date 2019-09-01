@@ -7,7 +7,7 @@ import mil.army.usace.hec.vortex.geo.Resampler;
 import mil.army.usace.hec.vortex.geo.VectorUtils;
 
 import java.awt.geom.Rectangle2D;
-import java.nio.file.Files;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,32 +15,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ProcessableUnit {
+public class ImportableUnit {
 
     private DataReader reader;
     private Map<String,String> geoOptions;
     private Path destination;
     private Options writeOptions;
 
-    private ProcessableUnit (ProcessableUnitBuilder builder){
+    private ImportableUnit(ImportableUnitBuilder builder){
         this.reader = builder.reader;
         this.geoOptions = builder.geoOptions;
         this.destination = builder.destination;
         this.writeOptions = builder.writeOptions;
     }
 
-    public static class ProcessableUnitBuilder{
+    public static class ImportableUnitBuilder {
         private DataReader reader;
         private Map<String,String> geoOptions;
         private Path destination;
         private Options writeOptions;
 
-        public ProcessableUnitBuilder reader(DataReader reader){
+        public ImportableUnitBuilder reader(DataReader reader){
             this.reader = reader;
             return this;
         }
 
-        public ProcessableUnitBuilder geoOptions(Options geoOptions){
+        public ImportableUnitBuilder geoOptions(Options geoOptions){
             if (geoOptions == null) {
                 this.geoOptions = Options.create().getOptions();
             } else {
@@ -49,39 +49,39 @@ public class ProcessableUnit {
             return this;
         }
 
-        public ProcessableUnitBuilder destination(Path destination){
+        public ImportableUnitBuilder destination(Path destination){
             this.destination = destination;
             return this;
         }
 
-        public ProcessableUnitBuilder writeOptions(Options writeOptions){
+        public ImportableUnitBuilder writeOptions(Options writeOptions){
             this.writeOptions = writeOptions;
             return this;
         }
 
-        public ProcessableUnit build(){
+        public ImportableUnit build(){
             if (reader == null){
                 System.out.println("ProcessableUnit requires DataReader");
             }
             if (destination == null){
                 System.out.println("ProcessableUnit requires destination");
             }
-            return new ProcessableUnit(this);
+            return new ImportableUnit(this);
         }
     }
 
-    public static ProcessableUnitBuilder builder() {return new ProcessableUnitBuilder();}
+    public static ImportableUnitBuilder builder() {return new ImportableUnitBuilder();}
 
     public void process(){
 
-        Rectangle2D env = null;
-        String envWkt = null;
-        if (geoOptions.containsKey("pathToShp")){
-            Path pathToShp = Paths.get(geoOptions.get("pathToShp"));
-            if(Files.exists(pathToShp)) {
-                env = VectorUtils.getEnvelope(pathToShp);
-                envWkt = VectorUtils.getWkt(pathToShp);
-            }
+        Rectangle2D env;
+        String envWkt;
+        if (geoOptions.containsKey("pathToShp") && new File(geoOptions.get("pathToShp")).exists()) {
+            env = VectorUtils.getEnvelope(Paths.get(geoOptions.get("pathToShp")));
+            envWkt = VectorUtils.getWkt(Paths.get(geoOptions.get("pathToShp")));
+        } else {
+            env = null;
+            envWkt = null;
         }
 
         List<VortexGrid> grids = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());

@@ -57,7 +57,7 @@ public class ZonalStatisticsCalculator {
     }
 
     public static Map<String, Integer[]> createZoneMasks(Path pathToZoneDataset, String field, VortexGrid grid){
-        Dataset raster = RasterUtils.getRasterFromVortexGrid(grid);
+        Dataset raster = RasterUtils.getDatasetFromVortexGrid(grid);
 
         double[] geoTransform = raster.GetGeoTransform();
         double dx = geoTransform[1];
