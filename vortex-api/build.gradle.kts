@@ -10,7 +10,6 @@ repositories {
 
 dependencies {
     implementation("org.gdal:gdal:2.4.0")
-    implementation("org.locationtech.jts:jts-core:1.16.1")
     implementation("javax.measure:unit-api:2.0-EDR")
     implementation("tech.units:indriya:2.0-EDR")
     implementation("systems.uom:systems-common:0.9")

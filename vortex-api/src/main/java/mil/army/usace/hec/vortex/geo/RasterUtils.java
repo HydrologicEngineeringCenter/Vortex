@@ -25,7 +25,7 @@ public class RasterUtils {
         return wkt;
     }
 
-    public static Dataset getRasterFromVortexGrid(VortexGrid dto){
+    public static Dataset getDatasetFromVortexGrid(VortexGrid dto){
         Driver driver = gdal.GetDriverByName("MEM");
         double dx = dto.dx();
         double dy = dto.dy();

@@ -62,7 +62,7 @@ public class MetDataImport {
 
     public void process() {
 
-        List<ProcessableUnit> processableUnits = new ArrayList<>();
+        List<ImportableUnit> importableUnits = new ArrayList<>();
         inFiles.forEach(file -> variables.forEach(variable -> {
             if (DataReader.getVariables(file).contains(variable)) {
 
@@ -71,17 +71,17 @@ public class MetDataImport {
                         .variable(variable)
                         .build();
 
-                ProcessableUnit processableUnit = ProcessableUnit.builder()
+                ImportableUnit importableUnit = ImportableUnit.builder()
                         .reader(reader)
                         .geoOptions(geoOptions)
                         .destination(destination)
                         .writeOptions(writeOptions)
                         .build();
 
-                processableUnits.add(processableUnit);
+                importableUnits.add(importableUnit);
             }
         }));
-        processableUnits.parallelStream().forEach(ProcessableUnit::process);
+        importableUnits.parallelStream().forEach(ImportableUnit::process);
     }
 }
 

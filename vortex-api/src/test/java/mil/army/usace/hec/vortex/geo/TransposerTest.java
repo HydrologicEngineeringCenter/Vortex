@@ -29,7 +29,9 @@ class TransposerTest {
 
         Transposer transposer = Transposer.builder()
                 .grid(grid)
-                .angle(0)
+                .angle(30)
+                .debug(true)
+                .tempDir("C:/Temp")
                 .build();
 
         transposer.transpose();
