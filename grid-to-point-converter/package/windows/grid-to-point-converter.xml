@@ -2,8 +2,8 @@
 <launch4jConfig>
   <dontWrapJar>true</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>importer.jar</jar>
-  <outfile>D:\projects\vortex\importer\src\main\deploy\package\windows\importer.exe</outfile>
+  <jar></jar>
+  <outfile>D:\projects\vortex\grid-to-point-converter\package\windows\grid-to-point-converter.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
@@ -13,23 +13,23 @@
   <stayAlive>false</stayAlive>
   <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
-  <icon>D:\projects\vortex\importer\src\main\deploy\package\windows\vortex_black.ico</icon>
-  <var>PATH=%EXEDIR%\bin\gdal;%PATH%</var>
-  <var>GDAL_DRIVER_PATH=%EXEDIR%\bin\gdal\gdalplugins</var>
-  <var>GDAL_DATA=%EXEDIR%\bin\gdal\gdal-data</var>
-  <var>PROJ_LIB=%EXEDIR%\bin\gdal\projlib</var>
+  <icon>D:\projects\vortex\grid-to-point-converter\package\windows\vortex_black.ico</icon>
+  <var>PATH=.\gdal;%PATH%</var>
+  <var>GDAL_DRIVER_PATH=.\gdal\gdalplugins</var>
+  <var>GDAL_DATA=.\gdal\gdal-data</var>
+  <var>PROJ_LIB=.\gdal\projlib</var>
   <classPath>
-    <mainClass>importer.MetDataImportWizard</mainClass>
-    <cp>./lib/*.jar</cp>
+    <mainClass>converter.ConverterWizard</mainClass>
+    <cp>../lib/converter.jar;../lib/*</cp>
   </classPath>
   <jre>
-    <path>%EXEDIR%/jre</path>
+    <path>../jre</path>
     <bundledJre64Bit>true</bundledJre64Bit>
     <bundledJreAsFallback>false</bundledJreAsFallback>
     <minVersion></minVersion>
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
     <runtimeBits>64/32</runtimeBits>
-    <opt>-Djava.library.path=&quot;%EXEDIR%\bin;%EXEDIR%\bin\gdal&quot;</opt>
+    <opt>-Djava.library.path=&quot;.;./gdal&quot;</opt>
   </jre>
 </launch4jConfig>
