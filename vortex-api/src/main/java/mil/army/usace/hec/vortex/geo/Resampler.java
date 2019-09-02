@@ -2,14 +2,16 @@ package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.gdal.*;
-import org.gdal.gdalconst.gdalconst;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+
+import static org.gdal.gdalconst.gdalconstConstants.GDT_Float32;
 
 public class Resampler {
     private VortexGrid grid;
@@ -60,10 +62,10 @@ public class Resampler {
 
         public Resampler build(){
             if(grid == null){
-                System.out.println("Resampler requires input grid");
+                throw new IllegalArgumentException("Resampler requires input grid");
             }
             if(cellSize == null){
-                System.out.println("Resampler requires cell size");
+                throw new IllegalArgumentException("Resampler requires cell size");
             }
             return new Resampler(this);
         }
@@ -83,7 +85,7 @@ public class Resampler {
         SpatialReference destSrs = new SpatialReference(targetWkt);
         destSrs.MorphFromESRI();
 
-        Dataset dataset = RasterUtils.getRasterFromDto(grid);
+        Dataset dataset = RasterUtils.getDatasetFromVortexGrid(grid);
         Dataset resampled = resample(dataset, env, envSrs, destSrs, cellSize);
 
         double[] geoTransform = resampled.GetGeoTransform();
@@ -96,7 +98,7 @@ public class Resampler {
         String wkt = resampled.GetProjection();
         Band band = resampled.GetRasterBand(1);
         float[] data = new float[nx * ny];
-        band.ReadRaster(0, 0, nx, ny, gdalconst.GDT_Float32, data);
+        band.ReadRaster(0, 0, nx, ny, GDT_Float32, data);
 
         dataset.delete();
         resampled.delete();
@@ -136,7 +138,7 @@ public class Resampler {
 
         SpatialReference srData = new SpatialReference(dataset.GetProjection());
         srData.MorphFromESRI();
-        Vector<String> options = new Vector<>();
+        ArrayList<String> options = new ArrayList<>();
         options.add("-of");
         options.add("MEM");
         options.add("-s_srs");
@@ -153,7 +155,7 @@ public class Resampler {
         options.add("-tr");
         options.add(Double.toString(cellSize));
         options.add(Double.toString(cellSize));
-        WarpOptions warpOptions = new WarpOptions(options);
+        WarpOptions warpOptions = new WarpOptions(new Vector<>(options));
         Dataset[] datasets = new Dataset[]{dataset};
         Dataset warped = gdal.Warp("warped", datasets, warpOptions);
         warped.FlushCache();

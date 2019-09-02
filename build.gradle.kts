@@ -42,6 +42,16 @@ tasks.register<Copy>("copyGridToPointConverter") {
 }
 tasks.getByPath(":copyGridToPointConverter").dependsOn(":grid-to-point-converter:build")
 
+tasks.register<Copy>("copyTransposer") {
+    from(project(":transposer").projectDir.toString()
+            + "/build/distributions/transposer-$version"){
+        exclude ("bin/**")
+        exclude ("lib/**")
+    }
+    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version")
+}
+tasks.getByPath(":copyTransposer").dependsOn(":transposer:build")
+
 tasks.register<Copy>("copyLicense") {
     from(project.rootDir){
         include ("LICENSE.md")
@@ -61,6 +71,7 @@ tasks.getByPath(":build").finalizedBy(":copyImporter")
 tasks.getByPath(":build").finalizedBy(":copyNormalizer")
 tasks.getByPath(":build").finalizedBy(":copyShifter")
 tasks.getByPath(":build").finalizedBy(":copyGridToPointConverter")
+tasks.getByPath(":build").finalizedBy(":copyTransposer")
 tasks.getByPath(":build").finalizedBy(":copyLicense")
 tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
 tasks.getByPath(":build").finalizedBy(":copyFatJar")
