@@ -119,9 +119,9 @@ tasks.register<Copy>("copyFatJar") {
     into("${rootProject.projectDir}/build/distributions")
 }
 
-tasks.getByName("build").finalizedBy(":copyJre")
-tasks.getByName("build").finalizedBy(":copyRuntimeLibs")
-tasks.getByName("build").finalizedBy(":copyNatives")
+tasks.getByPath(":build").finalizedBy(":copyJre")
+tasks.getByPath(":build").finalizedBy(":copyRuntimeLibs")
+tasks.getByPath(":build").finalizedBy(":copyNatives")
 tasks.getByPath(":build").finalizedBy(":copyImporter")
 tasks.getByPath(":build").finalizedBy(":copyNormalizer")
 tasks.getByPath(":build").finalizedBy(":copyShifter")
@@ -133,3 +133,5 @@ tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
 tasks.getByPath(":build").finalizedBy(":copyFatJar")
 
 tasks.getByPath(":final").dependsOn(":build")
+
+tasks.getByPath(":jar").enabled = false
