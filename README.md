@@ -7,6 +7,8 @@ The **importer** utility takes NetCDF, Grib, HDF, ASC, or HEC-DSS files as input
 
 The **grid-to-point-converter** utility converts gridded data to basin-average time-series data.
 
+The **transposer** utility rotates and shifts grids spatially.
+
 The **time-shifter** utility shifts grids in time.
 
 The **normalizer** utility normalizes volumes from one set of grids to another, e.g. normalize hourly QPE grids to daily [PRISM](http://www.prism.oregonstate.edu/) grids.
