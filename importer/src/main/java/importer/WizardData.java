@@ -1,6 +1,11 @@
 package importer;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -51,6 +56,21 @@ public class WizardData {
     }
 
     public void setAvailableVariables(ObservableList<String> variables) {
+        Set<String> extensions = getInFiles().stream()
+                .map(file -> file.substring(file.length() - 3))
+                .collect(Collectors.toSet());
+
+        if(extensions.size() == 1 && extensions.iterator().next().equals("dss")) {
+            try {
+                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                        .parseCaseInsensitive()
+                        .appendPattern("ddMMMuuuu:HHmm")
+                        .toFormatter();
+                variables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+            } catch (DateTimeParseException e) {
+                e.printStackTrace();
+            }
+        }
         availableVariables.set(variables);
     }
 
