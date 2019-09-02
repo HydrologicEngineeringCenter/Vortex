@@ -4,7 +4,11 @@ import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public class WizardData {
@@ -54,6 +58,17 @@ public class WizardData {
     }
 
     public void setAvailableSourceGrids(ObservableList<String> grids) {
+        if(getSourceFile().endsWith("dss")) {
+            try {
+                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                        .parseCaseInsensitive()
+                        .appendPattern("ddMMMuuuu:HHmm")
+                        .toFormatter();
+                grids.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+            } catch (DateTimeParseException e) {
+                e.printStackTrace();
+            }
+        }
         availableSourceGrids.set(grids);
     }
 
@@ -86,6 +101,17 @@ public class WizardData {
     }
 
     public void setAvailableNormalGrids(ObservableList<String> grids) {
+        if(getNormalsFile().endsWith("dss")) {
+            try {
+                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                        .parseCaseInsensitive()
+                        .appendPattern("ddMMMuuuu:HHmm")
+                        .toFormatter();
+                grids.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+            } catch (DateTimeParseException e) {
+                e.printStackTrace();
+            }
+        }
         availableNormalGrids.set(grids);
     }
 
