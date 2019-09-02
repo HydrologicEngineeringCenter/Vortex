@@ -5,7 +5,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -86,13 +85,8 @@ public class Step1Controller {
     @FXML
     private void handleAddFile() {
         FileChooser fileChooser = new FileChooser();
-        Optional<File> initialFilePath = Optional.ofNullable(getPersistedBrowseLocation());
-        if (initialFilePath.isPresent()) {
-            File filePath = initialFilePath.get();
-            if (filePath.exists()) {
-                fileChooser.setInitialDirectory(initialFilePath.get().getParentFile());
-            }
-        }
+
+        Optional.ofNullable(getPersistedBrowseLocation()).ifPresent(file -> fileChooser.setInitialDirectory(file.getParentFile()));
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
@@ -128,7 +122,8 @@ public class Step1Controller {
 
             ObservableList<String> variableList = FXCollections.observableArrayList(variables);
 
-            Node contentPanel = add.getScene().lookup("#contentPanel");
+            model.setAvailableVariables(variableList);
+            model.setSelectedVariables(FXCollections.emptyObservableList());
         }
     }
 

@@ -29,8 +29,7 @@ tasks.jar {
     archiveVersion.set("")
     manifest {
         attributes(
-                "Main-Class" to "transposer.TransposerWizard",
-                "Class-Path" to "./lib/*"
+                "Main-Class" to "transposer.TransposerWizard"
         )
     }
 }
@@ -40,7 +39,7 @@ tasks.register<Copy>("copyJar"){
     from ("$buildDir/libs") {
         include ("transposer.jar")
     }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version/lib")
 }
 
 tasks.register<Copy>("copyResources"){
