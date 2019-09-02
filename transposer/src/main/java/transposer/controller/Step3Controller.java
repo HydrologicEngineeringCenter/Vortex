@@ -1,4 +1,24 @@
-package importer.controller;
+package transposer.controller;
+
+import com.google.inject.Inject;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.StageStyle;
+import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.geo.BatchTransposer;
+import mil.army.usace.hec.vortex.util.DssUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import transposer.TransposerWizard;
+import transposer.WizardData;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,49 +26,26 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
-
-import importer.MetDataImportWizard;
-import importer.WizardData;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
-import mil.army.usace.hec.vortex.io.BatchImporter;
-import mil.army.usace.hec.vortex.Options;
-import mil.army.usace.hec.vortex.util.DssUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.inject.Inject;
-
-import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.stage.FileChooser;
-import javafx.stage.StageStyle;
 
 public class Step3Controller {
 
     private Logger log = LoggerFactory.getLogger(Step3Controller.class);
 
     @FXML
-    VBox content;
+    private VBox content;
 
     @FXML
-    TextField destination;
+    private TextField destination;
 
     @FXML
-    Button browse;
+    private Button browse;
 
     @Inject
-    WizardData model;
+    private WizardData model;
 
     private boolean dssInitialized = false;
-    Parent dssPathnamePartsView;
-    DssPathnamePartsController dssPathnamePartsController;
+    private Parent dssPathnamePartsView;
+    private DssPathnamePartsController dssPathnamePartsController;
 
     @FXML
     public void initialize() {
@@ -87,13 +84,8 @@ public class Step3Controller {
     @FXML
     private void handleBrowse() {
         FileChooser fileChooser = new FileChooser();
-        Optional<File> initialFilePath = Optional.ofNullable(getPersistedBrowseLocation());
-        if (initialFilePath.isPresent()) {
-            File filePath = initialFilePath.get();
-            if (filePath.exists()) {
-                fileChooser.setInitialDirectory(initialFilePath.get().getParentFile());
-            }
-        }
+
+        Optional.ofNullable(getPersistedBrowseLocation()).ifPresent(file -> fileChooser.setInitialDirectory(file.getParentFile()));
 
         // Set extension filters
         FileChooser.ExtensionFilter dssFilter = new FileChooser.ExtensionFilter("DSS files", "*.dss");
@@ -125,57 +117,54 @@ public class Step3Controller {
 
     @Submit
     public void submit() {
+
+        Path pathToSource = Paths.get(model.getInFile());
+        Set<String> sourceGrids = new HashSet<>(model.getSelectedVariables());
+        Path destinationOut = Paths.get(model.getDestinationOut());
+        double angle = Double.parseDouble(model.getAngle());
+        double stormCenterX;
+        if (model.getStormCenterX() != null && !model.getStormCenterX().isEmpty()) {
+            stormCenterX = Double.parseDouble(model.getStormCenterX());
+        } else {
+            stormCenterX = Double.NaN;
+        }
+
+        double stormCenterY;
+        if (model.getStormCenterY() != null && !model.getStormCenterY().isEmpty()) {
+            stormCenterY = Double.parseDouble(model.getStormCenterY());
+        } else {
+            stormCenterY = Double.NaN;
+        }
+
+        Options options = Options.create();
+        if (destinationOut.toString().toLowerCase().endsWith(".dss")) {
+            options.add("partA", dssPathnamePartsController.getPartA());
+            options.add("partB", dssPathnamePartsController.getPartB());
+            options.add("partC", dssPathnamePartsController.getPartC());
+            options.add("partD", dssPathnamePartsController.getPartD());
+            options.add("partE", dssPathnamePartsController.getPartE());
+            options.add("partF", dssPathnamePartsController.getPartF());
+        }
+
+        BatchTransposer batchTransposer = BatchTransposer.builder()
+                .pathToInput(pathToSource)
+                .variables(sourceGrids)
+                .angle(angle)
+                .stormCenterX(stormCenterX)
+                .stormCenterY(stormCenterY)
+                .destination(destinationOut)
+                .writeOptions(options)
+                .build();
+
+        batchTransposer.process();
+
         if (log.isDebugEnabled()) {
             log.debug("[SUBMIT] the user has completed step 3");
         }
-
-        List<Path> inFiles = model.getInFiles()
-                .stream()
-                .map(String::trim)
-                .map(Paths::get)
-                .collect(Collectors.toList());
-
-        List<String> variables = model.getSelectedVariables();
-
-        Options geoOptions = Options.create();
-        Optional.ofNullable(model.getClipDataSource()).ifPresent(entry -> {
-            if (!entry.isEmpty())
-                geoOptions.add("pathToShp", entry);
-        });
-
-        Optional.ofNullable(model.getTargetWkt()).ifPresent(entry -> {
-            if (!entry.isEmpty())
-                geoOptions.add("targetWkt", entry);
-        });
-
-        Optional.ofNullable(model.getTargetCellSize()).ifPresent(entry -> {
-            if (!entry.isEmpty())
-                geoOptions.add("targetCellSize", entry);
-        });
-
-        Path destination = Paths.get(model.getDestinationOut());
-
-        Options writeOptions = Options.create();
-        if (destination.getFileName().toString().toLowerCase().endsWith(".dss")) {
-            writeOptions.add("partA", dssPathnamePartsController.getPartA());
-            writeOptions.add("partB", dssPathnamePartsController.getPartB());
-            writeOptions.add("partC", dssPathnamePartsController.getPartC());
-            writeOptions.add("partF", dssPathnamePartsController.getPartF());
-        }
-
-        BatchImporter importer = BatchImporter.builder()
-                .inFiles(inFiles)
-                .variables(variables)
-                .geoOptions(geoOptions)
-                .destination(destination)
-                .writeOptions(writeOptions)
-                .build();
-
-        importer.process();
     }
 
     private void setPersistedBrowseLocation(File file) {
-        Preferences prefs = Preferences.userNodeForPackage(MetDataImportWizard.class);
+        Preferences prefs = Preferences.userNodeForPackage(TransposerWizard.class);
         if (Objects.nonNull(file)) {
             prefs.put("outFilePath", file.getPath());
         } else {
@@ -184,7 +173,7 @@ public class Step3Controller {
     }
 
     private File getPersistedBrowseLocation() {
-        Preferences prefs = Preferences.userNodeForPackage(MetDataImportWizard.class);
+        Preferences prefs = Preferences.userNodeForPackage(TransposerWizard.class);
         String filePath = prefs.get("outFilePath", null);
         if (Objects.nonNull(filePath)) {
             return new File(filePath);
@@ -210,9 +199,13 @@ public class Step3Controller {
             dssPathnamePartsController.partB.textProperty().set("*");
         }
 
+        Set<String> cParts = parts.get("cParts");
+        if (cParts.size() == 1){
+            dssPathnamePartsController.partC.textProperty().set(cParts.iterator().next());
+        } else {
+            dssPathnamePartsController.partC.textProperty().set("*");
+        }
 
-        dssPathnamePartsController.partC.textProperty().set("*");
-        dssPathnamePartsController.partC.setDisable(true);
         dssPathnamePartsController.partD.textProperty().set("*");
         dssPathnamePartsController.partD.setDisable(true);
         dssPathnamePartsController.partE.textProperty().set("*");
