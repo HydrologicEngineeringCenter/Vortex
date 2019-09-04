@@ -8,6 +8,7 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.geo.WktFactory;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 
@@ -50,7 +51,12 @@ class DssDataReader extends DataReader {
 
     private VortexGrid dssToDto(GridData gridData){
         GridInfo info = gridData.getGridInfo();
-        String wkt = ReferenceUtils.enhanceWkt(info.getSpatialReferenceSystem());
+        String wkt;
+        if (ReferenceUtils.isShg(info)){
+            wkt = WktFactory.shg();
+        } else {
+            wkt = ReferenceUtils.enhanceWkt(info.getSpatialReferenceSystem());
+        }
         float cellSize = info.getCellSize();
         int nx = info.getNumberOfCellsX();
         int ny = info.getNumberOfCellsY();
