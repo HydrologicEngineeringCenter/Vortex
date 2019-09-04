@@ -3,4 +3,5 @@
 out
 build
 final_build*.bat
+rc_build*.bat
 /scripts/
