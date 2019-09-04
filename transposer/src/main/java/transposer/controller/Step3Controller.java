@@ -135,7 +135,7 @@ public class Step3Controller {
         }
 
         Options options = Options.create();
-        if (destinationOut.toString().toLowerCase().endsWith(".dss")) {
+        if (destinationOut.toLowerCase().endsWith(".dss")) {
             options.add("partA", dssPathnamePartsController.getPartA());
             options.add("partB", dssPathnamePartsController.getPartB());
             options.add("partC", dssPathnamePartsController.getPartC());
@@ -145,7 +145,7 @@ public class Step3Controller {
         }
 
         BatchTransposer batchTransposer = BatchTransposer.builder()
-                .pathToInput(pathToSource.toString())
+                .pathToInput(pathToSource)
                 .variables(sourceGrids)
                 .angle(angle)
                 .stormCenterX(stormCenterX)
