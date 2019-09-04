@@ -50,8 +50,8 @@ public class BatchTransposer {
             return this;
         }
 
-        public BatchTransposerBuilder selectAll(boolean isSelectAll){
-            this.isSelectAll = isSelectAll;
+        public BatchTransposerBuilder selectAllVariables(){
+            this.isSelectAll = true;
             return this;
         }
 
@@ -82,6 +82,7 @@ public class BatchTransposer {
 
         public BatchTransposer build() {
             if(isSelectAll){
+                variables = new HashSet<>();
                 variables.addAll(DataReader.getVariables(pathToInput));
             }
             return new BatchTransposer(this);
