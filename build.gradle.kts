@@ -136,3 +136,7 @@ tasks.getByPath(":final").dependsOn(":build")
 tasks.getByName("candidate").dependsOn(":build")
 
 tasks.getByPath(":jar").enabled = false
+
+tasks.withType<Test> {
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).takeIf { it > 0 } ?: 1
+}
