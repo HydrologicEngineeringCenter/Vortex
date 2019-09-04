@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -27,18 +26,12 @@ public class Step1Controller {
 
     private Logger log = LoggerFactory.getLogger(Step1Controller.class);
 
-    @FXML
-    TextField sourceFile;
-
-    @FXML
-    Button add;
-
-    @FXML
-    ListView<String> availableVariables, selectedVariables;
-
-    @FXML
-    Button addButton, removeButton;
-
+    @FXML TextField sourceFile;
+    @FXML Button add;
+    @FXML ListView<String> availableVariables;
+    @FXML ListView<String> selectedVariables;
+    @FXML Button addButton;
+    @FXML Button removeButton;
     @Inject
     WizardData model;
 
