@@ -198,7 +198,8 @@ public class DssDataWriter extends DataWriter {
         String desc = description.toLowerCase();
 
         if (desc.contains("precipitation")
-                || desc.contains("precip") && description.contains("rate")
+                || desc.contains("precip")
+                || desc.contains("precip") && desc.contains("rate")
                 || desc.contains("qpe01h")) {
             return "PRECIPITATION";
         } else if (desc.contains("temperature")){
