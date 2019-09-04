@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.math.Sanatizer;
 import org.gdal.gdal.*;
 
 import java.nio.file.Path;
@@ -82,7 +83,12 @@ public class Transposer {
     public static TransposerBuilder builder(){return new TransposerBuilder();}
 
     public VortexGrid transpose(){
-        Dataset datasetIn = RasterUtils.getDatasetFromVortexGrid(grid);
+        VortexGrid sanatized = Sanatizer.builder()
+                .inputGrid(grid)
+                .build()
+                .sanatize();
+
+        Dataset datasetIn = RasterUtils.getDatasetFromVortexGrid(sanatized);
 
         if (debug) {
             ArrayList<String> options = new ArrayList<>();
