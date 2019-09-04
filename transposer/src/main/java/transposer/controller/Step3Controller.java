@@ -22,8 +22,6 @@ import transposer.WizardData;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.prefs.Preferences;
 
@@ -118,9 +116,9 @@ public class Step3Controller {
     @Submit
     public void submit() {
 
-        Path pathToSource = Paths.get(model.getInFile());
-        Set<String> sourceGrids = new HashSet<>(model.getSelectedVariables());
-        Path destinationOut = Paths.get(model.getDestinationOut());
+        String pathToSource = model.getInFile();
+        List<String> sourceGrids = model.getSelectedVariables();
+        String destinationOut = model.getDestinationOut();
         double angle = Double.parseDouble(model.getAngle());
         double stormCenterX;
         if (model.getStormCenterX() != null && !model.getStormCenterX().isEmpty()) {
@@ -147,7 +145,7 @@ public class Step3Controller {
         }
 
         BatchTransposer batchTransposer = BatchTransposer.builder()
-                .pathToInput(pathToSource)
+                .pathToInput(pathToSource.toString())
                 .variables(sourceGrids)
                 .angle(angle)
                 .stormCenterX(stormCenterX)
