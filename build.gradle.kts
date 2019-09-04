@@ -133,5 +133,6 @@ tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
 tasks.getByPath(":build").finalizedBy(":copyFatJar")
 
 tasks.getByPath(":final").dependsOn(":build")
+tasks.getByName("candidate").dependsOn(":build")
 
 tasks.getByPath(":jar").enabled = false
