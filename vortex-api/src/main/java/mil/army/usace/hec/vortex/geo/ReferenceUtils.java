@@ -1,5 +1,7 @@
 package mil.army.usace.hec.vortex.geo;
 
+import hec.heclib.grid.AlbersInfo;
+import hec.heclib.grid.GridInfo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.osr.CoordinateTransformation;
@@ -67,5 +69,35 @@ public class ReferenceUtils {
         }
 
         return valid.get();
+    }
+
+    public static boolean isShg(GridInfo info){
+        if(info.getGridType() != 420){
+            return false;
+        }
+        AlbersInfo albersInfo = (AlbersInfo) info;
+        if(albersInfo.getFirstStandardParallel() != 29.5){
+            return false;
+        }
+        if(albersInfo.getSecondStandardParallel() != 45.5){
+            return false;
+        }
+        if(albersInfo.getLatitudeOfProjectionOrigin() != 23.0){
+            return false;
+        }
+        if(albersInfo.getCentralMeridian() != -96.0){
+            return false;
+        }
+        if(albersInfo.getFalseEasting() != 0){
+            return false;
+        }
+        if(albersInfo.getFalseNorthing() != 0){
+            return false;
+        }
+        if(albersInfo.getProjectionDatum() != GridInfo.getNad83()){
+            return false;
+        }
+        String units = albersInfo.getProjectionUnits().toLowerCase();
+        return units.equals("m") || units.equals("meter") || units.equals("meters") || units.equals("metre");
     }
 }
