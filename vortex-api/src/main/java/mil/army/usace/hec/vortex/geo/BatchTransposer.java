@@ -4,7 +4,9 @@ import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.io.DataReader;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -31,19 +33,25 @@ public class BatchTransposer {
 
         private Path pathToInput;
         private Set<String> variables;
+        boolean isSelectAll;
         private double angle;
         private Double stormCenterX;
         private Double stormCenterY;
         private Path destination;
         private Options writeOptions;
 
-        public BatchTransposerBuilder pathToInput(Path pathToInput) {
-            this.pathToInput = pathToInput;
+        public BatchTransposerBuilder pathToInput(String pathToInput) {
+            this.pathToInput = Paths.get(pathToInput);
             return this;
         }
 
-        public BatchTransposerBuilder variables(Set<String> variables) {
-            this.variables = variables;
+        public BatchTransposerBuilder variables(List<String> variables) {
+            this.variables = new HashSet<>(variables);
+            return this;
+        }
+
+        public BatchTransposerBuilder selectAll(boolean isSelectAll){
+            this.isSelectAll = isSelectAll;
             return this;
         }
 
@@ -62,8 +70,8 @@ public class BatchTransposer {
             return this;
         }
 
-        public BatchTransposerBuilder destination(Path destination) {
-            this.destination = destination;
+        public BatchTransposerBuilder destination(String destination) {
+            this.destination = Paths.get(destination);
             return this;
         }
 
@@ -73,6 +81,9 @@ public class BatchTransposer {
         }
 
         public BatchTransposer build() {
+            if(isSelectAll){
+                variables.addAll(DataReader.getVariables(pathToInput));
+            }
             return new BatchTransposer(this);
         }
     }
