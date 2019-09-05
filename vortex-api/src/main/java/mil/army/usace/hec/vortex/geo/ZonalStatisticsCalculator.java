@@ -67,8 +67,13 @@ public class ZonalStatisticsCalculator {
         int nx = raster.GetRasterXSize();
         int ny = raster.GetRasterYSize();
 
-        double maxX = originX + dx * nx;
-        double maxY = originY + dy * ny;
+        double terminusX = originX + dx * nx;
+        double terminusY = originY + dy * ny;
+
+        double minX = Math.min(originX, terminusX);
+        double maxX = Math.max(originX, terminusX);
+        double minY = Math.min(originY, terminusY);
+        double maxY = Math.max(originY, terminusY);
 
         Driver driver = ogr.GetDriverByName("Memory");
         DataSource dataSource = driver.CreateDataSource("");
@@ -98,14 +103,14 @@ public class ZonalStatisticsCalculator {
 
             layer.CreateFeature(feature);
 
-            Vector<String> options = new Vector<>();
+            ArrayList<String> options = new ArrayList<>();
             options.add("-of");
             options.add("MEM");
             options.add("-te");
-            options.add(Double.toString(originX));
-            options.add(Double.toString(maxY));
+            options.add(Double.toString(minX));
+            options.add(Double.toString(minY));
             options.add(Double.toString(maxX));
-            options.add(Double.toString(originY));
+            options.add(Double.toString(maxY));
             options.add("-tr");
             options.add(Double.toString(dx));
             options.add(Double.toString(dy));
@@ -116,7 +121,7 @@ public class ZonalStatisticsCalculator {
 
             int[] bands = {1};
             double[] burnValues = {1};
-            gdal.RasterizeLayer(target, bands, layer, burnValues, options);
+            gdal.RasterizeLayer(target, bands, layer, burnValues, new Vector<>(options));
 
             Band mask = target.GetRasterBand(1);
             int[] maskData = new int[nx * ny];

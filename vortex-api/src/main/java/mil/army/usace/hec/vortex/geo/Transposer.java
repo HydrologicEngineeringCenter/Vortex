@@ -207,9 +207,9 @@ public class Transposer {
         options.add("MEM");
         options.add("-te");
         options.add(Double.toString(minX));
-        options.add(Double.toString(maxY));
-        options.add(Double.toString(maxX));
         options.add(Double.toString(minY));
+        options.add(Double.toString(maxX));
+        options.add(Double.toString(maxY));
         options.add("-tr");
         options.add(Double.toString(cellSize));
         options.add(Double.toString(cellSize));
