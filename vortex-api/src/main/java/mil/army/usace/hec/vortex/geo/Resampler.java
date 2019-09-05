@@ -148,9 +148,9 @@ public class Resampler {
         if (env != null) {
             options.add("-te");
             options.add(Double.toString(envelope.get("minX")));
-            options.add(Double.toString(envelope.get("maxY")));
-            options.add(Double.toString(envelope.get("maxX")));
             options.add(Double.toString(envelope.get("minY")));
+            options.add(Double.toString(envelope.get("maxX")));
+            options.add(Double.toString(envelope.get("maxY")));
         }
         options.add("-tr");
         options.add(Double.toString(cellSize));
