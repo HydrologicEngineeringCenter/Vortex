@@ -200,7 +200,8 @@ public class DssDataWriter extends DataWriter {
         if (desc.contains("precipitation")
                 || desc.contains("precip")
                 || desc.contains("precip") && desc.contains("rate")
-                || desc.contains("qpe01h")) {
+                || desc.contains("qpe01h")
+                || desc.contains("rainfall")) {
             return "PRECIPITATION";
         } else if (desc.contains("temperature")){
             return "TEMPERATURE";
@@ -283,6 +284,7 @@ public class DssDataWriter extends DataWriter {
     private static Unit<?> getUnits(String units){
         switch (units.toLowerCase()){
             case "kg.m-2.s-1":
+            case "kg/m2s":
                 return MILLI(METRE).divide(SECOND);
             case "mm hr^-1":
                 return MILLI(METRE).divide(HOUR);
@@ -326,6 +328,9 @@ public class DssDataWriter extends DataWriter {
         }
         if (unit.equals(INCH)){
             return "IN";
+        }
+        if (unit.equals(MILLI(METRE).divide(SECOND))){
+            return "MM/S";
         }
         if (unit.equals(CUBIC_METRE.divide(SECOND))){
             return "M3/S";
