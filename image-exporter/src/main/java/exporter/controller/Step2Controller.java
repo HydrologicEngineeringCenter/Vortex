@@ -1,111 +1,84 @@
 package exporter.controller;
 
 import com.google.inject.Inject;
+import exporter.ExporterWizard;
 import exporter.WizardData;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.DirectoryChooser;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
-import mil.army.usace.hec.vortex.io.TiffDataWriter;
+import mil.army.usace.hec.vortex.io.ImageFileType;
+import mil.army.usace.hec.vortex.util.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.prefs.Preferences;
 
 public class Step2Controller {
 
     private Logger log = LoggerFactory.getLogger(Step2Controller.class);
 
-    @FXML
-    VBox content;
+    @FXML TextField destinationDir;
+    @FXML Button browse;
+    @FXML TextField baseName;
+    @FXML ComboBox<ImageFileType> format;
 
     @Inject
     WizardData model;
 
-    private boolean destinationDirInitialized = false;
-    private Parent destinationDirView;
-    private DestinationDirController destinationDirController;
-
-    private boolean destinationFileInitialized = false;
-    private Parent destinationFileView;
-    private DestinationFileController destinationFileController;
-
     @FXML
-    public void initialize() {
-        model.selectedVariablesProperty().addListener((obs, oldText, newText) -> {
-            if (model.getSelectedVariables().size() > 1) {
-                content.getChildren().remove(destinationFileView);
-                if (!destinationDirInitialized){
-                    FXMLLoader fxmlLoader = new FXMLLoader( getClass().getResource("/fxml/DestinationDir.fxml"));
-                    destinationDirView = null;
-                    try {
-                        destinationDirView = fxmlLoader.load();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    destinationDirController = fxmlLoader.getController();
-                    destinationDirInitialized = true;
-                } else {
-                    content.getChildren().remove(destinationDirView);
-                }
+    void initialize(){
+        Image addImage = new Image(getClass().getResourceAsStream("/opened-folder-16.png"));
+        browse.setGraphic(new ImageView(addImage));
 
-                File dir = destinationDirController.getPersistedBrowseLocation();
-                String dest;
-                if (dir != null && dir.exists()){
-                    dest = dir.getPath();
-                } else {
-                    dest = System.getProperty("user.home");
-                }
-                destinationDirController.destination.textProperty().set(dest);
+        File persistedDir = getPersistedBrowseLocation();
+        String initialDir;
+        if (persistedDir != null && persistedDir.exists()){
+            initialDir = persistedDir.getPath();
+        } else {
+            initialDir = System.getProperty("user.home");
+        }
+        destinationDir.setText(initialDir);
 
-                content.getChildren().add(destinationDirView);
-            } else {
-                content.getChildren().remove(destinationDirView);
-                if (!destinationFileInitialized){
-                    FXMLLoader fxmlLoader = new FXMLLoader( getClass().getResource("/fxml/DestinationFile.fxml"));
-                    destinationFileView = null;
-                    try {
-                        destinationFileView = fxmlLoader.load();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    destinationFileController = fxmlLoader.getController();
-                    destinationFileInitialized = true;
-                } else {
-                    content.getChildren().remove(destinationFileView);
-                }
-
-                if (model.getSelectedVariables().size() == 1) {
-                    List<VortexData> grids = DataReader.builder()
-                            .path(Paths.get(model.getInFile()))
-                            .variable(model.getSelectedVariables().get(0))
-                            .build()
-                            .getDTOs();
-
-                    String defaultFileName = TiffDataWriter.autoGenerateFileName((VortexGrid) grids.get(0));
-                    File dir = destinationFileController.getPersistedBrowseLocation();
-                    String dest;
-                    if (dir != null && dir.exists()){
-                        dest = Paths.get(dir.toString(), defaultFileName).toString();
-                    } else {
-                        dest = Paths.get(System.getProperty("user.home"), defaultFileName).toString();
-                    }
-                    destinationFileController.destination.textProperty().set(dest);
-                }
-
-                content.getChildren().add(destinationFileView);
+        model.inFileProperty().addListener((observable, oldValue, newValue) -> {
+            if (new File(model.getInFile()).exists()) {
+                String fileNameIn = Paths.get(model.getInFile()).getFileName().toString();
+                String fileNameInSansExt = fileNameIn.substring(0, fileNameIn.lastIndexOf('.'));
+                baseName.setText(fileNameInSansExt);
             }
         });
+
+        format.getItems().setAll(Arrays.asList(ImageFileType.values()));
+        format.getSelectionModel().select(0);
+    }
+
+    @FXML
+    private void handleBrowse() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        Path initial = Paths.get(destinationDir.getText());
+        if(initial.toFile().isDirectory()) {
+            chooser.setInitialDirectory(initial.toFile());
+        }
+
+        // Show save file dialog
+        File file = chooser.showDialog(browse.getScene().getWindow());
+
+        if (file != null) {
+            destinationDir.setText(file.getPath());
+        }
+
+        setPersistedBrowseLocation(file);
     }
 
     @Validate
@@ -127,20 +100,8 @@ public class Step2Controller {
                     .getDTOs();
 
             grids.forEach(grid -> {
-                Path destination;
-                if (model.getSelectedVariables().size() == 1 && grids.size() == 1){
-                    destination = Paths.get(destinationFileController.getDestination());
-                } else if (model.getSelectedVariables().size() == 1 && grids.size() != 1) {
-                    String directory = Paths.get(destinationFileController.getDestination()).getParent().toString();
-                    String fileNameIn = Paths.get(destinationFileController.getDestination()).getFileName().toString();
-                    String fileNameInSansExt = fileNameIn.substring(0, fileNameIn.lastIndexOf('.'));
-                    String fileName = TiffDataWriter.autoGenerateFileName(fileNameInSansExt, (VortexGrid) grid);
-                    destination = Paths.get(directory, fileName);
-                } else {
-                    String directory = destinationDirController.getDestination();
-                    String fileName = TiffDataWriter.autoGenerateFileName((VortexGrid) grid);
-                    destination = Paths.get(directory, fileName);
-                }
+                String fileName = ImageUtils.generateFileName(baseName.getText(), (VortexGrid) grid, format.getValue());
+                Path destination = Paths.get(destinationDir.getText(), fileName);
                 DataWriter writer = DataWriter.builder()
                         .data(grids)
                         .destination(destination)
@@ -152,6 +113,25 @@ public class Step2Controller {
 
         if (log.isDebugEnabled()) {
             log.debug("[SUBMIT] the user has completed step 2");
+        }
+    }
+
+    private void setPersistedBrowseLocation(File file) {
+        Preferences prefs = Preferences.userNodeForPackage(ExporterWizard.class);
+        if (Objects.nonNull(file)) {
+            prefs.put("outDirPath", file.getPath());
+        } else {
+            prefs.remove("outDirPath");
+        }
+    }
+
+    private File getPersistedBrowseLocation() {
+        Preferences prefs = Preferences.userNodeForPackage(ExporterWizard.class);
+        String filePath = prefs.get("outDirPath", null);
+        if (Objects.nonNull(filePath)) {
+            return new File(filePath);
+        } else {
+            return null;
         }
     }
 }

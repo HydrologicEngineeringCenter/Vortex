@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-public class TiffDataWriter extends DataWriter {
+public class AscDataWriter extends DataWriter {
 
-    TiffDataWriter(DataWriterBuilder builder) {
+    AscDataWriter(DataWriterBuilder builder) {
         super(builder);
     }
 
@@ -28,17 +28,7 @@ public class TiffDataWriter extends DataWriter {
             Dataset dataset = RasterUtils.getDatasetFromVortexGrid(grid);
             ArrayList<String> gdalOptions = new ArrayList<>();
             gdalOptions.add("-of");
-            gdalOptions.add("Gtiff");
-            gdalOptions.add("-ot");
-            gdalOptions.add("Float32");
-            gdalOptions.add("-co");
-            gdalOptions.add("TILED=YES");
-            gdalOptions.add("-co");
-            gdalOptions.add("COMPRESS=DEFLATE");
-            gdalOptions.add("-co");
-            gdalOptions.add("ZLEVEL=1");
-            gdalOptions.add("-co");
-            gdalOptions.add("BIGTIFF=YES");
+            gdalOptions.add("AAIGrid");
             TranslateOptions translateOptions = new TranslateOptions(new Vector<>(gdalOptions));
             Dataset out = gdal.Translate(destination.toString(), dataset, translateOptions);
             out.FlushCache();

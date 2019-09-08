@@ -58,6 +58,11 @@ public abstract class DataWriter {
                 return new TiffDataWriter(this);
             }
 
+            PathMatcher ascMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.asc");
+            if (ascMatcher.matches(destination)) {
+                return new AscDataWriter(this);
+            }
+
             throw new IllegalStateException("Invalid destination.");
         }
     }
