@@ -7,6 +7,8 @@ The **importer** utility takes NetCDF, Grib, HDF, ASC, or HEC-DSS files as input
 
 The **grid-to-point-converter** utility converts gridded data to basin-average time-series data.
 
+The **image-exporter** utility exports gridded data to GeoTIFF or ASC raster formats.
+
 The **transposer** utility rotates and shifts grids spatially.
 
 The **time-shifter** utility shifts grids in time.
