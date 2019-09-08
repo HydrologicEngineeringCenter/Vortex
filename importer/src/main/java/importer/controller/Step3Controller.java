@@ -1,5 +1,25 @@
 package importer.controller;
 
+import com.google.inject.Inject;
+import importer.MetDataImportWizard;
+import importer.WizardData;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.StageStyle;
+import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.io.BatchImporter;
+import mil.army.usace.hec.vortex.util.DssUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -7,28 +27,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
-
-import importer.MetDataImportWizard;
-import importer.WizardData;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
-import mil.army.usace.hec.vortex.io.BatchImporter;
-import mil.army.usace.hec.vortex.Options;
-import mil.army.usace.hec.vortex.util.DssUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.inject.Inject;
-
-import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.stage.FileChooser;
-import javafx.stage.StageStyle;
 
 public class Step3Controller {
 
@@ -100,7 +98,7 @@ public class Step3Controller {
         fileChooser.getExtensionFilters().add(dssFilter);
 
         // Show save file dialog
-        File file = fileChooser.showOpenDialog(browse.getScene().getWindow());
+        File file = fileChooser.showSaveDialog(browse.getScene().getWindow());
 
         if (file != null) {
             destination.setText(file.getPath());
