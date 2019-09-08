@@ -98,7 +98,7 @@ public class Step3Controller {
         fileChooser.getExtensionFilters().add(dssFilter);
 
         // Show save file dialog
-        File file = fileChooser.showSaveDialog(browse.getScene().getWindow());
+        File file = fileChooser.showOpenDialog(browse.getScene().getWindow());
 
         if (file != null) {
             destination.setText(file.getPath());
