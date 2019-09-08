@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
+import mil.army.usace.hec.vortex.util.MatrixUtils;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.TranslateOptions;
 import org.gdal.gdal.gdal;
@@ -25,10 +26,35 @@ public class AscDataWriter extends DataWriter {
                 .collect(Collectors.toList());
 
         grids.forEach(grid -> {
-            Dataset dataset = RasterUtils.getDatasetFromVortexGrid(grid);
+            VortexGrid gridOut;
+            if (grid.dy() < 0){
+                gridOut = grid;
+            } else {
+                float[] flipped = MatrixUtils.flipArray(grid.data(), grid.nx(), grid.ny());
+                gridOut = VortexGrid.builder()
+                        .dx(grid.dx()).dy(grid.dy())
+                        .nx(grid.nx()).ny(grid.ny())
+                        .originX(grid.originX())
+                        .originY(grid.originY() + grid.dy() * grid.ny())
+                        .wkt(grid.wkt())
+                        .data(flipped)
+                        .units(grid.units())
+                        .fileName(grid.fileName())
+                        .shortName(grid.shortName())
+                        .fullName(grid.fullName())
+                        .description(grid.description())
+                        .startTime(grid.startTime())
+                        .endTime(grid.endTime())
+                        .interval(grid.interval())
+                        .build();
+            }
+
+            Dataset dataset = RasterUtils.getDatasetFromVortexGrid(gridOut);
             ArrayList<String> gdalOptions = new ArrayList<>();
             gdalOptions.add("-of");
             gdalOptions.add("AAIGrid");
+            gdalOptions.add("-co");
+            gdalOptions.add("FORCE_CELLSIZE=TRUE");
             TranslateOptions translateOptions = new TranslateOptions(new Vector<>(gdalOptions));
             Dataset out = gdal.Translate(destination.toString(), dataset, translateOptions);
             out.FlushCache();
