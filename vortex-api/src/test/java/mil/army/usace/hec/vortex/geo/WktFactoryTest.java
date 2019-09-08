@@ -6,6 +6,7 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 import org.gdal.osr.SpatialReference;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -22,6 +23,7 @@ class WktFactoryTest {
         GdalRegister.getInstance();
     }
 
+    @Disabled
     @Test
     void MrmsPrecipWktPassesRegression() {
         Path inFile = new File(getClass().getResource(
