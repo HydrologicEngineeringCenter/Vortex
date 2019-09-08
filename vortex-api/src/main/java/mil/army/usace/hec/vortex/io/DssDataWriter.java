@@ -289,6 +289,7 @@ public class DssDataWriter extends DataWriter {
             case "mm hr^-1":
                 return MILLI(METRE).divide(HOUR);
             case "kg.m-2":
+            case "kg/m^2":
             case "mm":
                 return MILLI(METRE);
             case "in":

@@ -2,18 +2,14 @@ package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
-import org.gdal.osr.osr;
 import ucar.unidata.geoloc.ProjectionImpl;
-import ucar.unidata.geoloc.projection.AlbersEqualArea;
-import ucar.unidata.geoloc.projection.LambertConformal;
-import ucar.unidata.geoloc.projection.LatLonProjection;
-import ucar.unidata.geoloc.projection.Mercator;
-import ucar.unidata.geoloc.projection.Orthographic;
-import ucar.unidata.geoloc.projection.Sinusoidal;
+import ucar.unidata.geoloc.projection.*;
 import ucar.unidata.util.Parameter;
 
 import java.util.List;
 import java.util.Optional;
+
+import static org.gdal.osr.osrConstants.SRS_UL_METER;
 
 public class WktFactory {
 
@@ -45,7 +41,7 @@ public class WktFactory {
                     in.getFalseEasting(),
                     in.getFalseNorthing()
             );
-            srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToWkt();
 
         } else if (projection instanceof LambertConformal) {
@@ -61,7 +57,7 @@ public class WktFactory {
                     in.getFalseEasting(),
                     in.getFalseNorthing()
             );
-            srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
 
         } else if (projection instanceof Mercator) {
@@ -75,7 +71,7 @@ public class WktFactory {
                     in.getFalseEasting(),
                     in.getFalseNorthing()
             );
-            srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
 
         } else if (projection instanceof Orthographic) {
@@ -88,7 +84,7 @@ public class WktFactory {
                     0,
                     0
             );
-            srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
 
         } else if (projection instanceof Sinusoidal) {
@@ -100,7 +96,21 @@ public class WktFactory {
                     in.getFalseEasting(),
                     in.getFalseNorthing()
             );
-            srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
+            return srs.ExportToPrettyWkt();
+
+        } else if (projection instanceof Stereographic) {
+            Stereographic in = (Stereographic) projection;
+            SpatialReference srs = new SpatialReference();
+            setGcsParameters(in, srs);
+            srs.SetStereographic(
+                    in.getTangentLat(),
+                    in.getTangentLon(),
+                    in.getScale(),
+                    in.getFalseEasting(),
+                    in.getFalseNorthing()
+            );
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
 
         } else {
@@ -146,7 +156,7 @@ public class WktFactory {
             srs.SetProjCS("USA_Contiguous_Albers_Equal_Area_Conic_USGS_version");
             srs.SetWellKnownGeogCS("NAD83");
             srs.SetACEA(29.5, 45.5, 23.0, -96.0, 0, 0);
-            srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
         }
         if (name.startsWith("UTM")){
@@ -161,7 +171,7 @@ public class WktFactory {
             srs.SetProjCS("WGS 84 / UTM zone " + zone + name.substring(name.length() - 1));
             srs.SetWellKnownGeogCS(WGS84);
             srs.SetUTM(zone, hemisphere);
-            srs.SetLinearUnits(osr.SRS_UL_METER, 1.0);
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
         }
         return "";

@@ -201,7 +201,8 @@ public class NetcdfDataReader extends DataReader {
                 CalendarDate[] dates = tAxis.getCoordBoundsDate(time);
 
                 String fileName = path.getFileName().toString().toLowerCase();
-                if (fileName.matches(".*qpe.*01h.*")){
+                if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
+                        || fileName.matches(".*radaronly.*qpe.*01h.*grib2")){
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
