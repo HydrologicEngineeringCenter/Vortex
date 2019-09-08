@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-base.archivesBaseName = "grid-to-image-exporter"
+base.archivesBaseName = "image-exporter"
 val version = project.version.toString()
 
 repositories {
@@ -29,8 +29,7 @@ tasks.jar {
     archiveVersion.set("")
     manifest {
         attributes(
-                "Main-Class" to "converter.GridToImageConverterWizard",
-                "Class-Path" to "./lib/*"
+                "Main-Class" to "exporter.ExporterWizard"
         )
     }
 }
