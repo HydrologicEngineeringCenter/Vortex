@@ -104,6 +104,19 @@ tasks.register<Copy>("copyTransposer") {
 }
 tasks.getByPath(":copyTransposer").dependsOn(":transposer:build")
 
+tasks.register<Copy>("copyImageExporter") {
+    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("lib") {
+        from(project(":image-exporter").buildDir.toString() + "/libs")
+        include("*.jar")
+    }
+    into("bin"){
+        from(project(":image-exporter").projectDir.toString() + "/package/windows")
+        include("*.bat", "*.exe")
+    }
+}
+tasks.getByPath(":copyImageExporter").dependsOn(":image-exporter:build")
+
 tasks.register<Copy>("copyLicense") {
     from(project.rootDir) {
         include("LICENSE.md")
@@ -127,6 +140,7 @@ tasks.getByPath(":build").finalizedBy(":copyNormalizer")
 tasks.getByPath(":build").finalizedBy(":copyShifter")
 tasks.getByPath(":build").finalizedBy(":copyGridToPointConverter")
 tasks.getByPath(":build").finalizedBy(":copyTransposer")
+tasks.getByPath(":build").finalizedBy(":copyImageExporter")
 tasks.getByPath(":build").finalizedBy(":copyLicense")
 
 tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
@@ -139,4 +153,5 @@ tasks.getByPath(":jar").enabled = false
 
 tasks.withType<Test> {
     maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).takeIf { it > 0 } ?: 1
+    maxHeapSize = "2g"
 }

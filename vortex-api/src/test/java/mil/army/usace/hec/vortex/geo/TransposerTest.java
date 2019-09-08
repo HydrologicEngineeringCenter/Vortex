@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -12,8 +13,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
 
 class TransposerTest {
 
@@ -81,7 +80,7 @@ class TransposerTest {
         }
         float[] data = transposed.data();
         for (int i = 0; i < arraylist.size(); i++) {
-            assertEquals(arraylist.get(i), data[i]);
+            Assertions.assertEquals(arraylist.get(i), data[i]);
         }
 
 //        try{
