@@ -152,6 +152,15 @@ public class Step1Controller {
             alert.showAndWait();
             return false;
         }
+        if( model.getSelectedVariables().isEmpty() ) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText( "No variables selected" );
+            alert.setContentText( "At least one variable is required." );
+            alert.initStyle(StageStyle.UTILITY);
+            alert.showAndWait();
+            return false;
+        }
         return true;
     }
 
