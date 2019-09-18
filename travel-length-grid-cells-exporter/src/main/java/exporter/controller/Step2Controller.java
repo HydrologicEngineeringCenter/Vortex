@@ -85,6 +85,22 @@ public class Step2Controller {
             alert.showAndWait();
             return false;
         }
+
+        TravelLengthGridCellsReader reader = TravelLengthGridCellsReader.builder()
+                .pathToSource(model.getInputFile())
+                .build();
+        boolean isValid = reader.validate();
+
+        if( !isValid ) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText( "Invalid Grid Cells" );
+            alert.setContentText( "This file contains invalid grid cell definitions." );
+            alert.initStyle(StageStyle.UTILITY);
+            alert.showAndWait();
+            return false;
+        }
+
         return true;
     }
 
