@@ -56,7 +56,7 @@ public class TravelLengthGridCellsReader {
                 if (isSubbasinFound.get() && line.trim().startsWith("GridCell:")) {
                     String[] split = line.trim().split("\\s+");
                     if (split.length != 5) {
-                        System.out.println("Error: invalid grid cell definition: " + line.trim());
+                        System.out.println("Error: invalid grid cell definition " + line.trim());
                     }
                     TravelLengthGridCell gridCell = TravelLengthGridCell.builder()
                             .subbasin(subbasinName.get())
@@ -73,5 +73,35 @@ public class TravelLengthGridCellsReader {
             e.printStackTrace();
         }
         return gridCells;
+    }
+
+    public boolean validate(){
+        AtomicBoolean isValid = new AtomicBoolean(true);
+        try (Scanner scanner = new Scanner(pathToSource.toFile())) {
+            AtomicBoolean isSubbasinFound = new AtomicBoolean();
+            AtomicReference<String> subbasinName = new AtomicReference<>();
+            while (scanner.hasNext()) {
+                String line = scanner.nextLine();
+                if (line.startsWith("Subbasin:")) {
+                    subbasinName.set(line.split(":")[1].trim());
+                    isSubbasinFound.set(true);
+                }
+
+                if (line.startsWith("End:")) {
+                    isSubbasinFound.set(false);
+                }
+
+                if (isSubbasinFound.get() && line.trim().startsWith("GridCell:")) {
+                    String[] split = line.trim().split("\\s+");
+                    if (split.length != 5) {
+                        System.out.println("Error: invalid grid cell definition: " + line.trim());
+                        isValid.set(false);
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return isValid.get();
     }
 }
