@@ -216,15 +216,15 @@ public class Step1Controller {
     public void setPersistedBrowseLocation(File file) {
         Preferences prefs = Preferences.userNodeForPackage(TravelLengthGridCellsExporterWizard.class);
         if (file != null) {
-            prefs.put("shpFilePath", file.getPath());
+            prefs.put("modFilePath", file.getPath());
         } else {
-            prefs.remove("shpFilePath");
+            prefs.remove("modFilePath");
         }
     }
 
     public File getPersistedBrowseLocation() {
         Preferences prefs = Preferences.userNodeForPackage(TravelLengthGridCellsExporterWizard.class);
-        String filePath = prefs.get("shpFilePath", null);
+        String filePath = prefs.get("modFilePath", null);
         if (filePath != null) {
             return new File(filePath);
         } else {
