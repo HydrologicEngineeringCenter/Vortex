@@ -58,7 +58,6 @@ tasks.register<Copy>("copyRuntimeLibs"){
 }
 
 tasks.register<Copy>("copyMapserver"){
-    println("${rootProject.projectDir}")
     from ("${rootProject.projectDir}/bin") {
         include ("gdal/**")
     }
