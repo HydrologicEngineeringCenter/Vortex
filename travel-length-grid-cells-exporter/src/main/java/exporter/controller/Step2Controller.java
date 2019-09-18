@@ -92,13 +92,13 @@ public class Step2Controller {
         boolean isValid = reader.validate();
 
         if( !isValid ) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Warning");
             alert.setHeaderText( "Invalid Grid Cells" );
             alert.setContentText( "This file contains invalid grid cell definitions." );
             alert.initStyle(StageStyle.UTILITY);
             alert.showAndWait();
-            return false;
+            return true;
         }
 
         return true;

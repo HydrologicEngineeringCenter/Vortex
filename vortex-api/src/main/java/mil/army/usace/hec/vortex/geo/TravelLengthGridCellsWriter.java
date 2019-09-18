@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.gdal.ogr.ogrConstants.wkbLinearRing;
-import static org.gdal.ogr.ogrConstants.wkbPolygon;
+import static org.gdal.ogr.ogrConstants.*;
 
 public class TravelLengthGridCellsWriter {
 
@@ -100,8 +99,13 @@ public class TravelLengthGridCellsWriter {
         Driver driver = ogr.GetDriverByName("ESRI Shapefile");
         DataSource dsOut = driver.CreateDataSource(pathToDestination.toString());
         Layer lyrOut = dsOut.CreateLayer("Layer", new SpatialReference(wkt), wkbPolygon);
-
+        lyrOut.CreateField(new FieldDefn("subbasin", OFTString));
+        lyrOut.CreateField(new FieldDefn("index_i", OFTString));
+        lyrOut.CreateField(new FieldDefn("index_j", OFTString));
+        lyrOut.CreateField(new FieldDefn("travel_len", OFTReal));
+        lyrOut.CreateField(new FieldDefn("area", OFTReal));
         FeatureDefn defn = lyrOut.GetLayerDefn();
+
         gridCells.forEach(gridCell -> {
             double x1 = gridCell.getIndexI() * cellSize;
             double x2 = x1 + cellSize;
@@ -119,6 +123,13 @@ public class TravelLengthGridCellsWriter {
 
             Feature feature = new Feature(defn);
             feature.SetGeometry(poly);
+
+            feature.SetField("subbasin", gridCell.getSubbasin());
+            feature.SetField("index_i", gridCell.getIndexI());
+            feature.SetField("index_j", gridCell.getIndexJ());
+            feature.SetField("travel_len", gridCell.getTravelLength());
+            feature.SetField("area", gridCell.getArea());
+
             lyrOut.CreateFeature(feature);
         });
 
