@@ -23,7 +23,7 @@ class AscDataWriterTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexData> dtos = new ArrayList<>(reader.getDTOs());
+        List<VortexData> dtos = new ArrayList<>(reader.getDtos());
 
         String fileName = ImageUtils.generateFileName("qpe", (VortexGrid) dtos.get(0), ImageFileType.ASC);
 

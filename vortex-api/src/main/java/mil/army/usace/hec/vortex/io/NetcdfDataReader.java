@@ -45,7 +45,7 @@ public class NetcdfDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexData> getDTOs() {
+    public List<VortexData> getDtos() {
         String location = path.toString();
         Formatter errlog = new Formatter();
         try (FeatureDataset dataset = FeatureDatasetFactoryManager.open(FeatureType.ANY, location, null, errlog)) {

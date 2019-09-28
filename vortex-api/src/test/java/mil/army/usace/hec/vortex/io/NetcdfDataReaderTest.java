@@ -22,7 +22,7 @@ class NetcdfDataReaderTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         assertEquals(1, dtos.size());
         assertEquals(32768, dtos.get(0).data().length);
     }
@@ -37,7 +37,7 @@ class NetcdfDataReaderTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         assertEquals(1, dtos.size());
         assertEquals(10368, dtos.get(0).data().length);
     }
@@ -52,7 +52,7 @@ class NetcdfDataReaderTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         assertEquals(365, dtos.size());
         assertEquals(259200, dtos.get(0).data().length);
     }
@@ -67,7 +67,7 @@ class NetcdfDataReaderTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         assertEquals(365, dtos.size());
         assertEquals(259200, dtos.get(0).data().length);
     }
@@ -82,7 +82,7 @@ class NetcdfDataReaderTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         assertEquals(62, dtos.size());
         assertEquals(10512, dtos.get(0).data().length);
     }

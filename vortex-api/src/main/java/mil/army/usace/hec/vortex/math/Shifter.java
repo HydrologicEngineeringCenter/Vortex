@@ -74,7 +74,7 @@ public class Shifter {
                         .path(pathToFile)
                         .variable(grid)
                         .build()
-                        .getDTOs()
+                        .getDtos()
                         .stream()
                         .map(data -> (VortexGrid) data)
                         .collect(Collectors.toList())));

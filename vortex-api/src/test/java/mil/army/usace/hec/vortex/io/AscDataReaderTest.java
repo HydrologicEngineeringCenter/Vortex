@@ -26,7 +26,7 @@ class AscDataReaderTest {
                 .path(path)
                 .build();
 
-        VortexGrid grid = (VortexGrid) reader.getDTOs().get(0);
+        VortexGrid grid = (VortexGrid) reader.getDtos().get(0);
 
         float[] data = grid.data();
         float max = Float.MIN_VALUE;

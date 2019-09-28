@@ -97,7 +97,7 @@ public class Step2Controller {
                     .path(pathToSource)
                     .variable(variable)
                     .build()
-                    .getDTOs();
+                    .getDtos();
 
             grids.forEach(grid -> {
                 String fileName = ImageUtils.generateFileName(baseName.getText(), (VortexGrid) grid, format.getValue());

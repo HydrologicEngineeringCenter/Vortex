@@ -80,7 +80,7 @@ class TransposableUnit {
     public static TransposableUnitBuilder builder() {return new TransposableUnitBuilder();}
 
     public void process(){
-        List<VortexGrid> grids = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
+        List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
 
         grids.forEach(grid -> {
             VortexGrid transposed = Transposer.builder()

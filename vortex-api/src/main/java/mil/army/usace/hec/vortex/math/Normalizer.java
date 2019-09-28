@@ -109,7 +109,7 @@ public class Normalizer {
                         .path(pathToSource)
                         .variable(variable)
                         .build()
-                        .getDTOs()));
+                        .getDtos()));
 
         List<VortexData> normals = new ArrayList<>();
         normalsVariables.forEach(variable -> normals.addAll(
@@ -117,7 +117,7 @@ public class Normalizer {
                         .path(pathToNormals)
                         .variable(variable)
                         .build()
-                        .getDTOs()));
+                        .getDtos()));
 
         AtomicReference<ZonedDateTime> intervalStart = new AtomicReference<>();
         intervalStart.set(startTime);

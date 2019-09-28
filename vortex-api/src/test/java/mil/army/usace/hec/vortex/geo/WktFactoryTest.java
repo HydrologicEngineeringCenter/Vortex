@@ -32,7 +32,7 @@ class WktFactoryTest {
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
 
         DataReader reader = DataReader.builder().path(inFile).variable(variableName).build();
-        List<VortexGrid> data = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> data = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         VortexGrid grid = data.get(0);
         String wkt = grid.wkt();
 
@@ -59,7 +59,7 @@ class WktFactoryTest {
         String variableName = "Temperature_height_above_ground";
 
         DataReader reader = DataReader.builder().path(inFile).variable(variableName).build();
-        List<VortexGrid> data = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> data = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         VortexGrid grid = data.get(0);
         String wkt = grid.wkt();
 
