@@ -3,7 +3,6 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

@@ -2,8 +2,9 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.geo.*;
-import tec.units.indriya.unit.MetricPrefix;
+import mil.army.usace.hec.vortex.geo.Grid;
+import mil.army.usace.hec.vortex.geo.ReferenceUtils;
+import mil.army.usace.hec.vortex.geo.WktFactory;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.nc2.Dimension;
@@ -32,7 +33,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-import static javax.measure.MetricPrefix.KILO;
+import static tec.units.indriya.unit.MetricPrefix.*;
 import static systems.uom.common.USCustomary.DEGREE_ANGLE;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.METRE;
@@ -71,6 +72,66 @@ public class NetcdfDataReader extends DataReader {
             return Collections.emptyList();
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public VortexData getDto(int idx) {
+        String location = path.toString();
+        Formatter errlog = new Formatter();
+        try (FeatureDataset dataset = FeatureDatasetFactoryManager.open(FeatureType.ANY, location, null, errlog)) {
+            if (dataset == null) {
+                System.out.printf("**failed on %s %n --> %s %n", location, errlog);
+                return null;
+            }
+
+            FeatureType ftype = dataset.getFeatureType();
+
+            if (ftype == FeatureType.GRID) {
+                assert (dataset instanceof GridDataset);
+                GridDataset gridDataset = (GridDataset) dataset;
+                return getData(gridDataset, variableName, idx);
+            } else if (ftype == FeatureType.RADIAL) {
+                assert (dataset instanceof RadialDatasetSweep);
+                RadialDatasetSweep radialDataset = (RadialDatasetSweep) dataset;
+            } else if (ftype.isPointFeatureType()) {
+                assert dataset instanceof FeatureDatasetPoint;
+                FeatureDatasetPoint pointDataset = (FeatureDatasetPoint) dataset;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
+
+    @Override
+    public int getDtoCount() {
+        String location = path.toString();
+        Formatter errlog = new Formatter();
+        try (FeatureDataset dataset = FeatureDatasetFactoryManager.open(FeatureType.ANY, location, null, errlog)) {
+            if (dataset == null) {
+                System.out.printf("**failed on %s %n --> %s %n", location, errlog);
+                return 0;
+            }
+
+            FeatureType ftype = dataset.getFeatureType();
+
+            if (ftype == FeatureType.GRID) {
+                assert (dataset instanceof GridDataset);
+                GridDataset gridDataset = (GridDataset) dataset;
+                return getDtoCount(gridDataset, variableName);
+            } else if (ftype == FeatureType.RADIAL) {
+                assert (dataset instanceof RadialDatasetSweep);
+                RadialDatasetSweep radialDataset = (RadialDatasetSweep) dataset;
+            } else if (ftype.isPointFeatureType()) {
+                assert dataset instanceof FeatureDatasetPoint;
+                FeatureDatasetPoint pointDataset = (FeatureDatasetPoint) dataset;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return 0;
+        }
+        return 0;
     }
 
     public static Set<String> getVariables(Path path) {
@@ -325,7 +386,7 @@ public class NetcdfDataReader extends DataReader {
                 csUnits = METRE;
                 break;
             case "km":
-                csUnits = MetricPrefix.KILO(METRE);
+                csUnits = KILO(METRE);
                 break;
             default:
                 csUnits = ONE;
@@ -373,5 +434,49 @@ public class NetcdfDataReader extends DataReader {
             return null;
         }
         return scaled;
+    }
+
+    private int getDtoCount(GridDataset dataset, String variable) {
+        GridDatatype gridDatatype = dataset.findGridDatatype(variable);
+        Dimension timeDim = gridDatatype.getTimeDimension();
+        return timeDim.getLength();
+    }
+
+    private VortexData getData(GridDataset dataset, String variable, int idx) {
+        GridDatatype gridDatatype = dataset.findGridDatatype(variable);
+        GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
+
+        Grid grid = getGrid(gcs);
+        String wkt = getWkt(gcs.getProjection());
+
+        List<ZonedDateTime[]> times = getTimeBounds(gcs);
+
+        Array array;
+        try {
+            array = gridDatatype.readDataSlice(idx, -1, -1, -1);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        float[] data = getFloatArray(array);
+        ZonedDateTime startTime = times.get(idx)[0];
+        ZonedDateTime endTime = times.get(idx)[1];
+        Duration interval = Duration.between(startTime, endTime);
+        return VortexGrid.builder()
+                .dx(grid.getDx()).dy(grid.getDy())
+                .nx(grid.getNx()).ny(grid.getNy())
+                .originX(grid.getOriginX()).originY(grid.getOriginY())
+                .wkt(wkt)
+                .data(data)
+                .units(gridDatatype.getUnitsString())
+                .fileName(dataset.getLocation())
+                .shortName(gridDatatype.getShortName())
+                .fullName(gridDatatype.getFullName())
+                .description(gridDatatype.getDescription())
+                .startTime(startTime)
+                .endTime(endTime)
+                .interval(interval)
+                .build();
     }
 }

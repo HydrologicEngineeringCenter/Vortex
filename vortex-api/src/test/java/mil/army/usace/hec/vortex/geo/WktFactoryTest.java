@@ -23,7 +23,7 @@ class WktFactoryTest {
         GdalRegister.getInstance();
     }
 
-    @Disabled
+    @Disabled //because this test was taking a really long time
     @Test
     void MrmsPrecipWktPassesRegression() {
         Path inFile = new File(getClass().getResource(

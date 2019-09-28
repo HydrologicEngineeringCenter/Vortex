@@ -31,9 +31,8 @@ class DssDataReader extends DataReader {
         HecDSSFileAccess.setDefaultDSSFileName(path.toString());
         String[] paths;
         if (variableName.contains("*")) {
-            String pathname = variableName;
             HecDssCatalog catalog = new HecDssCatalog();
-            paths = catalog.getCatalog(true, pathname);
+            paths = catalog.getCatalog(true, variableName);
         } else {
             paths = new String[1];
             paths[0] = variableName;
@@ -89,5 +88,24 @@ class DssDataReader extends DataReader {
         Set<String> variables = new HashSet<>();
         Arrays.stream(paths).map(DSSPathname::new).forEach(path -> variables.add(path.pathname()));
         return variables;
+    }
+
+    @Override
+    public int getDtoCount() {
+        HecDSSFileAccess.setDefaultDSSFileName(path.toString());
+        String[] paths;
+        if (variableName.contains("*")) {
+            HecDssCatalog catalog = new HecDssCatalog();
+            paths = catalog.getCatalog(true, variableName);
+        } else {
+            paths = new String[1];
+            paths[0] = variableName;
+        }
+        return paths.length;
+    }
+
+    @Override
+    public VortexData getDto(int idx) {
+        return null;
     }
 }
