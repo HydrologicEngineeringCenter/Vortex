@@ -27,7 +27,7 @@ class TransposerTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> grids = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
+        List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
         VortexGrid grid = grids.get(0);
 
         Transposer transposer = Transposer.builder()
@@ -49,7 +49,7 @@ class TransposerTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> grids = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
+        List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
         VortexGrid grid = grids.get(0);
 
         Transposer transposer = Transposer.builder()

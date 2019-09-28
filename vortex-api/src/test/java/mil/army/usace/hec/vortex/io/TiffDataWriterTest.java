@@ -22,7 +22,7 @@ class TiffDataWriterTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexData> dtos = new ArrayList<>(reader.getDTOs());
+        List<VortexData> dtos = new ArrayList<>(reader.getDtos());
 
         Path destination = Paths.get("C:/Temp/.tiff");
 
@@ -45,7 +45,7 @@ class TiffDataWriterTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexData> dtos = new ArrayList<>(reader.getDTOs());
+        List<VortexData> dtos = new ArrayList<>(reader.getDtos());
 
         Path destination = Paths.get("C:/Temp/.tiff");
 

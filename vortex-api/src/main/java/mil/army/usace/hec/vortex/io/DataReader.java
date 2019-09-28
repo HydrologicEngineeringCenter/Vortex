@@ -56,7 +56,7 @@ public abstract class DataReader {
 
     public static DataReaderBuilder builder(){return new DataReaderBuilder();}
 
-    public abstract List<VortexData> getDTOs();
+    public abstract List<VortexData> getDtos();
 
     public static Set<String> getVariables(Path path){
         String fileName = path.getFileName().toString().toLowerCase();

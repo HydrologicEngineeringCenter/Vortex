@@ -85,7 +85,7 @@ public class GridToPointConverter {
                         .path(pathToGrids)
                         .variable(variable)
                         .build()
-                        .getDTOs()
+                        .getDtos()
                         .stream()
                         .map(grid -> (VortexGrid)grid)
                         .collect(Collectors.toList())));

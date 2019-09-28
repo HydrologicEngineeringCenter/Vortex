@@ -27,7 +27,7 @@ class DssDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexData> getDTOs() {
+    public List<VortexData> getDtos() {
         HecDSSFileAccess.setDefaultDSSFileName(path.toString());
         String[] paths;
         if (variableName.contains("*")) {

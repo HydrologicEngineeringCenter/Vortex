@@ -30,7 +30,7 @@ class ZonalStatisticsCalculatorTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         VortexGrid dto = dtos.get(0);
 
         Path pathToShp = new File(getClass().getResource(
@@ -62,7 +62,7 @@ class ZonalStatisticsCalculatorTest {
                 .variable(variables.iterator().next())
                 .build();
 
-        List<VortexGrid> data = reader.getDTOs().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> data = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         VortexGrid dto = data.get(0);
 
         Path pathToShp = new File(getClass().getResource(

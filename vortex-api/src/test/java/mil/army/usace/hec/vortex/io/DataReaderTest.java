@@ -23,7 +23,7 @@ class DataReaderTest {
                 .variable(variableName)
                 .build();
 
-        List<VortexGrid> dtos = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
         VortexGrid dto = dtos.get(0);
         double left = dto.originX();
         double top = dto.originY();

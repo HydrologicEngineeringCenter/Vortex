@@ -25,7 +25,7 @@ class AscDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexData> getDTOs() {
+    public List<VortexData> getDtos() {
 
         Dataset in = gdal.Open(path.toString());
         ArrayList<String>  options =  new ArrayList<>();
@@ -165,7 +165,7 @@ class AscDataReader extends DataReader {
     @Override
     public VortexData getDto(int idx) {
         if (idx == 0)
-            return getDTOs().get(0);
+            return getDtos().get(0);
         else {
             return null;
         }
