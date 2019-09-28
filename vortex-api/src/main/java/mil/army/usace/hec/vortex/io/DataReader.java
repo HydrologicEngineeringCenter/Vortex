@@ -1,7 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -70,4 +69,8 @@ public abstract class DataReader {
         }
         return NetcdfDataReader.getVariables(path);
     }
+
+    public abstract int getDtoCount();
+
+    public abstract VortexData getDto(int idx);
 }

@@ -156,4 +156,18 @@ class AscDataReader extends DataReader {
         }
         return new HashSet<>(Collections.singletonList(fileName.substring(0, fileName.lastIndexOf('.'))));
     }
+
+    @Override
+    public int getDtoCount() {
+        return 1;
+    }
+
+    @Override
+    public VortexData getDto(int idx) {
+        if (idx == 0)
+            return getDTOs().get(0);
+        else {
+            return null;
+        }
+    }
 }

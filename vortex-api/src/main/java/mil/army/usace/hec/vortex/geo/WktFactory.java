@@ -4,6 +4,7 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
 import ucar.unidata.geoloc.ProjectionImpl;
 import ucar.unidata.geoloc.projection.*;
+import ucar.unidata.geoloc.projection.proj4.*;
 import ucar.unidata.util.Parameter;
 
 import java.util.List;
@@ -19,7 +20,8 @@ public class WktFactory {
 
     private static final String WGS84 = "WGS84";
 
-    private WktFactory(){}
+    private WktFactory() {
+    }
 
     public static String createWkt(ProjectionImpl projection) {
         if (projection instanceof LatLonProjection) {
@@ -46,6 +48,22 @@ public class WktFactory {
 
         } else if (projection instanceof LambertConformal) {
             LambertConformal in = (LambertConformal) projection;
+            SpatialReference srs = new SpatialReference();
+            srs.SetProjCS("Lambert Conformal Conic 2SP");
+            setGcsParameters(in, srs);
+            srs.SetLCC(
+                    in.getParallelOne(),
+                    in.getParallelTwo(),
+                    in.getOriginLat(),
+                    in.getOriginLon(),
+                    in.getFalseEasting(),
+                    in.getFalseNorthing()
+            );
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
+            return srs.ExportToPrettyWkt();
+
+        } else if (projection instanceof LambertConformalConicEllipse) {
+            LambertConformalConicEllipse in = (LambertConformalConicEllipse) projection;
             SpatialReference srs = new SpatialReference();
             srs.SetProjCS("Lambert Conformal Conic 2SP");
             setGcsParameters(in, srs);
@@ -127,18 +145,28 @@ public class WktFactory {
         Optional<Parameter> semiMinor = parameters.stream()
                 .filter(parameter -> parameter.getName().equalsIgnoreCase("semi_minor_axis"))
                 .findAny();
+        Optional<Parameter> inverseFlattening = parameters.stream()
+                .filter(parameter -> parameter.getName().equalsIgnoreCase("inverse_flattening"))
+                .findAny();
         Optional<Parameter> radius = parameters.stream()
                 .filter(parameter -> parameter.getName().equalsIgnoreCase("earth_radius"))
                 .findAny();
-        if (semiMajor.isPresent() && semiMinor.isPresent()){
-            double invFlattening = 1.0 / (1.0 - (semiMinor.get().getNumericValue()/semiMajor.get().getNumericValue()));
+        if (semiMajor.isPresent() && semiMinor.isPresent()) {
+            double invFlattening = 1.0 / (1.0 - (semiMinor.get().getNumericValue() / semiMajor.get().getNumericValue()));
             srs.SetGeogCS(
                     "unknown",
                     "unknown",
                     "spheroid",
                     semiMajor.get().getNumericValue(),
                     invFlattening);
-        } else if (radius.isPresent()){
+        } else if (semiMajor.isPresent() && inverseFlattening.isPresent()) {
+            srs.SetGeogCS(
+                    "unknown",
+                    "unknown",
+                    "spheroid",
+                    semiMajor.get().getNumericValue(),
+                    inverseFlattening.get().getNumericValue());
+        } else if (radius.isPresent()) {
             srs.SetGeogCS(
                     "unknown",
                     "unknown",
@@ -146,7 +174,7 @@ public class WktFactory {
                     radius.get().getNumericValue(),
                     0);
         } else {
-            srs.SetWellKnownGeogCS( WGS84 );
+            srs.SetWellKnownGeogCS(WGS84);
         }
     }
 
@@ -159,10 +187,10 @@ public class WktFactory {
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
         }
-        if (name.startsWith("UTM")){
-            int zone = Integer.parseInt(name.substring(3, name.length()-1));
+        if (name.startsWith("UTM")) {
+            int zone = Integer.parseInt(name.substring(3, name.length() - 1));
             int hemisphere;
-            if (name.substring(name.length() - 1).equals("N")){
+            if (name.substring(name.length() - 1).equals("N")) {
                 hemisphere = 1;
             } else {
                 hemisphere = 0;
@@ -177,8 +205,8 @@ public class WktFactory {
         return "";
     }
 
-    public static String shg(){
-        return  "PROJCS[\"USA_Contiguous_Albers_Equal_Area_Conic_USGS_version\"," +
+    public static String shg() {
+        return "PROJCS[\"USA_Contiguous_Albers_Equal_Area_Conic_USGS_version\"," +
                 "        GEOGCS[\"GCS_North_American_1983\"," +
                 "        DATUM[\"D_North_American_1983\"," +
                 "        SPHEROID[\"GRS_1980\",6378137.0,298.257222101]]," +

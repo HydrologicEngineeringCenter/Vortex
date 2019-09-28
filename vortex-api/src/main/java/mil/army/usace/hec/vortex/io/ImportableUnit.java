@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ImportableUnit {
 
@@ -84,9 +83,11 @@ public class ImportableUnit {
             envWkt = null;
         }
 
-        List<VortexGrid> grids = reader.getDTOs().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());
+        int count = reader.getDtoCount();
 
-        for (VortexGrid grid : grids){
+        for (int i = 0; i<count; i++){
+
+            VortexGrid grid = (VortexGrid) reader.getDto(i);
 
             String destWkt;
             double cellSize;
