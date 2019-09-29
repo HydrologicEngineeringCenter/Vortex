@@ -155,6 +155,8 @@ public class Resampler {
         options.add("-tr");
         options.add(Double.toString(cellSize));
         options.add(Double.toString(cellSize));
+        options.add("-r");
+        options.add("bilinear");
         WarpOptions warpOptions = new WarpOptions(new Vector<>(options));
         Dataset[] datasets = new Dataset[]{dataset};
         Dataset warped = gdal.Warp("warped", datasets, warpOptions);
