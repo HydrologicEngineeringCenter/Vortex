@@ -78,7 +78,7 @@ class BatchImporterTest {
 //        }
 //
 //        try{
-//            FileOutputStream fos= new FileOutputStream("C:/Temp/vortex");
+//            FileOutputStream fos= new FileOutputStream("C:/Temp/mrms_data_serialized");
 //            ObjectOutputStream oos= new ObjectOutputStream(fos);
 //            oos.writeObject(list);
 //            oos.close();
@@ -156,7 +156,7 @@ class BatchImporterTest {
 //        }
 //
 //        try{
-//            FileOutputStream fos= new FileOutputStream("C:/Temp/rtma");
+//            FileOutputStream fos= new FileOutputStream("C:/Temp/rtma_data_serialized");
 //            ObjectOutputStream oos= new ObjectOutputStream(fos);
 //            oos.writeObject(list);
 //            oos.close();
