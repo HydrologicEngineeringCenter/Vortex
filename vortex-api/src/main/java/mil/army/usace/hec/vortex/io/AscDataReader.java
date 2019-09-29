@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class AscDataReader extends DataReader {
 
@@ -35,52 +36,80 @@ class AscDataReader extends DataReader {
         Dataset raster = gdal.Translate("raster", in, translateOptions);
         raster.FlushCache();
 
-        String fileName = path.getFileName().toString();
+        String fileName = path.getFileName().toString().toLowerCase();
         String shortName;
         String fullName;
         String description;
-        if (fileName.contains("ppt")){
+        AtomicBoolean isPrismTemporal = new AtomicBoolean();
+        AtomicBoolean isPrismNormal = new AtomicBoolean();
+        if (fileName.matches("prism.*ppt.*stable.*")) {
             shortName = "precipitation";
             fullName = "precipitation";
             description = "precipitation";
-        } else if (fileName.contains("tmean")){
+            isPrismTemporal.set(true);
+        } else if (fileName.matches("prism.*ppt.*normal.*")) {
+            shortName = "precipitation";
+            fullName = "precipitation";
+            description = "precipitation";
+            isPrismNormal.set(true);
+        } else if (fileName.matches("prism.*tmean.*stable.*")){
             shortName = "mean temperature";
             fullName = "mean temperature";
             description = "mean temperature";
-        } else if (fileName.contains("tmin")){
+            isPrismTemporal.set(true);
+        } else if (fileName.matches("prism.*tmin.*stable.*")){
             shortName = "minimum temperature";
             fullName = "minimum temperature";
             description = "minimum temperature";
-        } else if (fileName.contains("tmax")){
+            isPrismTemporal.set(true);
+        } else if (fileName.matches("prism.*tmax.*stable.*")){
             shortName = "maximum temperature";
             fullName = "maximum temperature";
             description = "maximum temperature";
-        } else if (fileName.contains("tdmean")){
+            isPrismTemporal.set(true);
+        } else if (fileName.matches("prism.*tdmean.*stable.*")){
             shortName = "mean dewpoint temperature";
             fullName = "mean dewpoint temperature";
             description = "mean dewpoint temperature";
-        } else if (fileName.contains("vpdmin")){
+            isPrismTemporal.set(true);
+        } else if (fileName.matches("prism.*vpdmin.*stable.*")){
             shortName = "minimum vapor pressure deficit";
             fullName = "minimum vapor pressure deficit";
             description = "minimum vapor pressure deficit";
-        } else if (fileName.contains("vpdmax")){
+            isPrismTemporal.set(true);
+        } else if (fileName.matches("prism.*vpdmax.*stable.*")){
             shortName = "maximum vapor pressure deficit";
             fullName = "maximum vapor pressure deficit";
             description = "maximum vapor pressure deficit";
+            isPrismTemporal.set(true);
         }   else {
             shortName = "";
             fullName = "";
             description = "";
         }
 
-        String string1 = path.toString();
-        String string2 = string1.substring(0, string1.lastIndexOf('_'));
-        String string3 = string2.substring(string2.length() - 8);
+        ZonedDateTime startTime;
+        ZonedDateTime endTime;
+        Duration interval;
+        if (isPrismTemporal.get()) {
+            String string1 = path.toString();
+            String string2 = string1.substring(0, string1.lastIndexOf('_'));
+            String string3 = string2.substring(string2.length() - 8);
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        LocalDate date = LocalDate.parse(string3, formatter);
-        ZonedDateTime startTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(0, 0)), ZoneId.of("UTC"));
-        ZonedDateTime endTime = ZonedDateTime.of(LocalDateTime.of(date.plusDays(1), LocalTime.of(0, 0)), ZoneId.of("UTC"));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate date = LocalDate.parse(string3, formatter);
+            startTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(0, 0)), ZoneId.of("UTC"));
+            endTime = ZonedDateTime.of(LocalDateTime.of(date.plusDays(1), LocalTime.of(0, 0)), ZoneId.of("UTC"));
+            interval = Duration.between(startTime, endTime);
+        } else if (isPrismNormal.get()){
+            startTime = ZonedDateTime.of(1981, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+            endTime = ZonedDateTime.of(2010, 12, 31, 0, 0, 0, 0, ZoneId.of("UTC"));
+            interval = Duration.between(startTime, endTime);
+        } else {
+            startTime = null;
+            endTime = null;
+            interval = null;
+        }
 
         String units;
         if (fileName.contains("ppt")){
@@ -123,7 +152,7 @@ class AscDataReader extends DataReader {
                 .fileName(path.toString()).shortName(shortName)
                 .fullName(fullName).description(description)
                 .startTime(startTime).endTime(endTime)
-                .interval(Duration.between(startTime, endTime))
+                .interval(interval)
                 .build();
 
         List<VortexData> list = new ArrayList<>();
