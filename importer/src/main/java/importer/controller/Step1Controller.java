@@ -1,30 +1,31 @@
 package importer.controller;
 
+import com.google.inject.Inject;
+import importer.MetDataImportWizard;
+import importer.WizardData;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.stage.FileChooser;
+import javafx.stage.StageStyle;
+import mil.army.usace.hec.vortex.io.DataReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
-
-import importer.MetDataImportWizard;
-import importer.WizardData;
-import javafx.application.Platform;
-import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import mil.army.usace.hec.vortex.io.DataReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.inject.Inject;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.stage.FileChooser;
-import javafx.stage.StageStyle;
 
 public class Step1Controller {
 
@@ -69,7 +70,7 @@ public class Step1Controller {
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
-                "All recognized files", "*.nc", "*.hdf", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.dss");
+                "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.dss");
         fileChooser.getExtensionFilters().add(recognizedFilter);
         FileChooser.ExtensionFilter ncFilter = new FileChooser.ExtensionFilter(
                 "netCDF datasets", "*.nc");
