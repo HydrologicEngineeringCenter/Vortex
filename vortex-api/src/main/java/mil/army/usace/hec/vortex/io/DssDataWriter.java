@@ -81,7 +81,7 @@ public class DssDataWriter extends DataWriter {
                 gridInfo.setDataType(DssDataType.PER_CUM.value());
 
                 DSSPathname dssPathname = new DSSPathname();
-                dssPathname.setCPart(getCPart(grid.description()));
+                dssPathname.setCPart(getCPart(grid.shortName()));
 
                 write(convertedData, gridInfo, dssPathname);
 
@@ -109,12 +109,12 @@ public class DssDataWriter extends DataWriter {
                 gridInfo.setGridTimes(endTimeOut, endTimeOut);
 
                 DSSPathname dssPathname = new DSSPathname();
-                dssPathname.setCPart(getCPart(grid.description()));
+                dssPathname.setCPart(getCPart(grid.shortName()));
 
                 write(convertedData, gridInfo, dssPathname);
             } else {
                 DSSPathname dssPathname = new DSSPathname();
-                dssPathname.setCPart(getCPart(grid.description()));
+                dssPathname.setCPart(getCPart(grid.shortName()));
                 write(data, gridInfo, dssPathname);
             }
         });
@@ -199,8 +199,13 @@ public class DssDataWriter extends DataWriter {
         }));
     }
 
-    private static String getCPart(String description){
-        String desc = description.toLowerCase();
+    private static String getCPart(String shortName){
+        String desc;
+        if (shortName != null) {
+            desc = shortName.toLowerCase();
+        } else {
+            return "";
+        }
 
         if (desc.contains("precipitation")
                 || desc.contains("precip")
@@ -246,40 +251,28 @@ public class DssDataWriter extends DataWriter {
         }
     }
 
-    private static DSSPathname updatePathname(DSSPathname pathnameIn, Options options){
+    private static DSSPathname updatePathname(DSSPathname pathnameIn, Options options) {
         DSSPathname pathnameOut = new DSSPathname(pathnameIn.getPathname());
 
         if (options != null) {
             Map<String, String> parts = options.getOptions();
-            if (parts.containsKey("partA")) {
-                if (!parts.get("partA").equals("*")) {
-                    pathnameOut.setAPart(parts.get("partA"));
-                }
+            if (parts.containsKey("partA") && !parts.get("partA").equals("*")) {
+                pathnameOut.setAPart(parts.get("partA"));
             }
-            if (parts.containsKey("partB")) {
-                if (!parts.get("partB").equals("*")) {
-                    pathnameOut.setBPart(parts.get("partB"));
-                }
+            if (parts.containsKey("partB") && !parts.get("partB").equals("*")) {
+                pathnameOut.setBPart(parts.get("partB"));
             }
-            if (parts.containsKey("partC")) {
-                if (!parts.get("partC").equals("*")) {
-                    pathnameOut.setCPart(parts.get("partC"));
-                }
+            if (parts.containsKey("partC") && !parts.get("partC").equals("*")) {
+                pathnameOut.setCPart(parts.get("partC"));
             }
-            if (parts.containsKey("partD")) {
-                if (!parts.get("partC").equals("*")) {
-                    pathnameOut.setDPart(parts.get("partD"));
-                }
+            if (parts.containsKey("partD") && !parts.get("partC").equals("*")) {
+                pathnameOut.setDPart(parts.get("partD"));
             }
-            if (parts.containsKey("partE")) {
-                if (!parts.get("partE").equals("*")) {
-                    pathnameOut.setEPart(parts.get("partE"));
-                }
+            if (parts.containsKey("partE") && !parts.get("partE").equals("*")) {
+                pathnameOut.setEPart(parts.get("partE"));
             }
-            if (parts.containsKey("partF")) {
-                if (!parts.get("partF").equals("*")) {
-                    pathnameOut.setFPart(parts.get("partF"));
-                }
+            if (parts.containsKey("partF") && !parts.get("partF").equals("*")) {
+                pathnameOut.setFPart(parts.get("partF"));
             }
         }
 
@@ -290,8 +283,10 @@ public class DssDataWriter extends DataWriter {
         switch (units.toLowerCase()){
             case "kg.m-2.s-1":
             case "kg/m2s":
+            case "mm/s":
                 return MILLI(METRE).divide(SECOND);
             case "mm hr^-1":
+            case "mm/hr":
                 return MILLI(METRE).divide(HOUR);
             case "mm/day":
                 return MILLI(METRE).divide(DAY);
