@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class ImportableUnit {
 
@@ -85,7 +86,7 @@ public class ImportableUnit {
 
         int count = reader.getDtoCount();
 
-        for (int i = 0; i<count; i++){
+        IntStream.range(0, count).parallel().forEach(i -> {
 
             VortexGrid grid = (VortexGrid) reader.getDto(i);
 
@@ -123,7 +124,7 @@ public class ImportableUnit {
                     .build();
 
             writer.write();
-        }
+        });
     }
 
 }
