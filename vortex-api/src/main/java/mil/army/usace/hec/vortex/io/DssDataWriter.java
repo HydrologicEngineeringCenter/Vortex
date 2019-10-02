@@ -14,23 +14,24 @@ import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
 import org.gdal.osr.SpatialReference;
 
-import javax.measure.IncommensurableException;
 import javax.measure.Unit;
-import javax.measure.UnitConverter;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static systems.uom.common.USCustomary.*;
-import static tech.units.indriya.AbstractUnit.ONE;
-import static tech.units.indriya.unit.Units.*;
 import static tec.units.indriya.unit.MetricPrefix.*;
+import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.HOUR;
+import static tech.units.indriya.unit.Units.*;
 
 public class DssDataWriter extends DataWriter {
 
@@ -81,21 +82,23 @@ public class DssDataWriter extends DataWriter {
                 gridInfo.setDataType(DssDataType.PER_CUM.value());
 
                 DSSPathname dssPathname = new DSSPathname();
-                dssPathname.setCPart(getCPart(grid.shortName()));
+                String cPart;
+                if (!getCPart(grid.shortName()).isEmpty()){
+                    cPart = getCPart(grid.shortName());
+                } else {
+                    cPart = getCPart(grid.description());
+                }
+                dssPathname.setCPart(cPart);
 
                 write(convertedData, gridInfo, dssPathname);
 
             } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN)) {
-                UnitConverter converter;
-                try {
-                    converter = units.getConverterToAny(CELSIUS);
-                } catch (IncommensurableException e) {
-                    e.printStackTrace();
-                    return;
-                }
                 float[] convertedData = new float[data.length];
-                IntStream.range(0, data.length).forEach(i -> convertedData[i] =
-                        Double.valueOf(converter.convert(Float.valueOf(data[i]).doubleValue())).floatValue());
+                if (units.equals(FAHRENHEIT)) {
+                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) ((data[i] - 32.0) * (5.0/9.0)));
+                } else if (units.equals(KELVIN)){
+                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) (data[i] - 273.15));
+                }
 
                 gridInfo.setDataType(DssDataType.INST_VAL.value());
                 gridInfo.setDataUnits("DEG C");
@@ -109,12 +112,24 @@ public class DssDataWriter extends DataWriter {
                 gridInfo.setGridTimes(endTimeOut, endTimeOut);
 
                 DSSPathname dssPathname = new DSSPathname();
-                dssPathname.setCPart(getCPart(grid.shortName()));
+                String cPart;
+                if (!getCPart(grid.shortName()).isEmpty()){
+                    cPart = getCPart(grid.shortName());
+                } else {
+                    cPart = getCPart(grid.description());
+                }
+                dssPathname.setCPart(cPart);
 
                 write(convertedData, gridInfo, dssPathname);
             } else {
                 DSSPathname dssPathname = new DSSPathname();
-                dssPathname.setCPart(getCPart(grid.shortName()));
+                String cPart;
+                if (!getCPart(grid.shortName()).isEmpty()){
+                    cPart = getCPart(grid.shortName());
+                } else {
+                    cPart = getCPart(grid.description());
+                }
+                dssPathname.setCPart(cPart);
                 write(data, gridInfo, dssPathname);
             }
         });
@@ -304,6 +319,7 @@ public class DssDataWriter extends DataWriter {
             case "c":
                 return CELSIUS;
             case "fahrenheit":
+            case "degf":
             case "deg f":
             case "f":
                 return FAHRENHEIT;
