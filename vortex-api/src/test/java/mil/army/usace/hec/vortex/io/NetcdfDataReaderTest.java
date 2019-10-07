@@ -86,4 +86,17 @@ class NetcdfDataReaderTest {
         assertEquals(62, dtos.size());
         assertEquals(10512, dtos.get(0).data().length);
     }
+
+    @Test
+    void GpmSubImport(){
+        Path inFile = new File(getClass().getResource("/3B-HHR.MS.MRG.3IMERG.20170103-S110000-E112959.0660.V06B.HDF5.SUB.hdf5").getFile()).toPath();
+        String variableName = "precipitationCal";
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable(variableName)
+                .build();
+
+        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+    }
 }

@@ -263,14 +263,18 @@ public class NetcdfDataReader extends DataReader {
 
                 String fileName = path.getFileName().toString().toLowerCase();
                 if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
-                        || fileName.matches(".*radaronly.*qpe.*01h.*grib2")){
+                        || fileName.matches(".*radaronly.*qpe.*01h.*grib2")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
+                } else if (fileName.matches("3b-hhr.*sub.*")) {
+                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
                 }
 
                 if (fileName.matches("hrrr.*wrfsfcf.*")){
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
+                } else if (fileName.matches("3b-hhr.*sub.*")) {
+                    zonedDateTimes[1] = zonedDateTimes[0].plusMinutes(30);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
                 }
@@ -460,6 +464,7 @@ public class NetcdfDataReader extends DataReader {
         }
 
         float[] data = getFloatArray(array);
+
         ZonedDateTime startTime = times.get(idx)[0];
         ZonedDateTime endTime = times.get(idx)[1];
         Duration interval = Duration.between(startTime, endTime);
