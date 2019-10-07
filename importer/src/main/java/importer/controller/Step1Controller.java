@@ -73,10 +73,10 @@ public class Step1Controller {
                 "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.dss");
         fileChooser.getExtensionFilters().add(recognizedFilter);
         FileChooser.ExtensionFilter ncFilter = new FileChooser.ExtensionFilter(
-                "netCDF datasets", "*.nc");
+                "netCDF datasets", "*.nc", "*.nc4");
         fileChooser.getExtensionFilters().add(ncFilter);
         FileChooser.ExtensionFilter hdfFilter = new FileChooser.ExtensionFilter(
-                "HDF datasets", "*.hdf");
+                "HDF datasets", "*.hdf", "*.hdf5");
         fileChooser.getExtensionFilters().add(hdfFilter);
         FileChooser.ExtensionFilter gribFilter = new FileChooser.ExtensionFilter(
                 "GRIB datasets", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb");
@@ -89,6 +89,10 @@ public class Step1Controller {
         FileChooser.ExtensionFilter dssFilter = new FileChooser.ExtensionFilter(
                 "DSS datasets", "*.dss");
         fileChooser.getExtensionFilters().add(dssFilter);
+
+        FileChooser.ExtensionFilter allFilesFilter = new FileChooser.ExtensionFilter(
+                "All files", "*");
+        fileChooser.getExtensionFilters().add(allFilesFilter);
 
         // Show save file dialog
         List<File> files = fileChooser.showOpenMultipleDialog(add.getScene().getWindow());
