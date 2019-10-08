@@ -3,8 +3,10 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.Options;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BatchImporter {
     private List<Path> inFiles;
@@ -28,8 +30,8 @@ public class BatchImporter {
         private Options geoOptions;
         private Options writeOptions;
 
-        public BatchImporterBuilder inFiles(final List<Path> inFiles){
-            this.inFiles = inFiles;
+        public BatchImporterBuilder inFiles(final List<String> inFiles){
+            this.inFiles = inFiles.stream().map(file -> Paths.get(file)).collect(Collectors.toList());
             return this;
         }
 
@@ -38,8 +40,8 @@ public class BatchImporter {
             return this;
         }
 
-        public BatchImporterBuilder destination(final Path destination){
-            this.destination = destination;
+        public BatchImporterBuilder destination(final String destination){
+            this.destination = Paths.get(destination);
             return this;
         }
 

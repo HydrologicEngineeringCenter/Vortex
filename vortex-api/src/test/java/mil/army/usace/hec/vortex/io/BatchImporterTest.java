@@ -17,9 +17,9 @@ class BatchImporterTest {
 
     @Test
     void MrmsPrecipPassesRegression() {
-        Path inFile = new File(getClass().getResource(
-                "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toPath();
-        List<Path> inFiles = new ArrayList<>();
+        String inFile = new File(getClass().getResource(
+                "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
+        List<String> inFiles = new ArrayList<>();
         inFiles.add(inFile);
 
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
@@ -41,7 +41,7 @@ class BatchImporterTest {
                 .inFiles(inFiles)
                 .variables(variables)
                 .geoOptions(options)
-                .destination(outFile.toPath())
+                .destination(outFile.toString())
                 .build();
 
         importer.process();
@@ -91,9 +91,9 @@ class BatchImporterTest {
 
     @Test
     void RtmaTemperaturePassesRegression() {
-        Path inFile = new File(getClass().getResource(
-                "/201701021200_TMPK.grib2").getFile()).toPath();
-        List<Path> inFiles = new ArrayList<>();
+        String inFile = new File(getClass().getResource(
+                "/201701021200_TMPK.grib2").getFile()).toString();
+        List<String> inFiles = new ArrayList<>();
         inFiles.add(inFile);
 
         String variableName = "Temperature_height_above_ground";
@@ -118,7 +118,7 @@ class BatchImporterTest {
                 .inFiles(inFiles)
                 .variables(variables)
                 .geoOptions(options)
-                .destination(outFile.toPath())
+                .destination(outFile.toString())
                 .writeOptions(writeOptions)
                 .build();
 
