@@ -22,8 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -127,10 +125,9 @@ public class Step3Controller {
             log.debug("[SUBMIT] the user has completed step 3");
         }
 
-        List<Path> inFiles = model.getInFiles()
+        List<String> inFiles = model.getInFiles()
                 .stream()
                 .map(String::trim)
-                .map(Paths::get)
                 .collect(Collectors.toList());
 
         List<String> variables = model.getSelectedVariables();
@@ -151,10 +148,10 @@ public class Step3Controller {
                 geoOptions.add("targetCellSize", entry);
         });
 
-        Path destination = Paths.get(model.getDestinationOut());
+        String destination = model.getDestinationOut();
 
         Options writeOptions = Options.create();
-        if (destination.getFileName().toString().toLowerCase().endsWith(".dss")) {
+        if (destination.toLowerCase().endsWith(".dss")) {
             writeOptions.add("partA", dssPathnamePartsController.getPartA());
             writeOptions.add("partB", dssPathnamePartsController.getPartB());
             writeOptions.add("partC", dssPathnamePartsController.getPartC());
