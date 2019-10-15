@@ -1,6 +1,8 @@
 package exporter.controller;
 
 import com.google.inject.Inject;
+import exporter.ExporterWizard;
+import exporter.WizardData;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -12,8 +14,6 @@ import javafx.stage.StageStyle;
 import mil.army.usace.hec.vortex.io.DataReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import exporter.ExporterWizard;
-import exporter.WizardData;
 
 import java.io.File;
 import java.util.Objects;
@@ -79,7 +79,13 @@ public class Step1Controller {
     private void handleAddFile() {
         FileChooser fileChooser = new FileChooser();
 
-        Optional.ofNullable(getPersistedBrowseLocation()).ifPresent(file -> fileChooser.setInitialDirectory(file.getParentFile()));
+        Optional.ofNullable(getPersistedBrowseLocation())
+                .ifPresent(file -> {
+                    File parent = file.getParentFile();
+                    if (parent.exists()) {
+                        fileChooser.setInitialDirectory(parent);
+                    }
+                });
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(

@@ -91,7 +91,13 @@ public class Step1Controller {
     private void handleAddFile() {
         FileChooser fileChooser = new FileChooser();
 
-        Optional.ofNullable(getPersistedBrowseLocation()).ifPresent(file -> fileChooser.setInitialDirectory(file.getParentFile()));
+        Optional.ofNullable(getPersistedBrowseLocation())
+                .ifPresent(file -> {
+                    File parent = file.getParentFile();
+                    if (parent.exists()) {
+                        fileChooser.setInitialDirectory(parent);
+                    }
+                });
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
