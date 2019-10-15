@@ -4,8 +4,6 @@ import com.google.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -87,7 +85,13 @@ public class Step1Controller {
     private void handleAddFile() {
         FileChooser fileChooser = new FileChooser();
 
-        Optional.ofNullable(getPersistedBrowseLocation()).ifPresent(file -> fileChooser.setInitialDirectory(file.getParentFile()));
+        Optional.ofNullable(getPersistedBrowseLocation())
+                .ifPresent(file -> {
+                    File parent = file.getParentFile();
+                    if (parent.exists()) {
+                        fileChooser.setInitialDirectory(parent);
+                    }
+                });
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
