@@ -21,6 +21,10 @@ To download the latest release of the software see [releases](https://github.com
 
 For sample data retrieval scripts for QPE, RTMA, and HRRR data, see the [data retrieval scripts](https://github.com/HydrologicEngineeringCenter/data-retrieval-scripts) repository.
 
+## Scripting
+
+The Vortex API can be called via jython [scripts](https://github.com/HydrologicEngineeringCenter/Vortex/wiki/Vortex-scripting-example) for batch processing.
+
 ## Building from source
 
 These instructions demonstrate how to build, test, and run the source code on your local machine.  
