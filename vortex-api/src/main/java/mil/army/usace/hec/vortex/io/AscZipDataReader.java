@@ -10,14 +10,12 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BilZipDataReader extends DataReader {
+public class AscZipDataReader extends DataReader{
     static {
         GdalRegister.getInstance();
     }
 
-    BilZipDataReader(DataReaderBuilder builder) {
-        super(builder);
-    }
+    AscZipDataReader(DataReaderBuilder builder) { super(builder); }
 
     @Override
     public List<VortexData> getDtos() {
@@ -27,7 +25,7 @@ public class BilZipDataReader extends DataReader {
         List<VortexData> dtos = new ArrayList<>();
         for (Object o : fileList) {
             String fileName = o.toString();
-            if (fileName.endsWith(".bil")) {
+            if (fileName.endsWith(".asc")) {
                 DataReader reader = DataReader.builder()
                         .path(vPath + fileName)
                         .variable(variableName)
@@ -35,10 +33,9 @@ public class BilZipDataReader extends DataReader {
 
                 dtos.addAll(reader.getDtos());
             }
-        } // Loop through directory
-
+        }
         return dtos;
-    } // // Extended getDtos(): Bil Zip
+    } // Extended getDtos(): Asc Zip
 
     @Override
     public int getDtoCount() {
@@ -49,11 +46,11 @@ public class BilZipDataReader extends DataReader {
         AtomicInteger count = new AtomicInteger();
         for (Object o : fileList) {
             String name = o.toString();
-            if (name.endsWith(".bil"))
+            if (name.endsWith(".asc"))
                 count.incrementAndGet();
-        } // Loop through directory
+        }
         return count.get();
-    } // // Extended getDtoCount(): Bil
+    } // Extended getDtoCount(): Asc
 
     @Override
     public VortexData getDto(int idx) {
@@ -63,9 +60,9 @@ public class BilZipDataReader extends DataReader {
         int count = 0;
         for (Object o : fileList) {
             String fileName = o.toString();
-            if (fileName.endsWith(".bil")) {
+            if (fileName.endsWith(".asc")) {
                 count++;
-                if (count - 1 == idx){
+                if (count - 1 == idx) {
                     DataReader reader = DataReader.builder()
                             .path(vPath + fileName)
                             .variable(variableName)
@@ -76,6 +73,6 @@ public class BilZipDataReader extends DataReader {
             }
         }
         return null;
-    } // Extended getDto(): Bil Zip
+    } // Extended getDto(): Asc Zip
 
-} // BilZipDataReader class
+} // AscZipDataReader class
