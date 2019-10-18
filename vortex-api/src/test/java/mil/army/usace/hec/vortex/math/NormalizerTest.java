@@ -74,8 +74,8 @@ class NormalizerTest {
 
     @Test
     void NormalizerPassesRegression() {
-        Path source = new File(getClass().getResource("/normalizer/qpe.dss").getFile()).toPath();
-        Path normals = new File(getClass().getResource("/normalizer/prism.dss").getFile()).toPath();
+        String source = new File(getClass().getResource("/normalizer/qpe.dss").getFile()).toString();
+        String normals = new File(getClass().getResource("/normalizer/prism.dss").getFile()).toString();
 
         Set<String> sourceGrids = DataReader.getVariables(source);
         Set<String> normalsGrids = DataReader.getVariables(normals);
@@ -84,7 +84,7 @@ class NormalizerTest {
         ZonedDateTime end = ZonedDateTime.of(LocalDateTime.of(2017, 1, 3, 0, 0), ZoneId.of("UTC"));
         Duration interval = Duration.ofDays(1);
 
-        Path destination = new File(getClass().getResource("/normalizer/normalized.dss").getFile()).toPath();
+        String destination = new File(getClass().getResource("/normalizer/normalized.dss").getFile()).toString();
 
         Normalizer normalizer = Normalizer.builder()
                 .pathToSource(source).sourceVariables(sourceGrids)

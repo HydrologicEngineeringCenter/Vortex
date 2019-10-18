@@ -165,4 +165,26 @@ class BatchImporterTest {
 //            ioe.printStackTrace();
 //        }
     }
+
+    @Test
+    void bilZipReadTest() {
+        Path inFile = new File("C:/Users/q0hectab/Desktop/temp/Vortex/vortex-api/src/test/resources/PRISM_ppt_stable_4kmD2_20170101_20170131_bil.zip").toPath();
+        List<String> inFiles = new ArrayList<>();
+        inFiles.add(inFile.toString());
+
+        String outFile = new File("C:/Temp/test_bil_zip.dss").toString();
+
+        String variableName = "ppt";
+        List<String> variables = new ArrayList<>();
+        variables.add(variableName);
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(variables)
+                .destination(outFile)
+                .build();
+
+        importer.process();
+
+    }
 }

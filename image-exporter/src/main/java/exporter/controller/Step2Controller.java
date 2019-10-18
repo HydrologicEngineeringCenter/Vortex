@@ -89,7 +89,7 @@ public class Step2Controller {
     @Submit
     public void submit() {
 
-        Path pathToSource = Paths.get(model.getInFile());
+        String pathToSource = model.getInFile();
         Set<String> variables = new HashSet<>(model.getSelectedVariables());
 
         variables.forEach(variable -> {

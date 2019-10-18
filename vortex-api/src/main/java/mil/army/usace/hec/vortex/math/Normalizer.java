@@ -1,24 +1,28 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
-import mil.army.usace.hec.vortex.Options;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class Normalizer {
 
-    private Path pathToSource;
-    private Path pathToNormals;
+    private String pathToSource;
+    private String pathToNormals;
     private Set<String> sourceVariables;
     private Set<String> normalsVariables;
     private ZonedDateTime startTime;
@@ -40,8 +44,8 @@ public class Normalizer {
     }
 
     public static class NormalizerBuilder{
-        private Path pathToSource;
-        private Path pathToNormals;
+        private String pathToSource;
+        private String pathToNormals;
         private Set<String> sourceVariables;
         private Set<String> normalsVariables;
         ZonedDateTime startTime;
@@ -50,12 +54,12 @@ public class Normalizer {
         private Path destination;
         Options writeOptions;
 
-        public NormalizerBuilder pathToSource (final Path pathToSource){
+        public NormalizerBuilder pathToSource (final String pathToSource){
             this.pathToSource = pathToSource;
             return this;
         }
 
-        public NormalizerBuilder pathToNormals (final Path pathToNormals){
+        public NormalizerBuilder pathToNormals (final String pathToNormals){
             this.pathToNormals = pathToNormals;
             return this;
         }
@@ -85,8 +89,8 @@ public class Normalizer {
             return this;
         }
 
-        public NormalizerBuilder destination (final Path destination){
-            this.destination = destination;
+        public NormalizerBuilder destination (final String destination){
+            this.destination = Paths.get(destination);
             return this;
         }
 

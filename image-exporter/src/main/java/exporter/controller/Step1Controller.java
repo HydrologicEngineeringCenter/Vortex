@@ -117,7 +117,7 @@ public class Step1Controller {
 
             setPersistedBrowseLocation(file);
 
-            Set<String> variables = DataReader.getVariables(file.toPath());
+            Set<String> variables = DataReader.getVariables(file.toString());
 
             ObservableList<String> variableList = FXCollections.observableArrayList(variables);
 

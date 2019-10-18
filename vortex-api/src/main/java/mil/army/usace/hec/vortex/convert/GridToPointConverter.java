@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class GridToPointConverter {
 
-    private Path pathToGrids;
+    private String pathToGrids;
     private Set<String> variables;
     private Path pathToZoneDataset;
     private String field;
@@ -34,14 +34,14 @@ public class GridToPointConverter {
     }
 
     public static class GridToPointConverterBuilder {
-        private Path pathToGrids;
+        private String pathToGrids;
         private Set<String> variables;
         private Path pathToFeatures;
         private String field;
         private Path destination;
         private Options writeOptions;
 
-        public GridToPointConverterBuilder pathToGrids (final Path pathToGrids){
+        public GridToPointConverterBuilder pathToGrids (final String pathToGrids){
             this.pathToGrids = pathToGrids;
             return this;
         }

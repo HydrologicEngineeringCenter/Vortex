@@ -3,9 +3,7 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.junit.jupiter.api.Test;
 
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -14,13 +12,8 @@ class AscDataReaderTest {
     @Test
     void PrismImportPassesRegression() {
 
-        Path path = null;
-        try {
-            path = Paths.get(getClass().getClassLoader()
-                    .getResource("PRISM_ppt_stable_4kmD2/PRISM_ppt_stable_4kmD2_20170101_asc.asc").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        String path = new File(getClass().getResource(
+                "/PRISM_ppt_stable_4kmD2/PRISM_ppt_stable_4kmD2_20170101_asc.asc").getFile()).toString();
 
         DataReader reader = DataReader.builder()
                 .path(path)

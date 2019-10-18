@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,8 +17,8 @@ class TransposerTest {
 
     @Test
     void testTranspose(){
-        Path inFile = new File(getClass().getResource(
-                "/normalizer/qpe.dss").getFile()).toPath();
+        String inFile = new File(getClass().getResource(
+                "/normalizer/qpe.dss").getFile()).toString();
         String variableName = "///PRECIPITATION/02JAN2017:1200/02JAN2017:1300//";
 
         DataReader reader = DataReader.builder()
@@ -40,8 +39,8 @@ class TransposerTest {
 
     @Test
     void TransposeFtWorthGrid(){
-        Path inFile = new File(getClass().getResource(
-                "/transposer/precip2000_Jun.dss").getFile()).toPath();
+        String inFile = new File(getClass().getResource(
+                "/transposer/precip2000_Jun.dss").getFile()).toString();
         String variableName = "/SHG/WGRFC/PRECIP/01JUN2000:0600/01JUN2000:0700/METVUE/";
 
         DataReader reader = DataReader.builder()

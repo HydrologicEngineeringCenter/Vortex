@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -70,7 +68,7 @@ public class Step1Controller {
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
-                "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.dss");
+                "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.bil", "*bil.zip", "*.dss");
         fileChooser.getExtensionFilters().add(recognizedFilter);
         FileChooser.ExtensionFilter ncFilter = new FileChooser.ExtensionFilter(
                 "netCDF datasets", "*.nc", "*.nc4");
@@ -85,6 +83,10 @@ public class Step1Controller {
         FileChooser.ExtensionFilter ascFilter = new FileChooser.ExtensionFilter(
                 "ASC datasets", "*.asc");
         fileChooser.getExtensionFilters().add(ascFilter);
+
+        FileChooser.ExtensionFilter bilFilter = new FileChooser.ExtensionFilter(
+                "BIL datasets", "*.bil", "*bil.zip");
+        fileChooser.getExtensionFilters().add(bilFilter);
 
         FileChooser.ExtensionFilter dssFilter = new FileChooser.ExtensionFilter(
                 "DSS datasets", "*.dss");
@@ -130,7 +132,7 @@ public class Step1Controller {
 
     @Submit
     public void submit() {
-        List<Path> files = model.inFilesProperty().stream().map(Paths::get).collect(Collectors.toList());
+        List<String> files = new ArrayList<>(model.inFilesProperty());
 
         Set<String> variables = files.stream()
                 .map(DataReader::getVariables)
