@@ -15,13 +15,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class AscDataReader extends DataReader {
-
+/**
+ * This class reads in a BIL file to a VortexData object
+ */
+class BilDataReader extends DataReader {
     static {
         GdalRegister.getInstance();
     }
 
-    AscDataReader(DataReaderBuilder builder) {
+    BilDataReader(DataReaderBuilder builder) {
         super(builder);
     }
 
@@ -160,8 +162,8 @@ class AscDataReader extends DataReader {
         return list;
     }
 
-    public static Set<String> getVariables(String pathToAsc){
-        String fileName = new File(pathToAsc).getName();
+    public static Set<String> getVariables(String pathToBil){
+        String fileName = new File(pathToBil).getName();
         if (fileName.startsWith("PRISM_ppt")) {
             return new HashSet<>(Collections.singletonList("ppt"));
         }
@@ -199,4 +201,4 @@ class AscDataReader extends DataReader {
             return null;
         }
     }
-}
+} // BilDataReader class

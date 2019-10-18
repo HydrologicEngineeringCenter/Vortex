@@ -22,8 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 import java.util.prefs.Preferences;
@@ -124,10 +122,10 @@ public class Step4Controller {
     @Submit
     public void submit() {
 
-        Path pathToSource = Paths.get(model.getSourceFile());
+        String pathToSource = model.getSourceFile();
         Set<String> sourceGrids = new HashSet<>(model.getSelectedSourceGrids());
 
-        Path pathToNormals = Paths.get(model.getNormalsFile());
+        String pathToNormals = model.getNormalsFile();
         Set<String> normalGrids = new HashSet<>(model.getSelectedNormalGrids());
 
         String intervalType = model.getIntervalType();
@@ -147,7 +145,7 @@ public class Step4Controller {
                 break;
         }
 
-        Path destination = Paths.get(model.getDestinationOut());
+        String destination = model.getDestinationOut();
 
         Options options = Options.create();
         if (destination.toString().toLowerCase().endsWith(".dss")) {

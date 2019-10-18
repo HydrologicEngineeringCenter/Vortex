@@ -123,7 +123,7 @@ public class Step3Controller {
     @Submit
     public void submit() {
 
-        Path pathToSource = Paths.get(model.getInFile());
+        String pathToSource = model.getInFile();
         Set<String> sourceGrids = new HashSet<>(model.getSelectedVariables());
 
         Path destination = Paths.get(model.getDestinationOut());

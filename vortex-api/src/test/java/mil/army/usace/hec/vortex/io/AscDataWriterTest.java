@@ -14,8 +14,8 @@ import java.util.List;
 class AscDataWriterTest {
     @Test
     void AscDataWriterWritesDssFile(){
-        Path inFile = new File(getClass().getResource(
-                "/normalizer/qpe.dss").getFile()).toPath();
+        String inFile = new File(getClass().getResource(
+                "/normalizer/qpe.dss").getFile()).toString();
         String variableName = "///PRECIPITATION/02JAN2017:1200/02JAN2017:1300//";
 
         DataReader reader = DataReader.builder()

@@ -25,16 +25,16 @@ import ucar.unidata.geoloc.ProjectionImpl;
 import javax.measure.IncommensurableException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-import static tec.units.indriya.unit.MetricPrefix.*;
 import static systems.uom.common.USCustomary.DEGREE_ANGLE;
+import static tec.units.indriya.unit.MetricPrefix.KILO;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.METRE;
 
@@ -46,7 +46,7 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public List<VortexData> getDtos() {
-        String location = path.toString();
+        String location = path;
         Formatter errlog = new Formatter();
         try (FeatureDataset dataset = FeatureDatasetFactoryManager.open(FeatureType.ANY, location, null, errlog)) {
             if (dataset == null) {
@@ -76,7 +76,7 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public VortexData getDto(int idx) {
-        String location = path.toString();
+        String location = path;
         Formatter errlog = new Formatter();
         try (FeatureDataset dataset = FeatureDatasetFactoryManager.open(FeatureType.ANY, location, null, errlog)) {
             if (dataset == null) {
@@ -106,7 +106,7 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public int getDtoCount() {
-        String location = path.toString();
+        String location = path;
         Formatter errlog = new Formatter();
         try (FeatureDataset dataset = FeatureDatasetFactoryManager.open(FeatureType.ANY, location, null, errlog)) {
             if (dataset == null) {
@@ -134,8 +134,8 @@ public class NetcdfDataReader extends DataReader {
         return 0;
     }
 
-    public static Set<String> getVariables(Path path) {
-        try (NetcdfDataset ncd = NetcdfDataset.openDataset(path.toString())) {
+    public static Set<String> getVariables(String path) {
+        try (NetcdfDataset ncd = NetcdfDataset.openDataset(path)) {
             List<Variable> variables = ncd.getVariables();
             Set<String> variableNames = new HashSet<>();
             variables.forEach(variable -> {
@@ -261,7 +261,7 @@ public class NetcdfDataReader extends DataReader {
                 ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
                 CalendarDate[] dates = tAxis.getCoordBoundsDate(time);
 
-                String fileName = path.getFileName().toString().toLowerCase();
+                String fileName = new File(path).getName().toLowerCase();
                 if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
                         || fileName.matches(".*radaronly.*qpe.*01h.*grib2")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);

@@ -10,13 +10,12 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WktFactoryTest {
     static {
@@ -26,8 +25,8 @@ class WktFactoryTest {
     @Disabled //because this test was taking a really long time
     @Test
     void MrmsPrecipWktPassesRegression() {
-        Path inFile = new File(getClass().getResource(
-                "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toPath();
+        String inFile = new File(getClass().getResource(
+                "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
 
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
 
@@ -53,8 +52,8 @@ class WktFactoryTest {
 
     @Test
     void RtmaTemperatureWktPassesRegression() {
-        Path inFile = new File(getClass().getResource(
-                "/201701021200_TMPK.grib2").getFile()).toPath();
+        String inFile = new File(getClass().getResource(
+                "/201701021200_TMPK.grib2").getFile()).toString();
 
         String variableName = "Temperature_height_above_ground";
 
