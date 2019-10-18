@@ -6,10 +6,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class BatchImporter {
-    private List<Path> inFiles;
+    private List<String> inFiles;
     private List<String> variables;
     private Path destination;
     private Options geoOptions;
@@ -24,14 +23,14 @@ public class BatchImporter {
     }
 
     public static class BatchImporterBuilder {
-        private List<Path> inFiles;
+        private List<String> inFiles;
         private List<String> variables;
         private Path destination;
         private Options geoOptions;
         private Options writeOptions;
 
         public BatchImporterBuilder inFiles(final List<String> inFiles){
-            this.inFiles = inFiles.stream().map(file -> Paths.get(file)).collect(Collectors.toList());
+            this.inFiles = inFiles;
             return this;
         }
 

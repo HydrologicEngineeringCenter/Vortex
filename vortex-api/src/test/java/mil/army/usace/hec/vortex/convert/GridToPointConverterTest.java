@@ -18,8 +18,8 @@ class GridToPointConverterTest {
 
     @Test
     void QpeGridsConvertToPoint() {
-        Path pathToGrids = new File(getClass().getResource(
-                "/truckee-river-qpe.dss").getFile()).toPath();
+        String pathToGrids = new File(getClass().getResource(
+                "/truckee-river-qpe.dss").getFile()).toString();
 
         Set<String> variables = DataReader.getVariables(pathToGrids);
 
@@ -53,8 +53,8 @@ class GridToPointConverterTest {
 
     @Test
     void CpcTmaxGridsConvertToPoint() {
-        Path pathToGrids = new File(getClass().getResource(
-                "/cpc-tmax-2017.dss").getFile()).toPath();
+        String pathToGrids = new File(getClass().getResource(
+                "/cpc-tmax-2017.dss").getFile()).toString();
 
         Set<String> variables = DataReader.getVariables(pathToGrids);
 

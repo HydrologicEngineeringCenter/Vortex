@@ -8,11 +8,10 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
-import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -28,7 +27,7 @@ class DssDataReader extends DataReader {
 
     @Override
     public List<VortexData> getDtos() {
-        HecDSSFileAccess.setDefaultDSSFileName(path.toString());
+        HecDSSFileAccess.setDefaultDSSFileName(path);
         String[] paths;
         if (variableName.contains("*")) {
             HecDssCatalog catalog = new HecDssCatalog();
@@ -40,7 +39,7 @@ class DssDataReader extends DataReader {
         List<VortexData> dtos = new ArrayList<>();
         Arrays.stream(paths).forEach(path -> {
             int[] status = new int[1];
-            GridData gridData = GridUtilities.retrieveGridFromDss(this.path.toString(), path, status);
+            GridData gridData = GridUtilities.retrieveGridFromDss(this.path, path, status);
             if (gridData != null) {
                 dtos.add(dssToDto(gridData));
             }
@@ -74,15 +73,15 @@ class DssDataReader extends DataReader {
                 .dx(cellSize).dy(-cellSize).nx(nx).ny(ny)
                 .originX(ulx).originY(uly)
                 .wkt(wkt).data(data).units(info.getDataUnits())
-                .fileName(path.toString()).shortName(variable)
+                .fileName(path).shortName(variable)
                 .description(variable).fullName(variableName)
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval).build();
     }
 
-    public static Set<String> getVariables(Path pathToDss){
-        HecDSSFileAccess.setDefaultDSSFileName(pathToDss.toString());
+    public static Set<String> getVariables(String pathToDss){
+        HecDSSFileAccess.setDefaultDSSFileName(pathToDss);
         HecDssCatalog catalog = new HecDssCatalog();
         String[] paths = catalog.getCatalog(false, "/*/*/*/*/*/*/");
         Set<String> variables = new HashSet<>();
@@ -92,7 +91,7 @@ class DssDataReader extends DataReader {
 
     @Override
     public int getDtoCount() {
-        HecDSSFileAccess.setDefaultDSSFileName(path.toString());
+        HecDSSFileAccess.setDefaultDSSFileName(path);
         String[] paths;
         if (variableName.contains("*")) {
             HecDssCatalog catalog = new HecDssCatalog();

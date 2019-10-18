@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 public class BatchTransposer {
-    private Path pathToInput;
+    private String pathToInput;
     private Set<String> variables;
     private double angle;
     private Double stormCenterX;
@@ -31,7 +31,7 @@ public class BatchTransposer {
 
     public static class BatchTransposerBuilder {
 
-        private Path pathToInput;
+        private String pathToInput;
         private Set<String> variables;
         boolean isSelectAll;
         private double angle;
@@ -41,7 +41,7 @@ public class BatchTransposer {
         private Options writeOptions;
 
         public BatchTransposerBuilder pathToInput(String pathToInput) {
-            this.pathToInput = Paths.get(pathToInput);
+            this.pathToInput = pathToInput;
             return this;
         }
 

@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class Shifter {
 
-    private Path pathToFile;
+    private String pathToFile;
     private Set<String> grids;
     private Duration shift;
     private Path destination;
@@ -29,13 +29,13 @@ public class Shifter {
     }
 
     public static class ShifterBuilder{
-        private Path pathToFile;
+        private String pathToFile;
         private Set<String> grids;
         Duration shift;
         private Path destination;
         private Options options;
 
-        public ShifterBuilder pathToFile (final Path pathToFile){
+        public ShifterBuilder pathToFile (final String pathToFile){
             this.pathToFile = pathToFile;
             return this;
         }
