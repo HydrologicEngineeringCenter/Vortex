@@ -2,14 +2,12 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 
 public abstract class DataReader {
-    final Path path;
+    final String path;
     final String variableName;
 
     DataReader(DataReaderBuilder builder){
@@ -18,10 +16,10 @@ public abstract class DataReader {
     }
 
     public static class DataReaderBuilder{
-        private Path path;
+        private String path;
         private String variableName;
 
-        public DataReaderBuilder path (final Path path){
+        public DataReaderBuilder path (final String path){
             this.path = path;
             return this;
         }
@@ -36,17 +34,23 @@ public abstract class DataReader {
                 throw new IllegalStateException("DataReader requires a path to data source file.");
             }
 
-            PathMatcher ascMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.asc");
-            if (ascMatcher.matches(path)) {
+            if (path.matches(".*\\.asc")) {
                 return new AscDataReader(this);
+            }
+
+            if (path.matches(".*\\.bil")) {
+                return new BilDataReader(this);
+            }
+
+            if (path.matches(".*bil.zip")) {
+                return new BilZipDataReader(this);
             }
 
             if (variableName == null){
                 throw new IllegalStateException("This DataReader requires a variableName.");
             }
 
-            PathMatcher dssMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.dss");
-            if (dssMatcher.matches(path)) {
+            if (path.matches(".*\\.dss")) {
                 return new DssDataReader(this);
             }
 
@@ -58,11 +62,14 @@ public abstract class DataReader {
 
     public abstract List<VortexData> getDtos();
 
-    public static Set<String> getVariables(Path path){
-        String fileName = path.getFileName().toString().toLowerCase();
+    public static Set<String> getVariables(String path){
+        String fileName = new File(path).getName().toLowerCase();
 
         if (fileName.endsWith(".asc")){
             return AscDataReader.getVariables(path);
+        }
+        if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
+            return BilDataReader.getVariables(path);
         }
         if (fileName.endsWith(".dss")){
             return DssDataReader.getVariables(path);

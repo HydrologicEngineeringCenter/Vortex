@@ -13,8 +13,8 @@ class TiffDataWriterTest {
 
     @Test
     void TiffDataWriterWritesGribFile(){
-        Path inFile = new File(getClass().getResource(
-                "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toPath();
+        String inFile = new File(getClass().getResource(
+                "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
 
         DataReader reader = DataReader.builder()
@@ -36,8 +36,8 @@ class TiffDataWriterTest {
 
     @Test
     void TiffDataWriterWritesDssFile(){
-        Path inFile = new File(getClass().getResource(
-                "/normalizer/qpe.dss").getFile()).toPath();
+        String inFile = new File(getClass().getResource(
+                "/normalizer/qpe.dss").getFile()).toString();
         String variableName = "///PRECIPITATION/02JAN2017:1200/02JAN2017:1300//";
 
         DataReader reader = DataReader.builder()

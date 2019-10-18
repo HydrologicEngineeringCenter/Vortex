@@ -4,8 +4,6 @@ import com.google.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -18,7 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.prefs.Preferences;
 
 public class Step1Controller {
@@ -121,7 +122,7 @@ public class Step1Controller {
 
             setPersistedBrowseLocation(file);
 
-            Set<String> variables = DataReader.getVariables(file.toPath());
+            Set<String> variables = DataReader.getVariables(file.toString());
 
             ObservableList<String> variableList = FXCollections.observableArrayList(variables);
 
