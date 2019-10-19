@@ -37,7 +37,9 @@ public class ReferenceUtils {
             dest.SetWellKnownGeogCS( "WGS84" );
             CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(source, dest);
             double latitudeOfLly = transform.TransformPoint(llx, lly)[1];
-            if (latitudeOfLly < latitudeOfOrigin && Math.signum(lly) > 0){
+            double falseNorthing = source.GetProjParm("false_northing");
+            double llyLessFalseNorthing = lly - falseNorthing;
+            if (latitudeOfLly < latitudeOfOrigin && Math.signum(llyLessFalseNorthing) > 0){
                 return -1;
             }
             return 1;

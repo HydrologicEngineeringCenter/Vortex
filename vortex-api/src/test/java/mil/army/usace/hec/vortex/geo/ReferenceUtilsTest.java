@@ -4,8 +4,7 @@ import hec.heclib.grid.AlbersInfo;
 import hec.heclib.grid.GridInfo;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -54,6 +53,15 @@ class ReferenceUtilsTest {
         when(info.getProjectionDatum()).thenReturn(GridInfo.getNad83());
         when(info.getProjectionUnits()).thenReturn("ft");
         assertFalse(ReferenceUtils.isShg(info));
+    }
+
+    @Test
+    void UlyDirectionReturnsPositiveForUtmSouth(){
+        String wkt = WktFactory.create("UTM36S");
+        double llx = 302000.0;
+        double lly = 7080000.0;
+        int direction = ReferenceUtils.getUlyDirection(wkt, llx, lly);
+        assertEquals(1, direction);
     }
 
 }
