@@ -265,7 +265,7 @@ public class NetcdfDataReader extends DataReader {
                 if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
                         || fileName.matches(".*radaronly.*qpe.*01h.*grib2")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
-                } else if (fileName.matches("3b-hhr.*sub.*")) {
+                } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
@@ -273,7 +273,7 @@ public class NetcdfDataReader extends DataReader {
 
                 if (fileName.matches("hrrr.*wrfsfcf.*")){
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
-                } else if (fileName.matches("3b-hhr.*sub.*")) {
+                } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusMinutes(30);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
