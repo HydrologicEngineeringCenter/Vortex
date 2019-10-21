@@ -69,7 +69,7 @@ public abstract class DataReader {
     public static Set<String> getVariables(String path){
         String fileName = new File(path).getName().toLowerCase();
 
-        if (fileName.endsWith(".asc")){
+        if (fileName.endsWith(".asc") || fileName.endsWith("asc.zip")){
             return AscDataReader.getVariables(path);
         }
         if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
