@@ -81,21 +81,6 @@ public abstract class DataReader {
         return NetcdfDataReader.getVariables(path);
     } // builder()
 
-    protected String getVirtualPath (String pathToArchive){
-        // GDAL Virtual path for zip/gzip/tar/tgz files
-        String vPath;
-        if (pathToArchive.contains(".zip")) {
-            vPath = "/vsizip/" + path + File.separator;
-        } else if (pathToArchive.contains(".gzip")) {
-            vPath = "/vsigzip/" + path + File.separator;
-        } else if (pathToArchive.contains(".tar") || pathToArchive.contains(".tgz")) {
-            vPath = "/vsitar/" + path + File.separator;
-        } else {
-            throw new IllegalStateException("File is not *.zip, *.gzip, *.tar, or *.tgz");
-        }
-        return vPath;
-    } // getVirtualPath()
-
     public abstract int getDtoCount();
 
     public abstract VortexData getDto(int idx);
