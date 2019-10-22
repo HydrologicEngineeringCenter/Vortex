@@ -1,6 +1,6 @@
 plugins {
     java
-    id("nebula.release") version "13.0.0"
+    id("nebula.release") version "13.1.1"
 }
 
 val version = project.version.toString()
