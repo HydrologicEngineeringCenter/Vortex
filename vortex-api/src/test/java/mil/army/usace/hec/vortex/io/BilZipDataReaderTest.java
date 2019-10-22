@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,14 +43,16 @@ class BilZipDataReaderTest {
         }
 
         HecDssCatalog catalog = new HecDssCatalog();
-        String dateLogs[] = catalog.getCatalog(false, "*");
-        int numDates = dateLogs.length;
+        List<String> dateLogs = Arrays.asList(catalog.getCatalog(false, "*"));
+        int numDates = dateLogs.size();
 
         // Check the number of dates
         assertEquals(3, numDates);
         // Check the dates
-        assertEquals("///PRECIPITATION/31DEC2016:1200/01JAN2017:1200//", dateLogs[0]);
-        assertEquals("///PRECIPITATION/01JAN2017:1200/02JAN2017:1200//", dateLogs[1]);
-        assertEquals("///PRECIPITATION/30JAN2017:1200/31JAN2017:1200//", dateLogs[2]);
+        String[] dssPaths = new String[]{"///PRECIPITATION/31DEC2016:1200/01JAN2017:1200//",
+                "///PRECIPITATION/01JAN2017:1200/02JAN2017:1200//",
+                "///PRECIPITATION/30JAN2017:1200/31JAN2017:1200//"};
+
+        Arrays.stream(dssPaths).forEach(dssPath -> Assertions.assertTrue(dateLogs.contains(dssPath)));
     }
 } // BilZipDataReaderTest
