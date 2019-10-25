@@ -22,8 +22,6 @@ import shifter.WizardData;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 import java.util.prefs.Preferences;
@@ -139,10 +137,10 @@ public class Step3Controller {
                 break;
         }
 
-        Path destination = Paths.get(model.getDestinationOut());
+        String destination = model.getDestinationOut();
 
         Options options = Options.create();
-        if (destination.toString().toLowerCase().endsWith(".dss")) {
+        if (destination.toLowerCase().endsWith(".dss")) {
             options.add("partA", dssPathnamePartsController.getPartA());
             options.add("partB", dssPathnamePartsController.getPartB());
             options.add("partC", dssPathnamePartsController.getPartC());
