@@ -158,6 +158,15 @@ public class Step1Controller {
             alert.showAndWait();
             return false;
         }
+        if( selectedVariables.getItems().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText( "No Variables Selected" );
+            alert.setContentText( "At least one variable must be selected." );
+            alert.initStyle(StageStyle.UTILITY);
+            alert.showAndWait();
+            return false;
+        }
         return true;
     }
 
