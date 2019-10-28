@@ -20,6 +20,7 @@ public class WizardData {
     private final StringProperty angle = new SimpleStringProperty();
     private final StringProperty stormCenterX = new SimpleStringProperty();
     private final StringProperty stormCenterY = new SimpleStringProperty();
+    private final StringProperty scaleFactor = new SimpleStringProperty();
     private final StringProperty destinationOut = new SimpleStringProperty();
 
     public StringProperty inFileProperty() {
@@ -102,6 +103,14 @@ public class WizardData {
 
     public StringProperty stormCenterYProperty() {
         return stormCenterY;
+    }
+
+    public StringProperty scaleFactorProperty() {
+        return scaleFactor;
+    }
+
+    public String getScaleFactor(){
+        return scaleFactor.get();
     }
 
     public String getStormCenterY(){

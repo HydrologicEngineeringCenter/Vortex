@@ -7,13 +7,12 @@ import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class AscDataReaderTest {
-
+class BilDataReaderTest {
     private static VortexGrid grid;
 
     static {
         String path = new File(AscDataReaderTest.class.getResource(
-                "/regression/io/asc_reader/PRISM_ppt_stable_4kmD2_20170101_asc.asc").getFile()).toString();
+                "/regression/io/bil_reader/PRISM_ppt_stable_4kmD2_20170101_bil.bil").getFile()).toString();
 
         DataReader reader = DataReader.builder()
                 .path(path)
@@ -46,4 +45,5 @@ class AscDataReaderTest {
     void PrismPrecipImportNxPassesRegression() {
         assertEquals(1405, grid.nx());
     }
+
 }
