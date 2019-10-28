@@ -16,6 +16,7 @@ public class BatchTransposer {
     private double angle;
     private Double stormCenterX;
     private Double stormCenterY;
+    private Double scaleFactor;
     private Path destination;
     private Options writeOptions;
 
@@ -25,6 +26,7 @@ public class BatchTransposer {
         angle = builder.angle;
         stormCenterX = builder.stormCenterX;
         stormCenterY = builder.stormCenterY;
+        scaleFactor = builder.scaleFactor;
         destination = builder.destination;
         writeOptions = builder.writeOptions;
     }
@@ -37,6 +39,7 @@ public class BatchTransposer {
         private double angle;
         private Double stormCenterX;
         private Double stormCenterY;
+        private Double scaleFactor;
         private Path destination;
         private Options writeOptions;
 
@@ -67,6 +70,11 @@ public class BatchTransposer {
 
         public BatchTransposerBuilder stormCenterY(Double stormCenterY) {
             this.stormCenterY = stormCenterY;
+            return this;
+        }
+
+        public BatchTransposerBuilder scaleFactor(Double scaleFactor){
+            this.scaleFactor = scaleFactor;
             return this;
         }
 
@@ -108,6 +116,7 @@ public class BatchTransposer {
                         .angle(angle)
                         .stormCenterX(stormCenterX)
                         .stormCenterY(stormCenterY)
+                        .scaleFactor(scaleFactor)
                         .destination(destination)
                         .writeOptions(writeOptions)
                         .build();

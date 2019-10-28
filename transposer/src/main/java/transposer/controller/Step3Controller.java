@@ -119,7 +119,14 @@ public class Step3Controller {
         String pathToSource = model.getInFile();
         List<String> sourceGrids = model.getSelectedVariables();
         String destinationOut = model.getDestinationOut();
-        double angle = Double.parseDouble(model.getAngle());
+
+        double angle;
+        if (model.getAngle() != null && !model.getAngle().isEmpty()) {
+            angle = Double.parseDouble(model.getAngle());
+        } else {
+            angle = Double.NaN;
+        }
+
         double stormCenterX;
         if (model.getStormCenterX() != null && !model.getStormCenterX().isEmpty()) {
             stormCenterX = Double.parseDouble(model.getStormCenterX());
@@ -132,6 +139,13 @@ public class Step3Controller {
             stormCenterY = Double.parseDouble(model.getStormCenterY());
         } else {
             stormCenterY = Double.NaN;
+        }
+
+        double scaleFactor;
+        if (model.getScaleFactor() != null && !model.getScaleFactor().isEmpty()) {
+            scaleFactor = Double.parseDouble(model.getScaleFactor());
+        } else {
+            scaleFactor = Double.NaN;
         }
 
         Options options = Options.create();
@@ -150,6 +164,7 @@ public class Step3Controller {
                 .angle(angle)
                 .stormCenterX(stormCenterX)
                 .stormCenterY(stormCenterY)
+                .scaleFactor(scaleFactor)
                 .destination(destinationOut)
                 .writeOptions(options)
                 .build();
