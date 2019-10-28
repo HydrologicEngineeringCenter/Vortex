@@ -1,16 +1,18 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
-import mil.army.usace.hec.vortex.Options;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class Shifter {
 
@@ -50,8 +52,8 @@ public class Shifter {
             return this;
         }
 
-        public ShifterBuilder destination (final Path destination){
-            this.destination = destination;
+        public ShifterBuilder destination (final String destination){
+            this.destination = Paths.get(destination);
             return this;
         }
 
@@ -68,19 +70,16 @@ public class Shifter {
     public static ShifterBuilder builder(){return new ShifterBuilder();}
 
     public void shift(){
-        List<VortexGrid> targets = new ArrayList<>();
+        List<VortexData> targets = new ArrayList<>();
         grids.forEach(grid -> targets.addAll(
                 DataReader.builder()
                         .path(pathToFile)
                         .variable(grid)
                         .build()
-                        .getDtos()
-                        .stream()
-                        .map(data -> (VortexGrid) data)
-                        .collect(Collectors.toList())));
+                        .getDtos()));
 
         List<VortexGrid> output = new ArrayList<>();
-        targets.parallelStream().forEach(dto -> output.add(shift(dto, shift)));
+        targets.forEach(grid -> output.add(shift((VortexGrid) grid, shift)));
 
         output.parallelStream().forEach(dto ->{
             List<VortexData> data = new ArrayList<>();

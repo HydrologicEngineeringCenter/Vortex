@@ -4,13 +4,11 @@ import com.google.inject.Inject;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
+import javafx.stage.StageStyle;
 import mil.army.usace.hec.vortex.io.DataReader;
 import normalizer.NormalizerWizard;
 import normalizer.WizardData;
@@ -157,15 +155,24 @@ public class Step2Controller {
     @Validate
     public boolean validate() {
 
-//        if( model.inFilesProperty().isEmpty() ) {
-//            Alert alert = new Alert(Alert.AlertType.ERROR);
-//            alert.setTitle("Error");
-//            alert.setHeaderText( "Missing Field" );
-//            alert.setContentText( "Input dataset is required." );
-//            alert.initStyle(StageStyle.UTILITY);
-//            alert.showAndWait();
-//            return false;
-//        }
+        if( model.getNormalsFile().isEmpty() ) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText( "Missing Field" );
+            alert.setContentText( "Input dataset is required." );
+            alert.initStyle(StageStyle.UTILITY);
+            alert.showAndWait();
+            return false;
+        }
+        if( selectedNormalGrids.getItems().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText( "No Variables Selected" );
+            alert.setContentText( "At least one variable must be selected." );
+            alert.initStyle(StageStyle.UTILITY);
+            alert.showAndWait();
+            return false;
+        }
         return true;
     }
 
