@@ -9,7 +9,7 @@ The **grid-to-point-converter** utility converts gridded data to basin-average t
 
 The **image-exporter** utility exports gridded data to GeoTIFF or ASC raster formats.
 
-The **transposer** utility rotates and shifts grids spatially.
+The **transposer** utility rotates and shifts grids spatially. The utility has a scale parameter to scale grid values.
 
 The **time-shifter** utility shifts grids in time.
 
