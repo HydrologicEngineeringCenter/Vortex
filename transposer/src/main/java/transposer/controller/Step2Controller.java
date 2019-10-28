@@ -19,6 +19,8 @@ public class Step2Controller {
     private TextField stormCenterX;
     @FXML
     private TextField stormCenterY;
+    @FXML
+    private TextField scaleFactor;
 
     @Inject
     WizardData model;
@@ -29,6 +31,7 @@ public class Step2Controller {
         angle.textProperty().bindBidirectional(model.angleProperty());
         stormCenterX.textProperty().bindBidirectional(model.stormCenterXProperty());
         stormCenterY.textProperty().bindBidirectional(model.stormCenterYProperty());
+        scaleFactor.textProperty().bindBidirectional(model.scaleFactorProperty());
 
     }
 

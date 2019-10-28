@@ -76,6 +76,9 @@ public class Transposer {
             if (tempDir == null) {
                 tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
             }
+            if (Double.isNaN(angle)){
+                angle = 0.0;
+            }
             return new Transposer(this);
         }
     }
@@ -83,6 +86,11 @@ public class Transposer {
     public static TransposerBuilder builder(){return new TransposerBuilder();}
 
     public VortexGrid transpose(){
+        if (angle == 0 && (stormCenterX == null || stormCenterX.isNaN())
+                && (stormCenterY == null || stormCenterY.isNaN())){
+            return grid;
+        }
+
         VortexGrid sanatized = Sanatizer.builder()
                 .inputGrid(grid)
                 .build()
