@@ -105,6 +105,21 @@ class DssDataReader extends DataReader {
 
     @Override
     public VortexData getDto(int idx) {
+        HecDSSFileAccess.setDefaultDSSFileName(path);
+        String[] paths;
+        if (variableName.contains("*")) {
+            HecDssCatalog catalog = new HecDssCatalog();
+            paths = catalog.getCatalog(true, variableName);
+        } else {
+            paths = new String[1];
+            paths[0] = variableName;
+        }
+        String dssPath = paths[idx];
+        int[] status = new int[1];
+        GridData gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
+        if (gridData != null) {
+            return dssToDto(gridData);
+        }
         return null;
     }
 }
