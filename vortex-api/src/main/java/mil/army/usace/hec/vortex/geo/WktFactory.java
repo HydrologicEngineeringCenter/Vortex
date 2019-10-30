@@ -202,7 +202,7 @@ public class WktFactory {
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
         }
-        return "";
+        return null;
     }
 
     public static String shg() {
