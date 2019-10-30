@@ -8,7 +8,6 @@ import mil.army.usace.hec.vortex.io.DataWriter;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -130,17 +129,25 @@ public class Normalizer {
             ZonedDateTime start = intervalStart.get();
             ZonedDateTime end = intervalStart.get().plus(interval);
 
-            List<VortexGrid> output = normalize(
+            List<VortexGrid> sourceFiltered = source.stream().filter(grid -> ((grid.startTime().isEqual(start) || grid.startTime().isAfter(start))
+                    && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
+                    .map(grid -> (VortexGrid)grid)
+                    .collect(Collectors.toList());
 
-                    source.stream().filter(grid -> ((grid.startTime().isEqual(start) || grid.startTime().isAfter(start))
-                            && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
-                            .map(grid -> (VortexGrid)grid)
-                            .collect(Collectors.toList()),
+            if (sourceFiltered.isEmpty()){
+                System.out.println("No source grids for period " + start + " to " + end);
+            }
 
-                    normals.stream().filter(grid -> ((grid.startTime().equals(start) || grid.startTime().isAfter(start))
-                            && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
-                            .map(grid -> (VortexGrid)grid)
-                            .collect(Collectors.toList()));
+            List<VortexGrid> normalsFiltered = normals.stream().filter(grid -> ((grid.startTime().equals(start) || grid.startTime().isAfter(start))
+                    && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
+                    .map(grid -> (VortexGrid)grid)
+                    .collect(Collectors.toList());
+
+            if (normalsFiltered.isEmpty()){
+                System.out.println("No normals grids for period " + start + " to " + end);
+            }
+
+            List<VortexGrid> output = normalize(sourceFiltered, normalsFiltered);
 
             output.forEach(grid -> {
                 List<VortexData> data = new ArrayList<>();
@@ -162,6 +169,9 @@ public class Normalizer {
     static List<VortexGrid> normalize(List<VortexGrid> source, List<VortexGrid> normals) {
         boolean valid = validate(source, normals);
         if(!valid){
+            return Collections.emptyList();
+        }
+        if(source.isEmpty() || normals.isEmpty()){
             return Collections.emptyList();
         }
 
@@ -271,13 +281,11 @@ public class Normalizer {
     }
 
     private static void logValidationFailure(String origin, VortexGrid reference, VortexGrid invalid){
-        String pattern = "yyyy-MM-dd HH:mm";
-        SimpleDateFormat formatter = new SimpleDateFormat(pattern);
-        System.out.println(origin + " grid starting: " + formatter.format(invalid.startTime()) + " and ending: "
-                + formatter.format(invalid.endTime()) + " has nx: " + invalid.nx() + " ny: " + invalid.ny()
-                + " dx: " + invalid.dx() + " dy: " + invalid.dy() + " compared to \n"
-                + " reference grid starting " + formatter.format(reference.startTime()) + " and ending: "
-                + formatter.format(reference.endTime()) + " has nx: " + reference.nx() + " ny: " + reference.ny()
+        System.out.println(origin + " grid starting: " + invalid.startTime() + " and ending: "
+                + invalid.endTime() + " has nx: " + invalid.nx() + " ny: " + invalid.ny()
+                + " dx: " + invalid.dx() + " dy: " + invalid.dy() + "\n"
+                + " Reference grid starting " + reference.startTime() + " and ending "
+                + reference.endTime() + " has nx: " + reference.nx() + " ny: " + reference.ny()
                 + " dx: " + reference.dx() + " dy: " + reference.dy() + "\n"
                 + "Review file: " + invalid.fileName() + ", variable: " + invalid.fullName()
         );
