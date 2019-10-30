@@ -218,7 +218,7 @@ public class NetcdfDataReader extends DataReader {
                                     e.printStackTrace();
                                 }
                             })));
-        } else {
+        } else if (timeDim != null) {
             IntStream.range(0, times.size()).forEach(timeIndex -> {
                 try {
                     Array array = gridDatatype.readDataSlice(timeIndex, -1, -1, -1);
@@ -245,6 +245,48 @@ public class NetcdfDataReader extends DataReader {
                     e.printStackTrace();
                 }
             });
+        } else {
+            try {
+                Array array = gridDatatype.readDataSlice(1, -1, -1, -1);
+                float[] data = getFloatArray(array);
+                ZonedDateTime startTime;
+                ZonedDateTime endTime;
+                Duration interval;
+                if (!times.isEmpty()) {
+                    startTime = times.get(0)[0];
+                    endTime = times.get(0)[1];
+                    interval = Duration.between(startTime, endTime);
+                } else if (gridDatatype.findAttributeIgnoreCase("start_date") != null
+                        && gridDatatype.findAttributeIgnoreCase("stop_date") != null) {
+                    String startTimeString = gridDatatype.findAttributeIgnoreCase("start_date").getStringValue();
+                    startTime = ZonedDateTime.parse(startTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+                    String endTimeString = gridDatatype.findAttributeIgnoreCase("stop_date").getStringValue();
+                    endTime = ZonedDateTime.parse(endTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+                    interval = Duration.between(startTime, endTime);
+                } else {
+                    startTime = null;
+                    endTime = null;
+                    interval = null;
+                }
+
+                grids.add(VortexGrid.builder()
+                        .dx(grid.getDx()).dy(grid.getDy())
+                        .nx(grid.getNx()).ny(grid.getNy())
+                        .originX(grid.getOriginX()).originY(grid.getOriginY())
+                        .wkt(wkt)
+                        .data(data)
+                        .units(gridDatatype.getUnitsString())
+                        .fileName(dataset.getLocation())
+                        .shortName(gridDatatype.getShortName())
+                        .fullName(gridDatatype.getFullName())
+                        .description(gridDatatype.getDescription())
+                        .startTime(startTime)
+                        .endTime(endTime)
+                        .interval(interval)
+                        .build());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return grids;
     }
@@ -443,7 +485,11 @@ public class NetcdfDataReader extends DataReader {
     private int getDtoCount(GridDataset dataset, String variable) {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         Dimension timeDim = gridDatatype.getTimeDimension();
-        return timeDim.getLength();
+        if (timeDim != null) {
+            return timeDim.getLength();
+        } else {
+            return 1;
+        }
     }
 
     private VortexData getData(GridDataset dataset, String variable, int idx) {
@@ -465,9 +511,25 @@ public class NetcdfDataReader extends DataReader {
 
         float[] data = getFloatArray(array);
 
-        ZonedDateTime startTime = times.get(idx)[0];
-        ZonedDateTime endTime = times.get(idx)[1];
-        Duration interval = Duration.between(startTime, endTime);
+        ZonedDateTime startTime;
+        ZonedDateTime endTime;
+        Duration interval;
+        if (!times.isEmpty()) {
+            startTime = times.get(idx)[0];
+            endTime = times.get(idx)[1];
+            interval = Duration.between(startTime, endTime);
+        } else if (gridDatatype.findAttributeIgnoreCase("start_date") != null
+                && gridDatatype.findAttributeIgnoreCase("stop_date") != null) {
+            String startTimeString = gridDatatype.findAttributeIgnoreCase("start_date").getStringValue();
+            startTime = ZonedDateTime.parse(startTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+            String endTimeString = gridDatatype.findAttributeIgnoreCase("stop_date").getStringValue();
+            endTime = ZonedDateTime.parse(endTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+            interval = Duration.between(startTime, endTime);
+        } else {
+            startTime = null;
+            endTime = null;
+            interval = null;
+        }
         return VortexGrid.builder()
                 .dx(grid.getDx()).dy(grid.getDy())
                 .nx(grid.getNx()).ny(grid.getNy())
