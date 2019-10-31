@@ -9,16 +9,27 @@ import mil.army.usace.hec.vortex.io.DataWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+
 public class Normalizer {
+
+    private static Logger logger = Logger.getLogger(Normalizer.class.getName());
+    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm").withZone(ZoneId.of("UTC"));
 
     private String pathToSource;
     private String pathToNormals;
@@ -40,6 +51,9 @@ public class Normalizer {
         this.interval = builder.interval;
         this.destination = builder.destination;
         this.writeOptions = builder.writeOptions;
+
+        logger.setLevel(Level.INFO);
+        builder.handlers.forEach(handler -> logger.addHandler(handler));
     }
 
     public static class NormalizerBuilder{
@@ -52,6 +66,7 @@ public class Normalizer {
         Duration interval;
         private Path destination;
         Options writeOptions;
+        List<Handler> handlers;
 
         public NormalizerBuilder pathToSource (final String pathToSource){
             this.pathToSource = pathToSource;
@@ -98,6 +113,11 @@ public class Normalizer {
             return this;
         }
 
+        public NormalizerBuilder handlers (final List<Handler> handlers){
+            this.handlers = handlers;
+            return this;
+        }
+
         public Normalizer build(){
             return new Normalizer(this);
         }
@@ -106,6 +126,9 @@ public class Normalizer {
     public static NormalizerBuilder builder() {return new NormalizerBuilder();}
 
     public void normalize(){
+
+        logger.info(() -> "Normalization started...");
+
         List<VortexData> source = new ArrayList<>();
         sourceVariables.forEach(variable -> source.addAll(
                 DataReader.builder()
@@ -125,6 +148,7 @@ public class Normalizer {
         AtomicReference<ZonedDateTime> intervalStart = new AtomicReference<>();
         intervalStart.set(startTime);
 
+        AtomicInteger count = new AtomicInteger();
         while (intervalStart.get().isBefore(endTime)){
             ZonedDateTime start = intervalStart.get();
             ZonedDateTime end = intervalStart.get().plus(interval);
@@ -134,8 +158,8 @@ public class Normalizer {
                     .map(grid -> (VortexGrid)grid)
                     .collect(Collectors.toList());
 
-            if (sourceFiltered.isEmpty()){
-                System.out.println("No source grids for period " + start + " to " + end);
+            if (sourceFiltered.isEmpty()) {
+                logger.warning(() -> format("No source grids for period %s to %s", formatter.format(start), formatter.format(end)));
             }
 
             List<VortexGrid> normalsFiltered = normals.stream().filter(grid -> ((grid.startTime().equals(start) || grid.startTime().isAfter(start))
@@ -144,7 +168,7 @@ public class Normalizer {
                     .collect(Collectors.toList());
 
             if (normalsFiltered.isEmpty()){
-                System.out.println("No normals grids for period " + start + " to " + end);
+                logger.warning(() -> format("No normals grids for period %s to %s", formatter.format(start), formatter.format(end)));
             }
 
             List<VortexGrid> output = normalize(sourceFiltered, normalsFiltered);
@@ -163,7 +187,9 @@ public class Normalizer {
             });
 
             intervalStart.set(end);
+            count.addAndGet(output.size());
         }
+        logger.info(() -> format("Normalization complete: %s grids normalized.", count.get()));
     }
 
     static List<VortexGrid> normalize(List<VortexGrid> source, List<VortexGrid> normals) {
@@ -281,13 +307,13 @@ public class Normalizer {
     }
 
     private static void logValidationFailure(String origin, VortexGrid reference, VortexGrid invalid){
-        System.out.println(origin + " grid starting: " + invalid.startTime() + " and ending: "
-                + invalid.endTime() + " has nx: " + invalid.nx() + " ny: " + invalid.ny()
-                + " dx: " + invalid.dx() + " dy: " + invalid.dy() + "\n"
-                + " Reference grid starting " + reference.startTime() + " and ending "
-                + reference.endTime() + " has nx: " + reference.nx() + " ny: " + reference.ny()
-                + " dx: " + reference.dx() + " dy: " + reference.dy() + "\n"
-                + "Review file: " + invalid.fileName() + ", variable: " + invalid.fullName()
+        logger.severe(() -> origin + " grid starting: " + formatter.format(invalid.startTime()) + " and ending: "
+                + formatter.format(invalid.endTime()) + " has nx: " + invalid.nx() + " ny: " + invalid.ny()
+                + " dx: " + invalid.dx() + " dy: " + invalid.dy() + "."
+                + " Reference grid starting " + formatter.format(reference.startTime()) + " and ending "
+                + formatter.format(reference.endTime()) + " has nx: " + reference.nx() + " ny: " + reference.ny()
+                + " dx: " + reference.dx() + " dy: " + reference.dy() + "."
+                + " Review file: " + invalid.fileName() + ", variable: " + invalid.fullName()
         );
     }
 }

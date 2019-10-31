@@ -28,6 +28,7 @@ public class WizardData {
     private final StringProperty interval = new SimpleStringProperty();
     private final StringProperty intervalType = new SimpleStringProperty();
     private final StringProperty destinationOut = new SimpleStringProperty();
+    private final StringProperty console = new SimpleStringProperty("");
 
     public StringProperty sourceFileProperty() {
         return sourceFile;
@@ -227,6 +228,12 @@ public class WizardData {
         return destinationOut;
     }
 
+    public StringProperty consoleTextProperty() {
+        return console;
+    }
 
+    public void appendConsoleText(String string) {
+        console.setValue(console.get() + string);
+    }
 }
 
