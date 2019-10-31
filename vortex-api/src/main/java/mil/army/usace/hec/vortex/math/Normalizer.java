@@ -193,11 +193,12 @@ public class Normalizer {
     }
 
     static List<VortexGrid> normalize(List<VortexGrid> source, List<VortexGrid> normals) {
-        boolean valid = validate(source, normals);
-        if(!valid){
+        if(source.isEmpty() || normals.isEmpty()){
             return Collections.emptyList();
         }
-        if(source.isEmpty() || normals.isEmpty()){
+
+        boolean valid = validate(source, normals);
+        if(!valid){
             return Collections.emptyList();
         }
 
@@ -255,6 +256,14 @@ public class Normalizer {
     }
 
     private static boolean validate(List<VortexGrid> source, List<VortexGrid> normals){
+        if(source.isEmpty()){
+            throw new IllegalStateException("Must provide more than one source grid.");
+        }
+
+        if(normals.isEmpty()){
+            throw new IllegalStateException("Must provide more then one normals grid.");
+        }
+
         VortexGrid reference = source.get(0);
         int nx = reference.nx();
         int ny = reference.ny();
