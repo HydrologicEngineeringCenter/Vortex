@@ -66,7 +66,7 @@ public class Normalizer {
         Duration interval;
         private Path destination;
         Options writeOptions;
-        List<Handler> handlers;
+        List<Handler> handlers = new ArrayList<>();
 
         public NormalizerBuilder pathToSource (final String pathToSource){
             this.pathToSource = pathToSource;
@@ -114,7 +114,7 @@ public class Normalizer {
         }
 
         public NormalizerBuilder handlers (final List<Handler> handlers){
-            this.handlers = handlers;
+            this.handlers.addAll(handlers);
             return this;
         }
 
