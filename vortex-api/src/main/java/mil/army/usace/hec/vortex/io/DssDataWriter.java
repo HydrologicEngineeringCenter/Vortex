@@ -181,7 +181,7 @@ public class DssDataWriter extends DataWriter {
 
             TimeSeriesContainer tsc = new TimeSeriesContainer();
             tsc.units = units;
-            tsc.dataType = type.value();
+            tsc.type = type.toString();
 
             if (isRegular.get()){
                 Interval interval;
@@ -193,6 +193,7 @@ public class DssDataWriter extends DataWriter {
                 }
                 pathname.setEPart(interval.getInterval());
                 tsc.values = values;
+                tsc.numberValues = values.length;
                 tsc.startTime = getHecTime(dates.get(0)).value();
             } else {
                 pathname.setEPart("Ir-Month");
@@ -202,6 +203,7 @@ public class DssDataWriter extends DataWriter {
                         times[date] = getHecTime(dates.get(date)).value());
                 tsc.times = times;
                 tsc.values = values;
+                tsc.numberValues = values.length;
             }
 
             tsc.fullName = updatePathname(pathname, options).getPathname();
@@ -282,7 +284,7 @@ public class DssDataWriter extends DataWriter {
             if (parts.containsKey("partC") && !parts.get("partC").equals("*")) {
                 pathnameOut.setCPart(parts.get("partC"));
             }
-            if (parts.containsKey("partD") && !parts.get("partC").equals("*")) {
+            if (parts.containsKey("partD") && !parts.get("partD").equals("*")) {
                 pathnameOut.setDPart(parts.get("partD"));
             }
             if (parts.containsKey("partE") && !parts.get("partE").equals("*")) {
