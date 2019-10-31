@@ -10,7 +10,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.JavaFXBuilderFactory;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -67,11 +66,11 @@ public class WizardController {
     private void initButtons() {
         btnBack = new Button("Back");
         btnBack.disableProperty().bind( currentStep.lessThanOrEqualTo(0)
-                .or(currentStep.greaterThanOrEqualTo(steps.size()-2)) );
+                .or(currentStep.greaterThanOrEqualTo(steps.size()-1)) );
         btnBack.setOnAction(action -> back());
 
         btnNext = new Button("Next");
-        btnNext.disableProperty().bind( currentStep.greaterThanOrEqualTo(steps.size()-2) );
+        btnNext.disableProperty().bind( currentStep.greaterThanOrEqualTo(steps.size()-1) );
         btnNext.setOnAction(action -> next());
 
         btnCancel = new Button();
@@ -128,11 +127,7 @@ public class WizardController {
         Parent processing = fxmlLoaderProcessing.load();
         processing.getProperties().put( CONTROLLER_KEY, fxmlLoaderProcessing.getController() );
 
-        FXMLLoader fxmlLoaderCompleted = new FXMLLoader( WizardController.class.getResource("/fxml/Completed.fxml"), null, bf, cb);
-        Parent completed = fxmlLoaderCompleted.load();
-        completed.getProperties().put( CONTROLLER_KEY, fxmlLoaderCompleted.getController() );
-
-        steps.addAll( Arrays.asList(step1, step2, step3, step4, processing, completed));
+        steps.addAll( Arrays.asList(step1, step2, step3, step4, processing));
     }
 
     @FXML
@@ -173,7 +168,7 @@ public class WizardController {
             }
         };
         task.setOnSucceeded(e -> scene.setCursor(Cursor.DEFAULT));
-        if( currentStep.get() == (steps.size()-3) ) {
+        if( currentStep.get() == (steps.size()-1) ) {
             task.setOnSucceeded(e -> this.next());
         }
         new Thread(task).start();
@@ -181,11 +176,6 @@ public class WizardController {
         if( currentStep.get() < (steps.size()-1) ) {
             contentPanel.getChildren().remove( steps.get(currentStep.get()) );
             currentStep.set( currentStep.get() + 1 );
-            if (currentStep.get() >= (steps.size()-2)){
-                contentPanel.setAlignment(Pos.CENTER);
-            } else {
-                contentPanel.setAlignment(Pos.TOP_LEFT);
-            }
             contentPanel.getChildren().add( steps.get(currentStep.get()) );
         }
     }
@@ -196,11 +186,6 @@ public class WizardController {
         if( currentStep.get() > 0 ) {
             contentPanel.getChildren().remove( steps.get(currentStep.get()) );
             currentStep.set( currentStep.get() - 1 );
-            if (currentStep.get() >= (steps.size()-2)){
-                contentPanel.setAlignment(Pos.CENTER);
-            } else {
-                contentPanel.setAlignment(Pos.TOP_LEFT);
-            }
             contentPanel.getChildren().add( steps.get(currentStep.get()) );
         }
     }

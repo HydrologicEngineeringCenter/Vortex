@@ -1,6 +1,7 @@
 package normalizer.controller;
 
 import com.google.inject.Inject;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -22,8 +23,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 import java.util.prefs.Preferences;
 
 public class Step4Controller {
@@ -148,12 +157,50 @@ public class Step4Controller {
         String destination = model.getDestinationOut();
 
         Options options = Options.create();
-        if (destination.toString().toLowerCase().endsWith(".dss")) {
+        if (destination.toLowerCase().endsWith(".dss")) {
             options.add("partA", dssPathnamePartsController.getPartA());
             options.add("partB", dssPathnamePartsController.getPartB());
             options.add("partC", dssPathnamePartsController.getPartC());
             options.add("partF", dssPathnamePartsController.getPartF());
         }
+
+        SimpleFormatter formatter = new SimpleFormatter(){
+            private static final String format = "%s %s %s\n";
+
+
+            @Override
+            public synchronized String format(LogRecord lr) {
+                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                        .withZone(ZoneId.systemDefault());
+
+                return String.format(format,
+                        formatter.format(Instant.now()),
+                        lr.getLevel().getLocalizedName(),
+                        lr.getMessage()
+                );
+            }
+        };
+
+        StreamHandler handler = new StreamHandler(new OutputStream() {
+
+            @Override
+            public void write(int b) {
+                String s = String.valueOf((char)b);
+                Platform.runLater(() -> model.appendConsoleText(s));
+            }
+
+        }, formatter){
+
+            // flush on each publish:
+            @Override
+            public void publish(LogRecord record) {
+                super.publish(record);
+                flush();
+            }
+
+        };
+        List<Handler> handlers = new ArrayList<>();
+        handlers.add(handler);
 
         Normalizer normalizer = Normalizer.builder()
                 .startTime(model.startDateTimeProperty().get())
@@ -165,6 +212,7 @@ public class Step4Controller {
                 .normalsVariables(normalGrids)
                 .destination(destination)
                 .writeOptions(options)
+                .handlers(handlers)
                 .build();
 
         normalizer.normalize();
