@@ -27,7 +27,7 @@
             <HBox spacing="10.0" VBox.vgrow="ALWAYS">
                <children>
                   <ListView fx:id="availableSourceGrids" HBox.hgrow="ALWAYS" />
-                  <VBox alignment="CENTER" spacing="10.0" HBox.hgrow="ALWAYS">
+                  <VBox alignment="CENTER" prefHeight="25.0" prefWidth="25.0" spacing="10.0" HBox.hgrow="ALWAYS">
                      <children>
                         <Button fx:id="addButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#handleAdd" prefHeight="25.0" prefWidth="25.0">
                            <VBox.margin>
