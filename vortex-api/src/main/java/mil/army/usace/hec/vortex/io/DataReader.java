@@ -34,6 +34,10 @@ public abstract class DataReader {
                 throw new IllegalStateException("DataReader requires a path to data source file.");
             }
 
+            if (path.toLowerCase().contains("snodas")) {
+                return new SnodasDataReader(this);
+            }
+
             if (path.matches(".*\\.asc")) {
                 return new AscDataReader(this);
             }
