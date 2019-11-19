@@ -17,6 +17,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -35,16 +36,19 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
     @Override
     public List<VortexData> getDtos() {
         // Update tar with header files for SNODAS .dat files, and decompress all GZ files
-        try {updateTar(this.path);} catch (IOException e) {e.printStackTrace();}
+//        try {updateTar(this.path);} catch (IOException e) {e.printStackTrace();}
         // Get VirtualPath to Tar
+
+        String folderPath = Paths.get(this.path).getParent().toString() + File.separator + "unzipFolder" + File.separator;
         String vPath = getVirtualPath(this.path);
-        Vector fileList = gdal.ReadDir(vPath);
+
+        Vector fileList = gdal.ReadDir(folderPath);
         List<VortexData> dtos = new ArrayList<>();
         for(Object o : fileList) {
             String fileName = o.toString();
             if (fileName.endsWith(".dat")) {
                 DataReader reader = DataReader.builder()
-                        .path(vPath + fileName)
+                        .path(folderPath + fileName)
                         .variable(this.variableName)
                         .build();
 
@@ -71,56 +75,98 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         String directoryPath = Paths.get(tarFilePath).getParent().toString();
         String tarFileName = Paths.get(tarFilePath).getFileName().toString();
 
-        // Create a File type object for the TarFile
-        File tarFile = new File(tarFilePath, tarFileName);
-        // Create a temp Tar File
-        File tempTarFile = new File(tarFilePath, "tempTar.tar");
-        tempTarFile.createNewFile();
+        // Creating an input stream for the original tar file
+        File originalTarFile = new File(directoryPath, tarFileName);
+        TarArchiveInputStream originalStream = new TarArchiveInputStream(new FileInputStream(originalTarFile));
 
-        // Getting input stream from original TarFile, and output stream from new Temp Tar File
-        TarArchiveInputStream originalStream = new TarArchiveInputStream(new FileInputStream(tarFile));
+        // Extract files from tar into untarFolder
+        File untarFolder = unTarFile(directoryPath, originalStream);
+        // Close originalStream
+        originalStream.close();
+        // Decompress GZ files inside untarFolder to gzFolder
+        File gzFolder = decompressFolder(directoryPath, untarFolder);
+        // Create header files
+        for(File fileEntry : gzFolder.listFiles()) {
+            String fileName = fileEntry.getName();
+            if(fileName.endsWith(".dat")) {
+                String name = fileName.substring(0, fileName.lastIndexOf(".dat")) + ".hdr";
+                String gzFolderPath = directoryPath + File.separator + "unzipFolder";
+                createHeader(gzFolderPath, name);
+            }
+        } // Loop through unzipped Folder
+        // Compress folder into a Tar file
+        File tempTarFile = tarFolder(directoryPath, gzFolder);
+
+        // Clean up: deleting untarFolder, unzipFolder, original tar, and rename tempTar to original
+        FileUtils.deleteDirectory(untarFolder);
+//        FileUtils.deleteDirectory(gzFolder);
+        FileUtils.deleteQuietly(originalTarFile);
+        tempTarFile.renameTo(originalTarFile);
+    } // updateTar()
+
+
+    private File tarFolder(String directoryPath, File inputFolder) throws IOException {
+        // Create a temp Tar File
+        File tempTarFile = new File(directoryPath, "tempTar.tar");
+        tempTarFile.createNewFile();
         TarArchiveOutputStream newStream = new TarArchiveOutputStream(new FileOutputStream(tempTarFile));
 
-        // Creating entries from the original TarFile AND new header files, then add them into Temp Tar File
-        ArchiveEntry nextEntry = null;
-        List<String> headerNameArray = new ArrayList<>();
-        // Reading entries from original TarFile, and save names for HeaderNameArray
-        while((nextEntry = originalStream.getNextEntry()) != null) {
-            // FIXME: Decompress GZ files
-            String entryName = nextEntry.getName();
-            if (entryName.contains(".dat")) {
-                String headerName = entryName.substring(0, entryName.indexOf(".dat")) + ".hdr";
-                headerNameArray.add(headerName);
-            } // Save names for HeaderNameArray
-
-            // Copy files in original TarFile to new TempTarFile
-            newStream.putArchiveEntry(nextEntry);
-            IOUtils.copy(originalStream, newStream);
-            newStream.closeArchiveEntry();
-        } // Copy original files from TarFile to TempTarFile
-
-        // Creating header files and adding them
-        for(String headerName : headerNameArray) {
-            File headerFile = createHeader(directoryPath, headerName);
-            TarArchiveEntry entry = new TarArchiveEntry(headerName);
-            entry.setSize(headerFile.length());
+        for(File currentFile : inputFolder.listFiles()) {
+            ArchiveEntry entry = newStream.createArchiveEntry(currentFile, currentFile.getName());
             newStream.putArchiveEntry(entry);
-            IOUtils.copy(new FileInputStream(headerFile), newStream);
-        } // Loop through headerNameArray
-
-        // Close streams
-        newStream.closeArchiveEntry();
-        newStream.finish();
-        originalStream.close();
+            InputStream folderStream = Files.newInputStream(currentFile.toPath());
+            IOUtils.copy(folderStream, newStream);
+            folderStream.close();
+            newStream.closeArchiveEntry();
+        }
         newStream.close();
 
-        // Delete original(old) TarFile, rename temp(new) TarFile
-        tarFile.delete();
-        tempTarFile.renameTo(tarFile);
+        return tempTarFile;
+    } // tarFolder
 
-        // FIXME: Delete the header files that are not in tar
+    private File unTarFile(String directoryPath, TarArchiveInputStream iStream) throws IOException {
+        String fileSeparator = File.separator;
+        ArchiveEntry nextEntry = null;
+        // Creating a folder to untar into
+        String folderPath = directoryPath + fileSeparator + "untarFolder";
+        File destinationFolder = new File(folderPath);
+        if(!destinationFolder.exists())
+            destinationFolder.mkdirs();
 
-    } // updateTar()
+        // Untar into folder
+        while((nextEntry = iStream.getNextEntry()) != null) {
+            File outputFile = new File(destinationFolder + fileSeparator + nextEntry.getName());
+            FileOutputStream outputStream = new FileOutputStream(outputFile);
+            IOUtils.copy(iStream, outputStream);
+            outputStream.close();
+        } // Untar into folder
+
+        return destinationFolder;
+    } // unTarFile
+
+    private File decompressFolder(String directoryPath, File inputFolder) throws IOException {
+        String fileSeparator = File.separator;
+        // Creating a folder to unzip into
+        String gzFolderPath = directoryPath + fileSeparator + "unzipFolder";
+        File gzDestinationFolder = new File(gzFolderPath);
+        if(!gzDestinationFolder.exists())
+            gzDestinationFolder.mkdirs();
+
+        // Loop through inputFolder
+        if(inputFolder.isDirectory()) {
+            for (File fileEntry : Objects.requireNonNull(inputFolder.listFiles())) {
+                String name = fileEntry.getName().substring(0, fileEntry.getName().lastIndexOf(".gz"));
+                File decompressedOutputFile = new File(gzDestinationFolder + fileSeparator + name);
+                GzipCompressorInputStream gzStream = new GzipCompressorInputStream(new FileInputStream(fileEntry));
+                FileOutputStream decompressedOutputStream = new FileOutputStream(decompressedOutputFile);
+                IOUtils.copy(gzStream, decompressedOutputStream);
+                gzStream.close();
+                decompressedOutputStream.close();
+            }
+        } // unzipFolder contains decompressed files
+
+        return gzDestinationFolder;
+    } // decompressFolder
 
     private File createHeader(String directoryPath, String headerName) throws IOException {
         // Create empty header file

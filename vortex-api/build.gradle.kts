@@ -14,6 +14,8 @@ dependencies {
     implementation("tech.units:indriya:2.0-EDR")
     implementation("systems.uom:systems-common:0.9")
     implementation("edu.ucar:netcdfAll:4.6.14")
+    implementation("org.apache.commons:commons-compress:1.18")
+    implementation("commons-io:commons-io:2.6")
     implementation("org.slf4j:slf4j-jdk14:1.7.25")
     implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
     testImplementation ("org.mockito:mockito-core:2.27.0")

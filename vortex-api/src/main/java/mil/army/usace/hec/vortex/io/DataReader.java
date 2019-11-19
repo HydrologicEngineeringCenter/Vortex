@@ -34,8 +34,12 @@ public abstract class DataReader {
                 throw new IllegalStateException("DataReader requires a path to data source file.");
             }
 
-            if (path.toLowerCase().contains("snodas")) {
+            if (path.toLowerCase().contains("snodas") && path.endsWith(".tar")) {
                 return new SnodasTarDataReader(this);
+            }
+
+            if (path.toLowerCase().contains("snodas") && path.endsWith(".dat")) {
+                return new SnodasDataReader(this);
             }
 
             if (path.matches(".*\\.asc")) {
@@ -78,6 +82,9 @@ public abstract class DataReader {
         }
         if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
             return BilDataReader.getVariables(path);
+        }
+        if (fileName.contains("snodas")){
+            return SnodasDataReader.getVariables(path);
         }
         if (fileName.endsWith(".dss")){
             return DssDataReader.getVariables(path);

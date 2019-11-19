@@ -22,10 +22,9 @@ class SnodasDataReader extends DataReader {
     @Override
     public List<VortexData> getDtos() {
         // Read in raster using Gdal
+        // FIXME: Gdal to read in dat file
         Dataset in = gdal.Open(this.path);
-        ArrayList<String> options = new ArrayList<>();
-        options.add("-of");
-        options.add("MEM");
+        ArrayList<String> options = addGdalOptions();
         TranslateOptions translateOptions = new TranslateOptions(new Vector<>(options));
         Dataset raster = gdal.Translate("raster", in, translateOptions);
         raster.FlushCache();
@@ -55,6 +54,26 @@ class SnodasDataReader extends DataReader {
         else
             return null;
     } // getDto()
+
+    private ArrayList<String> addGdalOptions() {
+        ArrayList<String> options = new ArrayList<>();
+        options.add("-of");
+        options.add("MEM");
+        options.add("-a_srs");
+        options.add("'+proj=longlat");
+        options.add("+ellps=WGS84");
+        options.add("+datum=WGS84");
+        options.add("+no_defs'");
+        options.add("-a_nodata");
+        options.add("-9999");
+        options.add("-a_ullr");
+        options.add("-124.73333333");
+        options.add("52.87500000");
+        options.add("-66.94166667");
+        options.add("24.95000000");
+
+        return options;
+    } // addGdalOptions()
 
     private Map<String,String> parseFile(String fileName) {
         Map<String,String> info = new HashMap<>();
@@ -212,4 +231,11 @@ class SnodasDataReader extends DataReader {
 
         return dto;
     } // getGrid()
+
+    public static Set<String> getVariables(String pathToSnodas) {
+        String fileName = new File(pathToSnodas).getName();
+        //FIXME: add logic to get the variable
+        return new HashSet<>(Collections.singletonList("ppt"));
+    } // getVariables()
+
 } // BilDataReader class

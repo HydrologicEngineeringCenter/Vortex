@@ -68,7 +68,7 @@ public class Step1Controller {
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
-                "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.bil", "*bil.zip", "*.dss");
+                "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.bil", "*bil.zip", "*.dss", "*.tar");
         fileChooser.getExtensionFilters().add(recognizedFilter);
         FileChooser.ExtensionFilter ncFilter = new FileChooser.ExtensionFilter(
                 "netCDF datasets", "*.nc", "*.nc4");
@@ -87,6 +87,10 @@ public class Step1Controller {
         FileChooser.ExtensionFilter bilFilter = new FileChooser.ExtensionFilter(
                 "BIL datasets", "*.bil", "*bil.zip");
         fileChooser.getExtensionFilters().add(bilFilter);
+
+        FileChooser.ExtensionFilter tarFilter = new FileChooser.ExtensionFilter(
+                "SNODAS datasets", "*.tar");
+        fileChooser.getExtensionFilters().add(tarFilter);
 
         FileChooser.ExtensionFilter dssFilter = new FileChooser.ExtensionFilter(
                 "DSS datasets", "*.dss");
