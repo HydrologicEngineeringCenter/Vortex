@@ -35,7 +35,7 @@ public abstract class DataReader {
             }
 
             if (path.toLowerCase().contains("snodas")) {
-                return new SnodasDataReader(this);
+                return new SnodasTarDataReader(this);
             }
 
             if (path.matches(".*\\.asc")) {

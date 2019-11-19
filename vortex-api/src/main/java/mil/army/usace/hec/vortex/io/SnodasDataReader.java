@@ -1,6 +1,5 @@
 package mil.army.usace.hec.vortex.io;
 
-import javafx.scene.transform.Translate;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
@@ -16,19 +15,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class SnodasDataReader extends DataReader implements VirtualFileSystem{
-    static { GdalRegister.getInstance(); }
-    SnodasDataReader(DataReaderBuilder builder) {
-        super(builder);
-    }
+class SnodasDataReader extends DataReader {
+    static {GdalRegister.getInstance();}
+    SnodasDataReader(DataReaderBuilder builder) {super(builder);}
 
     @Override
     public List<VortexData> getDtos() {
-        // Create header files for SNODAS .dat files
-        createHeaders(""); // FIXME: Get actual path
-
         // Read in raster using Gdal
-        Dataset in = gdal.Open(path);
+        Dataset in = gdal.Open(this.path);
         ArrayList<String> options = new ArrayList<>();
         options.add("-of");
         options.add("MEM");
@@ -37,7 +31,9 @@ class SnodasDataReader extends DataReader implements VirtualFileSystem{
         raster.FlushCache();
 
         // Get the file name
-        String fileName = "empty"; // FIXME: Get actual fileName
+        String fileSeparator = System.getProperty("file.separator");
+        String filePath = this.path;
+        String fileName = filePath.substring(filePath.lastIndexOf(fileSeparator) + 1);
 
         // Build the grid and add to list of Data Transferable Objects (DTOs)
         VortexData dto = getGrid(raster, fileName);
@@ -49,24 +45,16 @@ class SnodasDataReader extends DataReader implements VirtualFileSystem{
 
     @Override
     public int getDtoCount() {
-        return 0;
+        return 1;
     } // getDtoCount()
 
     @Override
     public VortexData getDto(int idx) {
-        return null;
+        if (idx == 0)
+            return getDtos().get(0);
+        else
+            return null;
     } // getDto()
-
-    private void createHeaders(String pathToFile) {
-        // FIXME: ApacheCommons - Read & Write for tar. Add headers
-        // Content for header file
-        List<String> enviHeader = Arrays.asList("ENVI", "samples = 6935", "lines = 3351", "bands = 1",
-                "header offset = 0", "file type = ENVI Standard", "data type = 2", "interleave = bsq", "byte order = 1");
-
-        // Loop through each dat file, and create header file for each
-
-    } // createHeaders()
-
 
     private Map<String,String> parseFile(String fileName) {
         Map<String,String> info = new HashMap<>();
@@ -118,12 +106,47 @@ class SnodasDataReader extends DataReader implements VirtualFileSystem{
         return info;
     } // parseFile()
 
-    private String getUnits() {
-        return null;
+    private String getUnits(Map<String,String> info) {
+        String productCode = info.get("product");
+        String unit = "";
+
+        if(productCode.equals("1034") || productCode.equals("1036") || productCode.equals("1044") || productCode.equals("1050") || productCode.equals("1039"))
+            unit = "meters";
+        else if(productCode.equals("1025"))
+            unit = "kg/m2";
+        else if(productCode.equals("1038"))
+            unit = "kelvin";
+        else
+            unit = "Error: Invalid product code";
+
+        return unit;
     } // getUnits()
 
-    private String getName() {
-        return null;
+    private String getName(Map<String,String> info) {
+        String productCode = info.get("product");
+        String vCode = info.get("vType");
+        String name = "";
+
+        if(productCode.equals("1034"))
+            name = "SWE";
+        else if(productCode.equals("1036"))
+            name = "Snow Depth";
+        else if(productCode.equals("1044"))
+            name = "Snow Melt Runoff at the Base of the Snow Pack";
+        else if(productCode.equals("1050"))
+            name = "Sublimation from the Snow Pack";
+        else if(productCode.equals("1039"))
+            name = "Sublimation of Blowing Snow";
+        else if(productCode.equals("1025") && vCode.equals("IL01"))
+            name = "Solid Precipitation";
+        else if(productCode.equals("1025") && vCode.equals("IL00"))
+            name = "Liquid Precipitation";
+        else if(productCode.equals("1038"))
+            name = "Snow Pack Average Temperature";
+        else
+            name = "Error: Invalid product code";
+
+        return name;
     } // getName()
 
     private ZonedDateTime[] getTimeSpan(Map<String,String> info) {
@@ -132,6 +155,7 @@ class SnodasDataReader extends DataReader implements VirtualFileSystem{
         LocalDate date = LocalDate.parse(info.get("date"), formatter);
         ZonedDateTime startTime = null, endTime = null;
 
+        // Product Code meanings: https://nsidc.org/data/G02158
         switch(info.get("product")) {
             case "1044": case "1050": case "1039": case "1025":
                 startTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(6,0)), ZoneId.of("UTC"));
@@ -167,8 +191,8 @@ class SnodasDataReader extends DataReader implements VirtualFileSystem{
         // Extract: units, name, description, start/endTime, and interval from fileName
         Map<String,String> parsedInfo = parseFile(fileName);
         String units, shortName, fullName, description;
-        units = getUnits(); // FIXME: Implement getUnits
-        shortName = fullName = description = getName(); // FIXME: Get actual name
+        units = getUnits(parsedInfo);
+        shortName = fullName = description = getName(parsedInfo);
         ZonedDateTime startTime, endTime;
         ZonedDateTime[] timeSpan = getTimeSpan(parsedInfo);
         startTime = timeSpan[0];
@@ -180,7 +204,7 @@ class SnodasDataReader extends DataReader implements VirtualFileSystem{
                 .dx(dx).dy(dy).nx(nx).ny(ny)
                 .originX(ulx).originY(uly)
                 .wkt(wkt).data(data).units(units)
-                .fileName(path).shortName(shortName)
+                .fileName(fileName).shortName(shortName)
                 .fullName(fullName).description(description)
                 .startTime(startTime).endTime(endTime)
                 .interval(interval)
@@ -188,5 +212,4 @@ class SnodasDataReader extends DataReader implements VirtualFileSystem{
 
         return dto;
     } // getGrid()
-
-} // SnodasDataReader class
+} // BilDataReader class
