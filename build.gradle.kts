@@ -6,14 +6,16 @@ plugins {
 val version = project.version.toString()
 
 repositories {
-    maven(url = "https://artifacts.unidata.ucar.edu/repository/unidata-all/")
     mavenCentral()
+    maven(url = "https://artifacts.unidata.ucar.edu/repository/unidata-all/")
+
 }
 
 dependencies {
     implementation(project(":vortex-api"))
     implementation("org.slf4j:slf4j-jdk14:1.7.25")
     implementation("com.google.inject:guice:4.0")
+    implementation("org.apache.commons:commons-compress:1.18")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
