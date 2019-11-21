@@ -36,12 +36,10 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
     @Override
     public List<VortexData> getDtos() {
         // Update tar with header files for SNODAS .dat files, and decompress all GZ files
-//        try {updateTar(this.path);} catch (IOException e) {e.printStackTrace();}
+        try {updateTar(this.path);} catch (IOException e) {e.printStackTrace();}
         // Get VirtualPath to Tar
-
         String folderPath = Paths.get(this.path).getParent().toString() + File.separator + "unzipFolder" + File.separator;
-        String vPath = getVirtualPath(this.path);
-
+        // Use Gdal to read in data
         Vector fileList = gdal.ReadDir(folderPath);
         List<VortexData> dtos = new ArrayList<>();
         for(Object o : fileList) {
@@ -175,7 +173,7 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         List<String> enviHeader = Arrays.asList("ENVI", "samples = 6935", "lines = 3351", "bands = 1",
                 "header offset = 0", "file type = ENVI Standard", "data type = 2", "interleave = bsq", "byte order = 1");
         // Write to HeaderFile
-        Path header = Paths.get(headerName);
+        Path header = Paths.get(directoryPath + File.separator + headerName);
         Files.write(header, enviHeader, StandardCharsets.UTF_8);
 
         return headerFile;

@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import javafx.scene.transform.Translate;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
@@ -22,10 +23,9 @@ class SnodasDataReader extends DataReader {
     @Override
     public List<VortexData> getDtos() {
         // Read in raster using Gdal
-        // FIXME: Gdal to read in dat file
         Dataset in = gdal.Open(this.path);
-        ArrayList<String> options = addGdalOptions();
-        TranslateOptions translateOptions = new TranslateOptions(new Vector<>(options));
+        Vector options = gdal.ParseCommandLine("-of MEM -a_srs \"+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs\" -a_nodata -9999 -a_ullr  -124.73333333 52.87500000 -66.94166667 24.95000000");
+        TranslateOptions translateOptions = new TranslateOptions(options);
         Dataset raster = gdal.Translate("raster", in, translateOptions);
         raster.FlushCache();
 
@@ -54,26 +54,6 @@ class SnodasDataReader extends DataReader {
         else
             return null;
     } // getDto()
-
-    private ArrayList<String> addGdalOptions() {
-        ArrayList<String> options = new ArrayList<>();
-        options.add("-of");
-        options.add("MEM");
-        options.add("-a_srs");
-        options.add("'+proj=longlat");
-        options.add("+ellps=WGS84");
-        options.add("+datum=WGS84");
-        options.add("+no_defs'");
-        options.add("-a_nodata");
-        options.add("-9999");
-        options.add("-a_ullr");
-        options.add("-124.73333333");
-        options.add("52.87500000");
-        options.add("-66.94166667");
-        options.add("24.95000000");
-
-        return options;
-    } // addGdalOptions()
 
     private Map<String,String> parseFile(String fileName) {
         Map<String,String> info = new HashMap<>();
@@ -143,7 +123,7 @@ class SnodasDataReader extends DataReader {
 
     private String getName(Map<String,String> info) {
         String productCode = info.get("product");
-        String vCode = info.get("vType");
+        String dataType = info.get("dType");
         String name = "";
 
         if(productCode.equals("1034"))
@@ -156,9 +136,9 @@ class SnodasDataReader extends DataReader {
             name = "Sublimation from the Snow Pack";
         else if(productCode.equals("1039"))
             name = "Sublimation of Blowing Snow";
-        else if(productCode.equals("1025") && vCode.equals("IL01"))
+        else if(productCode.equals("1025") && dataType.equals("IL01"))
             name = "Solid Precipitation";
-        else if(productCode.equals("1025") && vCode.equals("IL00"))
+        else if(productCode.equals("1025") && dataType.equals("IL00"))
             name = "Liquid Precipitation";
         else if(productCode.equals("1038"))
             name = "Snow Pack Average Temperature";
@@ -228,6 +208,8 @@ class SnodasDataReader extends DataReader {
                 .startTime(startTime).endTime(endTime)
                 .interval(interval)
                 .build();
+        // FIXME: Add to stop  memory leaks
+        data = null;
 
         return dto;
     } // getGrid()
