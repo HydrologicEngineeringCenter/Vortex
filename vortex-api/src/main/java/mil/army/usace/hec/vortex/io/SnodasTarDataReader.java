@@ -178,4 +178,4 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
 
         return headerFile;
     } // createHeader()
-} // SnodasDataReader class
+} // SnodasTarDataReader class

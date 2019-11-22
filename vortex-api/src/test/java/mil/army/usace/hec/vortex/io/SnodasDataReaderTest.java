@@ -31,6 +31,24 @@ class SnodasDataReaderTest {
         String path = new File(getClass().getResource(
                 "/regression/io/snodas_reader/SNODAS_20191101.tar").getFile()).toString();
 
+        List<String> inFiles = new ArrayList<>();
+        inFiles.add(path);
+        String outFile = new File(getClass().getResource(
+                "/regression/io/snodas_reader/snodas_tar_test.dss").getFile()).toString();
+
+        String variableName = "SWE";
+        List<String> variables = new ArrayList<>();
+        variables.add(variableName);
+
+//        BatchImporter importer = BatchImporter.builder()
+//                .inFiles(inFiles)
+//                .variables(variables)
+//                .destination(outFile)
+//                .build();
+//
+//        importer.process();
+
+
         DataReader reader = DataReader.builder()
                 .path(path)
                 .build();

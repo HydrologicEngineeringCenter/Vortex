@@ -4,13 +4,20 @@ import javafx.scene.transform.Translate;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.TranslateOptions;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
+import visad.SingletonSet;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -55,7 +62,7 @@ class SnodasDataReader extends DataReader {
             return null;
     } // getDto()
 
-    private Map<String,String> parseFile(String fileName) {
+    private static Map<String,String> parseFile(String fileName) {
         Map<String,String> info = new HashMap<>();
 
         // Initialize indices
@@ -105,7 +112,7 @@ class SnodasDataReader extends DataReader {
         return info;
     } // parseFile()
 
-    private String getUnits(Map<String,String> info) {
+    private static String getUnits(Map<String,String> info) {
         String productCode = info.get("product");
         String unit = "";
 
@@ -121,7 +128,7 @@ class SnodasDataReader extends DataReader {
         return unit;
     } // getUnits()
 
-    private String getName(Map<String,String> info) {
+    private static String getName(Map<String, String> info) {
         String productCode = info.get("product");
         String dataType = info.get("dType");
         String name = "";
@@ -136,9 +143,9 @@ class SnodasDataReader extends DataReader {
             name = "Sublimation from the Snow Pack";
         else if(productCode.equals("1039"))
             name = "Sublimation of Blowing Snow";
-        else if(productCode.equals("1025") && dataType.equals("IL01"))
+        else if(productCode.equals("1025") && dataType.equals("lL01"))
             name = "Solid Precipitation";
-        else if(productCode.equals("1025") && dataType.equals("IL00"))
+        else if(productCode.equals("1025") && dataType.equals("lL00"))
             name = "Liquid Precipitation";
         else if(productCode.equals("1038"))
             name = "Snow Pack Average Temperature";
@@ -148,7 +155,7 @@ class SnodasDataReader extends DataReader {
         return name;
     } // getName()
 
-    private ZonedDateTime[] getTimeSpan(Map<String,String> info) {
+    private static ZonedDateTime[] getTimeSpan(Map<String,String> info) {
         ZonedDateTime[] timeSpan = new ZonedDateTime[2];
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         LocalDate date = LocalDate.parse(info.get("date"), formatter);
@@ -160,7 +167,7 @@ class SnodasDataReader extends DataReader {
                 startTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(6,0)), ZoneId.of("UTC"));
                 endTime   = ZonedDateTime.of(LocalDateTime.of(date.plusDays(1), LocalTime.of(6,0)), ZoneId.of("UTC"));
                 break;
-            case "1034": case "1036":
+            case "1034": case "1036": case "1038":
                 startTime = endTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(6,0)), ZoneId.of("UTC"));
                 break;
         } // Switch case for product
@@ -171,7 +178,7 @@ class SnodasDataReader extends DataReader {
         return timeSpan;
     } // getTimeSpan()
 
-    private VortexGrid getGrid(Dataset raster, String fileName) {
+    private static VortexGrid getGrid(Dataset raster, String fileName) {
         // Getting grid info from raster
         double[] geoTransform = raster.GetGeoTransform();
         double dx = geoTransform[1];
@@ -214,10 +221,37 @@ class SnodasDataReader extends DataReader {
         return dto;
     } // getGrid()
 
-    public static Set<String> getVariables(String pathToSnodas) {
-        String fileName = new File(pathToSnodas).getName();
-        //FIXME: add logic to get the variable
-        return new HashSet<>(Collections.singletonList("ppt"));
+    public static Set<String> getVariables(String pathToTar) {
+        // Create input stream for Tar, to read its contents
+        String directoryPath = Paths.get(pathToTar).getParent().toString();
+        String tarFileName = Paths.get(pathToTar).getFileName().toString();
+        File tarFile = new File(directoryPath, tarFileName);
+        List<String> fileNames = new ArrayList<>();
+
+        try {
+            TarArchiveInputStream tarStream = new TarArchiveInputStream(new FileInputStream(tarFile));
+
+            // Loop through tar contents
+            ArchiveEntry nextEntry;
+            while((nextEntry = tarStream.getNextEntry()) != null) {
+                String entryFileName = nextEntry.getName();
+                if (entryFileName.contains(".dat")) {
+                    entryFileName = entryFileName.substring(0, entryFileName.lastIndexOf(".dat"));
+                    fileNames.add(entryFileName);
+                } // If the entry is .dat file
+            } // Get a list of file names (that ended with .dat)
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Parse file names to map with variable, and save to a HashSet
+        HashSet<String> variables = new HashSet<>();
+        for (String fileName : fileNames) {
+            Map<String, String> info = parseFile(fileName);
+            variables.add(getName(info));
+        }
+
+        return variables;
     } // getVariables()
 
-} // BilDataReader class
+} // SnodasDataReader class
