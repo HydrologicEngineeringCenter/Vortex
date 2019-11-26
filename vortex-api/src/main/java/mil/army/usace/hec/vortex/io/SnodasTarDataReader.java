@@ -1,6 +1,5 @@
 package mil.army.usace.hec.vortex.io;
 
-import javafx.scene.transform.Translate;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
@@ -34,11 +33,12 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
     SnodasTarDataReader(DataReaderBuilder builder) {super(builder);}
 
     @Override
+    // Return a list of data-transferable-objects for the specified variable (SWE/Liquid Precipitaion/etc...)
     public List<VortexData> getDtos() {
-        // Update tar with header files for SNODAS .dat files, and decompress all GZ files
-        try {updateTar(this.path);} catch (IOException e) {e.printStackTrace();}
         // Get VirtualPath to Tar
-        String folderPath = Paths.get(this.path).getParent().toString() + File.separator + "unzipFolder" + File.separator;
+        String folderName = Paths.get(this.path).getFileName().toString();
+        folderName = folderName.substring(0, folderName.lastIndexOf(".tar")) + "_unzip";
+        String folderPath = Paths.get(this.path).getParent().toString() + File.separator + folderName + File.separator;
         // Use Gdal to read in data
         Vector fileList = gdal.ReadDir(folderPath);
         List<VortexData> dtos = new ArrayList<>();
@@ -59,11 +59,38 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
 
     @Override
     public int getDtoCount() {
-        return 0;
+        // Pre-processing: Extracting files from the specified tar, and decompress them
+        try {updateTar(this.path);} catch (IOException e) {e.printStackTrace();}
+        // Get the number of .dat files that matches with the specified variableName (this.variable)
+        return 1;
     } // getDtoCount()
 
     @Override
     public VortexData getDto(int idx) {
+         int count = -1;
+         String folderName = Paths.get(this.path).getFileName().toString();
+         folderName = folderName.substring(0, folderName.lastIndexOf(".tar")) + "_unzip";
+         String folderPath = Paths.get(this.path).getParent().toString() + File.separator + folderName + File.separator;
+         String pathToFolder = Paths.get(folderPath).getParent().toString();
+         File folder = new File(pathToFolder, folderName);
+
+        for (File fileEntry : Objects.requireNonNull(folder.listFiles())) {
+            String fileName = fileEntry.getName();
+            if(fileName.endsWith(".dat")) {
+                if (matchedVariable(fileName, this.variableName)) {
+                    count++; // First file, count = 0. Second, count = 1, etc...
+                    if (count == idx) {
+                        DataReader reader = DataReader.builder()
+                                .path(folder.getAbsolutePath() + File.separator + fileName)
+                                .variable(this.variableName)
+                                .build();
+
+                        return reader.getDto(0);
+                    }
+                }
+            }
+        } // Looping through folder to get Dto
+
         return null;
     } // getDto()
 
@@ -72,38 +99,60 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         String tarFilePath = pathToFile;
         String directoryPath = Paths.get(tarFilePath).getParent().toString();
         String tarFileName = Paths.get(tarFilePath).getFileName().toString();
-
         // Creating an input stream for the original tar file
         File originalTarFile = new File(directoryPath, tarFileName);
         TarArchiveInputStream originalStream = new TarArchiveInputStream(new FileInputStream(originalTarFile));
 
         // Extract files from tar into untarFolder
-        File untarFolder = unTarFile(directoryPath, originalStream);
+        String tarName = tarFileName.substring(0, tarFileName.lastIndexOf(".tar"));
+        File untarFolder = unTarFile(directoryPath, originalStream, tarName);
         // Close originalStream
         originalStream.close();
         // Decompress GZ files inside untarFolder to gzFolder
-        File gzFolder = decompressFolder(directoryPath, untarFolder);
+        File gzFolder = decompressFolder(directoryPath, untarFolder, tarName);
         // Create header files
         for(File fileEntry : gzFolder.listFiles()) {
             String fileName = fileEntry.getName();
             if(fileName.endsWith(".dat")) {
                 String name = fileName.substring(0, fileName.lastIndexOf(".dat")) + ".hdr";
-                String gzFolderPath = directoryPath + File.separator + "unzipFolder";
+                String folderName = tarName + "_unzip";
+                String gzFolderPath = directoryPath + File.separator + folderName;
                 createHeader(gzFolderPath, name);
             }
         } // Loop through unzipped Folder
-        // Compress folder into a Tar file
-        File tempTarFile = tarFolder(directoryPath, gzFolder);
 
-        // Clean up: deleting untarFolder, unzipFolder, original tar, and rename tempTar to original
+        // Clean up: deleting untarFolder
         FileUtils.deleteDirectory(untarFolder);
-//        FileUtils.deleteDirectory(gzFolder);
-        FileUtils.deleteQuietly(originalTarFile);
-        tempTarFile.renameTo(originalTarFile);
     } // updateTar()
+
+    private boolean matchedVariable(String fileName, String variableName) {
+        String productCode = fileName.substring(8,12);
+        String dataType = fileName.substring(13,17);
+
+        if(productCode.equals("1034") && variableName.equals("SWE"))
+            return true;
+        else if(productCode.equals("1036") && variableName.equals("Snow Depth"))
+            return true;
+        else if(productCode.equals("1044") && variableName.equals("Snow Melt Runoff at the Base of the Snow Pack"))
+            return true;
+        else if(productCode.equals("1050") && variableName.equals("Sublimation from the Snow Pack"))
+            return true;
+        else if(productCode.equals("1039") && variableName.equals("Sublimation of Blowing Snow"))
+            return true;
+        else if(productCode.equals("1025") && dataType.equals("lL01") && variableName.equals("Solid Precipitation"))
+            return true;
+        else if(productCode.equals("1025") && dataType.equals("lL00") && variableName.equals("Liquid Precipitation"))
+            return true;
+        else if(productCode.equals("1038") && variableName.equals("Snow Pack Average Temperature"))
+            return true;
+        else
+            return false;
+    } // matchedVariable() returns true if fileName matches with the variableName
 
 
     private File tarFolder(String directoryPath, File inputFolder) throws IOException {
+        // File tempTarFile = tarFolder(directoryPath, gzFolder);
+        // ^ Use that line in updateTar to compress the zip folder into a tar
         // Create a temp Tar File
         File tempTarFile = new File(directoryPath, "tempTar.tar");
         tempTarFile.createNewFile();
@@ -122,11 +171,11 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         return tempTarFile;
     } // tarFolder
 
-    private File unTarFile(String directoryPath, TarArchiveInputStream iStream) throws IOException {
+    private File unTarFile(String directoryPath, TarArchiveInputStream iStream, String tarName) throws IOException {
         String fileSeparator = File.separator;
         ArchiveEntry nextEntry = null;
         // Creating a folder to untar into
-        String folderPath = directoryPath + fileSeparator + "untarFolder";
+        String folderPath = directoryPath + fileSeparator + tarName + "_untar";
         File destinationFolder = new File(folderPath);
         if(!destinationFolder.exists())
             destinationFolder.mkdirs();
@@ -142,10 +191,10 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         return destinationFolder;
     } // unTarFile
 
-    private File decompressFolder(String directoryPath, File inputFolder) throws IOException {
+    private File decompressFolder(String directoryPath, File inputFolder, String tarName) throws IOException {
         String fileSeparator = File.separator;
         // Creating a folder to unzip into
-        String gzFolderPath = directoryPath + fileSeparator + "unzipFolder";
+        String gzFolderPath = directoryPath + fileSeparator + tarName + "_unzip";
         File gzDestinationFolder = new File(gzFolderPath);
         if(!gzDestinationFolder.exists())
             gzDestinationFolder.mkdirs();

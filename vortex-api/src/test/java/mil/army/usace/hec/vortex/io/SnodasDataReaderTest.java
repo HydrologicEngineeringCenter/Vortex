@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -21,37 +22,35 @@ class SnodasDataReaderTest {
     private static VortexGrid grid;
     @Test
     void gdalTest() {
-        Path path = Paths.get("C:\\Projects\\Vortex\\vortex-api\\build\\resources\\test\\regression\\io\\snodas_reader\\unzipFolder\\us_ssmv01025SlL00T0024TTNATS2019110105DP001.dat");
-        System.out.println(path.toAbsolutePath());
-        // Dataset in = gdal.Open("C:\\Projects\\Vortex\\vortex-api\\build\\resources\\test\\regression\\io\\snodas_reader\\unzipFolder\\us_ssmv01025SlL00T0024TTNATS2019110105DP001.dat");
+        String path = new File(getClass().getResource(
+                "/regression/io/snodas_reader/SNODAS_20191031.tar").getFile()).toString();
+        String virtualPath = "/vsizip/" + path;
+        Vector x = gdal.ReadDir(virtualPath);
+        
     } // gdalTest
 
     @Test
     void SnodasTest() {
-        String path = new File(getClass().getResource(
-                "/regression/io/snodas_reader/SNODAS_20191101.tar").getFile()).toString();
+        String path = Paths.get("src/test/resources/regression/io/snodas_reader/SNODAS_20191101.tar").toAbsolutePath().toString();
 
         List<String> inFiles = new ArrayList<>();
         inFiles.add(path);
-        String outFile = new File(getClass().getResource(
-                "/regression/io/snodas_reader/snodas_tar_test.dss").getFile()).toString();
+        String outFile = Paths.get("src/test/resources/regression/io/snodas_reader/snodas_test.dss").toAbsolutePath().toString();
 
-        String variableName = "SWE";
-        List<String> variables = new ArrayList<>();
-        variables.add(variableName);
+        List<String> availableVariables = Arrays.asList("SWE", "Snow Depth", "Snow Melt Runoff at the Base of the Snow Pack", "Sublimation from the Snow Pack",
+                "Sublimation of Blowing Snow", "Solid Precipitation", "Liquid Precipitation", "Snow Pack Average Temperature");
 
-//        BatchImporter importer = BatchImporter.builder()
-//                .inFiles(inFiles)
-//                .variables(variables)
-//                .destination(outFile)
-//                .build();
-//
-//        importer.process();
+        for(String variableName : availableVariables) {
+            List<String> variables = new ArrayList<>();
+            variables.add(variableName);
 
+            BatchImporter importer = BatchImporter.builder()
+                    .inFiles(inFiles)
+                    .variables(variables)
+                    .destination(outFile)
+                    .build();
 
-        DataReader reader = DataReader.builder()
-                .path(path)
-                .build();
-        grid = (VortexGrid) reader.getDtos().get(0);
+            importer.process();
+        } // Import all variables
     } // SnodasTest
 } // BilZipDataReaderTest

@@ -1,15 +1,11 @@
 package mil.army.usace.hec.vortex.io;
 
-import javafx.scene.transform.Translate;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.gdal.gdal.Band;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdal.TranslateOptions;
-import org.gdal.gdal.gdal;
+import org.gdal.gdal.*;
 import org.gdal.gdalconst.gdalconst;
 import visad.SingletonSet;
 
@@ -35,7 +31,7 @@ class SnodasDataReader extends DataReader {
         TranslateOptions translateOptions = new TranslateOptions(options);
         Dataset raster = gdal.Translate("raster", in, translateOptions);
         raster.FlushCache();
-
+        
         // Get the file name
         String fileSeparator = System.getProperty("file.separator");
         String filePath = this.path;
@@ -117,11 +113,11 @@ class SnodasDataReader extends DataReader {
         String unit = "";
 
         if(productCode.equals("1034") || productCode.equals("1036") || productCode.equals("1044") || productCode.equals("1050") || productCode.equals("1039"))
-            unit = "meters";
+            unit = "m"; // meters
         else if(productCode.equals("1025"))
-            unit = "kg/m2";
+            unit = "kg/m^2";
         else if(productCode.equals("1038"))
-            unit = "kelvin";
+            unit = "k"; // kelvin
         else
             unit = "Error: Invalid product code";
 
