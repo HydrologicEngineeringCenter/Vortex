@@ -39,6 +39,8 @@ public class TiffDataWriter extends DataWriter {
             gdalOptions.add("ZLEVEL=1");
             gdalOptions.add("-co");
             gdalOptions.add("BIGTIFF=YES");
+            gdalOptions.add("-a_nodata");
+            gdalOptions.add("-9999");
             TranslateOptions translateOptions = new TranslateOptions(new Vector<>(gdalOptions));
             Dataset out = gdal.Translate(destination.toString(), dataset, translateOptions);
             out.FlushCache();
