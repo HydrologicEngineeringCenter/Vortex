@@ -230,19 +230,33 @@ public class DssDataWriter extends DataWriter {
                 || desc.contains("qpe01h")
                 || desc.contains("rainfall")) {
             return "PRECIPITATION";
-        } else if (desc.contains("temperature")){
+        } else if (desc.contains("temperature")
+                || desc.equals("airtemp")){
             return "TEMPERATURE";
         } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
                 && desc.contains("radiation")){
             return "SOLAR RADIATION";
         } else if ((desc.contains("wind")) && (desc.contains("speed"))){
             return "WINDSPEED";
-        } else if ((desc.contains("snow")) && (desc.contains("water")) && (desc.contains("equivalent"))) {
+        } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
+                || desc.equals("swe")) {
             return "SWE";
         } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
             return "SNOWFALL ACCUMLATION";
-        } else if (desc.contains("albedo")){
+        } else if (desc.contains("albedo")) {
             return "ALBEDO";
+        } else if (desc.equals("cold content")){
+                return "COLD CONTENT";
+        } else if (desc.equals("cold content ati")){
+            return "COLD CONTENT ATI";
+        } else if (desc.equals("liquid water")){
+            return "LIQUID WATER";
+        } else if (desc.equals("meltrate ati")){
+            return "MELTRATE ATI";
+        } else if (desc.equals("snow depth")){
+            return "SNOW DEPTH";
+        } else if (desc.equals("snow melt")){
+            return "SNOW MELT";
         } else {
             return "";
         }
@@ -322,6 +336,8 @@ public class DssDataWriter extends DataWriter {
             case "deg c":
             case "c":
                 return CELSIUS;
+            case "degc-d":
+                return CELSIUS.multiply(DAY);
             case "fahrenheit":
             case "degf":
             case "deg f":
@@ -410,6 +426,9 @@ public class DssDataWriter extends DataWriter {
         }
         if (unit.equals(MILLI(GRAM).divide(LITRE))){
             return "MG/L";
+        }
+        if (unit.equals(CELSIUS.multiply(DAY))){
+            return "DEGC-D";
         }
         return "";
     }
