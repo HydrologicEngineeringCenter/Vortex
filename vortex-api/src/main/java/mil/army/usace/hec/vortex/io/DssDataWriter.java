@@ -90,6 +90,17 @@ public class DssDataWriter extends DataWriter {
                 }
                 dssPathname.setCPart(cPart);
 
+                if (options != null) {
+                    Map<String, String> parts = options.getOptions();
+                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
+                        DSSPathname pathnameIn = new DSSPathname();
+                        int status = pathnameIn.setPathname(grid.fullName());
+                        if (status == 0) {
+                            dssPathname.setFPart(pathnameIn.getFPart());
+                        }
+                    }
+                }
+
                 write(convertedData, gridInfo, dssPathname);
 
             } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN)) {
@@ -120,6 +131,17 @@ public class DssDataWriter extends DataWriter {
                 }
                 dssPathname.setCPart(cPart);
 
+                if (options != null) {
+                    Map<String, String> parts = options.getOptions();
+                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
+                        DSSPathname pathnameIn = new DSSPathname();
+                        int status = pathnameIn.setPathname(grid.fullName());
+                        if (status == 0) {
+                            dssPathname.setFPart(pathnameIn.getFPart());
+                        }
+                    }
+                }
+
                 write(convertedData, gridInfo, dssPathname);
             } else {
                 DSSPathname dssPathname = new DSSPathname();
@@ -130,6 +152,18 @@ public class DssDataWriter extends DataWriter {
                     cPart = getCPart(grid.description());
                 }
                 dssPathname.setCPart(cPart);
+
+                if (options != null) {
+                    Map<String, String> parts = options.getOptions();
+                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
+                        DSSPathname pathnameIn = new DSSPathname();
+                        int status = pathnameIn.setPathname(grid.fullName());
+                        if (status == 0) {
+                            dssPathname.setFPart(pathnameIn.getFPart());
+                        }
+                    }
+                }
+
                 write(data, gridInfo, dssPathname);
             }
         });
