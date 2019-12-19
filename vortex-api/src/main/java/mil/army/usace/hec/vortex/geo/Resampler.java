@@ -109,7 +109,7 @@ public class Resampler {
                 .originX(originX).originY(originY)
                 .wkt(wkt).data(data).units(grid.units())
                 .fileName(grid.fileName()).shortName(grid.shortName())
-                .fullName(grid.shortName()).description(grid.description())
+                .fullName(grid.fullName()).description(grid.description())
                 .startTime(grid.startTime()).endTime(grid.endTime()).interval(grid.interval())
                 .build();
     }

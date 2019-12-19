@@ -90,6 +90,17 @@ public class DssDataWriter extends DataWriter {
                 }
                 dssPathname.setCPart(cPart);
 
+                if (options != null) {
+                    Map<String, String> parts = options.getOptions();
+                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
+                        DSSPathname pathnameIn = new DSSPathname();
+                        int status = pathnameIn.setPathname(grid.fullName());
+                        if (status == 0) {
+                            dssPathname.setFPart(pathnameIn.getFPart());
+                        }
+                    }
+                }
+
                 write(convertedData, gridInfo, dssPathname);
 
             } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN)) {
@@ -120,6 +131,17 @@ public class DssDataWriter extends DataWriter {
                 }
                 dssPathname.setCPart(cPart);
 
+                if (options != null) {
+                    Map<String, String> parts = options.getOptions();
+                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
+                        DSSPathname pathnameIn = new DSSPathname();
+                        int status = pathnameIn.setPathname(grid.fullName());
+                        if (status == 0) {
+                            dssPathname.setFPart(pathnameIn.getFPart());
+                        }
+                    }
+                }
+
                 write(convertedData, gridInfo, dssPathname);
             } else {
                 DSSPathname dssPathname = new DSSPathname();
@@ -130,6 +152,18 @@ public class DssDataWriter extends DataWriter {
                     cPart = getCPart(grid.description());
                 }
                 dssPathname.setCPart(cPart);
+
+                if (options != null) {
+                    Map<String, String> parts = options.getOptions();
+                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
+                        DSSPathname pathnameIn = new DSSPathname();
+                        int status = pathnameIn.setPathname(grid.fullName());
+                        if (status == 0) {
+                            dssPathname.setFPart(pathnameIn.getFPart());
+                        }
+                    }
+                }
+
                 write(data, gridInfo, dssPathname);
             }
         });
@@ -230,15 +264,16 @@ public class DssDataWriter extends DataWriter {
                 || desc.contains("qpe01h")
                 || desc.contains("rainfall")) {
             return "PRECIPITATION";
-        } else if (desc.contains("temperature")){
+        } else if (desc.contains("temperature")
+                || desc.equals("airtemp")){
             return "TEMPERATURE";
         } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
                 && desc.contains("radiation")){
             return "SOLAR RADIATION";
         } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
             return "WINDSPEED";
-        } else if ((desc.contains("snow") && desc.contains("water") && desc.contains("equivalent"))
-                || desc.contains("swe")) {
+        } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
+                || desc.equals("swe")) {
             return "SWE";
         } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
             return "SNOWFALL ACCUMLATION";
@@ -250,6 +285,18 @@ public class DssDataWriter extends DataWriter {
             return "LIQUID WATER";
         } else if (desc.contains("snow") && desc.contains("sublimation")) {
             return "SNOW SUBLIMATION";
+        } else if (desc.equals("cold content")){
+            return "COLD CONTENT";
+        } else if (desc.equals("cold content ati")){
+            return "COLD CONTENT ATI";
+        } else if (desc.equals("liquid water")){
+            return "LIQUID WATER";
+        } else if (desc.equals("meltrate ati")){
+            return "MELTRATE ATI";
+        } else if (desc.equals("snow depth")){
+            return "SNOW DEPTH";
+        } else if (desc.equals("snow melt")){
+            return "SNOW MELT";
         } else {
             return "";
         }
@@ -329,6 +376,8 @@ public class DssDataWriter extends DataWriter {
             case "deg c":
             case "c":
                 return CELSIUS;
+            case "degc-d":
+                return CELSIUS.multiply(DAY);
             case "fahrenheit":
             case "degf":
             case "deg f":
@@ -417,6 +466,9 @@ public class DssDataWriter extends DataWriter {
         }
         if (unit.equals(MILLI(GRAM).divide(LITRE))){
             return "MG/L";
+        }
+        if (unit.equals(CELSIUS.multiply(DAY))){
+            return "DEGC-D";
         }
         return "";
     }

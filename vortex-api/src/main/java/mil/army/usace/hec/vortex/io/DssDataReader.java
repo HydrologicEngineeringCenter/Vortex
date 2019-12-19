@@ -66,7 +66,9 @@ class DssDataReader extends DataReader {
         ZonedDateTime startTime = ZonedDateTime.of(LocalDateTime.parse(info.getStartTime(), formatter), ZoneId.of("UTC"));
         ZonedDateTime endTime = ZonedDateTime.of(LocalDateTime.parse(info.getEndTime(), formatter), ZoneId.of("UTC"));
         Duration interval = Duration.between(startTime, endTime);
-        String variable = new DSSPathname(variableName).cPart();
+        DSSPathname dssPathname = new DSSPathname(variableName);
+        String pathName = dssPathname.getPathname();
+        String variable = dssPathname.cPart();
         float[] data = MatrixUtils.flipArray(gridData.getData(), nx, ny);
 
         return  VortexGrid.builder()
@@ -74,7 +76,7 @@ class DssDataReader extends DataReader {
                 .originX(ulx).originY(uly)
                 .wkt(wkt).data(data).units(info.getDataUnits())
                 .fileName(path).shortName(variable)
-                .description(variable).fullName(variableName)
+                .description(variable).fullName(pathName)
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval).build();

@@ -1,17 +1,17 @@
 package importer;
 
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import javafx.beans.property.SimpleListProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
 public class WizardData {
 
@@ -66,7 +66,16 @@ public class WizardData {
                         .parseCaseInsensitive()
                         .appendPattern("ddMMMuuuu:HHmm")
                         .toFormatter();
+                //Sort based on D part
                 variables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+                //Sort based on A part
+                variables.sort(Comparator.comparing(s -> s.split("/")[1]));
+                //Sort based on B part
+                variables.sort(Comparator.comparing(s -> s.split("/")[2]));
+                //Sort based on C part
+                variables.sort(Comparator.comparing(s -> s.split("/")[3]));
+                //Sort based on F part
+                variables.sort(Comparator.comparing(s -> s.split("/")[6]));
             } catch (DateTimeParseException e) {
                 e.printStackTrace();
             }

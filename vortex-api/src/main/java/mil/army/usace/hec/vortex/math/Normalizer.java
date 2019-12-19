@@ -246,7 +246,7 @@ public class Normalizer {
                     .originX(dto.originX()).originY(dto.originY())
                     .wkt(dto.wkt()).data(outData).units(dto.units())
                     .fileName(dto.fileName()).shortName(dto.shortName())
-                    .fullName(dto.shortName()).description(dto.description())
+                    .fullName(dto.fullName()).description(dto.description())
                     .startTime(dto.startTime()).endTime(dto.endTime())
                     .interval(dto.interval()).build()
             );
