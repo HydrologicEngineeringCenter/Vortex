@@ -34,6 +34,7 @@ public class GeoprocessingStepController {
     @FXML Button selectCellSize;
     @FXML TextArea targetWkt;
     @FXML TextField targetCellSize;
+    @FXML ComboBox<String> resamplingMethod;
 
     @Inject
     WizardData model;
@@ -43,6 +44,7 @@ public class GeoprocessingStepController {
         clipDataSource.textProperty().bindBidirectional(model.clipDataSourceProperty());
         targetWkt.textProperty().bindBidirectional(model.targetWktProperty());
         targetCellSize.textProperty().bindBidirectional(model.targetCellSizeProperty());
+        model.resamplingMethodProperty().bind(resamplingMethod.getSelectionModel().selectedItemProperty());
 
         Image folderOpen = new Image(getClass().getResourceAsStream("/opened-folder-16.png"));
         browse.setGraphic(new ImageView(folderOpen));
@@ -51,6 +53,10 @@ public class GeoprocessingStepController {
         selectProjection.setGraphic(new ImageView(globe));
         Image grid = new Image(getClass().getResourceAsStream("/grid-16.png"));
         selectCellSize.setGraphic(new ImageView(grid));
+
+        Set<String> resamplingMethods = new HashSet<>(new ArrayList<>(Arrays.asList("Nearest Neighbor", "Bilinear", "Average")));
+        resamplingMethod.getItems().addAll(resamplingMethods);
+        resamplingMethod.getSelectionModel().select(0);
     }
 
     @FXML

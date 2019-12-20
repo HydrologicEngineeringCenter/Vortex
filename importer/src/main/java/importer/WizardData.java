@@ -22,6 +22,7 @@ public class WizardData {
     private final StringProperty clipDataSource = new SimpleStringProperty();
     private final StringProperty targetWkt = new SimpleStringProperty();
     private final StringProperty targetCellSize = new SimpleStringProperty();
+    private final StringProperty resamplingMethod = new SimpleStringProperty();
 
     public SimpleListProperty<String> inFilesProperty() {
         return inFiles;
@@ -149,6 +150,10 @@ public class WizardData {
 
     public StringProperty targetCellSizeProperty() {
         return targetCellSize;
+    }
+
+    public StringProperty resamplingMethodProperty() {
+        return resamplingMethod;
     }
 }
 
