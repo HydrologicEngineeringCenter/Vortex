@@ -19,7 +19,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -199,15 +202,14 @@ public class DssDataWriter extends DataWriter {
                     .sorted()
                     .collect(Collectors.toList());
 
-            AtomicBoolean isRegular = new AtomicBoolean(false);
+            AtomicBoolean isRegular = new AtomicBoolean(true);
             Duration diff = Duration.between(startTimes.get(0), startTimes.get(1));
-            IntStream.range(1 , startTimes.size()).forEach(date -> {
-                if(Duration.between(startTimes.get(date - 1), startTimes.get(date)).equals(diff)){
-                    isRegular.set(true);
-                } else {
+            for( int t = 1; t < startTimes.size(); t++){
+                if(Duration.between(startTimes.get(t - 1), startTimes.get(t)) != diff){
                     isRegular.set(false);
+                    break;
                 }
-            });
+            }
 
             double[] values = filtered.stream()
                     .mapToDouble(VortexPoint::data)
@@ -237,7 +239,8 @@ public class DssDataWriter extends DataWriter {
                 tsc.numberValues = values.length;
                 tsc.startTime = getHecTime(startTimes.get(0)).value();
             } else {
-                pathname.setEPart("Ir-Month");
+                logger.info(() -> "Inconsistent time-interval in record. Data will be stored as irregular interval.");
+                pathname.setEPart("Ir-Day");
 
                 int[] times = new int[endTimes.size()];
                 IntStream.range(0, endTimes.size()).forEach(time ->
