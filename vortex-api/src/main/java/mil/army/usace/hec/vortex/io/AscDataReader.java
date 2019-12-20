@@ -40,8 +40,11 @@ class AscDataReader extends DataReader {
         String shortName;
         String fullName;
         String description;
+
         AtomicBoolean isPrismTemporal = new AtomicBoolean();
         AtomicBoolean isPrismNormal = new AtomicBoolean();
+        AtomicBoolean isQpfHourly = new AtomicBoolean();
+
         if (fileName.matches("prism.*ppt.*stable.*")) {
             shortName = "precipitation";
             fullName = "precipitation";
@@ -82,7 +85,12 @@ class AscDataReader extends DataReader {
             fullName = "maximum vapor pressure deficit";
             description = "maximum vapor pressure deficit";
             isPrismTemporal.set(true);
-        }   else {
+        } else if (fileName.matches("qpf.*1hr.*")){
+            shortName = "precipitation";
+            fullName = "precipitation";
+            description = "precipitation";
+            isQpfHourly.set(true);
+        } else {
             shortName = "";
             fullName = "";
             description = "";
@@ -105,6 +113,14 @@ class AscDataReader extends DataReader {
             startTime = ZonedDateTime.of(1981, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
             endTime = ZonedDateTime.of(2010, 12, 31, 0, 0, 0, 0, ZoneId.of("UTC"));
             interval = Duration.between(startTime, endTime);
+        } else if (isQpfHourly.get()) {
+            String filenameSansExt = fileName.replaceFirst("[.][^.]+$", "");
+            String dateString = filenameSansExt.substring(filenameSansExt.length() - 8);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMddHH");
+            LocalDateTime localDateTime = LocalDateTime.parse(dateString, formatter);
+            endTime = ZonedDateTime.of(localDateTime, ZoneId.of("UTC"));
+            startTime = endTime.minusHours(1);
+            interval = Duration.ofHours(1);
         } else {
             startTime = null;
             endTime = null;
@@ -112,7 +128,7 @@ class AscDataReader extends DataReader {
         }
 
         String units;
-        if (fileName.contains("ppt")){
+        if (fileName.contains("ppt") || fileName.contains("qpf")){
             units = "mm";
         } else if (fileName.contains("tmean")){
             units = "Degrees C";
@@ -164,6 +180,9 @@ class AscDataReader extends DataReader {
         String fileName = new File(pathToAsc).getName();
         if (fileName.startsWith("PRISM_ppt")) {
             return new HashSet<>(Collections.singletonList("ppt"));
+        }
+        if (fileName.startsWith("QPF_1HR")) {
+            return new HashSet<>(Collections.singletonList("precipitation"));
         }
         if (fileName.startsWith("PRISM_tmean")) {
             return new HashSet<>(Collections.singletonList("tmean"));
