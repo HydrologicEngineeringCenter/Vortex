@@ -19,11 +19,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -34,6 +33,8 @@ import static tech.units.indriya.unit.Units.HOUR;
 import static tech.units.indriya.unit.Units.*;
 
 public class DssDataWriter extends DataWriter {
+
+    private static Logger logger = Logger.getLogger(DssDataWriter.class.getName());
 
     DssDataWriter(DataWriterBuilder builder) {
         super(builder);
@@ -188,14 +189,20 @@ public class DssDataWriter extends DataWriter {
                     .sorted(Comparator.comparing(VortexPoint::endTime))
                     .collect(Collectors.toList());
 
-            List<ZonedDateTime> dates = filtered.stream()
+            List<ZonedDateTime> startTimes = filtered.stream()
+                    .map(VortexPoint::startTime)
+                    .sorted()
+                    .collect(Collectors.toList());
+
+            List<ZonedDateTime> endTimes = filtered.stream()
                     .map(VortexPoint::endTime)
+                    .sorted()
                     .collect(Collectors.toList());
 
             AtomicBoolean isRegular = new AtomicBoolean(false);
-            Duration diff = Duration.between(dates.get(0), dates.get(1));
-            IntStream.range(1 , dates.size()).forEach(date -> {
-                if(Duration.between(dates.get(date - 1), dates.get(date)).equals(diff)){
+            Duration diff = Duration.between(startTimes.get(0), startTimes.get(1));
+            IntStream.range(1 , startTimes.size()).forEach(date -> {
+                if(Duration.between(startTimes.get(date - 1), startTimes.get(date)).equals(diff)){
                     isRegular.set(true);
                 } else {
                     isRegular.set(false);
@@ -222,19 +229,19 @@ public class DssDataWriter extends DataWriter {
                 try {
                     interval = new Interval((int) diff.abs().getSeconds() / SECONDS_PER_MINUTE);
                 } catch (DataSetIllegalArgumentException e) {
-                    e.printStackTrace();
+                    logger.log(Level.SEVERE, "Uncaught exception", e);
                     return;
                 }
                 pathname.setEPart(interval.getInterval());
                 tsc.values = values;
                 tsc.numberValues = values.length;
-                tsc.startTime = getHecTime(dates.get(0)).value();
+                tsc.startTime = getHecTime(startTimes.get(0)).value();
             } else {
                 pathname.setEPart("Ir-Month");
 
-                int[] times = new int[dates.size()];
-                IntStream.range(0, dates.size()).forEach(date ->
-                        times[date] = getHecTime(dates.get(date)).value());
+                int[] times = new int[endTimes.size()];
+                IntStream.range(0, endTimes.size()).forEach(time ->
+                        times[time] = getHecTime(endTimes.get(time)).value());
                 tsc.times = times;
                 tsc.values = values;
                 tsc.numberValues = values.length;
@@ -296,22 +303,23 @@ public class DssDataWriter extends DataWriter {
         }
     }
 
-    private static DssDataType getDssDataType(String description){
+    private static DssDataType getDssDataType(String description) {
         String desc = description.toLowerCase();
         if (desc.contains("precipitation")
                 || desc.contains("precip") && desc.contains("rate")
                 || desc.contains("qpe01h")) {
             return DssDataType.PER_CUM;
-        } else if (desc.contains("temperature")){
+        } else if (desc.contains("temperature")
+                || desc.equals("temp-air")) {
             return DssDataType.INST_VAL;
         } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
-                && desc.contains("radiation")){
+                && desc.contains("radiation")) {
             return DssDataType.PER_AVER;
-        } else if ((desc.contains("wind")) && (desc.contains("speed"))){
+        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
             return DssDataType.INST_VAL;
-        } else if ((desc.contains("snow")) && (desc.contains("water")) && (desc.contains("equivalent"))){
+        } else if ((desc.contains("snow")) && (desc.contains("water")) && (desc.contains("equivalent"))) {
             return DssDataType.INST_VAL;
-        } else if (desc.contains("albedo")){
+        } else if (desc.contains("albedo")) {
             return DssDataType.INST_VAL;
         } else {
             return DssDataType.INVAL;
