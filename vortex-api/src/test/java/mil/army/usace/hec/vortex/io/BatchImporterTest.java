@@ -33,6 +33,7 @@ class BatchImporterTest {
         options.add("pathToShp", shapefile.toString());
         options.add("targetCellSize", "2000");
         options.add("targetWkt", WktFactory.shg());
+        options.add("resamplingMethod", "Bilinear");
 
         File outFile = new File(getClass().getResource(
                 "/regression/mrms/mrms.dss").getFile());
@@ -107,6 +108,7 @@ class BatchImporterTest {
         options.add("pathToShp", shapefile.toString());
         options.add("targetCellSize", "2000");
         options.add("targetWkt", WktFactory.shg());
+        options.add("resamplingMethod", "Bilinear");
 
         Options writeOptions = Options.create();
         writeOptions.add("partB", "Truckee River");
