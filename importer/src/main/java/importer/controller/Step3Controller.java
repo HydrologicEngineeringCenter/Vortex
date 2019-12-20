@@ -148,6 +148,8 @@ public class Step3Controller {
                 geoOptions.add("targetCellSize", entry);
         });
 
+        geoOptions.add("resamplingMethod", model.resamplingMethodProperty().getValue());
+
         String destination = model.getDestinationOut();
 
         Options writeOptions = Options.create();

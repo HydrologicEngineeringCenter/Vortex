@@ -84,6 +84,8 @@ public class ImportableUnit {
             envWkt = null;
         }
 
+        String method = geoOptions.getOrDefault("resamplingMethod", "near");
+
         int count = reader.getDtoCount();
 
         IntStream.range(0, count).parallel().forEach(i -> {
@@ -111,6 +113,7 @@ public class ImportableUnit {
                     .envelopeWkt(envWkt)
                     .targetWkt(destWkt)
                     .cellSize(cellSize)
+                    .method(method)
                     .build()
                     .resample();
 
