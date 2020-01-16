@@ -1,7 +1,6 @@
 package exporter.controller;
 
 import com.google.inject.Inject;
-import exporter.TravelLengthGridCellsExporterWizard;
 import exporter.WizardData;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -19,11 +18,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.prefs.Preferences;
+import java.util.Properties;
+
+import static java.nio.file.StandardOpenOption.CREATE;
 
 public class Step2Controller {
 
@@ -127,22 +132,37 @@ public class Step2Controller {
     }
 
     private void setPersistedBrowseLocation(File file) {
-        Preferences prefs = Preferences.userNodeForPackage(TravelLengthGridCellsExporterWizard.class);
-        if (Objects.nonNull(file)) {
-            prefs.put("outFilePath", file.getPath());
-        } else {
-            prefs.remove("outFilePath");
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "travel-length-grid-cells.properties" );
+
+        try(OutputStream output = Files.newOutputStream(pathToProperties, CREATE)){
+            Properties properties = new Properties();
+            properties.setProperty("outFilePath", file.getPath());
+            properties.store(output,null);
+        } catch (IOException e) {
+            log.error(e.toString());
         }
     }
 
     private File getPersistedBrowseLocation() {
-        Preferences prefs = Preferences.userNodeForPackage(TravelLengthGridCellsExporterWizard.class);
-        String filePath = prefs.get("outFilePath", null);
-        if (Objects.nonNull(filePath)) {
-            return new File(filePath);
-        } else {
-            return null;
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "travel-length-grid-cells.properties" );
+
+        if (Files.exists(pathToProperties)) {
+            try (InputStream input = Files.newInputStream(pathToProperties)) {
+                Properties properties = new Properties();
+                properties.load(input);
+                String outFilePath = properties.getProperty("outFilePath");
+                if (Files.exists(Paths.get(outFilePath))) {
+                    return new File(outFilePath);
+                }
+                return null;
+            } catch (IOException e) {
+                log.error(e.toString());
+                return null;
+            }
         }
+        return null;
     }
 }
 

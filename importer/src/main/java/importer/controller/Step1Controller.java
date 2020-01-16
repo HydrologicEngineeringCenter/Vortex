@@ -1,7 +1,6 @@
 package importer.controller;
 
 import com.google.inject.Inject;
-import importer.MetDataImportWizard;
 import importer.WizardData;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -21,9 +20,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
+
+import static java.nio.file.StandardOpenOption.CREATE;
 
 public class Step1Controller {
 
@@ -152,22 +158,37 @@ public class Step1Controller {
         }
     }
 
-    public void setPersistedBrowseLocation(File file) {
-        Preferences prefs = Preferences.userNodeForPackage(MetDataImportWizard.class);
-        if (Objects.nonNull(file)) {
-            prefs.put("inFilePath", file.getPath());
-        } else {
-            prefs.remove("inFilePath");
+    private void setPersistedBrowseLocation(File file) {
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "importer.properties" );
+
+        try(OutputStream output = Files.newOutputStream(pathToProperties, CREATE)){
+            Properties properties = new Properties();
+            properties.setProperty("inFilePath", file.getPath());
+            properties.store(output,null);
+        } catch (IOException e) {
+            log.error(e.toString());
         }
     }
 
-    public File getPersistedBrowseLocation() {
-        Preferences prefs = Preferences.userNodeForPackage(MetDataImportWizard.class);
-        String filePath = prefs.get("inFilePath", null);
-        if (Objects.nonNull(filePath)) {
-            return new File(filePath);
-        } else {
-            return null;
+    private File getPersistedBrowseLocation() {
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "importer.properties" );
+
+        if (Files.exists(pathToProperties)) {
+            try (InputStream input = Files.newInputStream(pathToProperties)) {
+                Properties properties = new Properties();
+                properties.load(input);
+                String outFilePath = properties.getProperty("inFilePath");
+                if (Files.exists(Paths.get(outFilePath))) {
+                    return new File(outFilePath);
+                }
+                return null;
+            } catch (IOException e) {
+                log.error(e.toString());
+                return null;
+            }
         }
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 package converter.controller;
 
 import com.google.inject.Inject;
+import converter.WizardData;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -17,15 +18,17 @@ import mil.army.usace.hec.vortex.convert.GridToPointConverter;
 import mil.army.usace.hec.vortex.util.DssUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import converter.ConverterWizard;
-import converter.WizardData;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.prefs.Preferences;
+
+import static java.nio.file.StandardOpenOption.CREATE;
 
 public class Step3Controller {
 
@@ -158,22 +161,37 @@ public class Step3Controller {
     }
 
     private void setPersistedBrowseLocation(File file) {
-        Preferences prefs = Preferences.userNodeForPackage(ConverterWizard.class);
-        if (Objects.nonNull(file)) {
-            prefs.put("outFilePath", file.getPath());
-        } else {
-            prefs.remove("outFilePath");
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "grid-to-point-converter.properties" );
+
+        try(OutputStream output = Files.newOutputStream(pathToProperties, CREATE)){
+            Properties properties = new Properties();
+            properties.setProperty("outFilePath", file.getPath());
+            properties.store(output,null);
+        } catch (IOException e) {
+            log.error(e.toString());
         }
     }
 
     private File getPersistedBrowseLocation() {
-        Preferences prefs = Preferences.userNodeForPackage(ConverterWizard.class);
-        String filePath = prefs.get("outFilePath", null);
-        if (Objects.nonNull(filePath)) {
-            return new File(filePath);
-        } else {
-            return null;
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "grid-to-point-converter.properties" );
+
+        if (Files.exists(pathToProperties)) {
+            try (InputStream input = Files.newInputStream(pathToProperties)) {
+                Properties properties = new Properties();
+                properties.load(input);
+                String outFilePath = properties.getProperty("outFilePath");
+                if (Files.exists(Paths.get(outFilePath))) {
+                    return new File(outFilePath);
+                }
+                return null;
+            } catch (IOException e) {
+                log.error(e.toString());
+                return null;
+            }
         }
+        return null;
     }
 
     private void initializeDssParts(){
