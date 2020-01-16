@@ -1,7 +1,6 @@
 package exporter.controller;
 
 import com.google.inject.Inject;
-import exporter.ExporterWizard;
 import exporter.WizardData;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -20,10 +19,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.prefs.Preferences;
+
+import static java.nio.file.StandardOpenOption.CREATE;
 
 public class Step2Controller {
 
@@ -117,22 +121,37 @@ public class Step2Controller {
     }
 
     private void setPersistedBrowseLocation(File file) {
-        Preferences prefs = Preferences.userNodeForPackage(ExporterWizard.class);
-        if (Objects.nonNull(file)) {
-            prefs.put("outDirPath", file.getPath());
-        } else {
-            prefs.remove("outDirPath");
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "image-exporter.properties" );
+
+        try(OutputStream output = Files.newOutputStream(pathToProperties, CREATE)){
+            Properties properties = new Properties();
+            properties.setProperty("outDirPath", file.getPath());
+            properties.store(output,null);
+        } catch (IOException e) {
+            log.error(e.toString());
         }
     }
 
     private File getPersistedBrowseLocation() {
-        Preferences prefs = Preferences.userNodeForPackage(ExporterWizard.class);
-        String filePath = prefs.get("outDirPath", null);
-        if (Objects.nonNull(filePath)) {
-            return new File(filePath);
-        } else {
-            return null;
+        Path pathToProperties = Paths.get(System.getProperty("user.home")
+                + File.separator + ".vortex" + File.separator + "image-exporter.properties" );
+
+        if (Files.exists(pathToProperties)) {
+            try (InputStream input = Files.newInputStream(pathToProperties)) {
+                Properties properties = new Properties();
+                properties.load(input);
+                String outFilePath = properties.getProperty("outDirPath");
+                if (Files.exists(Paths.get(outFilePath))) {
+                    return new File(outFilePath);
+                }
+                return null;
+            } catch (IOException e) {
+                log.error(e.toString());
+                return null;
+            }
         }
+        return null;
     }
 }
 
