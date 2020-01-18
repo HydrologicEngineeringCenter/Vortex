@@ -243,6 +243,9 @@ public class GeoprocessingStepController {
                 Properties properties = new Properties();
                 properties.load(input);
                 String outFilePath = properties.getProperty("shpFilePath");
+                if (outFilePath == null){
+                    return null;
+                }
                 if (Files.exists(Paths.get(outFilePath))) {
                     return new File(outFilePath);
                 }

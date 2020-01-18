@@ -207,6 +207,9 @@ public class Step1Controller {
                 Properties properties = new Properties();
                 properties.load(input);
                 String outFilePath = properties.getProperty("sourceFilePath");
+                if (outFilePath == null){
+                    return null;
+                }
                 if (Files.exists(Paths.get(outFilePath))) {
                     return new File(outFilePath);
                 }
