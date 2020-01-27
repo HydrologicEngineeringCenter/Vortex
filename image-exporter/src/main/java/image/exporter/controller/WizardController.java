@@ -1,4 +1,4 @@
-package exporter.controller;
+package image.exporter.controller;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -21,7 +21,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
-import exporter.WizardData;
+import image.exporter.WizardData;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;

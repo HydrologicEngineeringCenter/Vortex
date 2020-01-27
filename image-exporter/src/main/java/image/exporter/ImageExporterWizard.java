@@ -1,4 +1,4 @@
-package exporter;
+package image.exporter;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import mil.army.usace.hec.vortex.GdalRegister;
 
-public class ExporterWizard extends Application {
+public class ImageExporterWizard extends Application {
 
     static {
         GdalRegister.getInstance();
@@ -23,7 +23,7 @@ public class ExporterWizard extends Application {
 
         final Injector injector = Guice.createInjector( new WizardModule() );
 
-        final Parent p = FXMLLoader.load( ExporterWizard.class.getResource("/fxml/Wizard.fxml"),
+        final Parent p = FXMLLoader.load( ImageExporterWizard.class.getResource("/fxml/Wizard.fxml"),
                 null,
                 new JavaFXBuilderFactory(),
                 injector::getInstance

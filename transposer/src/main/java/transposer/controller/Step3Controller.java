@@ -14,6 +14,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.StageStyle;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.geo.BatchTransposer;
+import mil.army.usace.hec.vortex.ui.BrowseLocationPersister;
 import mil.army.usace.hec.vortex.util.DssUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,16 +22,12 @@ import transposer.WizardData;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-
-public class Step3Controller {
+public class Step3Controller implements BrowseLocationPersister {
 
     private Logger log = LoggerFactory.getLogger(Step3Controller.class);
 
@@ -179,40 +176,6 @@ public class Step3Controller {
         if (log.isDebugEnabled()) {
             log.debug("[SUBMIT] the user has completed step 3");
         }
-    }
-
-    private void setPersistedBrowseLocation(File file) {
-        Path pathToProperties = Paths.get(System.getProperty("user.home")
-                + File.separator + ".vortex" + File.separator + "transposer.properties" );
-
-        try(OutputStream output = Files.newOutputStream(pathToProperties, CREATE)){
-            Properties properties = new Properties();
-            properties.setProperty("outFilePath", file.getPath());
-            properties.store(output,null);
-        } catch (IOException e) {
-            log.error(e.toString());
-        }
-    }
-
-    private File getPersistedBrowseLocation() {
-        Path pathToProperties = Paths.get(System.getProperty("user.home")
-                + File.separator + ".vortex" + File.separator + "transposer.properties" );
-
-        if (Files.exists(pathToProperties)) {
-            try (InputStream input = Files.newInputStream(pathToProperties)) {
-                Properties properties = new Properties();
-                properties.load(input);
-                String outFilePath = properties.getProperty("outFilePath");
-                if (Files.exists(Paths.get(outFilePath))) {
-                    return new File(outFilePath);
-                }
-                return null;
-            } catch (IOException e) {
-                log.error(e.toString());
-                return null;
-            }
-        }
-        return null;
     }
 
     private void initializeDssParts(){
