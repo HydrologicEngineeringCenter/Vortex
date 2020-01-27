@@ -1,4 +1,4 @@
-package exporter;
+package image.exporter;
 
 import com.google.inject.AbstractModule;
 
