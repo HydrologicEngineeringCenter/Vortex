@@ -19,7 +19,7 @@
   <var>GDAL_DATA=.\gdal\gdal-data</var>
   <var>PROJ_LIB=.\gdal\projlib</var>
   <classPath>
-    <mainClass>exporter.ExporterWizard</mainClass>
+    <mainClass>image.exporter.ImageExporterWizard</mainClass>
     <cp>../lib/image-exporter.jar;../lib/*</cp>
   </classPath>
   <jre>
