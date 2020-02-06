@@ -188,7 +188,10 @@ public class ZonalStatisticsCalculator {
             }
         }
 
-        double average = values.stream().mapToDouble(Double::new).sum() / values.size();
+        double average = values.stream()
+                //filter out values less than -1E20, assume these are NaN
+                .filter(value -> value > -1E20)
+                .mapToDouble(Double::valueOf).sum() / values.size();
 
         return ZonalStatistics.builder()
                 .id(id)
