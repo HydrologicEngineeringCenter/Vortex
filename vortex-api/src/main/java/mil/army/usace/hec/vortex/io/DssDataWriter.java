@@ -203,11 +203,17 @@ public class DssDataWriter extends DataWriter {
                     .collect(Collectors.toList());
 
             AtomicBoolean isRegular = new AtomicBoolean(true);
-            Duration diff = Duration.between(startTimes.get(0), startTimes.get(1));
-            for( int t = 1; t < startTimes.size(); t++){
-                if(Duration.between(startTimes.get(t - 1), startTimes.get(t)) != diff){
-                    isRegular.set(false);
-                    break;
+            Duration diff;
+            if (startTimes.size() == 1){
+                isRegular.set(false);
+                diff = Duration.ZERO;
+            } else {
+                diff = Duration.between(startTimes.get(0), startTimes.get(1));
+                for (int t = 1; t < startTimes.size(); t++) {
+                    if (!Duration.between(startTimes.get(t - 1), startTimes.get(t)).equals(diff)) {
+                        isRegular.set(false);
+                        break;
+                    }
                 }
             }
 
@@ -256,7 +262,7 @@ public class DssDataWriter extends DataWriter {
             dssTimeSeries.setDSSFileName(destination.toString());
             int status = dssTimeSeries.write(tsc);
             dssTimeSeries.done();
-            if (status != 0) System.out.println("Dss write error");
+            if (status != 0) logger.severe("Dss write error");
         }));
     }
 
