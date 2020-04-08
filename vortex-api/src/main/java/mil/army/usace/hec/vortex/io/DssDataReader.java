@@ -17,7 +17,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 class DssDataReader extends DataReader {
 
@@ -64,8 +66,13 @@ class DssDataReader extends DataReader {
         double uly = lly + direction * ny * cellSize;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
         ZonedDateTime startTime = ZonedDateTime.of(LocalDateTime.parse(info.getStartTime(), formatter), ZoneId.of("UTC"));
-        ZonedDateTime endTime = ZonedDateTime.of(LocalDateTime.parse(info.getEndTime(), formatter), ZoneId.of("UTC"));
-        Duration interval = Duration.between(startTime, endTime);
+        AtomicReference<ZonedDateTime> endTime = new AtomicReference<>();
+        try {
+            endTime.set(ZonedDateTime.of(LocalDateTime.parse(info.getEndTime(), formatter), ZoneId.of("UTC")));
+        } catch (DateTimeParseException e){
+            endTime.set(startTime);
+        }
+        Duration interval = Duration.between(startTime, endTime.get());
         DSSPathname dssPathname = new DSSPathname(variableName);
         String pathName = dssPathname.getPathname();
         String variable = dssPathname.cPart();
@@ -78,7 +85,7 @@ class DssDataReader extends DataReader {
                 .fileName(path).shortName(variable)
                 .description(variable).fullName(pathName)
                 .startTime(startTime)
-                .endTime(endTime)
+                .endTime(endTime.get())
                 .interval(interval).build();
     }
 
