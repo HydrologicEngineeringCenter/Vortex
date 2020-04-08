@@ -113,6 +113,8 @@ public class Step2Controller implements BrowseLocationPersister {
             });
         });
 
+        setPersistedBrowseLocation(new File(destinationDir.getText()));
+
         if (log.isDebugEnabled()) {
             log.debug("[SUBMIT] the user has completed step 2");
         }
