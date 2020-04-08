@@ -32,7 +32,7 @@
             </Button>
          </children>
       </HBox>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Base name:" />
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Filename Prefix:" />
       <TextField fx:id="baseName" />
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Format:" />
       <ComboBox fx:id="format" prefWidth="150.0" />
