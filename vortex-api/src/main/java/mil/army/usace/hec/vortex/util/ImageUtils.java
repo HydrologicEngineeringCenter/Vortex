@@ -77,6 +77,7 @@ public class ImageUtils {
             }
             fileNameBase = fileNameBuilder.toString();
         }
-        return (fileNameBase + "." + type.label.toLowerCase()).replaceAll("_\\.", ".");
+        String fileNameClean = fileNameBase.replaceAll("[^A-Za-z0-9]", "_");
+        return (fileNameClean + "." + type.label.toLowerCase()).replaceAll("_\\.", ".");
     }
 }
