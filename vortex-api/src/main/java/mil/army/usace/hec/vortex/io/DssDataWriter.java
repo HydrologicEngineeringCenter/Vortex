@@ -376,6 +376,7 @@ public class DssDataWriter extends DataWriter {
                 return MILLI(METRE).divide(DAY);
             case "kg.m-2":
             case "kg/m^2":
+            case "kg m^-2":
             case "mm":
                 return MILLI(METRE);
             case "in":
