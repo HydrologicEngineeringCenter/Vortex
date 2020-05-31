@@ -201,7 +201,7 @@ public class DssDataWriter extends DataWriter {
             List<VortexPoint> filtered = points.stream()
                     .filter(point -> point.id().equals(id))
                     .filter(point -> point.description().equals(description))
-                    .sorted(Comparator.comparing(VortexPoint::endTime))
+                    .sorted(Comparator.comparing(VortexPoint::startTime))
                     .collect(Collectors.toList());
 
             List<ZonedDateTime> startTimes = filtered.stream()
