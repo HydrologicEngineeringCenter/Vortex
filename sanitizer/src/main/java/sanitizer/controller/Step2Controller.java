@@ -2,7 +2,6 @@ package sanitizer.controller;
 
 import com.google.inject.Inject;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,13 +16,9 @@ public class Step2Controller {
     @FXML
     private TextField minimumReplacement;
     @FXML
-    private CheckBox replaceWithNanBelow;
-    @FXML
     private TextField maximumThreshold;
     @FXML
     private TextField maximumReplacement;
-    @FXML
-    private CheckBox replaceWithNanAbove;
 
 
     @Inject
@@ -31,33 +26,11 @@ public class Step2Controller {
 
     @FXML
     public void initialize() {
-
         minimumThreshold.textProperty().bindBidirectional(model.minimumThresholdProperty());
         minimumReplacement.textProperty().bindBidirectional(model.minimumReplacementProperty());
-        replaceWithNanBelow.selectedProperty().bindBidirectional(model.isReplaceWithNanBelow());
-        replaceWithNanBelow.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            boolean isReplaceWithNanBelow = newValue;
-            if (isReplaceWithNanBelow) {
-                minimumReplacement.setEditable(false);
-                minimumReplacement.setText("");
-            } else {
-                minimumReplacement.setEditable(true);
-            }
-        });
 
         maximumThreshold.textProperty().bindBidirectional(model.maximumThresholdProperty());
         maximumReplacement.textProperty().bindBidirectional(model.maximumReplacementProperty());
-        replaceWithNanAbove.selectedProperty().bindBidirectional(model.isReplaceWithNanAbove());
-        replaceWithNanAbove.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            boolean isReplaceWithNanAbove = newValue;
-            if (isReplaceWithNanAbove) {
-                maximumReplacement.setEditable(false);
-                maximumReplacement.setText("");
-            } else {
-                maximumReplacement.setEditable(true);
-            }
-        });
-
     }
 
     @Validate
