@@ -3,6 +3,9 @@ package mil.army.usace.hec.vortex.geo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.ogr.*;
 import org.gdal.osr.SpatialReference;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
@@ -104,5 +107,22 @@ public class VectorUtils {
         featureDefn.delete();
 
         return fields;
+    }
+
+    public static Envelope toEnvelope(Rectangle2D rectangle2D) {
+        double minX = rectangle2D.getMinX();
+        double minY = rectangle2D.getMinY();
+        double maxX = rectangle2D.getMaxX();
+        double maxY = rectangle2D.getMaxY();
+
+        Coordinate[] coordinates = new Coordinate[5];
+        coordinates[0] = new Coordinate(minX, minY);
+        coordinates[1] = new Coordinate(maxX, minY);
+        coordinates[2] = new Coordinate(maxX, maxY);
+        coordinates[3] = new Coordinate(minX, maxY);
+        coordinates[4] = new Coordinate(minX, minY);
+
+        GeometryFactory factory = new GeometryFactory();
+        return factory.createPolygon(coordinates).getEnvelopeInternal();
     }
 }
