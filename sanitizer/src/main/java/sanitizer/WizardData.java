@@ -17,10 +17,8 @@ public class WizardData {
     private final SimpleListProperty<String> selectedVariables = new SimpleListProperty<>();
     private final StringProperty minimumThreshold = new SimpleStringProperty();
     private final StringProperty minimumReplacement = new SimpleStringProperty();
-    private final BooleanProperty isReplaceWithNanAbove = new SimpleBooleanProperty();
     private final StringProperty maximumThreshold = new SimpleStringProperty();
     private final StringProperty maximumReplacement = new SimpleStringProperty();
-    private final BooleanProperty isReplaceWithNanBelow = new SimpleBooleanProperty();
     private final StringProperty destinationOut = new SimpleStringProperty();
 
     public StringProperty inFileProperty() {
@@ -85,7 +83,7 @@ public class WizardData {
         selectedVariables.removeAll(variables);
     }
 
-    public StringProperty minimumThresholdProperty() {
+    public StringProperty lowerThresholdProperty() {
         return minimumThreshold;
     }
 
@@ -93,7 +91,7 @@ public class WizardData {
         return minimumThreshold.get();
     }
 
-    public StringProperty minimumReplacementProperty() {
+    public StringProperty lowerReplacementProperty() {
         return minimumReplacement;
     }
 
@@ -101,15 +99,11 @@ public class WizardData {
         return minimumReplacement.get();
     }
 
-    public BooleanProperty isReplaceWithNanBelow () {
-        return isReplaceWithNanBelow;
-    }
-
-    public StringProperty maximumThresholdProperty() {
+    public StringProperty upperThresholdProperty() {
         return maximumThreshold;
     }
 
-    public StringProperty maximumReplacementProperty() {
+    public StringProperty upperReplacementProperty() {
         return maximumReplacement;
     }
 
@@ -119,10 +113,6 @@ public class WizardData {
 
     public String getMaximumThreshold(){
         return maximumThreshold.get();
-    }
-
-    public BooleanProperty isReplaceWithNanAbove () {
-        return isReplaceWithNanAbove;
     }
 
     public String getDestinationOut() {
