@@ -117,6 +117,19 @@ tasks.register<Copy>("copySanitizer") {
 }
 tasks.getByPath(":copySanitizer").dependsOn(":sanitizer:build")
 
+tasks.register<Copy>("copyClipper") {
+    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("lib") {
+        from(project(":clipper").buildDir.toString() + "/libs")
+        include("*.jar")
+    }
+    into("bin"){
+        from(project(":clipper").projectDir.toString() + "/package/windows")
+        include("*.bat", "*.exe")
+    }
+}
+tasks.getByPath(":copyClipper").dependsOn(":clipper:build")
+
 tasks.register<Copy>("copyImageExporter") {
     into("$buildDir/distributions/${rootProject.name}-$version")
     into("lib") {
@@ -167,6 +180,7 @@ tasks.getByPath(":build").finalizedBy(":copyShifter")
 tasks.getByPath(":build").finalizedBy(":copyGridToPointConverter")
 tasks.getByPath(":build").finalizedBy(":copyTransposer")
 tasks.getByPath(":build").finalizedBy(":copySanitizer")
+tasks.getByPath(":build").finalizedBy(":copyClipper")
 tasks.getByPath(":build").finalizedBy(":copyImageExporter")
 tasks.getByPath(":build").finalizedBy(":copyTravelLengthGridCellsExporter")
 tasks.getByPath(":build").finalizedBy(":copyLicense")
