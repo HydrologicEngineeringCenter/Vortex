@@ -1,7 +1,7 @@
 package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.math.Sanatizer;
+import mil.army.usace.hec.vortex.math.Sanitizer;
 import org.gdal.gdal.*;
 
 import java.nio.file.Path;
@@ -91,10 +91,26 @@ public class Transposer {
             return grid;
         }
 
-        VortexGrid sanatized = Sanatizer.builder()
-                .inputGrid(grid)
-                .build()
-                .sanatize();
+        VortexGrid sanatized;
+        String desc = grid.description().toLowerCase();
+        if (desc.contains("precipitation")
+                || desc.contains("precip")
+                || desc.contains("precip") && desc.contains("rate")
+                || desc.contains("qpe01h")
+                || ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
+                && desc.contains("radiation"))
+                || ((desc.contains("snow")) && (desc.contains("water")) && (desc.contains("equivalent")))
+                || desc.contains("albedo")) {
+
+            sanatized = Sanitizer.builder()
+                    .inputGrid(grid)
+                    .minimumThreshold(0)
+                    .minimumReplacementValue(Float.NaN)
+                    .build()
+                    .sanitize();
+        } else {
+            sanatized = grid;
+        }
 
         Dataset datasetIn = RasterUtils.getDatasetFromVortexGrid(sanatized);
 

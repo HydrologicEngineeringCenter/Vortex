@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar></jar>
+  <outfile>D:\projects\vortex\sanitizer\package\windows\sanitizer.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon>D:\projects\vortex\sanitizer\package\windows\vortex_black.ico</icon>
+  <var>PATH=.\gdal;%PATH%</var>
+  <var>GDAL_DRIVER_PATH=.\gdal\gdalplugins</var>
+  <var>GDAL_DATA=.\gdal\gdal-data</var>
+  <var>PROJ_LIB=.\gdal\projlib</var>
+  <classPath>
+    <mainClass>sanitizer.SanitizerWizard</mainClass>
+    <cp>../lib/sanitizer.jar;../lib/*</cp>
+  </classPath>
+  <jre>
+    <path>../jre</path>
+    <bundledJre64Bit>true</bundledJre64Bit>
+    <bundledJreAsFallback>false</bundledJreAsFallback>
+    <minVersion></minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <runtimeBits>64/32</runtimeBits>
+    <opt>-Djava.library.path=&quot;.;./gdal&quot;</opt>
+  </jre>
+</launch4jConfig>
