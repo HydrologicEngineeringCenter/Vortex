@@ -103,6 +103,10 @@ public class DssDataWriter extends DataWriter {
                             dssPathname.setFPart(pathnameIn.getFPart());
                         }
                     }
+                    if (parts.containsKey("units")) {
+                        String unitString = parts.get("units");
+                        gridInfo.setDataUnits(unitString);
+                    }
                 }
 
                 write(convertedData, gridInfo, dssPathname);
@@ -144,6 +148,10 @@ public class DssDataWriter extends DataWriter {
                             dssPathname.setFPart(pathnameIn.getFPart());
                         }
                     }
+                    if (parts.containsKey("units")) {
+                        String unitString = parts.get("units");
+                        gridInfo.setDataUnits(unitString);
+                    }
                 }
 
                 write(convertedData, gridInfo, dssPathname);
@@ -165,6 +173,10 @@ public class DssDataWriter extends DataWriter {
                         if (status == 0) {
                             dssPathname.setFPart(pathnameIn.getFPart());
                         }
+                    }
+                    if (parts.containsKey("units")) {
+                        String unitString = parts.get("units");
+                        gridInfo.setDataUnits(unitString);
                     }
                 }
 
