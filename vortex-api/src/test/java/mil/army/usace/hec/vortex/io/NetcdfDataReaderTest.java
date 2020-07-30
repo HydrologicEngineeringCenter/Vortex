@@ -1,11 +1,14 @@
 package mil.army.usace.hec.vortex.io;
 
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -146,5 +149,32 @@ class NetcdfDataReaderTest {
         VortexGrid grid = grids.get(0);
         assertTrue(grid.startTime().isEqual(ZonedDateTime.of(1983, 12, 31, 23, 0, 0, 0, ZoneId.of("UTC"))));
         assertTrue(grid.endTime().isEqual(ZonedDateTime.of(1984, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))));
+    }
+
+    @Test
+    void CmipPrecipImport(){
+        String inFile = new File("D:/data/CMIP/Extraction_pr.nc").toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("pr")
+                .build();
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+        float[] data = vortexGrid.data();
+
+        List<Double> values = new ArrayList<>();
+        for (int i = 1; i < data.length; i++) {
+            if (!Float.isNaN(data[i])) {
+                values.add((double) data[i]);
+            }
+        }
+
+        double max = Collections.max(values);
+        double min = Collections.min(values);
+
+        assertEquals(66.21134185791016, max, 1E-5);
+        assertEquals(0.04108993336558342, min, 1E-5);
     }
 }
