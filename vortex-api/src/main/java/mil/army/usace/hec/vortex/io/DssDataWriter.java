@@ -112,12 +112,14 @@ public class DssDataWriter extends DataWriter {
 
                 write(convertedData, gridInfo, dssPathname);
 
-            } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN)) {
+            } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN) || units.equals(CELSIUS)) {
                 float[] convertedData = new float[data.length];
                 if (units.equals(FAHRENHEIT)) {
                     IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) ((data[i] - 32.0) * (5.0/9.0)));
                 } else if (units.equals(KELVIN)){
                     IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) (data[i] - 273.15));
+                } else if (units.equals(CELSIUS)) {
+                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i]);
                 }
 
                 gridInfo.setDataType(DssDataType.INST_VAL.value());
@@ -295,7 +297,9 @@ public class DssDataWriter extends DataWriter {
                 || desc.contains("pr")) {
             return "PRECIPITATION";
         } else if (desc.contains("temperature")
-                || desc.equals("airtemp")){
+                || desc.equals("airtemp")
+                || desc.equals("tasmin")
+                || desc.equals("tasmax")){
             return "TEMPERATURE";
         } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
                 && desc.contains("radiation")){
@@ -611,25 +615,34 @@ public class DssDataWriter extends DataWriter {
         DSSPathname updatedPathname = updatePathname(pathname, options);
 
         ZonedDateTime startTime = TimeConverter.toZonedDateTime(getStartTime(gridData.getGridInfo()));
-        ZonedDateTime endTime = TimeConverter.toZonedDateTime(getEndTime(gridData.getGridInfo()));
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMMyyyy");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
 
-        String dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
-        String ePart;
-        if (endTime.getHour() == 0 && endTime.getMinute() == 0) {
-            ZonedDateTime previous = endTime.minusDays(1);
-            ePart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
-        } else {
-            ePart = String.format("%s:%s", dateFormatter.format(endTime), timeFormatter.format(endTime));
-        }
+        if (gridData.getGridInfo().getDataType() != DssDataType.INST_VAL.value()){
+            String dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
+            updatedPathname.setDPart(dPart);
 
-        if (gridData.getGridInfo().getDataType() == DssDataType.INST_VAL.value()){
-            updatedPathname.setDPart(dPart);
-        } else {
-            updatedPathname.setDPart(dPart);
+            ZonedDateTime endTime = TimeConverter.toZonedDateTime(getEndTime(gridData.getGridInfo()));
+            String ePart;
+            if (endTime.getHour() == 0 && endTime.getMinute() == 0) {
+                ZonedDateTime previous = endTime.minusDays(1);
+                ePart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
+            } else {
+                ePart = String.format("%s:%s", dateFormatter.format(endTime), timeFormatter.format(endTime));
+            }
+
             updatedPathname.setEPart(ePart);
+        } else {
+            String dPart;
+            if (startTime.getHour() == 0 && startTime.getMinute() == 0) {
+                ZonedDateTime previous = startTime.minusDays(1);
+                dPart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
+            } else {
+                dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
+            }
+
+            updatedPathname.setDPart(dPart);
         }
 
         griddedData.setPathname(updatedPathname.getPathname());
