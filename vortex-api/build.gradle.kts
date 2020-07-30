@@ -11,10 +11,9 @@ repositories {
 dependencies {
     implementation("org.gdal:gdal:2.4.0")
     implementation("org.locationtech.jts:jts-core:1.16.1")
-    implementation("javax.measure:unit-api:2.0-EDR")
-    implementation("tech.units:indriya:2.0-EDR")
-    implementation("systems.uom:systems-common:0.9")
-    implementation("edu.ucar:netcdfAll:4.6.14")
+    implementation("tech.units:indriya:2.0.4")
+    implementation("systems.uom:systems-common:2.0.2")
+    implementation("edu.ucar:netcdfAll:4.6.15")
     implementation("org.slf4j:slf4j-jdk14:1.7.25")
     implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
     testImplementation ("org.mockito:mockito-core:2.27.0")

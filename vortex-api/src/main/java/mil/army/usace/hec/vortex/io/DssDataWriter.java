@@ -12,6 +12,7 @@ import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
+import mil.army.usace.hec.vortex.util.TimeConverter;
 import org.gdal.osr.SpatialReference;
 
 import javax.measure.Unit;
@@ -29,15 +30,15 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static javax.measure.MetricPrefix.*;
 import static systems.uom.common.USCustomary.*;
-import static tec.units.indriya.unit.MetricPrefix.*;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.HOUR;
 import static tech.units.indriya.unit.Units.*;
 
 public class DssDataWriter extends DataWriter {
 
-    private static Logger logger = Logger.getLogger(DssDataWriter.class.getName());
+    private static final Logger logger = Logger.getLogger(DssDataWriter.class.getName());
 
     DssDataWriter(DataWriterBuilder builder) {
         super(builder);
@@ -290,7 +291,8 @@ public class DssDataWriter extends DataWriter {
                 || desc.contains("precip")
                 || desc.contains("precip") && desc.contains("rate")
                 || desc.contains("qpe01h")
-                || desc.contains("rainfall")) {
+                || desc.contains("rainfall")
+                || desc.contains("pr")) {
             return "PRECIPITATION";
         } else if (desc.contains("temperature")
                 || desc.equals("airtemp")){
@@ -385,6 +387,7 @@ public class DssDataWriter extends DataWriter {
             case "mm/hr":
                 return MILLI(METRE).divide(HOUR);
             case "mm/day":
+            case "mm/d":
                 return MILLI(METRE).divide(DAY);
             case "kg.m-2":
             case "kg/m^2":
@@ -604,19 +607,36 @@ public class DssDataWriter extends DataWriter {
 
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(destination.toString());
-        griddedData.setPathname(updatePathname(pathname, options).getPathname());
-        HecTime startTime = getStartTime(gridData.getGridInfo());
-        HecTime endTime = getEndTime(gridData.getGridInfo());
+
+        DSSPathname updatedPathname = updatePathname(pathname, options);
+
+        ZonedDateTime startTime = TimeConverter.toZonedDateTime(getStartTime(gridData.getGridInfo()));
+        ZonedDateTime endTime = TimeConverter.toZonedDateTime(getEndTime(gridData.getGridInfo()));
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMMyyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+
+        String dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
+        String ePart;
+        if (endTime.getHour() == 0 && endTime.getMinute() == 0) {
+            ZonedDateTime previous = endTime.minusDays(1);
+            ePart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
+        } else {
+            ePart = String.format("%s:%s", dateFormatter.format(endTime), timeFormatter.format(endTime));
+        }
 
         if (gridData.getGridInfo().getDataType() == DssDataType.INST_VAL.value()){
-            griddedData.setGridTime(endTime);
+            updatedPathname.setDPart(dPart);
         } else {
-            griddedData.setGriddedTimeWindow(startTime, endTime);
+            updatedPathname.setDPart(dPart);
+            updatedPathname.setEPart(ePart);
         }
+
+        griddedData.setPathname(updatedPathname.getPathname());
 
         int status = griddedData.storeGriddedData(info, gridData);
         if (status != 0) {
-            System.out.println("DSS write error");
+            logger.log(Level.SEVERE, () -> "DSS write error");
         }
         griddedData.done();
     }
