@@ -85,11 +85,15 @@ class AscDataReader extends DataReader {
             fullName = "maximum vapor pressure deficit";
             description = "maximum vapor pressure deficit";
             isPrismTemporal.set(true);
-        } else if (fileName.matches("qpf.*1hr.*")){
+        } else if (fileName.matches("qpf.*1hr.*")) {
             shortName = "precipitation";
             fullName = "precipitation";
             description = "precipitation";
             isQpfHourly.set(true);
+        } else if (fileName.matches(".*yr.*ha.*")) {
+            shortName = "precipitation-frequency";
+            fullName = "precipitation-frequency";
+            description = "precipitation-frequency";
         } else {
             shortName = "";
             fullName = "";
@@ -140,8 +144,10 @@ class AscDataReader extends DataReader {
             units = "Degrees C";
         } else if (fileName.contains("vpdmin")){
             units = "hPa";
-        } else if (fileName.contains("vpdmax")){
+        } else if (fileName.contains("vpdmax")) {
             units = "hPa";
+        } else if (fileName.matches(".*yr.*ha.*")) {
+            units = "1/1000 in";
         } else {
             units = "";
         }

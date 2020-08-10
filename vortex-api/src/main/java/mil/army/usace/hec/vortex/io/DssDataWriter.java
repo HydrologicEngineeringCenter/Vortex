@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +159,22 @@ public class DssDataWriter extends DataWriter {
                 }
 
                 write(convertedData, gridInfo, dssPathname);
+            } else if (units.equals(ONE.divide(INCH.multiply(1000)))) {
+                float[] convertedData = new float[data.length];
+                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] / 1000);
+
+                gridInfo.setDataUnits("IN");
+
+                DSSPathname dssPathname = new DSSPathname();
+                String cPart;
+                if (!getCPart(grid.shortName()).isEmpty()){
+                    cPart = getCPart(grid.shortName());
+                } else {
+                    cPart = getCPart(grid.description());
+                }
+                dssPathname.setCPart(cPart);
+
+                write(convertedData, gridInfo, dssPathname);
             } else {
                 DSSPathname dssPathname = new DSSPathname();
                 String cPart;
@@ -289,12 +306,14 @@ public class DssDataWriter extends DataWriter {
             return "";
         }
 
-        if (desc.contains("precipitation")
-                || desc.contains("precip")
-                || desc.contains("precip") && desc.contains("rate")
-                || desc.contains("qpe01h")
-                || desc.contains("rainfall")
-                || desc.contains("pr")) {
+        if (desc.contains("precipitation") && desc.contains("frequency")) {
+            return "PRECIPITATION-FREQUENCY";
+        } else if (desc.contains("precipitation")
+                    || desc.contains("precip")
+                    || desc.contains("precip") && desc.contains("rate")
+                    || desc.contains("qpe01h")
+                    || desc.contains("rainfall")
+                    || desc.contains("pr")) {
             return "PRECIPITATION";
         } else if (desc.contains("temperature")
                 || desc.equals("airtemp")
@@ -332,7 +351,9 @@ public class DssDataWriter extends DataWriter {
 
     private static DssDataType getDssDataType(String description) {
         String desc = description.toLowerCase();
-        if (desc.contains("precipitation")
+        if (desc.contains("precipitation") && desc.contains("frequency")) {
+            return DssDataType.INST_VAL;
+        } else if (desc.contains("precipitation")
                 || desc.contains("precip") && desc.contains("rate")
                 || desc.contains("qpe01h")) {
             return DssDataType.PER_CUM;
@@ -402,6 +423,8 @@ public class DssDataWriter extends DataWriter {
             case "inch":
             case "inches":
                 return INCH;
+            case "1/1000 in":
+                return ONE.divide(INCH.multiply(1000));
             case "celsius":
             case "degrees c":
             case "deg c":
@@ -570,7 +593,13 @@ public class DssDataWriter extends DataWriter {
         String unitsString = getUnitsString(units);
         gridInfo.setDataUnits(unitsString);
 
+
+
         ZonedDateTime startTime = grid.startTime();
+
+        if (startTime == null)
+            return gridInfo;
+
         ZonedDateTime endTime = grid.endTime();
         if (!startTime.equals(endTime) && units.isCompatible(CELSIUS)) {
             gridInfo.setDataType(DssDataType.PER_AVER.value());
@@ -587,14 +616,24 @@ public class DssDataWriter extends DataWriter {
 
     private static HecTime getStartTime(GridInfo gridInfo){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-        LocalDateTime date = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
+        LocalDateTime date;
+        try {
+            date = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
         HecTime time = new HecTime();
         time.setXML(date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return time;
     }
     private static HecTime getEndTime(GridInfo gridInfo){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-        LocalDateTime date = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
+        LocalDateTime date;
+        try {
+            date = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
         HecTime time = new HecTime();
         time.setXML(date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return time;
@@ -614,35 +653,39 @@ public class DssDataWriter extends DataWriter {
 
         DSSPathname updatedPathname = updatePathname(pathname, options);
 
-        ZonedDateTime startTime = TimeConverter.toZonedDateTime(getStartTime(gridData.getGridInfo()));
+        HecTime time0 = getStartTime(gridData.getGridInfo());
+        HecTime time1 = getEndTime(gridData.getGridInfo());
+        if (time0 != null && time1 != null) {
+            ZonedDateTime startTime = TimeConverter.toZonedDateTime(time0);
 
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMMyyyy");
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMMyyyy");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
 
-        if (gridData.getGridInfo().getDataType() != DssDataType.INST_VAL.value()){
-            String dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
-            updatedPathname.setDPart(dPart);
+            if (gridData.getGridInfo().getDataType() != DssDataType.INST_VAL.value()) {
+                String dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
+                updatedPathname.setDPart(dPart);
 
-            ZonedDateTime endTime = TimeConverter.toZonedDateTime(getEndTime(gridData.getGridInfo()));
-            String ePart;
-            if (endTime.getHour() == 0 && endTime.getMinute() == 0) {
-                ZonedDateTime previous = endTime.minusDays(1);
-                ePart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
+                ZonedDateTime endTime = TimeConverter.toZonedDateTime(time1);
+                String ePart;
+                if (endTime.getHour() == 0 && endTime.getMinute() == 0) {
+                    ZonedDateTime previous = endTime.minusDays(1);
+                    ePart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
+                } else {
+                    ePart = String.format("%s:%s", dateFormatter.format(endTime), timeFormatter.format(endTime));
+                }
+
+                updatedPathname.setEPart(ePart);
             } else {
-                ePart = String.format("%s:%s", dateFormatter.format(endTime), timeFormatter.format(endTime));
-            }
+                String dPart;
+                if (startTime.getHour() == 0 && startTime.getMinute() == 0) {
+                    ZonedDateTime previous = startTime.minusDays(1);
+                    dPart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
+                } else {
+                    dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
+                }
 
-            updatedPathname.setEPart(ePart);
-        } else {
-            String dPart;
-            if (startTime.getHour() == 0 && startTime.getMinute() == 0) {
-                ZonedDateTime previous = startTime.minusDays(1);
-                dPart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
-            } else {
-                dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
+                updatedPathname.setDPart(dPart);
             }
-
-            updatedPathname.setDPart(dPart);
         }
 
         griddedData.setPathname(updatedPathname.getPathname());
