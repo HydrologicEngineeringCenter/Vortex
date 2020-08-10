@@ -308,6 +308,8 @@ public class DssDataWriter extends DataWriter {
 
         if (desc.contains("precipitation") && desc.contains("frequency")) {
             return "PRECIPITATION-FREQUENCY";
+        } else if (desc.contains("pressure") && desc.contains("surface")) {
+            return "PRESSURE";
         } else if (desc.contains("precipitation")
                     || desc.contains("precip")
                     || desc.contains("precip") && desc.contains("rate")
@@ -448,8 +450,10 @@ public class DssDataWriter extends DataWriter {
                 return KILO(METRE).divide(HOUR);
             case "%":
                 return PERCENT;
-            case "hPa":
+            case "hpa":
                 return HECTO(PASCAL);
+            case "pa":
+                return PASCAL;
             case "m":
                 return METRE;
             default:
@@ -502,6 +506,9 @@ public class DssDataWriter extends DataWriter {
         }
         if (unit.equals(KILO(PASCAL))){
             return "KPA";
+        }
+        if (unit.equals(PASCAL)) {
+            return "PA";
         }
         if (unit.equals(PERCENT)){
             return "%";
