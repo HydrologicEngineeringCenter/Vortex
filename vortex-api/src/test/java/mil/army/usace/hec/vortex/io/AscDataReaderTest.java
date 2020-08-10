@@ -7,7 +7,7 @@ import java.io.File;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class AscDataReaderTest {
 
@@ -46,5 +46,18 @@ class AscDataReaderTest {
 
         VortexGrid grid = (VortexGrid) reader.getDtos().get(0);
         assertEquals(grid.endTime(), ZonedDateTime.of(2019, 12,19, 0, 0, 0, 0, ZoneId.of("UTC")));
+    }
+
+    @Test
+    void Atlas14Import(){
+        String path = new File(getClass().getResource("/orb100yr24ha/orb100yr24ha.asc").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(path)
+                .variable("orb100yr24ha")
+                .build();
+
+        VortexGrid grid = (VortexGrid) reader.getDtos().get(0);
+        assertNotNull(grid);
     }
 }
