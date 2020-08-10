@@ -1,16 +1,21 @@
 package sanitizer;
 
-import javafx.beans.property.*;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WizardData {
+
+    private static final Logger logger = Logger.getLogger(WizardData.class.getName());
 
     private final StringProperty inFile = new SimpleStringProperty();
     private final SimpleListProperty<String> availableVariables = new SimpleListProperty<>();
@@ -45,8 +50,8 @@ public class WizardData {
                         .appendPattern("ddMMMuuuu:HHmm")
                         .toFormatter();
                 grids.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
-            } catch (DateTimeParseException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, e, e::getMessage);
             }
         }
         availableVariables.set(grids);
@@ -64,8 +69,8 @@ public class WizardData {
                         .appendPattern("ddMMMuuuu:HHmm")
                         .toFormatter();
                 grids.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
-            } catch (DateTimeParseException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, e, e::getMessage);
             }
         }
         selectedVariables.set(grids);
