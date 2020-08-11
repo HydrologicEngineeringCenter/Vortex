@@ -175,6 +175,22 @@ public class DssDataWriter extends DataWriter {
                 dssPathname.setCPart(cPart);
 
                 write(convertedData, gridInfo, dssPathname);
+            } else if (units.equals(PASCAL)) {
+                float[] convertedData = new float[data.length];
+                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] / 1000);
+
+                gridInfo.setDataUnits("KPA");
+
+                DSSPathname dssPathname = new DSSPathname();
+                String cPart;
+                if (!getCPart(grid.shortName()).isEmpty()){
+                    cPart = getCPart(grid.shortName());
+                } else {
+                    cPart = getCPart(grid.description());
+                }
+                dssPathname.setCPart(cPart);
+
+                write(convertedData, gridInfo, dssPathname);
             } else {
                 DSSPathname dssPathname = new DSSPathname();
                 String cPart;
