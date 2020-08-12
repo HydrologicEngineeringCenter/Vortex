@@ -19,7 +19,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 class DssDataReader extends DataReader {
 
@@ -64,15 +63,23 @@ class DssDataReader extends DataReader {
         double lly = info.getLowerLeftCellY() * cellSize;
         int direction = ReferenceUtils.getUlyDirection(wkt, ulx, lly);
         double uly = lly + direction * ny * cellSize;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-        ZonedDateTime startTime = ZonedDateTime.of(LocalDateTime.parse(info.getStartTime(), formatter), ZoneId.of("UTC"));
-        AtomicReference<ZonedDateTime> endTime = new AtomicReference<>();
-        try {
-            endTime.set(ZonedDateTime.of(LocalDateTime.parse(info.getEndTime(), formatter), ZoneId.of("UTC")));
-        } catch (DateTimeParseException e){
-            endTime.set(startTime);
+        ZonedDateTime startTime;
+        ZonedDateTime endTime;
+        Duration interval;
+        if (!info.getStartTime().isEmpty()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
+            startTime = ZonedDateTime.of(LocalDateTime.parse(info.getStartTime(), formatter), ZoneId.of("UTC"));
+            try {
+                endTime = ZonedDateTime.of(LocalDateTime.parse(info.getEndTime(), formatter), ZoneId.of("UTC"));
+            } catch (DateTimeParseException e) {
+                endTime = startTime;
+            }
+            interval = Duration.between(startTime, endTime);
+        } else {
+            startTime = null;
+            endTime = null;
+            interval = null;
         }
-        Duration interval = Duration.between(startTime, endTime.get());
         DSSPathname dssPathname = new DSSPathname(variableName);
         String pathName = dssPathname.getPathname();
         String variable = dssPathname.cPart();
@@ -85,7 +92,7 @@ class DssDataReader extends DataReader {
                 .fileName(path).shortName(variable)
                 .description(variable).fullName(pathName)
                 .startTime(startTime)
-                .endTime(endTime.get())
+                .endTime(endTime)
                 .interval(interval).build();
     }
 
