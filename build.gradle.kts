@@ -1,11 +1,15 @@
 plugins {
     java
+    id ("org.openjfx.javafxplugin") version "0.0.8"
     id("nebula.release") version "13.1.1"
 }
 
 val version = project.version.toString()
 
+val windows_x64 by configurations.creating
+
 repositories {
+    maven(url = "https://www.hec.usace.army.mil/nexus/repository/maven-public/")
     maven(url = "https://artifacts.unidata.ucar.edu/repository/unidata-all/")
     mavenCentral()
 }
@@ -18,6 +22,14 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
+    windows_x64 ("net.adoptopenjdk:jre:11.0.6_10@zip")
+    windows_x64 ("mil.army.usace.hec:javaHeclib:7-HK@zip")
+    windows_x64 ("org.gdal:gdal:2.4.4-win-x64@zip")
+}
+
+javafx {
+    version = "11"
+    modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 tasks.register<Copy>("copyRuntimeLibs") {
@@ -26,16 +38,16 @@ tasks.register<Copy>("copyRuntimeLibs") {
     into("$buildDir/distributions/${rootProject.name}-$version/lib")
 }
 
-tasks.register<Copy>("copyJre"){
-    from ("$projectDir/jre")
-    into ("$buildDir/distributions/${rootProject.name}-$version/jre")
+tasks.register<Copy>("copyJavafx"){
+    from ("$buildDir/distributions/${base.archivesBaseName}-$version/lib")
+    include ("javafx*.jar")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version/jmods")
 }
 
-tasks.register<Copy>("copyNatives"){
-    from ("$projectDir/bin"){
-        exclude("*.xml", "*.ico")
-    }
-    into ("$buildDir/distributions/${rootProject.name}-$version/bin")
+tasks.register<Delete>("deleteJavafx"){
+    delete(fileTree("$buildDir/distributions/${base.archivesBaseName}-$version/lib").matching {
+        include("javafx*.jar")
+    })
 }
 
 tasks.register<Copy>("copyImporter") {
@@ -171,8 +183,40 @@ tasks.register<Copy>("copyFatJar") {
     into("${rootProject.projectDir}/build/distributions")
 }
 
+tasks.register<Copy>("getNatives") {
+    configurations.getByName("windows_x64").asFileTree.forEach() {
+        from(zipTree(it))
+        into("$projectDir/bin")
+    }
+}
+
+tasks.register<Delete>("refreshNatives") {
+    destroyables.register("$projectDir/x64")
+    doLast {
+        delete("$projectDir/bin")
+    }
+}
+tasks.getByName("refreshNatives") { finalizedBy("getNatives") }
+
+tasks.register<Copy>("copyNatives") {
+    from ("$projectDir/bin")
+    exclude ("jre")
+    into ("$buildDir/distributions/${rootProject.name}-$version/bin")
+}
+
+tasks.getByName("copyNatives") { dependsOn("refreshNatives") }
+
+tasks.register<Copy>("copyJre") {
+    from ("$projectDir/bin/jre")
+    into ("$buildDir/distributions/${rootProject.name}-$version/jre")
+}
+
+tasks.getByName("copyJre") {dependsOn("refreshNatives")}
+
 tasks.getByPath(":build").finalizedBy(":copyJre")
 tasks.getByPath(":build").finalizedBy(":copyRuntimeLibs")
+tasks.getByName("copyRuntimeLibs") { finalizedBy("copyJavafx") }
+tasks.getByName("copyJavafx") { finalizedBy("deleteJavafx") }
 tasks.getByPath(":build").finalizedBy(":copyNatives")
 tasks.getByPath(":build").finalizedBy(":copyImporter")
 tasks.getByPath(":build").finalizedBy(":copyNormalizer")

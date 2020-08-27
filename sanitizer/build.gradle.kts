@@ -1,6 +1,7 @@
 plugins {
     java
     application
+    id ("org.openjfx.javafxplugin")
 }
 
 base.archivesBaseName = "sanitizer"
@@ -21,8 +22,9 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
 }
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+javafx {
+    version = "11"
+    modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 tasks.jar {

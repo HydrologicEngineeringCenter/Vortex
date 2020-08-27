@@ -1,6 +1,7 @@
 plugins {
     java
     application
+    id ("org.openjfx.javafxplugin")
 }
 
 base.archivesBaseName = "grid-to-point-converter"
@@ -14,6 +15,7 @@ repositories {
 dependencies {
     implementation(project(":vortex-api"))
     implementation("org.slf4j:slf4j-jdk14:1.7.25")
+    implementation("org.openjfx:javafx-fxml:11")
     implementation("com.google.inject:guice:4.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
@@ -22,7 +24,12 @@ dependencies {
 }
 
 configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+}
+
+javafx {
+    version = "11"
+    modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 tasks.jar {

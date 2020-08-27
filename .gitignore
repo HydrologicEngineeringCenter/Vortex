@@ -5,4 +5,5 @@ build
 final_build*.bat
 rc_build*.bat
 candidate_build*.bat
+bin
 /scripts/
