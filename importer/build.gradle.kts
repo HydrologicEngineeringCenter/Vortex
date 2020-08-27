@@ -1,6 +1,7 @@
 plugins {
     java
     application
+    id ("org.openjfx.javafxplugin")
 }
 
 base.archivesBaseName = "importer"
@@ -21,8 +22,9 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
 }
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+javafx {
+    version = "11"
+    modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 tasks.jar {
@@ -58,6 +60,18 @@ tasks.register<Copy>("copyRuntimeLibs"){
     into ("$buildDir/distributions/${base.archivesBaseName}-$version/lib")
 }
 
+tasks.register<Copy>("copyJavafx"){
+    from ("$buildDir/distributions/${base.archivesBaseName}-$version/lib")
+    include ("javafx*.jar")
+    into ("$buildDir/distributions/${base.archivesBaseName}-$version/jmods")
+}
+
+tasks.register<Delete>("deleteJavafx"){
+    delete(fileTree("$buildDir/distributions/${base.archivesBaseName}-$version/lib").matching {
+        include("javafx*.jar")
+    })
+}
+
 tasks.register<Copy>("copyMapserver"){
     from ("${rootProject.projectDir}/bin") {
         include ("gdal/**")
@@ -73,6 +87,8 @@ tasks.register<Copy>("copyNatives"){
 tasks.build{finalizedBy("copyJar")}
 tasks.build{finalizedBy("copyResources")}
 tasks.build{finalizedBy("copyRuntimeLibs")}
+tasks.getByName("copyRuntimeLibs") { finalizedBy("copyJavafx") }
+tasks.getByName("copyJavafx") { finalizedBy("deleteJavafx") }
 tasks.build{finalizedBy("copyMapserver")}
 tasks.build{finalizedBy("copyNatives")}
 
