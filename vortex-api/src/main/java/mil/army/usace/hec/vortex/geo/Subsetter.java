@@ -51,10 +51,10 @@ public class Subsetter {
         int nx = grid.nx();
         int ny = grid.ny();
 
-        int offsetX = (int) Math.round(Math.floor(envelope.getMinX() - originX) / dx);
-        int offsetY = (int) Math.round(Math.floor(envelope.getMaxY() - originY) / dy);
-        int subsetNx = Math.min((int) Math.round(Math.ceil(envelope.getMaxX() - originX) / dx) - offsetX, nx - offsetX);
-        int subsetNy = Math.min((int) Math.round(Math.ceil(envelope.getMinY() - originY) / dy) - offsetY, ny - offsetY);
+        int offsetX = (int) Math.floor((envelope.getMinX() - originX) / dx);
+        int offsetY = (int) Math.floor((envelope.getMaxY() - originY) / dy);
+        int subsetNx = Math.min((int) Math.ceil((envelope.getMaxX() - originX) / dx) - offsetX, nx - offsetX);
+        int subsetNy = Math.min((int) Math.ceil((envelope.getMinY() - originY) / dy) - offsetY, ny - offsetY);
         double subsetOriginX = originX + offsetX * dx;
         double subsetOriginY = originY + offsetY * dy;
 
