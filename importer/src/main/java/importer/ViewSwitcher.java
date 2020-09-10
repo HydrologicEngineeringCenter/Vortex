@@ -18,7 +18,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public class ViewSwitcher {
 
-    private Logger log = LoggerFactory.getLogger(ViewSwitcher.class);
+    private final Logger log = LoggerFactory.getLogger(ViewSwitcher.class);
 
     private static final String WINDOW_POSITION_X = "Window_Position_X";
     private static final String WINDOW_POSITION_Y = "Window_Position_Y";
@@ -38,6 +38,16 @@ public class ViewSwitcher {
 
         Path pathToProperties = Paths.get(System.getProperty("user.home")
                 + File.separator + ".vortex" + File.separator + "importer.properties" );
+
+        Path directory = pathToProperties.getParent();
+
+        if (Files.notExists(directory)) {
+            try {
+                Files.createDirectory(directory);
+            } catch (IOException e) {
+                log.error(e.toString());
+            }
+        }
 
         if (Files.exists(pathToProperties)) {
             try (InputStream input = Files.newInputStream(pathToProperties)) {
