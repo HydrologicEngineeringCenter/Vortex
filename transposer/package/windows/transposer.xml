@@ -30,6 +30,6 @@
     <maxVersion></maxVersion>
     <jdkPreference>preferJre</jdkPreference>
     <runtimeBits>64/32</runtimeBits>
-    <opt>--module-path &quot;..\jmods&quot; --add-modules javafx.controls,javafx.fxml -Djava.library.path=&quot;.;./gdal&quot;</opt>
+    <opt>--module-path &quot;..\jmods&quot; --add-modules javafx.controls,javafx.fxml -Djavafx.cachedir=. -Djava.library.path=&quot;.;./gdal&quot;</opt>
   </jre>
 </launch4jConfig>
