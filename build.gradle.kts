@@ -155,19 +155,6 @@ tasks.register<Copy>("copyImageExporter") {
 }
 tasks.getByPath(":copyImageExporter").dependsOn(":image-exporter:build")
 
-tasks.register<Copy>("copyTravelLengthGridCellsExporter") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
-    into("lib") {
-        from(project(":travel-length-grid-cells-exporter").buildDir.toString() + "/libs")
-        include("*.jar")
-    }
-    into("bin"){
-        from(project(":travel-length-grid-cells-exporter").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
-    }
-}
-tasks.getByPath(":copyTravelLengthGridCellsExporter").dependsOn(":travel-length-grid-cells-exporter:build")
-
 tasks.register<Copy>("copyLicense") {
     from(project.rootDir) {
         include("LICENSE.md")
@@ -226,7 +213,6 @@ tasks.getByPath(":build").finalizedBy(":copyTransposer")
 tasks.getByPath(":build").finalizedBy(":copySanitizer")
 tasks.getByPath(":build").finalizedBy(":copyClipper")
 tasks.getByPath(":build").finalizedBy(":copyImageExporter")
-tasks.getByPath(":build").finalizedBy(":copyTravelLengthGridCellsExporter")
 tasks.getByPath(":build").finalizedBy(":copyLicense")
 
 tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
