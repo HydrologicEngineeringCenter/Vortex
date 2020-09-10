@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -151,6 +152,7 @@ class NetcdfDataReaderTest {
         assertTrue(grid.endTime().isEqual(ZonedDateTime.of(1984, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))));
     }
 
+    @Disabled
     @Test
     void CmipPrecipImport(){
         String inFile = new File("D:/data/CMIP/Extraction_pr.nc").toString();
