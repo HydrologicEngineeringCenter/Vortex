@@ -7,6 +7,7 @@ import si.uom.NonSI;
 import tech.units.indriya.AbstractUnit;
 import tech.units.indriya.unit.Units;
 import ucar.ma2.Array;
+import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
@@ -122,7 +123,7 @@ public class VariableDsReader {
                 }
             } catch (IOException | InvalidRangeException e) {
                 logger.log(Level.SEVERE, e, e::getMessage);
-                array = ucar.ma2.Array.factory(new float[]{});
+                array = ucar.ma2.Array.factory(DataType.FLOAT, new int[]{});
             }
 
             float[] data = getFloatArray(array);

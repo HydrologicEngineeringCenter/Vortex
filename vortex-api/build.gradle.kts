@@ -13,12 +13,11 @@ dependencies {
     implementation("org.locationtech.jts:jts-core:1.16.1")
     implementation("tech.units:indriya:2.0.4")
     implementation("systems.uom:systems-common:2.0.2")
-    implementation("edu.ucar:netcdfAll:4.6.15") {
-        exclude("com.google.protobuf",  "protobuf-java")
-        exclude("com.google.protobuf",  "protobuf-lite")
-    }
+    implementation("edu.ucar:cdm-core:5.3.3")
     implementation("org.slf4j:slf4j-jdk14:1.7.25")
     implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
+    runtimeOnly("edu.ucar:grib:5.3.3")
+    runtimeOnly("edu.ucar:netcdf4:5.3.3")
     testImplementation ("org.mockito:mockito-core:2.27.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
