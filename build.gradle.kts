@@ -198,30 +198,40 @@ tasks.register<Copy>("copyJre") {
     into ("$buildDir/distributions/${rootProject.name}-$version/jre")
 }
 
-tasks.getByName("copyJre") {dependsOn("refreshNatives")}
+tasks.register<Zip>("zipWin") {
+    archiveFileName.set("${rootProject.name}-$version-win-x64" + ".zip")
+    destinationDirectory.set(file("$buildDir/distributions"))
+    from (fileTree("$buildDir/distributions/${rootProject.name}-$version"))
+    into ("${rootProject.name}-$version")
+}
 
-tasks.getByPath(":build").finalizedBy(":copyJre")
-tasks.getByPath(":build").finalizedBy(":copyRuntimeLibs")
+tasks.getByName("copyJre").dependsOn("refreshNatives")
+
+tasks.getByName("build") { finalizedBy("copyJre") }
+tasks.getByName("build") { finalizedBy("copyRuntimeLibs") }
 tasks.getByName("copyRuntimeLibs") { finalizedBy("copyJavafx") }
 tasks.getByName("copyJavafx") { finalizedBy("deleteJavafx") }
-tasks.getByPath(":build").finalizedBy(":copyNatives")
-tasks.getByPath(":build").finalizedBy(":copyImporter")
-tasks.getByPath(":build").finalizedBy(":copyNormalizer")
-tasks.getByPath(":build").finalizedBy(":copyShifter")
-tasks.getByPath(":build").finalizedBy(":copyGridToPointConverter")
-tasks.getByPath(":build").finalizedBy(":copyTransposer")
-tasks.getByPath(":build").finalizedBy(":copySanitizer")
-tasks.getByPath(":build").finalizedBy(":copyClipper")
-tasks.getByPath(":build").finalizedBy(":copyImageExporter")
-tasks.getByPath(":build").finalizedBy(":copyLicense")
+tasks.getByName("build") { finalizedBy("copyNatives") }
+tasks.getByName("build") { finalizedBy("copyImporter") }
+tasks.getByName("build") { finalizedBy("copyNormalizer") }
+tasks.getByName("build") { finalizedBy("copyShifter") }
+tasks.getByName("build") { finalizedBy("copyGridToPointConverter") }
+tasks.getByName("build") { finalizedBy("copyTransposer") }
+tasks.getByName("build") { finalizedBy("copySanitizer") }
+tasks.getByName("build") { finalizedBy("copyClipper") }
+tasks.getByName("build") { finalizedBy("copyImageExporter") }
+tasks.getByName("build") { finalizedBy("copyLicense") }
+tasks.getByName("build").dependsOn("vortex-api:fatJar")
+tasks.getByName("build") { finalizedBy("copyFatJar") }
+tasks.getByName("build") { finalizedBy("zipWin") }
+tasks.getByName("zipWin").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", "copyNatives", "copyNatives",
+        "copyImporter", "copyNormalizer", "copyShifter", "copyGridToPointConverter", "copyTransposer", "copySanitizer",
+        "copyClipper", "copyImageExporter", "copyLicense")
 
-tasks.getByPath(":build").dependsOn("vortex-api:fatJar")
-tasks.getByPath(":build").finalizedBy(":copyFatJar")
-
-tasks.getByPath(":final").dependsOn(":build")
+tasks.getByName("final").dependsOn(":build")
 tasks.getByName("candidate").dependsOn(":build")
 
-tasks.getByPath(":jar").enabled = false
+tasks.getByName("jar").enabled = false
 
 tasks.withType<Test> {
     maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).takeIf { it > 0 } ?: 1
