@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
-import static javax.measure.MetricPrefix.*;
+import static javax.measure.MetricPrefix.KILO;
 import static systems.uom.common.USCustomary.DEGREE_ANGLE;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.METRE;
@@ -48,7 +48,7 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public List<VortexData> getDtos() {
-        try (NetcdfDataset ncd = NetcdfDataset.openDataset(path);  Formatter errlog = new Formatter()) {
+        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path);  Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
             if (dataset != null) {
                 FeatureType ftype = dataset.getFeatureType();
@@ -87,7 +87,7 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public VortexData getDto(int idx) {
-        try (NetcdfDataset ncd = NetcdfDataset.openDataset(path);  Formatter errlog = new Formatter()) {
+        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path);  Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
             if (dataset != null) {
                 FeatureType ftype = dataset.getFeatureType();
@@ -122,7 +122,7 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public int getDtoCount() {
-        try (NetcdfDataset ncd = NetcdfDataset.openDataset(path);  Formatter errlog = new Formatter()) {
+        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path);  Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
             if (dataset != null) {
                 FeatureType ftype = dataset.getFeatureType();
@@ -151,7 +151,7 @@ public class NetcdfDataReader extends DataReader {
     }
 
     public static Set<String> getVariables(String path) {
-        try (NetcdfDataset ncd = NetcdfDataset.openDataset(path)) {
+        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path)) {
             List<Variable> variables = ncd.getVariables();
             Set<String> variableNames = new HashSet<>();
             variables.forEach(variable -> {
@@ -258,7 +258,7 @@ public class NetcdfDataReader extends DataReader {
                             .interval(interval)
                             .build());
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, e, e::getMessage);;
+                    logger.log(Level.SEVERE, e, e::getMessage);
                 }
             });
         } else {

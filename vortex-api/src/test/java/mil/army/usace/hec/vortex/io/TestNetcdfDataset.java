@@ -23,7 +23,7 @@ class TestNetcdfDataset {
         NetcdfDataset ncd = null;
         try {
             assert path != null;
-            ncd = NetcdfDataset.openDataset(path.toString());
+            ncd = NetcdfDatasets.openDataset(path.toString());
         } catch(Exception e){
             e.printStackTrace();
         } finally {
