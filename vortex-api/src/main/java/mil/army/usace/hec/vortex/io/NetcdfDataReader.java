@@ -6,7 +6,6 @@ import mil.army.usace.hec.vortex.geo.Grid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import ucar.ma2.Array;
-import ucar.ma2.DataType;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.FeatureType;
@@ -171,22 +170,11 @@ public class NetcdfDataReader extends DataReader {
     }
 
     private float[] getFloatArray(Array array) {
-        DataType type = array.getDataType();
-        try {
-            if (type == DataType.FLOAT) {
-                return (float[]) array.copyTo1DJavaArray();
-            } else if (type == DataType.DOUBLE) {
-                double[] dataIn = (double[]) array.copyTo1DJavaArray();
-                float[] dataOut = new float[(int) array.getSize()];
-                for (int i = 0; i < dataIn.length; i++) {
-                    dataOut[i] = (float) (dataIn[i]);
-                }
-                return dataOut;
-            }
-        } catch (ClassCastException e) {
-            return new float[]{};
+        float[] data = new float[(int) array.getSize()];
+        for (int i = 0; i < array.getSize(); i++) {
+            data[i] = array.getFloat(i);
         }
-        return new float[]{};
+        return data;
     }
 
     private List<VortexData> getData(GridDataset dataset, String variable) {
