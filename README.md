@@ -35,7 +35,7 @@ These instructions demonstrate how to build, test, and run the source code on yo
 
 ### Prerequisites
 
-You will need JDK 8.  The version used for building releases is OpenJDK 8, from [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/what-is-corretto-8.html). The [AdoptOpenJDK](https://adoptopenjdk.net/) does not include the JavaFX library; Attempts to build with AdoptOpenJDK will fail to compile.
+You will need JDK 11.  The version used for building releases is OpenJDK, from [AdoptOpenJDK](https://adoptopenjdk.net/releases.html). When running from an IDE, you must also include a JavaFX SDK in your run configuration (https://gluonhq.com/products/javafx/). You do not need a JavaFX SDK if running via Gradle.
 
 This repository includes a [Gradle](https://gradle.org/) Wrapper; No Gradle installation is required. The JAVA_HOME environment variable should be set to a project appropriate JDK.
 
