@@ -179,4 +179,20 @@ class NetcdfDataReaderTest {
         assertEquals(66.21134185791016, max, 1E-5);
         assertEquals(0.04108993336558342, min, 1E-5);
     }
+
+    @Disabled
+    @Test
+    void ArizonaSweDaily(){
+        String inFile = new File(getClass().getResource("/01.nc").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("SWE")
+                .build();
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+        assertEquals(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2020, 3, 2, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
 }
