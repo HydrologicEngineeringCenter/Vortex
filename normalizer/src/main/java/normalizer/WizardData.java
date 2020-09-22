@@ -1,15 +1,18 @@
 package normalizer;
 
-import javafx.beans.property.*;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 
 public class WizardData {
 
@@ -19,12 +22,12 @@ public class WizardData {
     private final StringProperty normalsFile = new SimpleStringProperty();
     private final SimpleListProperty<String> availableNormalGrids = new SimpleListProperty<>();
     private final SimpleListProperty<String> selectedNormalGrids = new SimpleListProperty<>();
-    private final SimpleObjectProperty<LocalDate> startDate = new SimpleObjectProperty<>();
-    private final SimpleObjectProperty<ZonedDateTime> startDateTime = new SimpleObjectProperty<>();
-    private final SimpleObjectProperty<ZonedDateTime> endDateTime = new SimpleObjectProperty<>();
-    private final SimpleObjectProperty<LocalDate> endDate = new SimpleObjectProperty<>();
+    private final StringProperty startDate = new SimpleStringProperty();
+    private final StringProperty endDate = new SimpleStringProperty();
     private final StringProperty startTime = new SimpleStringProperty();
     private final StringProperty endTime = new SimpleStringProperty();
+    private final SimpleObjectProperty<ZonedDateTime> startDateTime = new SimpleObjectProperty<>();
+    private final SimpleObjectProperty<ZonedDateTime> endDateTime = new SimpleObjectProperty<>();
     private final StringProperty interval = new SimpleStringProperty();
     private final StringProperty intervalType = new SimpleStringProperty();
     private final StringProperty destinationOut = new SimpleStringProperty();
@@ -140,16 +143,8 @@ public class WizardData {
         return availableNormalGrids;
     }
 
-    public SimpleObjectProperty<LocalDate> startDateProperty() {
+    public StringProperty startDateProperty() {
         return startDate;
-    }
-
-    public void setStartDate(LocalDate time) {
-        startDate.set(time);
-    }
-
-    public LocalDate getStartDate(){
-        return startDate.get();
     }
 
     public SimpleObjectProperty<ZonedDateTime> startDateTimeProperty() {
@@ -172,16 +167,8 @@ public class WizardData {
         return startTime.get();
     }
 
-    public SimpleObjectProperty<LocalDate> endDateProperty() {
+    public StringProperty endDateProperty() {
         return endDate;
-    }
-
-    public void setEndDate(LocalDate date) {
-        endDate.set(date);
-    }
-
-    public LocalDate getEndDate(){
-        return endDate.get();
     }
 
     public StringProperty endTimeProperty() {

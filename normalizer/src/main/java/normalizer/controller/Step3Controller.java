@@ -8,10 +8,7 @@ import normalizer.WizardData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
@@ -19,9 +16,9 @@ public class Step3Controller {
 
     private Logger log = LoggerFactory.getLogger(Step3Controller.class);
 
-    @FXML DatePicker startDate;
+    @FXML TextField startDate;
     @FXML TextField startTime;
-    @FXML DatePicker endDate;
+    @FXML TextField endDate;
     @FXML TextField endTime;
     @FXML TextField interval;
     @FXML ComboBox<String> intervalType;
@@ -31,8 +28,8 @@ public class Step3Controller {
 
     @FXML
     public void initialize() {
-        startDate.valueProperty().bindBidirectional(model.startDateProperty());
-        endDate.valueProperty().bindBidirectional(model.endDateProperty());
+        startDate.textProperty().bindBidirectional(model.startDateProperty());
+        endDate.textProperty().bindBidirectional(model.endDateProperty());
         startTime.textProperty().bindBidirectional(model.startTimeProperty());
         endTime.textProperty().bindBidirectional(model.endTimeProperty());
         interval.textProperty().bindBidirectional(model.intervalProperty());
@@ -44,11 +41,12 @@ public class Step3Controller {
 
     @Validate
     public boolean validate() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmm");
-        
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("M/d/yyyy");
         try {
-            LocalTime startTime = LocalTime.parse(model.getStartTime(), formatter);
-            ZonedDateTime startDateTime = ZonedDateTime.of(LocalDateTime.of(model.getStartDate(), startTime), ZoneId.of("UTC"));
+            LocalTime startTime = LocalTime.parse(model.getStartTime(), timeFormatter);
+            LocalDate startD = LocalDate.parse(startDate.textProperty().get(), dateFormatter);
+            ZonedDateTime startDateTime = ZonedDateTime.of(LocalDateTime.of(startD, startTime), ZoneId.of("UTC"));
             model.startDateTimeProperty().set(startDateTime);
         } catch (DateTimeParseException e){
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -61,8 +59,9 @@ public class Step3Controller {
         }
 
         try {
-            LocalTime endTime = LocalTime.parse(model.getStartTime(), formatter);
-            ZonedDateTime endDateTime = ZonedDateTime.of(LocalDateTime.of(model.getEndDate(), endTime), ZoneId.of("UTC"));
+            LocalTime endTime = LocalTime.parse(model.getStartTime(), timeFormatter);
+            LocalDate endD = LocalDate.parse(endDate.textProperty().get(), dateFormatter);
+            ZonedDateTime endDateTime = ZonedDateTime.of(LocalDateTime.of(endD, endTime), ZoneId.of("UTC"));
             model.endDateTimeProperty().set(endDateTime);
         } catch (DateTimeParseException e){
             Alert alert = new Alert(Alert.AlertType.ERROR);

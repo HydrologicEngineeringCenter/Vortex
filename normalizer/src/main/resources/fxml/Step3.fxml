@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.DatePicker?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Text?>
-
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 <HBox xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="normalizer.controller.Step3Controller">
    <children>
       <VBox fillWidth="false" spacing="10.0">
@@ -35,9 +28,9 @@
                <children>
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Start:" />
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="End:" GridPane.rowIndex="1" />
-                  <DatePicker fx:id="startDate" maxWidth="-Infinity" minWidth="-Infinity" promptText="1/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" />
+                  <TextField fx:id="startDate" maxWidth="-Infinity" minWidth="-Infinity" promptText="1/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" />
                   <TextField fx:id="startTime" promptText="0000" GridPane.columnIndex="4" />
-                  <DatePicker fx:id="endDate" maxWidth="-Infinity" minWidth="-Infinity" promptText="2/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1" />
+                  <TextField fx:id="endDate" maxWidth="-Infinity" minWidth="-Infinity" promptText="2/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1" />
                   <TextField fx:id="endTime" promptText="0000" GridPane.columnIndex="4" GridPane.rowIndex="1" />
                </children>
             </GridPane>
