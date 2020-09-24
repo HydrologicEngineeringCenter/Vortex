@@ -20,7 +20,7 @@
   <var>PROJ_LIB=.\gdal\projlib</var>
   <classPath>
     <mainClass>converter.ConverterWizard</mainClass>
-    <cp>../lib/converter.jar;../lib/*</cp>
+    <cp>../lib/grid-to-point-converter.jar;../lib/*</cp>
   </classPath>
   <jre>
     <path>../jre</path>
