@@ -180,7 +180,6 @@ class NetcdfDataReaderTest {
         assertEquals(0.04108993336558342, min, 1E-5);
     }
 
-    @Disabled
     @Test
     void ArizonaSweDaily(){
         String inFile = new File(getClass().getResource("/01.nc").getFile()).toString();

@@ -317,7 +317,7 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time)).minusHours(1);
                 } else if (fileName.matches(".*aorc.*tmp.*nc4.*")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
-                } else if (fileName.matches("[0-9]{2}.*nc")) {
+                } else if (fileName.matches("[0-9]{2}.nc")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(0));
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
@@ -331,7 +331,7 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[1] = convert(tAxis.getCalendarDate(time));
                 } else if (fileName.matches(".*aorc.*tmp.*nc4.*")) {
                     zonedDateTimes[1] = convert(tAxis.getCalendarDate(time));
-                } else if (fileName.matches("[0-9]{2}.*nc")) {
+                } else if (fileName.matches("[0-9]{2}.nc")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
