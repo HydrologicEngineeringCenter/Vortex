@@ -12,7 +12,6 @@ import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
-import mil.army.usace.hec.vortex.util.TimeConverter;
 import org.gdal.osr.SpatialReference;
 
 import javax.measure.Unit;
@@ -674,49 +673,19 @@ public class DssDataWriter extends DataWriter {
 
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(destination.toString());
+        griddedData.setPathname(updatePathname(pathname, options).getPathname());
+        HecTime startTime = getStartTime(gridData.getGridInfo());
+        HecTime endTime = getEndTime(gridData.getGridInfo());
 
-        DSSPathname updatedPathname = updatePathname(pathname, options);
-
-        HecTime time0 = getStartTime(gridData.getGridInfo());
-        HecTime time1 = getEndTime(gridData.getGridInfo());
-        if (time0 != null && time1 != null) {
-            ZonedDateTime startTime = TimeConverter.toZonedDateTime(time0);
-
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("ddMMMyyyy");
-            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
-
-            if (gridData.getGridInfo().getDataType() != DssDataType.INST_VAL.value()) {
-                String dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
-                updatedPathname.setDPart(dPart);
-
-                ZonedDateTime endTime = TimeConverter.toZonedDateTime(time1);
-                String ePart;
-                if (endTime.getHour() == 0 && endTime.getMinute() == 0) {
-                    ZonedDateTime previous = endTime.minusDays(1);
-                    ePart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
-                } else {
-                    ePart = String.format("%s:%s", dateFormatter.format(endTime), timeFormatter.format(endTime));
-                }
-
-                updatedPathname.setEPart(ePart);
-            } else {
-                String dPart;
-                if (startTime.getHour() == 0 && startTime.getMinute() == 0) {
-                    ZonedDateTime previous = startTime.minusDays(1);
-                    dPart = String.format("%s:%04d", dateFormatter.format(previous), 2400);
-                } else {
-                    dPart = String.format("%s:%s", dateFormatter.format(startTime), timeFormatter.format(startTime));
-                }
-
-                updatedPathname.setDPart(dPart);
-            }
+        if (gridData.getGridInfo().getDataType() == DssDataType.INST_VAL.value()){
+            griddedData.setGridTime(endTime);
+        } else {
+            griddedData.setGriddedTimeWindow(startTime, endTime);
         }
-
-        griddedData.setPathname(updatedPathname.getPathname());
 
         int status = griddedData.storeGriddedData(info, gridData);
         if (status != 0) {
-            logger.log(Level.SEVERE, () -> "DSS write error");
+            System.out.println("DSS write error");
         }
         griddedData.done();
     }
