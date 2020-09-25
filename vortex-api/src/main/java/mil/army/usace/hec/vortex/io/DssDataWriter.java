@@ -115,23 +115,15 @@ public class DssDataWriter extends DataWriter {
             } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN) || units.equals(CELSIUS)) {
                 float[] convertedData = new float[data.length];
                 if (units.equals(FAHRENHEIT)) {
-                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) ((data[i] - 32.0) * (5.0/9.0)));
+                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i]);
+                    gridInfo.setDataUnits("DEG F");
                 } else if (units.equals(KELVIN)){
                     IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) (data[i] - 273.15));
+                    gridInfo.setDataUnits("DEG C");
                 } else if (units.equals(CELSIUS)) {
                     IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i]);
+                    gridInfo.setDataUnits("DEG C");
                 }
-
-                gridInfo.setDataType(DssDataType.INST_VAL.value());
-                gridInfo.setDataUnits("DEG C");
-
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-                LocalDateTime endTime = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
-
-                HecTime endTimeOut = new HecTime();
-                endTimeOut.setXML(endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
-                gridInfo.setGridTimes(endTimeOut, endTimeOut);
 
                 DSSPathname dssPathname = new DSSPathname();
                 String cPart;
