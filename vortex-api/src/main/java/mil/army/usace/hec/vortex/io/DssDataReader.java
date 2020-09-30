@@ -99,10 +99,8 @@ class DssDataReader extends DataReader {
     public static Set<String> getVariables(String pathToDss){
         HecDSSFileAccess.setDefaultDSSFileName(pathToDss);
         HecDssCatalog catalog = new HecDssCatalog();
-        String[] paths = catalog.getCatalog(false, "/*/*/*/*/*/*/");
-        Set<String> variables = new HashSet<>();
-        Arrays.stream(paths).map(DSSPathname::new).forEach(path -> variables.add(path.pathname()));
-        return variables;
+        String[] paths = catalog.getCatalog(false, null);
+        return new HashSet<>(Arrays.asList(paths));
     }
 
     @Override

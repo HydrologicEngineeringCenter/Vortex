@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import clipper.WizardData;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -76,7 +77,7 @@ public class Step1Controller implements BrowseLocationPersister {
         selectedVariables.setOnMouseClicked(click -> {
             if (click.getClickCount() == 2) {
                 ObservableList<String> selection = selectedVariables.getSelectionModel().getSelectedItems();
-                TreeSet<String> available = new TreeSet<>(this.availableVariables.getItems());
+                Set<String> available = new HashSet<>(this.availableVariables.getItems());
                 available.addAll(selection);
                 this.availableVariables.setItems(FXCollections.observableArrayList(available));
                 model.removeSelectedSourceGrids(selection);
@@ -139,7 +140,7 @@ public class Step1Controller implements BrowseLocationPersister {
     @FXML
     private void handleAdd() {
         ObservableList<String> selection = availableVariables.getSelectionModel().getSelectedItems();
-        TreeSet<String> selected = new TreeSet<>(this.selectedVariables.getItems());
+        Set<String> selected = new HashSet<>(this.selectedVariables.getItems());
         selected.addAll(selection);
         this.selectedVariables.setItems(FXCollections.observableArrayList(selected));
         model.removeAvailableSourceGrids(selection);
@@ -149,7 +150,7 @@ public class Step1Controller implements BrowseLocationPersister {
     @FXML
     private void handleRemove() {
         ObservableList<String> selection = selectedVariables.getSelectionModel().getSelectedItems();
-        TreeSet<String> available = new TreeSet<>(this.availableVariables.getItems());
+        Set<String> available = new HashSet<>(this.availableVariables.getItems());
         available.addAll(selection);
         this.availableVariables.setItems(FXCollections.observableArrayList(available));
         model.removeSelectedSourceGrids(selection);

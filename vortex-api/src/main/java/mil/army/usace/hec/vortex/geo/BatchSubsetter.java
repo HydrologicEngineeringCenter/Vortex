@@ -8,7 +8,6 @@ import org.locationtech.jts.geom.Envelope;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +40,7 @@ public class BatchSubsetter {
 
         private String pathToInput;
         private Set<String> variables;
-        boolean isSelectAll;
+        private boolean isSelectAll;
         private String envelopeDataSource;
         private Path destination;
         private Options writeOptions;
@@ -91,27 +90,21 @@ public class BatchSubsetter {
 
     public void process(){
 
+        variables.parallelStream().forEach(variable -> {
+            DataReader reader = DataReader.builder()
+                    .path(pathToInput)
+                    .variable(variable)
+                    .build();
 
-        List<SubsettableUnit> units = new ArrayList<>();
-        variables.forEach(variable -> {
-            if (DataReader.getVariables(pathToInput).contains(variable)) {
+            SubsettableUnit unit = SubsettableUnit.builder()
+                    .reader(reader)
+                    .setEnvelope(envelope)
+                    .setEnvelopeWkt(envelopeWkt)
+                    .destination(destination)
+                    .writeOptions(writeOptions)
+                    .build();
 
-                DataReader reader = DataReader.builder()
-                        .path(pathToInput)
-                        .variable(variable)
-                        .build();
-
-                SubsettableUnit unit = SubsettableUnit.builder()
-                        .reader(reader)
-                        .setEnvelope(envelope)
-                        .setEnvelopeWkt(envelopeWkt)
-                        .destination(destination)
-                        .writeOptions(writeOptions)
-                        .build();
-
-                units.add(unit);
-            }
+            unit.process();
         });
-        units.parallelStream().forEach(SubsettableUnit::process);
     }
 }
