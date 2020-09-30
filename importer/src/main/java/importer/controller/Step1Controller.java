@@ -67,7 +67,9 @@ public class Step1Controller implements BrowseLocationPersister {
 
         // Set extension filters
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
-                "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb", "*.asc", "*.bil", "*bil.zip", "*.dss");
+                "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.h5",
+                "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb",
+                "*.asc", "*.bil", "*bil.zip", "*.dss", "*.tif", "*.tiff");
         fileChooser.getExtensionFilters().add(recognizedFilter);
         FileChooser.ExtensionFilter ncFilter = new FileChooser.ExtensionFilter(
                 "netCDF datasets", "*.nc", "*.nc4");
@@ -82,6 +84,10 @@ public class Step1Controller implements BrowseLocationPersister {
         FileChooser.ExtensionFilter ascFilter = new FileChooser.ExtensionFilter(
                 "ASC datasets", "*.asc");
         fileChooser.getExtensionFilters().add(ascFilter);
+
+        FileChooser.ExtensionFilter tifFilter = new FileChooser.ExtensionFilter(
+                "TIF datasets", "*.tif");
+        fileChooser.getExtensionFilters().add(tifFilter);
 
         FileChooser.ExtensionFilter bilFilter = new FileChooser.ExtensionFilter(
                 "BIL datasets", "*.bil", "*bil.zip");

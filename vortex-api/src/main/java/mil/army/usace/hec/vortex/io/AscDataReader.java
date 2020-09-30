@@ -14,6 +14,8 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class AscDataReader extends DataReader {
 
@@ -94,6 +96,10 @@ class AscDataReader extends DataReader {
             shortName = "precipitation-frequency";
             fullName = "precipitation-frequency";
             description = "precipitation-frequency";
+        } else if (fileName.toLowerCase().matches("windspeed.*")) {
+            shortName = "windspeed";
+            fullName = "windspeed";
+            description = "windspeed";
         } else {
             shortName = "";
             fullName = "";
@@ -126,9 +132,28 @@ class AscDataReader extends DataReader {
             startTime = endTime.minusHours(1);
             interval = Duration.ofHours(1);
         } else {
-            startTime = null;
-            endTime = null;
-            interval = null;
+            Pattern pattern = Pattern.compile("\\d{4}_\\d{2}_\\d{2}t\\d{4}");
+            Matcher matcher = pattern.matcher(fileName);
+            List<String> dateStrings = new ArrayList<>();
+            while (matcher.find()){
+                dateStrings.add(matcher.group(0));
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd't'Hmm");
+            if (dateStrings.size() == 2) {
+                startTime = ZonedDateTime.of(LocalDateTime.parse(dateStrings.get(0), formatter), ZoneId.of("Z"));
+                endTime = ZonedDateTime.of(LocalDateTime.parse(dateStrings.get(1), formatter), ZoneId.of("Z"));
+                interval = Duration.between(startTime, endTime);
+            } else if(dateStrings.size() ==1 ) {
+                startTime = ZonedDateTime.of(LocalDateTime.parse(dateStrings.get(0), formatter), ZoneId.of("Z"));
+                endTime = ZonedDateTime.from(startTime);
+                interval = Duration.ZERO;
+            } else {
+                startTime = null;
+                endTime = null;
+                interval = null;
+            }
+
         }
 
         String units;

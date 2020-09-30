@@ -34,7 +34,7 @@ public abstract class DataReader {
                 throw new IllegalStateException("DataReader requires a path to data source file.");
             }
 
-            if (path.matches(".*\\.asc")) {
+            if (path.matches(".*\\.(asc|tif|tiff)$")) {
                 return new AscDataReader(this);
             }
 
@@ -69,7 +69,7 @@ public abstract class DataReader {
     public static Set<String> getVariables(String path){
         String fileName = new File(path).getName().toLowerCase();
 
-        if (fileName.endsWith(".asc") || fileName.endsWith("asc.zip")){
+        if (fileName.matches(".*\\.(asc|tif|tiff)$") || fileName.endsWith("asc.zip")){
             return AscDataReader.getVariables(path);
         }
         if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
