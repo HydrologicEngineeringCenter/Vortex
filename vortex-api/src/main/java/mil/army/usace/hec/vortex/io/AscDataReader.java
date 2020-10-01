@@ -5,7 +5,6 @@ import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
-import org.gdal.gdal.TranslateOptions;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 
@@ -29,14 +28,6 @@ class AscDataReader extends DataReader {
 
     @Override
     public List<VortexData> getDtos() {
-
-        Dataset in = gdal.Open(path);
-        ArrayList<String>  options =  new ArrayList<>();
-        options.add("-of");
-        options.add("MEM");
-        TranslateOptions translateOptions = new TranslateOptions(new Vector<>(options));
-        Dataset raster = gdal.Translate("raster", in, translateOptions);
-        raster.FlushCache();
 
         String fileName = new File(path).getName().toLowerCase();
         String shortName;
@@ -177,19 +168,21 @@ class AscDataReader extends DataReader {
             units = "";
         }
 
-        double[] geoTransform = raster.GetGeoTransform();
+        Dataset dataset = gdal.Open(path);
+
+        double[] geoTransform = dataset.GetGeoTransform();
         double dx = geoTransform[1];
         double dy = geoTransform[5];
         double ulx = geoTransform[0];
         double uly = geoTransform[3];
-        int nx = raster.GetRasterXSize();
-        int ny = raster.GetRasterYSize();
-        String wkt = raster.GetProjection();
-        Band band = raster.GetRasterBand(1);
+        int nx = dataset.GetRasterXSize();
+        int ny = dataset.GetRasterYSize();
+        String wkt = dataset.GetProjection();
+        Band band = dataset.GetRasterBand(1);
         float[] data = new float[nx * ny];
         band.ReadRaster(0, 0, nx, ny, gdalconst.GDT_Float32, data);
 
-        raster.delete();
+        dataset.delete();
         band.delete();
 
         VortexGrid dto = VortexGrid.builder()
