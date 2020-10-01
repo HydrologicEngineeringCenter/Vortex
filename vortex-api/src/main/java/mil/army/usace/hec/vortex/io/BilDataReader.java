@@ -12,13 +12,20 @@ import org.gdal.gdalconst.gdalconst;
 import java.io.File;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class reads in a BIL file to a VortexData object
  */
 class BilDataReader extends DataReader {
+    private static final Logger logger = Logger.getLogger(BilDataReader.class.getName());
+
     static {
         GdalRegister.getInstance();
     }
@@ -42,13 +49,17 @@ class BilDataReader extends DataReader {
         String shortName;
         String fullName;
         String description;
-        AtomicBoolean isPrismTemporal = new AtomicBoolean();
+        AtomicBoolean isPrismTemporalDaily = new AtomicBoolean();
+        AtomicBoolean isPrismTemporalMonthly = new AtomicBoolean();
         AtomicBoolean isPrismNormal = new AtomicBoolean();
         if (fileName.matches("prism.*ppt.*stable.*")) {
             shortName = "precipitation";
             fullName = "precipitation";
             description = "precipitation";
-            isPrismTemporal.set(true);
+            if (fileName.matches("prism.*ppt.*stable.*(d1|d2).*"))
+                isPrismTemporalDaily.set(true);
+            if (fileName.matches("prism.*ppt.*stable.*m3.*"))
+                isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*ppt.*normal.*")) {
             shortName = "precipitation";
             fullName = "precipitation";
@@ -58,32 +69,50 @@ class BilDataReader extends DataReader {
             shortName = "mean temperature";
             fullName = "mean temperature";
             description = "mean temperature";
-            isPrismTemporal.set(true);
+            if (fileName.matches("prism.*tmean.*stable.*(d1|d2).*"))
+                isPrismTemporalDaily.set(true);
+            if (fileName.matches("prism.*tmean.*stable.*m3.*"))
+                isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*tmin.*stable.*")){
             shortName = "minimum temperature";
             fullName = "minimum temperature";
             description = "minimum temperature";
-            isPrismTemporal.set(true);
+            if (fileName.matches("prism.*tmin.*stable.*d2.*(d1|d2).*"))
+                isPrismTemporalDaily.set(true);
+            if (fileName.matches("prism.*tmin.*stable.*m3.*"))
+                isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*tmax.*stable.*")){
             shortName = "maximum temperature";
             fullName = "maximum temperature";
             description = "maximum temperature";
-            isPrismTemporal.set(true);
+            if (fileName.matches("prism.*tmax.*stable.*(d1|d2).*"))
+                isPrismTemporalDaily.set(true);
+            if (fileName.matches("prism.*tmax.*stable.*m3.*"))
+                isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*tdmean.*stable.*")){
             shortName = "mean dewpoint temperature";
             fullName = "mean dewpoint temperature";
             description = "mean dewpoint temperature";
-            isPrismTemporal.set(true);
+            if (fileName.matches("prism.*tdmean.*stable.*(d1|d2).*"))
+                isPrismTemporalDaily.set(true);
+            if (fileName.matches("prism.*tdmean.*stable.*m3.*"))
+                isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*vpdmin.*stable.*")){
             shortName = "minimum vapor pressure deficit";
             fullName = "minimum vapor pressure deficit";
             description = "minimum vapor pressure deficit";
-            isPrismTemporal.set(true);
+            if (fileName.matches("prism.*vpdmin.*stable.*(d1|d2).*"))
+                isPrismTemporalDaily.set(true);
+            if (fileName.matches("prism.*vpdmin.*stable.*m3.*"))
+                isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*vpdmax.*stable.*")){
             shortName = "maximum vapor pressure deficit";
             fullName = "maximum vapor pressure deficit";
             description = "maximum vapor pressure deficit";
-            isPrismTemporal.set(true);
+            if (fileName.matches("prism.*vpdmax.*stable.*(d1|d2).*"))
+                isPrismTemporalDaily.set(true);
+            if (fileName.matches("prism.*vpdmax.*stable.*m3.*"))
+                isPrismTemporalMonthly.set(true);
         }   else {
             shortName = "";
             fullName = "";
@@ -93,16 +122,44 @@ class BilDataReader extends DataReader {
         ZonedDateTime startTime;
         ZonedDateTime endTime;
         Duration interval;
-        if (isPrismTemporal.get()) {
+        if (isPrismTemporalDaily.get()) {
             String string1 = path;
             String string2 = string1.substring(0, string1.lastIndexOf('_'));
             String string3 = string2.substring(string2.length() - 8);
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            LocalDate date = LocalDate.parse(string3, formatter);
+            LocalDate date;
+            try {
+                date = LocalDate.parse(string3, formatter);
+            } catch (DateTimeParseException e) {
+                logger.log(Level.WARNING, e, e::getMessage);
+                return Collections.emptyList();
+            }
             startTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(0, 0)), ZoneId.of("UTC")).minusHours(12);
             endTime = ZonedDateTime.of(LocalDateTime.of(date.plusDays(1), LocalTime.of(0, 0)), ZoneId.of("UTC")).minusHours(12);
             interval = Duration.between(startTime, endTime);
+
+        } else if (isPrismTemporalMonthly.get()) {
+            Pattern pattern = Pattern.compile("\\d{6}");
+            Matcher matcher = pattern.matcher(path);
+            String dateString = "";
+            while (matcher.find()) {
+                dateString = matcher.group(0);
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
+            YearMonth yearMonth;
+            try {
+                yearMonth = YearMonth.parse(dateString, formatter);
+            } catch (DateTimeParseException e) {
+                logger.log(Level.WARNING, e, e::getMessage);
+                return Collections.emptyList();
+            }
+            LocalDateTime startDay = LocalDateTime.of(yearMonth.getYear(), yearMonth.getMonth(), 1, 0, 0);
+            startTime = ZonedDateTime.of(startDay, ZoneId.of("UTC")).minusHours(12);
+            endTime = startTime.plusMonths(1);
+            interval = Duration.between(startTime, endTime);
+
         } else if (isPrismNormal.get()){
             startTime = ZonedDateTime.of(1981, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
             endTime = ZonedDateTime.of(2010, 12, 31, 0, 0, 0, 0, ZoneId.of("UTC"));
