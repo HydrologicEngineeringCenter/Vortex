@@ -64,4 +64,13 @@ class ReferenceUtilsTest {
         assertEquals(1, direction);
     }
 
+    @Test
+    void UlyDirectionReturnsPositiveForShg(){
+        String wkt = WktFactory.shg();
+        double x = -1680000;
+        double lly = 102000;
+        int direction = ReferenceUtils.getUlyDirection(wkt, x, lly);
+        assertEquals(1, direction);
+    }
+
 }

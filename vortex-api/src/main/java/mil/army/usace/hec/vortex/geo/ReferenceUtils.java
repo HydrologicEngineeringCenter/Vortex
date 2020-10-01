@@ -4,7 +4,6 @@ import hec.heclib.grid.AlbersInfo;
 import hec.heclib.grid.GridInfo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexGrid;
-import org.gdal.osr.CoordinateTransformation;
 import org.gdal.osr.SpatialReference;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,21 +28,22 @@ public class ReferenceUtils {
     }
 
     public static int getUlyDirection(String wkt, double llx, double lly){
-        SpatialReference source = new SpatialReference(wkt);
-        source.MorphFromESRI();
-        if (source.IsProjected() == 1){
-            double latitudeOfOrigin = source.GetProjParm("latitude_of_origin");
-            SpatialReference dest = new SpatialReference();
-            dest.SetWellKnownGeogCS( "WGS84" );
-            CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(source, dest);
-            double latitudeOfLly = transform.TransformPoint(llx, lly)[1];
-            double falseNorthing = source.GetProjParm("false_northing");
-            double llyLessFalseNorthing = lly - falseNorthing;
-            if (latitudeOfLly < latitudeOfOrigin && Math.signum(llyLessFalseNorthing) > 0){
-                return -1;
-            }
-            return 1;
-        }
+        //Return 1 until there is a use case the necessitates returning -1. This function is only called by DssDataReader.
+//        SpatialReference source = new SpatialReference(wkt);
+//        source.MorphFromESRI();
+//        if (source.IsProjected() == 1){
+//            double latitudeOfOrigin = source.GetProjParm("latitude_of_origin");
+//            SpatialReference dest = new SpatialReference();
+//            dest.SetWellKnownGeogCS( "WGS84" );
+//            CoordinateTransformation transform = CoordinateTransformation.CreateCoordinateTransformation(source, dest);
+//            double latitudeOfLly = transform.TransformPoint(llx, lly)[1];
+//            double falseNorthing = source.GetProjParm("false_northing");
+//            double llyLessFalseNorthing = lly - falseNorthing;
+//            if (latitudeOfLly < latitudeOfOrigin && Math.signum(llyLessFalseNorthing) > 0){
+//                return -1;
+//            }
+//            return 1;
+//        }
         return 1;
     }
 
