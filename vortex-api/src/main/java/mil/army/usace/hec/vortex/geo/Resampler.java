@@ -138,10 +138,17 @@ public class Resampler {
             double maxX = upperRight[0];
             double maxY = upperRight[1];
 
-            envelope.put("maxX", Math.ceil(maxX / cellSize) * cellSize);
-            envelope.put("maxY", Math.ceil(maxY / cellSize) * cellSize);
-            envelope.put("minX", Math.floor(minX / cellSize) * cellSize);
-            envelope.put("minY", Math.floor(minY / cellSize) * cellSize);
+            if (!Double.isNaN(cellSize)) {
+                envelope.put("maxX", Math.ceil(maxX / cellSize) * cellSize);
+                envelope.put("maxY", Math.ceil(maxY / cellSize) * cellSize);
+                envelope.put("minX", Math.floor(minX / cellSize) * cellSize);
+                envelope.put("minY", Math.floor(minY / cellSize) * cellSize);
+            } else {
+                envelope.put("maxX", maxX);
+                envelope.put("maxY", maxY);
+                envelope.put("minX", minX);
+                envelope.put("minY", minY);
+            }
         }
 
         SpatialReference srData = new SpatialReference(dataset.GetProjection());
@@ -160,9 +167,11 @@ public class Resampler {
             options.add(Double.toString(envelope.get("maxX")));
             options.add(Double.toString(envelope.get("maxY")));
         }
-        options.add("-tr");
-        options.add(Double.toString(cellSize));
-        options.add(Double.toString(cellSize));
+        if (!Double.isNaN(cellSize)) {
+            options.add("-tr");
+            options.add(Double.toString(cellSize));
+            options.add(Double.toString(cellSize));
+        }
         if (method.equals("Bilinear")) {
             options.add("-r");
             options.add("bilinear");

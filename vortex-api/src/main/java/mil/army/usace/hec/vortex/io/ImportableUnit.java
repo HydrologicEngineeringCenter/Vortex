@@ -93,7 +93,6 @@ public class ImportableUnit {
             VortexGrid grid = (VortexGrid) reader.getDto(i);
 
             String destWkt;
-            double cellSize;
 
             if (geoOptions.containsKey("targetWkt")) {
                 destWkt = geoOptions.get("targetWkt");
@@ -101,10 +100,11 @@ public class ImportableUnit {
                 destWkt = grid.wkt();
             }
 
+            double cellSize;
             if (geoOptions.containsKey("targetCellSize")) {
                 cellSize = Double.parseDouble(geoOptions.get("targetCellSize"));
             } else {
-                cellSize = ((Math.abs(grid.dx()) + Math.abs(grid.dy())) / 2.0);
+                cellSize = Double.NaN;
             }
 
             VortexGrid processed = Resampler.builder()
