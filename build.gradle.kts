@@ -3,7 +3,7 @@ plugins {
     id ("org.openjfx.javafxplugin") version "0.0.8"
 }
 
-val version = "0.10.9"
+version = "0.10.9"
 
 val windows_x64 by configurations.creating
 
