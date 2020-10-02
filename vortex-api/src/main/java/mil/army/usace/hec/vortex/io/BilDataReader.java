@@ -156,7 +156,7 @@ class BilDataReader extends DataReader {
                 return Collections.emptyList();
             }
             LocalDateTime startDay = LocalDateTime.of(yearMonth.getYear(), yearMonth.getMonth(), 1, 0, 0);
-            startTime = ZonedDateTime.of(startDay, ZoneId.of("UTC")).minusHours(12);
+            startTime = ZonedDateTime.of(startDay, ZoneId.of("UTC"));
             endTime = startTime.plusMonths(1);
             interval = Duration.between(startTime, endTime);
 
