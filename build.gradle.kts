@@ -4,8 +4,6 @@ plugins {
     id("nebula.release") version "13.1.1"
 }
 
-version = project.version.toString()
-
 val windows_x64 by configurations.creating
 
 repositories {
@@ -35,23 +33,23 @@ javafx {
 tasks.register<Copy>("copyRuntimeLibs") {
     from(configurations.runtimeClasspath)
     include("*.jar")
-    into("$buildDir/distributions/${rootProject.name}-$version/lib")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}/lib")
 }
 
 tasks.register<Copy>("copyJavafx"){
-    from ("$buildDir/distributions/${base.archivesBaseName}-$version/lib")
+    from ("$buildDir/distributions/${base.archivesBaseName}-${project.version}/lib")
     include ("javafx*.jar")
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/jmods")
+    into ("$buildDir/distributions/${base.archivesBaseName}-${project.version}/jmods")
 }
 
 tasks.register<Delete>("deleteJavafx"){
-    delete(fileTree("$buildDir/distributions/${base.archivesBaseName}-$version/lib").matching {
+    delete(fileTree("$buildDir/distributions/${base.archivesBaseName}-${project.version}/lib").matching {
         include("javafx*.jar")
     })
 }
 
 tasks.register<Copy>("copyImporter") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":importer").buildDir.toString() + "/libs")
         include("*.jar")
@@ -65,7 +63,7 @@ tasks.register<Copy>("copyImporter") {
 tasks.getByPath(":copyImporter").dependsOn(":importer:build")
 
 tasks.register<Copy>("copyNormalizer") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":normalizer").buildDir.toString() + "/libs")
         include("*.jar")
@@ -78,7 +76,7 @@ tasks.register<Copy>("copyNormalizer") {
 tasks.getByPath(":copyNormalizer").dependsOn(":normalizer:build")
 
 tasks.register<Copy>("copyShifter") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":time-shifter").buildDir.toString() + "/libs")
         include("*.jar")
@@ -91,7 +89,7 @@ tasks.register<Copy>("copyShifter") {
 tasks.getByPath(":copyShifter").dependsOn(":time-shifter:build")
 
 tasks.register<Copy>("copyGridToPointConverter") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":grid-to-point-converter").buildDir.toString() + "/libs")
         include("*.jar")
@@ -104,7 +102,7 @@ tasks.register<Copy>("copyGridToPointConverter") {
 tasks.getByPath(":copyGridToPointConverter").dependsOn(":grid-to-point-converter:build")
 
 tasks.register<Copy>("copyTransposer") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":transposer").buildDir.toString() + "/libs")
         include("*.jar")
@@ -117,7 +115,7 @@ tasks.register<Copy>("copyTransposer") {
 tasks.getByPath(":copyTransposer").dependsOn(":transposer:build")
 
 tasks.register<Copy>("copySanitizer") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":sanitizer").buildDir.toString() + "/libs")
         include("*.jar")
@@ -130,7 +128,7 @@ tasks.register<Copy>("copySanitizer") {
 tasks.getByPath(":copySanitizer").dependsOn(":sanitizer:build")
 
 tasks.register<Copy>("copyClipper") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":clipper").buildDir.toString() + "/libs")
         include("*.jar")
@@ -143,7 +141,7 @@ tasks.register<Copy>("copyClipper") {
 tasks.getByPath(":copyClipper").dependsOn(":clipper:build")
 
 tasks.register<Copy>("copyImageExporter") {
-    into("$buildDir/distributions/${rootProject.name}-$version")
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
         from(project(":image-exporter").buildDir.toString() + "/libs")
         include("*.jar")
@@ -159,13 +157,13 @@ tasks.register<Copy>("copyLicense") {
     from(project.rootDir) {
         include("LICENSE.md")
     }
-    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-$version")
+    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-${project.version}")
 }
 
 tasks.register<Copy>("copyFatJar") {
     from(project(":vortex-api").buildDir.toString()
             + "/libs") {
-        include("${rootProject.name}-all-$version")
+        include("${rootProject.name}-all-${project.version}")
     }
     into("${rootProject.projectDir}/build/distributions")
 }
@@ -188,21 +186,21 @@ tasks.getByName("refreshNatives") { finalizedBy("getNatives") }
 tasks.register<Copy>("copyNatives") {
     from ("$projectDir/bin")
     exclude ("jre")
-    into ("$buildDir/distributions/${rootProject.name}-$version/bin")
+    into ("$buildDir/distributions/${rootProject.name}-${project.version}/bin")
 }
 
 tasks.getByName("copyNatives") { dependsOn("refreshNatives") }
 
 tasks.register<Copy>("copyJre") {
     from ("$projectDir/bin/jre")
-    into ("$buildDir/distributions/${rootProject.name}-$version/jre")
+    into ("$buildDir/distributions/${rootProject.name}-${project.version}/jre")
 }
 
 tasks.register<Zip>("zipWin") {
-    archiveFileName.set("${rootProject.name}-$version-win-x64" + ".zip")
+    archiveFileName.set("${rootProject.name}-${project.version}-win-x64" + ".zip")
     destinationDirectory.set(file("$buildDir/distributions"))
-    from (fileTree("$buildDir/distributions/${rootProject.name}-$version"))
-    into ("${rootProject.name}-$version")
+    from (fileTree("$buildDir/distributions/${rootProject.name}-${project.version}"))
+    into ("${rootProject.name}-${project.version}")
 }
 
 tasks.getByName("copyJre").dependsOn("refreshNatives")
