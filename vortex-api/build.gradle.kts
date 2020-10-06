@@ -25,10 +25,6 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
 }
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-
 base.archivesBaseName = "vortex"
 project.version = project.version.toString()
 
