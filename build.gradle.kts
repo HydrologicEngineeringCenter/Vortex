@@ -1,9 +1,10 @@
 plugins {
     java
     id ("org.openjfx.javafxplugin") version "0.0.8"
+    id("nebula.release") version "13.1.1"
 }
 
-version = "0.10.9"
+version = project.version.toString()
 
 val windows_x64 by configurations.creating
 
@@ -226,6 +227,9 @@ tasks.getByName("build") { finalizedBy("zipWin") }
 tasks.getByName("zipWin").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", "copyNatives", "copyNatives",
         "copyImporter", "copyNormalizer", "copyShifter", "copyGridToPointConverter", "copyTransposer", "copySanitizer",
         "copyClipper", "copyImageExporter", "copyLicense")
+
+tasks.getByName("final").dependsOn(":build")
+tasks.getByName("candidate").dependsOn(":build")
 
 tasks.getByName("jar").enabled = false
 
