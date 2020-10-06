@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -193,5 +194,14 @@ class NetcdfDataReaderTest {
         VortexGrid vortexGrid = (VortexGrid) vortexData;
         assertEquals(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
         assertEquals(ZonedDateTime.of(2020, 3, 2, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
+
+    @Test
+    void GCIP_EOP_Stage_IV(){
+        String inFile = new File(getClass().getResource("/ST4.2005010100.01h").getFile()).toString();
+
+        Set<String> variables = DataReader.getVariables(inFile);
+        assertTrue(variables.contains("Total_precipitation_surface_1_Hour_Accumulation"));
+        assertEquals(2, variables.size());
     }
 }
