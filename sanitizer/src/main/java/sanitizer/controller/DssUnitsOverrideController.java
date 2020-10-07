@@ -13,17 +13,17 @@ public class DssUnitsOverrideController {
 
     @FXML
     void initialize(){
-        unitsStringBox.setVisible(false);
+        unitsString.setEditable(false);
+        unitsString.setDisable(true);
         overrideDssUnitsCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            boolean isOverrideDssUnits = newValue;
-            if (isOverrideDssUnits) {
-                unitsStringBox.setVisible(true);
-                unitsString.setVisible(true);
+            boolean isOverride = newValue;
+            if (isOverride) {
                 unitsString.setEditable(true);
+                unitsString.setDisable(false);
             } else {
-                unitsStringBox.setVisible(false);
                 unitsString.setEditable(false);
                 unitsString.setText("");
+                unitsString.setDisable(true);
             }
         });
     }

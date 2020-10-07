@@ -50,6 +50,9 @@ public class Step3Controller implements BrowseLocationPersister {
     private Parent dssUnitsOverrideView;
     private DssUnitsOverrideController dssUnitsOverrideController;
 
+    private Parent dssDataTypeOverrideView;
+    private DssDataTypeOverrideController dssDataTypeOverrideController;
+
     @FXML
     public void initialize() {
         destination.textProperty().bindBidirectional(model.destinationOutProperty());
@@ -77,21 +80,32 @@ public class Step3Controller implements BrowseLocationPersister {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-
                     dssUnitsOverrideController = unitsLoader.getController();
+
+                    FXMLLoader dataTypeLoader = new FXMLLoader( getClass().getResource("/fxml/DssDataTypeOverride.fxml"));
+                    dssDataTypeOverrideView = null;
+                    try {
+                        dssDataTypeOverrideView = dataTypeLoader.load();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    dssDataTypeOverrideController = dataTypeLoader.getController();
 
                 } else {
                     content.getChildren().remove(destination.getScene().lookup("#dssPathnameParts"));
                     content.getChildren().remove(destination.getScene().lookup("#dssUnitsOverride"));
+                    content.getChildren().remove(destination.getScene().lookup("#dssDataTypeOverride"));
                 }
 
                 content.getChildren().add(dssPathnamePartsView);
                 content.getChildren().add(dssUnitsOverrideView);
+                content.getChildren().add(dssDataTypeOverrideView);
 
 
             } else {
                 content.getChildren().remove(destination.getScene().lookup("#dssPathnameParts"));
                 content.getChildren().remove(destination.getScene().lookup("#dssUnitsOverride"));
+                content.getChildren().remove(destination.getScene().lookup("#dssDataTypeOverride"));
             }
         });
 
@@ -180,6 +194,10 @@ public class Step3Controller implements BrowseLocationPersister {
             String unitsString = dssUnitsOverrideController.getUnitsString();
             if (!unitsString.isEmpty())
                 options.add("units", unitsString);
+
+            String dataType = dssDataTypeOverrideController.getSelectedItem();
+            if (dataType != null && !dataType.isEmpty())
+                options.add("dataType", dataType);
         }
 
         BatchSanitizer batchSanitizer = BatchSanitizer.builder()

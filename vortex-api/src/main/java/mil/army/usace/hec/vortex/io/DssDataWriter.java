@@ -205,6 +205,17 @@ public class DssDataWriter extends DataWriter {
                         String unitString = parts.get("units");
                         gridInfo.setDataUnits(unitString);
                     }
+                    if (parts.containsKey("dataType")) {
+                        String dataType = parts.get("dataType");
+                        if (dataType.equals("INST-VAL"))
+                            gridInfo.setDataType(DssDataType.INST_VAL.value());
+                        if (dataType.equals("PER-AVER"))
+                            gridInfo.setDataType(DssDataType.PER_AVER.value());
+                        if (dataType.equals("PER-CUM"))
+                            gridInfo.setDataType(DssDataType.PER_CUM.value());
+                        if (dataType.equals("INST-VAL"))
+                            gridInfo.setDataType(DssDataType.INST_VAL.value());
+                    }
                 }
 
                 write(data, gridInfo, dssPathname);
