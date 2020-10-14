@@ -3,6 +3,7 @@ plugins {
 }
 
 repositories {
+    maven(url = "https://www.hec.usace.army.mil/nexus/repository/maven-public/")
     maven(url = "https://artifacts.unidata.ucar.edu/repository/unidata-all/")
     mavenCentral()
 }

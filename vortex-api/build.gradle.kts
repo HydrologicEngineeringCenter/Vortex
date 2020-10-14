@@ -1,21 +1,26 @@
 plugins {
     java
+    id("maven-publish")
 }
 
 
 repositories {
     maven(url = "https://artifacts.unidata.ucar.edu/repository/unidata-all/")
+    maven(url = "https://www.hec.usace.army.mil/nexus/repository/maven-public/")
     mavenCentral()
 }
 
 dependencies {
+    implementation("mil.army.usace.hec:hec:6.0.0.51")
+    implementation("mil.army.usace.hec:heclib:6.0.0.51")
+    implementation("mil.army.usace.hec:hecData:6.0.0.51")
     implementation("org.gdal:gdal:2.4.0")
     implementation("org.locationtech.jts:jts-core:1.16.1")
     implementation("tech.units:indriya:2.0.4")
     implementation("systems.uom:systems-common:2.0.2")
     implementation("edu.ucar:cdm-core:5.4.0-SNAPSHOT")
     implementation("org.slf4j:slf4j-jdk14:1.7.25")
-    implementation(fileTree(mapOf("dir" to "lib", "include" to listOf("*.jar"))))
+    runtimeOnly("com.rmanet:rma:6.0.0.51")
     runtimeOnly("edu.ucar:grib:5.4.0-SNAPSHOT")
     runtimeOnly("edu.ucar:netcdf4:5.4.0-SNAPSHOT")
     testImplementation ("org.mockito:mockito-core:2.27.0")
@@ -54,3 +59,30 @@ tasks.register<Jar>("fatJar") {
 }
 
 tasks.getByName("build").dependsOn("fatJar")
+
+val mavenUser: String by project
+val mavenPassword: String by project
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "mil.army.usace.hec"
+            artifactId = "vortex"
+
+            from(components["java"])
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username = "$mavenUser"
+                password = "$mavenPassword"
+            }
+            val releasesRepoUrl = uri("https://www.hec.usace.army.mil/nexus/repository/maven-releases/")
+            val snapshotsRepoUrl = uri("https://www.hec.usace.army.mil/nexus/repository/maven-snapshots/")
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+        }
+    }
+}
+
+tasks.getByName("publish").dependsOn("jar")

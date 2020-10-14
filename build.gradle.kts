@@ -227,6 +227,7 @@ tasks.getByName("zipWin").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", 
         "copyClipper", "copyImageExporter", "copyLicense")
 
 tasks.getByName("final").dependsOn(":build")
+tasks.getByName("final").dependsOn("vortex-api:publish")
 tasks.getByName("candidate").dependsOn(":build")
 
 tasks.getByName("jar").enabled = false

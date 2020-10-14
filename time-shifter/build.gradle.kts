@@ -8,6 +8,7 @@ base.archivesBaseName = "time-shifter"
 val version = project.version.toString()
 
 repositories {
+    maven(url = "https://www.hec.usace.army.mil/nexus/repository/maven-public/")
     maven(url = "https://artifacts.unidata.ucar.edu/repository/unidata-all/")
     mavenCentral()
 }
