@@ -12,6 +12,7 @@ geo_options = Options.create()
 geo_options.add('pathToShp', clip_shp)
 geo_options.add('targetCellSize', '2000')
 geo_options.add('targetWkt', WktFactory.shg())
+geo_options.add('resamplingMethod', 'Bilinear')
 
 destination = 'C:/Temp/myPythonImport.dss'
 
