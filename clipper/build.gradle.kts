@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     implementation(project(":vortex-api"))
-    implementation("org.slf4j:slf4j-jdk14:1.7.25")
+    implementation("org.slf4j:slf4j-simple:1.7.25")
     implementation("com.google.inject:guice:4.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
