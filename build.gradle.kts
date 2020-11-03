@@ -266,11 +266,28 @@ tasks.register<Copy>("copyJre") {
     into ("$buildDir/distributions/${rootProject.name}-${project.version}/jre")
 }
 
+tasks.register<Tar>("zipLinux") {
+    archiveFileName.set("${rootProject.name}-${project.version}-linux-x64" + ".tar.gz")
+    destinationDirectory.set(file("$buildDir/distributions"))
+    from (fileTree("$buildDir/distributions/${rootProject.name}-${project.version}"))
+    into ("${rootProject.name}-${project.version}")
+    compression = Compression.GZIP
+}
+
 tasks.register<Zip>("zipWin") {
     archiveFileName.set("${rootProject.name}-${project.version}-win-x64" + ".zip")
     destinationDirectory.set(file("$buildDir/distributions"))
     from (fileTree("$buildDir/distributions/${rootProject.name}-${project.version}"))
     into ("${rootProject.name}-${project.version}")
+}
+
+tasks.register("zip") {
+    if(OperatingSystem.current().isWindows()) {
+        dependsOn("zipWin")
+    }
+    else if(OperatingSystem.current().isLinux()) {
+        dependsOn("zipLinux")
+    }
 }
 
 tasks.getByName("copyJre").dependsOn("refreshNatives")
@@ -292,8 +309,8 @@ tasks.getByName("build") { finalizedBy("copyLicense") }
 tasks.getByName("build") { finalizedBy("copyStartScripts") }
 tasks.getByName("build").dependsOn("vortex-api:fatJar")
 tasks.getByName("build") { finalizedBy("copyFatJar") }
-tasks.getByName("build") { finalizedBy("zipWin") }
-tasks.getByName("zipWin").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", "copyNatives", "copyNatives",
+tasks.getByName("build") { finalizedBy("zip") }
+tasks.getByName("zip").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", "copyNatives", "copyNatives",
         "copyImporter", "copyNormalizer", "copyShifter", "copyGridToPointConverter", "copyTransposer", "copySanitizer",
         "copyClipper", "copyImageExporter", "copyLicense", "copyStartScripts")
 
