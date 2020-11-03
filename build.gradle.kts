@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     java
     id ("org.openjfx.javafxplugin") version "0.0.8"
@@ -5,6 +7,7 @@ plugins {
 }
 
 val windows_x64 by configurations.creating
+val linux_x64 by configurations.creating
 
 repositories {
     maven(url = "https://www.hec.usace.army.mil/nexus/repository/maven-public/")
@@ -23,6 +26,8 @@ dependencies {
     windows_x64 ("net.adoptopenjdk:jre:11.0.6_10@zip")
     windows_x64 ("mil.army.usace.hec:javaHeclib:7-HK@zip")
     windows_x64 ("org.gdal:gdal:2.4.4-win-x64@zip")
+    linux_x64("net.adoptopenjdk:jre:11.0.9_10-linux64@tar.gz")
+    linux_x64("mil.army.usace.hec:javaHeclib:7-HK-Linux64@tar.gz")
 }
 
 javafx {
@@ -169,10 +174,19 @@ tasks.register<Copy>("copyFatJar") {
 }
 
 tasks.register<Copy>("getNatives") {
-    configurations.getByName("windows_x64").asFileTree.forEach() {
-        from(zipTree(it))
-        into("$projectDir/bin")
+    if(OperatingSystem.current().isWindows()) {
+        configurations.getByName("windows_x64").asFileTree.forEach() {
+            from(zipTree(it))
+            into("$projectDir/bin")
+        }
     }
+    else if(OperatingSystem.current().isLinux()) {
+        configurations.getByName("linux_x64").asFileTree.forEach() {
+            from(tarTree(it))
+            into("$projectDir/bin")
+        }
+    }
+
 }
 
 tasks.register<Delete>("refreshNatives") {
