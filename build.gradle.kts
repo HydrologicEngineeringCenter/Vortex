@@ -222,6 +222,13 @@ tasks.register<Copy>("copyFatJar") {
     into("${rootProject.projectDir}/build/distributions")
 }
 
+tasks.register<Copy>("copyStartScripts") {
+    if(OperatingSystem.current().isLinux()) {
+        from("$projectDir/package/linux")
+        into("$buildDir/distributions/${rootProject.name}-${project.version}/bin")
+    }
+}
+
 tasks.register<Copy>("getNatives") {
     if(OperatingSystem.current().isWindows()) {
         configurations.getByName("windows_x64").asFileTree.forEach() {
@@ -282,12 +289,13 @@ tasks.getByName("build") { finalizedBy("copySanitizer") }
 tasks.getByName("build") { finalizedBy("copyClipper") }
 tasks.getByName("build") { finalizedBy("copyImageExporter") }
 tasks.getByName("build") { finalizedBy("copyLicense") }
+tasks.getByName("build") { finalizedBy("copyStartScripts") }
 tasks.getByName("build").dependsOn("vortex-api:fatJar")
 tasks.getByName("build") { finalizedBy("copyFatJar") }
 tasks.getByName("build") { finalizedBy("zipWin") }
 tasks.getByName("zipWin").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", "copyNatives", "copyNatives",
         "copyImporter", "copyNormalizer", "copyShifter", "copyGridToPointConverter", "copyTransposer", "copySanitizer",
-        "copyClipper", "copyImageExporter", "copyLicense")
+        "copyClipper", "copyImageExporter", "copyLicense", "copyStartScripts")
 
 tasks.getByName("final").dependsOn(":build")
 tasks.getByName("final").dependsOn("vortex-api:publish")
