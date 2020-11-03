@@ -60,9 +60,16 @@ tasks.register<Copy>("copyImporter") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":importer").projectDir.toString()
-                + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":importer").projectDir.toString()
+                    + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":importer").projectDir.toString()
+                    + "/package/linux")
+            include("*.sh")
+        }
     }
 }
 tasks.getByPath(":copyImporter").dependsOn(":importer:build")
@@ -74,8 +81,14 @@ tasks.register<Copy>("copyNormalizer") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":normalizer").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":normalizer").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":normalizer").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
     }
 }
 tasks.getByPath(":copyNormalizer").dependsOn(":normalizer:build")
@@ -87,8 +100,14 @@ tasks.register<Copy>("copyShifter") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":time-shifter").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":time-shifter").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":time-shifter").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
     }
 }
 tasks.getByPath(":copyShifter").dependsOn(":time-shifter:build")
@@ -100,8 +119,14 @@ tasks.register<Copy>("copyGridToPointConverter") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":grid-to-point-converter").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":grid-to-point-converter").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":grid-to-point-converter").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
     }
 }
 tasks.getByPath(":copyGridToPointConverter").dependsOn(":grid-to-point-converter:build")
@@ -113,8 +138,14 @@ tasks.register<Copy>("copyTransposer") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":transposer").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":transposer").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":transposer").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
     }
 }
 tasks.getByPath(":copyTransposer").dependsOn(":transposer:build")
@@ -126,8 +157,14 @@ tasks.register<Copy>("copySanitizer") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":sanitizer").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":sanitizer").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":sanitizer").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
     }
 }
 tasks.getByPath(":copySanitizer").dependsOn(":sanitizer:build")
@@ -139,8 +176,14 @@ tasks.register<Copy>("copyClipper") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":clipper").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":clipper").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":clipper").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
     }
 }
 tasks.getByPath(":copyClipper").dependsOn(":clipper:build")
@@ -152,8 +195,14 @@ tasks.register<Copy>("copyImageExporter") {
         include("*.jar")
     }
     into("bin"){
-        from(project(":image-exporter").projectDir.toString() + "/package/windows")
-        include("*.bat", "*.exe")
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":image-exporter").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":image-exporter").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
     }
 }
 tasks.getByPath(":copyImageExporter").dependsOn(":image-exporter:build")

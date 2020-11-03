@@ -1,0 +1,1 @@
+../jre/bin/java --module-path ../jmods --add-modules javafx.controls,javafx.fxml -Djavafx.cachedir=. -Djava.library.path=/usr/lib/jni -cp ../lib/grid-to-point-converter.jar:../lib/* converter.ConverterWizard
