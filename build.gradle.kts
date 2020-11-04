@@ -73,6 +73,11 @@ tasks.register<Copy>("copyImporter") {
                     + "/package/linux")
             include("*.sh")
         }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":importer").projectDir.toString()
+                    + "/package/macOS")
+            include("*.sh")
+        }
     }
 }
 tasks.getByPath(":copyImporter").dependsOn(":importer:build")
@@ -91,6 +96,11 @@ tasks.register<Copy>("copyNormalizer") {
         else if(OperatingSystem.current().isLinux()) {
             from(project(":normalizer").projectDir.toString() + "/package/linux")
             include("*sh")
+        }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":normalizer").projectDir.toString()
+                    + "/package/macOS")
+            include("*.sh")
         }
     }
 }
@@ -111,6 +121,10 @@ tasks.register<Copy>("copyShifter") {
             from(project(":time-shifter").projectDir.toString() + "/package/linux")
             include("*sh")
         }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":time-shifter").projectDir.toString() + "/package/macOS")
+            include("*.sh")
+        }
     }
 }
 tasks.getByPath(":copyShifter").dependsOn(":time-shifter:build")
@@ -129,6 +143,10 @@ tasks.register<Copy>("copyGridToPointConverter") {
         else if(OperatingSystem.current().isLinux()) {
             from(project(":grid-to-point-converter").projectDir.toString() + "/package/linux")
             include("*sh")
+        }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":grid-to-point-converter").projectDir.toString() + "/package/macOS")
+            include("*.sh")
         }
     }
 }
@@ -149,6 +167,10 @@ tasks.register<Copy>("copyTransposer") {
             from(project(":transposer").projectDir.toString() + "/package/linux")
             include("*sh")
         }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":transposer").projectDir.toString() + "/package/macOS")
+            include("*.sh")
+        }
     }
 }
 tasks.getByPath(":copyTransposer").dependsOn(":transposer:build")
@@ -167,6 +189,10 @@ tasks.register<Copy>("copySanitizer") {
         else if(OperatingSystem.current().isLinux()) {
             from(project(":sanitizer").projectDir.toString() + "/package/linux")
             include("*sh")
+        }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":sanitizer").projectDir.toString() + "/package/macOS")
+            include("*.sh")
         }
     }
 }
@@ -187,6 +213,10 @@ tasks.register<Copy>("copyClipper") {
             from(project(":clipper").projectDir.toString() + "/package/linux")
             include("*sh")
         }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":clipper").projectDir.toString() + "/package/macOS")
+            include("*.sh")
+        }
     }
 }
 tasks.getByPath(":copyClipper").dependsOn(":clipper:build")
@@ -205,6 +235,10 @@ tasks.register<Copy>("copyImageExporter") {
         else if(OperatingSystem.current().isLinux()) {
             from(project(":image-exporter").projectDir.toString() + "/package/linux")
             include("*sh")
+        }
+        else if(OperatingSystem.current().isMacOsX()) {
+            from(project(":image-exporter").projectDir.toString() + "/package/macOS")
+            include("*.sh")
         }
     }
 }
