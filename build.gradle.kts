@@ -230,6 +230,10 @@ tasks.register<Copy>("copyStartScripts") {
         from("$projectDir/package/linux")
         into("$buildDir/distributions/${rootProject.name}-${project.version}/bin")
     }
+    else if(OperatingSystem.current().isMacOsX()) {
+        from("$projectDir/package/macOS")
+        into("$buildDir/distributions/${rootProject.name}-${project.version}/bin")
+    }
 }
 
 tasks.register<Copy>("getNatives") {
