@@ -35,12 +35,20 @@ project.version = project.version.toString()
 
 tasks.test {
     useJUnit()
-    environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
-    jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
-            "-Djava.io.tmpdir=C:/Temp")
+
+    if(org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+        environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
+                "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
+                "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
+
+        jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
+                "-Djava.io.tmpdir=C:/Temp")
+    }
+    else if(org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+        jvmArgs("-Djava.library.path=/usr/lib/jni",
+                "-Djava.io.tmpdir=C:/Temp")
+    }
 }
 
 tasks.named<Test>("test") {
