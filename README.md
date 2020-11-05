@@ -50,10 +50,16 @@ This repository includes a [Gradle](https://gradle.org/) Wrapper; No Gradle inst
 To build the project use the gradle build command:
 
 ```bat
-gradlew build
+gradlew build -x test
 ```
+The `-x test` argument builds without running tests.
 
 ### Running tests
+In order to test, you must have LFS objects downloaded. To download LFS objects, use:
+
+```bat
+git lfs pull
+```
 
 To run tests use the gradle test command:
 
