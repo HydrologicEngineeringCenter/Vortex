@@ -1,0 +1,129 @@
+package mil.army.usace.hec.vortex.math;
+
+import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.io.DataReader;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class BatchCalculator {
+    private final String pathToInput;
+    private final Set<String> variables;
+    private final float multiplyValue;
+    private final float divideValue;
+    private final float addValue;
+    private final float subtractValue;
+    private final Path destination;
+    private final Options writeOptions;
+
+    private BatchCalculator(Builder builder){
+        pathToInput = builder.pathToInput;
+        variables = builder.variables;
+        multiplyValue = builder.multiplyValue;
+        divideValue = builder.divideValue;
+        addValue = builder.addValue;
+        subtractValue = builder.subtractValue;
+        destination = builder.destination;
+        writeOptions = builder.writeOptions;
+    }
+
+    public static class Builder {
+
+        private String pathToInput;
+        private Set<String> variables;
+        boolean isSelectAll;
+        private float multiplyValue = Float.NaN;
+        private float divideValue = Float.NaN;
+        private float addValue = Float.NaN;
+        private float subtractValue = Float.NaN;
+        private Path destination;
+        private Options writeOptions;
+
+        public Builder pathToInput(String pathToInput) {
+            this.pathToInput = pathToInput;
+            return this;
+        }
+
+        public Builder variables(List<String> variables) {
+            this.variables = new HashSet<>(variables);
+            return this;
+        }
+
+        public Builder selectAllVariables(){
+            this.isSelectAll = true;
+            return this;
+        }
+
+        public Builder multiplyValue(float multiplyValue) {
+            this.multiplyValue = multiplyValue;
+            return this;
+        }
+
+        public Builder divideValue(float divideValue) {
+            this.divideValue = divideValue;
+            return this;
+        }
+
+        public Builder addValue(float addValue) {
+            this.addValue = addValue;
+            return this;
+        }
+
+        public Builder subtractValue(float subtractValue) {
+            this.subtractValue = subtractValue;
+            return this;
+        }
+
+        public Builder destination(String destination) {
+            this.destination = Paths.get(destination);
+            return this;
+        }
+
+        public Builder writeOptions(Options writeOptions) {
+            this.writeOptions = writeOptions;
+            return this;
+        }
+
+        public BatchCalculator build() {
+            if(isSelectAll){
+                variables = new HashSet<>();
+                variables.addAll(DataReader.getVariables(pathToInput));
+            }
+            return new BatchCalculator(this);
+        }
+    }
+
+    public static Builder builder(){
+        return new Builder();
+    }
+
+    public void process(){
+        List<CalculatableUnit> units = new ArrayList<>();
+        variables.forEach(variable -> {
+            if (DataReader.getVariables(pathToInput).contains(variable)) {
+
+                DataReader reader = DataReader.builder()
+                        .path(pathToInput)
+                        .variable(variable)
+                        .build();
+
+                CalculatableUnit unit = CalculatableUnit.builder()
+                        .reader(reader)
+                        .multiplyValue(multiplyValue)
+                        .divideValue(divideValue)
+                        .addValue(addValue)
+                        .subtractValue(subtractValue)
+                        .destination(destination)
+                        .writeOptions(writeOptions)
+                        .build();
+
+                units.add(unit);
+            }
+        });
+        units.parallelStream().forEach(CalculatableUnit::process);
+    }
+}
