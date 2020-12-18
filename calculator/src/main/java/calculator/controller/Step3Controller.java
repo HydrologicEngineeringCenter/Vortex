@@ -154,32 +154,32 @@ public class Step3Controller implements BrowseLocationPersister {
         List<String> sourceGrids = model.getSelectedVariables();
         String destinationOut = model.getDestinationOut();
 
-        double minimumThreshold;
-        if (model.getMinimumThreshold() != null && !model.getMinimumThreshold().isEmpty()) {
-            minimumThreshold = Double.parseDouble(model.getMinimumThreshold());
+       float multiplyValue;
+        if (model.getMultiplyValue() != null && !model.getMultiplyValue().isEmpty()) {
+            multiplyValue = Float.parseFloat(model.getMultiplyValue());
         } else {
-            minimumThreshold = -Double.MAX_VALUE;
+            multiplyValue = Float.NaN;
         }
 
-        float minimumReplacement;
-        if (model.getMinimumReplacement() != null && !model.getMinimumReplacement().isEmpty()) {
-            minimumReplacement = Float.parseFloat(model.getMinimumReplacement());
+        float divideValue;
+        if (model.getDivideValue() != null && !model.getDivideValue().isEmpty()) {
+            divideValue = Float.parseFloat(model.getDivideValue());
         } else {
-            minimumReplacement = Float.NaN;
+            divideValue = Float.NaN;
         }
 
-        double maximumThreshold;
-        if (model.getMaximumThreshold() != null && !model.getMaximumThreshold().isEmpty()) {
-            maximumThreshold = Double.parseDouble(model.getMaximumThreshold());
+        float addValue;
+        if (model.getAddValue() != null && !model.getAddValue().isEmpty()) {
+            addValue = Float.parseFloat(model.getAddValue());
         } else {
-            maximumThreshold = Double.MAX_VALUE;
+            addValue = Float.NaN;
         }
 
-        float maximumReplacement;
-        if (model.getMaximumReplacement() != null && !model.getMaximumReplacement().isEmpty()) {
-            maximumReplacement = Float.parseFloat(model.getMaximumReplacement());
+        float subtractValue;
+        if (model.getSubtractValue() != null && !model.getSubtractValue().isEmpty()) {
+            subtractValue = Float.parseFloat(model.getSubtractValue());
         } else {
-            maximumReplacement = Float.NaN;
+            subtractValue = Float.NaN;
         }
 
         Options options = Options.create();
@@ -203,10 +203,10 @@ public class Step3Controller implements BrowseLocationPersister {
         BatchCalculator batchCalculator = BatchCalculator.builder()
                 .pathToInput(pathToSource)
                 .variables(sourceGrids)
-                .minimumThreshold(minimumThreshold)
-                .minimumReplacementValue(minimumReplacement)
-                .maximumThreshold(maximumThreshold)
-                .maximumReplacementValue(maximumReplacement)
+                .multiplyValue(multiplyValue)
+                .divideValue(divideValue)
+                .addValue(addValue)
+                .subtractValue(subtractValue)
                 .destination(destinationOut)
                 .writeOptions(options)
                 .build();

@@ -20,10 +20,10 @@ public class WizardData {
     private final StringProperty inFile = new SimpleStringProperty();
     private final SimpleListProperty<String> availableVariables = new SimpleListProperty<>();
     private final SimpleListProperty<String> selectedVariables = new SimpleListProperty<>();
-    private final StringProperty minimumThreshold = new SimpleStringProperty();
-    private final StringProperty minimumReplacement = new SimpleStringProperty();
-    private final StringProperty maximumThreshold = new SimpleStringProperty();
-    private final StringProperty maximumReplacement = new SimpleStringProperty();
+    private final StringProperty multiplyValue = new SimpleStringProperty();
+    private final StringProperty divideValue = new SimpleStringProperty();
+    private final StringProperty addValue = new SimpleStringProperty();
+    private final StringProperty subtractValue = new SimpleStringProperty();
     private final StringProperty destinationOut = new SimpleStringProperty();
 
     public StringProperty inFileProperty() {
@@ -89,36 +89,49 @@ public class WizardData {
     }
 
     public StringProperty lowerThresholdProperty() {
-        return minimumThreshold;
+        return multiplyValue;
     }
 
-    public String getMinimumThreshold(){
-        return minimumThreshold.get();
+    public StringProperty multiplyValueProperty(){
+        return multiplyValue;
+    }
+
+    public String getMultiplyValue(){
+        return multiplyValue.get();
     }
 
     public StringProperty lowerReplacementProperty() {
-        return minimumReplacement;
+        return divideValue;
     }
 
-    public String getMinimumReplacement(){
-        return minimumReplacement.get();
+    public StringProperty divideValueProperty() {
+        return divideValue;
     }
 
-    public StringProperty upperThresholdProperty() {
-        return maximumThreshold;
+    public String getDivideValue(){
+        return divideValue.get();
     }
 
-    public StringProperty upperReplacementProperty() {
-        return maximumReplacement;
+    //public StringProperty upperThresholdProperty() { return addValue; }
+
+    public StringProperty addValueProperty() {
+        return addValue;
     }
 
-    public String getMaximumReplacement(){
-        return maximumReplacement.get();
+    public String getAddValue() {
+        return addValue.get();
     }
 
-    public String getMaximumThreshold(){
-        return maximumThreshold.get();
+    public StringProperty upperThresholdProperty() { return subtractValue; }
+
+    public StringProperty subtractValueProperty() {
+        return subtractValue;
     }
+
+    public String getSubtractValue() {
+        return subtractValue.get();
+    }
+
 
     public String getDestinationOut() {
         return destinationOut.get();
