@@ -41,13 +41,18 @@ public class Step2Controller {
     @Validate
     public boolean validate() {
         int count = 0;
-        if (!multiplyTextField.getText().isEmpty())
+        String multiplyText = multiplyTextField.getText();
+        String divideText = divideTextField.getText();
+        String addText = addTextField.getText();
+        String subtractText = subtractTextField.getText();
+
+        if (multiplyText != null && !multiplyText.isEmpty())
             count++;
-        if (!divideTextField.getText().isEmpty())
+        if (divideText != null && !divideText.isEmpty())
             count++;
-        if (!addTextField.getText().isEmpty())
+        if (addText != null && !addText.isEmpty())
             count++;
-        if(!subtractTextField.getText().isEmpty())
+        if(subtractText != null && !subtractText.isEmpty())
             count++;
         if (count != 1) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -63,9 +68,8 @@ public class Step2Controller {
 
     @Submit
     public void submit() {
-
         if (log.isDebugEnabled()) {
-            log.debug("[SUBMIT] the user has completed step 1");
+            log.debug("[SUBMIT] the user has completed step 2");
         }
     }
 
