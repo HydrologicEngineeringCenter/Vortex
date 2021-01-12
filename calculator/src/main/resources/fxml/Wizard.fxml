@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.controller.WizardController">
+   <children>
+      <VBox fx:id="contentPanel" VBox.vgrow="ALWAYS" />
+      <Separator prefWidth="200.0" />
+      <ButtonBar fx:id="buttonBar" prefHeight="40.0" prefWidth="200.0" />
+   </children>
+</VBox>
