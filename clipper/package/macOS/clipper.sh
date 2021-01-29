@@ -1,1 +1,1 @@
-../jre/Contents/Home/bin/java --module-path ../jmods --add-modules javafx.controls,javafx.fxml -Djavafx.cachedir=. -Djava.library.path=../bin/gdal@2.4.4/2.4.4_1/lib -cp ../lib/clipper.jar:../lib/* clipper.ClipperWizard
+../jre/Contents/Home/bin/java --module-path ../jmods --add-modules javafx.controls,javafx.fxml -Djavafx.cachedir=. -Djava.library.path=../bin/gdal -cp ../lib/clipper.jar:../lib/* clipper.ClipperWizard
