@@ -73,13 +73,6 @@ tasks.register<Delete>("deleteJavafx"){
     })
 }
 
-tasks.register<Copy>("copyMapserver"){
-    from ("${rootProject.projectDir}/bin") {
-        include ("gdal/**")
-    }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/bin")
-}
-
 tasks.register<Copy>("copyNatives"){
     from ("${rootProject.projectDir}/bin")
     into ("$buildDir/distributions/${base.archivesBaseName}-$version/bin")
@@ -90,7 +83,6 @@ tasks.build{finalizedBy("copyResources")}
 tasks.build{finalizedBy("copyRuntimeLibs")}
 tasks.getByName("copyRuntimeLibs") { finalizedBy("copyJavafx") }
 tasks.getByName("copyJavafx") { finalizedBy("deleteJavafx") }
-tasks.build{finalizedBy("copyMapserver")}
 tasks.build{finalizedBy("copyNatives")}
 
 application {
