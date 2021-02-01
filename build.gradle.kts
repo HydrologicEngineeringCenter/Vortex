@@ -198,6 +198,25 @@ tasks.register<Copy>("copySanitizer") {
 }
 tasks.getByPath(":copySanitizer").dependsOn(":sanitizer:build")
 
+tasks.register<Copy>("copyCalculator") {
+    into("$buildDir/distributions/${rootProject.name}-${project.version}")
+    into("lib") {
+        from(project(":calculator").buildDir.toString() + "/libs")
+        include("*.jar")
+    }
+    into("bin"){
+        if(OperatingSystem.current().isWindows()) {
+            from(project(":calculator").projectDir.toString() + "/package/windows")
+            include("*.bat", "*.exe")
+        }
+        else if(OperatingSystem.current().isLinux()) {
+            from(project(":calculator").projectDir.toString() + "/package/linux")
+            include("*sh")
+        }
+    }
+}
+tasks.getByPath(":copyCalculator").dependsOn(":calculator:build")
+
 tasks.register<Copy>("copyClipper") {
     into("$buildDir/distributions/${rootProject.name}-${project.version}")
     into("lib") {
@@ -350,6 +369,7 @@ tasks.getByName("build") { finalizedBy("copyShifter") }
 tasks.getByName("build") { finalizedBy("copyGridToPointConverter") }
 tasks.getByName("build") { finalizedBy("copyTransposer") }
 tasks.getByName("build") { finalizedBy("copySanitizer") }
+tasks.getByName("build") { finalizedBy("copyCalculator") }
 tasks.getByName("build") { finalizedBy("copyClipper") }
 tasks.getByName("build") { finalizedBy("copyImageExporter") }
 tasks.getByName("build") { finalizedBy("copyLicense") }
@@ -359,7 +379,7 @@ tasks.getByName("build") { finalizedBy("copyFatJar") }
 tasks.getByName("build") { finalizedBy("zip") }
 tasks.getByName("zip").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", "copyNatives", "copyNatives",
         "copyImporter", "copyNormalizer", "copyShifter", "copyGridToPointConverter", "copyTransposer", "copySanitizer",
-        "copyClipper", "copyImageExporter", "copyLicense", "copyStartScripts")
+        "copyCalculator", "copyClipper", "copyImageExporter", "copyLicense", "copyStartScripts")
 
 tasks.getByName("final").dependsOn(":build")
 tasks.getByName("final").dependsOn("vortex-api:publish")

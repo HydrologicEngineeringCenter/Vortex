@@ -558,10 +558,12 @@ public class DssDataWriter extends DataWriter {
 
         SpatialReference srs = new SpatialReference(grid.wkt());
         String crsName;
-        if (srs.IsProjected() == 1){
+        if (srs.IsProjected() == 1) {
             crsName = srs.GetAttrValue("projcs");
-        } else {
+        } else if (srs.IsGeographic() == 1) {
             crsName = srs.GetAttrValue("geogcs");
+        } else {
+            crsName = "";
         }
 
         if (crsName.toLowerCase().contains("albers")){
@@ -618,8 +620,6 @@ public class DssDataWriter extends DataWriter {
         Unit<?> units = getUnits(grid.units());
         String unitsString = getUnitsString(units);
         gridInfo.setDataUnits(unitsString);
-
-
 
         ZonedDateTime startTime = grid.startTime();
 
