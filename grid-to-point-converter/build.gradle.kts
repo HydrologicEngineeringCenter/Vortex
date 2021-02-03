@@ -66,13 +66,6 @@ tasks.register<Copy>("copyRuntimeLibs"){
     into ("$buildDir/distributions/${base.archivesBaseName}-$version/lib")
 }
 
-tasks.register<Copy>("copyMapserver"){
-    from ("${rootProject.projectDir}/bin") {
-        include ("gdal/**")
-    }
-    into ("$buildDir/distributions/${base.archivesBaseName}-$version/bin")
-}
-
 tasks.register<Copy>("copyNatives"){
     from ("${rootProject.projectDir}/bin")
     into ("$buildDir/distributions/${base.archivesBaseName}-$version/bin")
@@ -81,7 +74,6 @@ tasks.register<Copy>("copyNatives"){
 tasks.build{finalizedBy("copyJar")}
 tasks.build{finalizedBy("copyResources")}
 tasks.build{finalizedBy("copyRuntimeLibs")}
-tasks.build{finalizedBy("copyMapserver")}
 tasks.build{finalizedBy("copyNatives")}
 
 application {
