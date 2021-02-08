@@ -2,10 +2,13 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.Options;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BatchImporter {
     private List<String> inFiles;
@@ -14,12 +17,17 @@ public class BatchImporter {
     private Options geoOptions;
     private Options writeOptions;
 
+    private PropertyChangeSupport support;
+    private final AtomicInteger doneCount;
+
     private BatchImporter(BatchImporterBuilder builder){
         this.inFiles = builder.inFiles;
         this.variables = builder.variables;
         this.destination = builder.destination;
         this.geoOptions = builder.geoOptions;
         this.writeOptions = builder.writeOptions;
+        this.support = new PropertyChangeSupport(this);
+        this.doneCount = new AtomicInteger();
     }
 
     public static class BatchImporterBuilder {
@@ -82,7 +90,27 @@ public class BatchImporter {
                 importableUnits.add(importableUnit);
             }
         }));
-        importableUnits.parallelStream().forEach(ImportableUnit::process);
+
+        int totalCount = importableUnits.size();
+
+        importableUnits.parallelStream().forEach(importableUnit -> {
+            importableUnit.addPropertyChangeListener(evt -> {
+                if(evt.getPropertyName().equals("complete")) {
+                    int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
+                    support.firePropertyChange("progress", null, newValue);
+                }
+            });
+
+            importableUnit.process();
+        });
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }
 
