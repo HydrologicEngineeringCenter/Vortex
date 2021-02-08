@@ -7,6 +7,8 @@ import mil.army.usace.hec.vortex.geo.Resampler;
 import mil.army.usace.hec.vortex.geo.VectorUtils;
 
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,11 +24,14 @@ public class ImportableUnit {
     private Path destination;
     private Options writeOptions;
 
+    private PropertyChangeSupport support;
+
     private ImportableUnit(ImportableUnitBuilder builder){
         this.reader = builder.reader;
         this.geoOptions = builder.geoOptions;
         this.destination = builder.destination;
         this.writeOptions = builder.writeOptions;
+        this.support = new PropertyChangeSupport(this);
     }
 
     public static class ImportableUnitBuilder {
@@ -128,6 +133,16 @@ public class ImportableUnit {
 
             writer.write();
         });
+
+        support.firePropertyChange("complete", null, null);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 
 }
