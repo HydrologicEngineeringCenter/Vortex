@@ -68,15 +68,15 @@ public class WizardData {
                         .appendPattern("ddMMMuuuu:HHmm")
                         .toFormatter();
                 //Sort based on D part
-                variables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+                variables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/", 7)[4], formatter)));
                 //Sort based on A part
-                variables.sort(Comparator.comparing(s -> s.split("/")[1]));
+                variables.sort(Comparator.comparing(s -> s.split("/", 7)[1]));
                 //Sort based on B part
-                variables.sort(Comparator.comparing(s -> s.split("/")[2]));
+                variables.sort(Comparator.comparing(s -> s.split("/", 7)[2]));
                 //Sort based on C part
-                variables.sort(Comparator.comparing(s -> s.split("/")[3]));
+                variables.sort(Comparator.comparing(s -> s.split("/", 7)[3]));
                 //Sort based on F part
-                variables.sort(Comparator.comparing(s -> s.split("/")[6]));
+                variables.sort(Comparator.comparing(s -> s.split("/", 7)[6]));
             } catch (DateTimeParseException e) {
                 e.printStackTrace();
             }
