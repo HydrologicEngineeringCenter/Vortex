@@ -1,3 +1,2 @@
 * linguist-vendored
 *.java linguist-vendored=false
-**/vortex-api/src/test/resources/** filter=lfs diff=lfs merge=lfs -text
