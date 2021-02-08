@@ -82,8 +82,9 @@ public class ZonalStatisticsCalculator {
         Layer inLayer = inDataSource.GetLayer(0);
 
         SpatialReference src = inLayer.GetSpatialRef();
-        SpatialReference tgt = new SpatialReference();
-        tgt.ImportFromWkt(raster.GetProjection());
+        src.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER);
+        SpatialReference tgt = new SpatialReference(raster.GetProjection());
+        tgt.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER);
         CoordinateTransformation transformation = osr.CreateCoordinateTransformation(src, tgt);
 
         AtomicReference<List<GridCell>> gridCells = new AtomicReference<>();
