@@ -87,6 +87,10 @@ publishing {
     }
     repositories {
         maven {
+            credentials {
+                username = "$mavenUser"
+                password = "$mavenPassword"
+            }
             val releasesRepoUrl = uri("https://www.hec.usace.army.mil/nexus/repository/maven-releases/")
             val snapshotsRepoUrl = uri("https://www.hec.usace.army.mil/nexus/repository/maven-snapshots/")
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
