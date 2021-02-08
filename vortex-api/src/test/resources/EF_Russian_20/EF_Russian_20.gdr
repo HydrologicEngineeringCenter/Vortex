@@ -1,3 +1,31 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:ec6d193b02bd1d674df03c76bc60bb40c039da675c21ec3226b88f01ece868b6
-size 1053
+<?xml version="1.0" encoding="UTF-8"?>
+<ShapefileProperties>
+  <DefaultRGB>-5111808</DefaultRGB>
+  <HighlightRGB>-65536</HighlightRGB>
+  <DrawUsingDefaultColor>true</DrawUsingDefaultColor>
+  <DrawLabels>false</DrawLabels>
+  <DrawLines>true</DrawLines>
+  <DrawArea>true</DrawArea>
+  <Alpha>75.0</Alpha>
+  <BorderColor>black</BorderColor>
+  <BorderWidth>1</BorderWidth>
+  <BorderStyle />
+  <FillColor>blue</FillColor>
+  <FillStyle>Solid</FillStyle>
+  <SymbolDrawType>0</SymbolDrawType>
+  <PolygonDrawType>0</PolygonDrawType>
+  <LabelFont Name="SansSerif" Style="0" Size="12" />
+  <DisplayFieldIndex>0</DisplayFieldIndex>
+  <ColorContourStartColor>blue</ColorContourStartColor>
+  <ColorContourEndColor>red</ColorContourEndColor>
+  <NumContourSteps>10</NumContourSteps>
+  <LabelRotation>0.0</LabelRotation>
+  <LabelPosition>0</LabelPosition>
+  <LabelFieldIndex>-1</LabelFieldIndex>
+  <PointSize>5</PointSize>
+  <SymbolIndex>0</SymbolIndex>
+  <UseGradations>false</UseGradations>
+  <NumGradations>5</NumGradations>
+  <AttributeMap />
+</ShapefileProperties>
+

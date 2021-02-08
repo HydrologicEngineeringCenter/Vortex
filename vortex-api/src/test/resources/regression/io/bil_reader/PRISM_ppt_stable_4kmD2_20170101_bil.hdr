@@ -1,3 +1,14 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:7047c7bf3dcbed243dd3e25c5e4290088a1a8de3f0c9442ac97f20c5aa822367
-size 306
+BYTEORDER      I
+LAYOUT         BIL
+NROWS          621
+NCOLS          1405
+NBANDS         1
+NBITS          32
+BANDROWBYTES   5620
+TOTALROWBYTES  5620
+PIXELTYPE      FLOAT
+ULXMAP         -125
+ULYMAP         49.9166666666664
+XDIM           0.0416666666667
+YDIM           0.0416666666667
+NODATA         -9999

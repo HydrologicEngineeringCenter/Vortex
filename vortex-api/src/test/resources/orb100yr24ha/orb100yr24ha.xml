@@ -1,3 +1,394 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:baf8cbb4ba94d7faf167149cc530f5da310e6f27ad43ad4d9ae2cc0962210fae
-size 15798
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<metadata>
+<idinfo>
+<datsetid>gov.noaa.nws.ohd.hdsc: OHD-HDSC-NOAAAtlas14V2v2011-ORB</datsetid>
+<citation>
+<citeinfo>
+<origin>NOAA/NWS/Office of Hydrologic Development, Hydrometeorological Design Studies Center</origin>
+<pubdate>20060817</pubdate>
+<title>Precipitation Frequency for Ohio River Basin, USA - NOAA Atlas 14 Volume 2</title>
+<geoform>raster digital data</geoform>
+<serinfo>
+<sername>NOAA Atlas 14</sername>
+<issue>Volume 2</issue>
+</serinfo>
+<pubinfo>
+<pubplace>Silver Spring, MD, USA</pubplace>
+<publish>NOAA/NWS/Office of Hydrologic Development, Hydrometeorological Design Studies Center</publish>
+</pubinfo>
+<onlink>http://hdsc.nws.noaa.gov/hdsc/pfds/pfds_gis.html</onlink>
+<onlink>http://hdsc.nws.noaa.gov/hdsc/pfds/</onlink>
+<onlink>http://www.nws.noaa.gov/ohd/hdsc/index.html</onlink>
+<onlink>ftp://hdsc.nws.noaa.gov/pub/hdsc/data/</onlink>
+</citeinfo>
+</citation>
+<descript>
+<abstract>This GIS grid atlas contains precipitation frequency estimates for the Ohio River Basin and Surrounding states is based on precipitation data collected between 4/1863-12/2000. This atlas is an updated version of Technical Memorandum NWS Hydro 35, Five to 60-minutes Precipitation Frequency for Eastern and Central United States (1977), Technical Paper 40 - Rainfall Frequency Atlas of the United States for Durations from 30 minutes to 24 hours and Return Periods from 1 to 100 Years (1961) and Technical Paper 49 - Two-to-Ten-Day Precipitation for Return Periods of 2 to 100 Years in the Contiguous United States (1964) for the following states: Delaware, District of Columbia, Illinois, Indiana, Kentucky, Maryland, New Jersey, North Carolina, Ohio, Pennsylvania, South Carolina, Tennessee, Virginia and West Virginia. The grids provide information for durations from 5 minutes through 60 days, and for return periods of 2 years through 1000 years.</abstract>
+<purpose>Precipitation frequency estimates are used as basic design criteria for a wide variety of hydraulic structures such as culverts, roadway drainages, bridges and small dams. This dataset is for the display and/or analyses of spatially distributed point precipitation frequency estimates.</purpose>
+<supplinf>none.</supplinf>
+</descript>
+<timeperd>
+<timeinfo>
+<rngdates>
+<begdate>18630401</begdate>
+<enddate>20001231</enddate>
+</rngdates>
+</timeinfo>
+<current>Climatological period from which the point precipitation observations were taken.</current>
+</timeperd>
+<status>
+<progress>Complete</progress>
+<update>As needed</update>
+</status>
+<spdom>
+<bounding>
+<westbc>-91.5375</westbc>
+<eastbc>-73.8714</eastbc>
+<northbc>42.52960</northbc>
+<southbc>31.95664</southbc>
+</bounding>
+</spdom>
+<keywords>
+<theme>
+<themekt>NASA GCMD Science Keywords</themekt>
+<themekey>Atmosphere &gt; Precipitation &gt; Precipitation Frequency</themekey>
+</theme>
+<theme>
+<themekt>ISO 19115 Topic Category</themekt>
+<themekey>climatologyMeteorologyAtmosphere</themekey>
+</theme>
+<place>
+<placekt>NASA GCMD Location Keywords</placekt>
+<placekey>Continent &gt; North America &gt; United States Of America</placekey>
+</place>
+<stratum>
+<stratkt>NASA GCMD Location Keywords</stratkt>
+<stratkey>Vertical Location &gt; Ground Layer</stratkey>
+</stratum>
+</keywords>
+<thelayid>
+<numthlay>1</numthlay>
+<layrname>
+<theme>
+<themekt>NASA GCMD Science Keywords</themekt>
+<themekey>Atmosphere &gt; Precipitation &gt; Precipitation Frequency</themekey>
+</theme>
+</layrname>
+</thelayid>
+<accconst>n/a, no restrictions apply and data is public domain.</accconst>
+<useconst>Acknowledgement of NOAA/National Weather Service, Office of Hydrologic Development, Hydrometeorological Design Studies Center (HDSC)</useconst>
+<ptcontac>
+<cntinfo>
+<cntorgp>
+<cntorg>NOAA/National Weather Service, Office of Hydrologic Development, Hydrometeorological Design Studies Center</cntorg>
+</cntorgp>
+<cntaddr>
+<addrtype>mailing and physical address</addrtype>
+<address>NOAA/NWS/Office of Hydrologic Development</address>
+<address>SSMC2, W/OHD 13</address>
+<address>1325 East-West Highway</address>
+<city>Silver Spring</city>
+<state>MD</state>
+<postal>20910</postal>
+<country>USA</country>
+</cntaddr>
+<cntemail>hdsc.questions@noaa.gov</cntemail>
+<hours>9 a.m. to 5 p.m. Eastern, Monday-Friday</hours>
+</cntinfo>
+</ptcontac>
+<browse>
+<browsen>http://hdsc.nws.noaa.gov/hdsc/pfds/meta/images/ohiorbasin1_web_thumbnail.png</browsen>
+<browsed>ORB 100-year 24-hour</browsed>
+<browset>PNG</browset>
+</browse>
+<secinfo>
+<secsys>None</secsys>
+<secclass>Unclassified</secclass>
+<sechandl>None</sechandl>
+</secinfo>
+<native>Microsoft Windows XP</native>
+<crossref>
+<citeinfo>
+<origin>NOAA/National Weather Serivce, Office of Hydrology</origin>
+<pubdate>1961</pubdate>
+<title>Technical Paper 40 - Rainfall Frequency Atlas of the United States for Durations from 30 minutes to 24 hours and Return Periods from 1 to 100 Years</title>
+<geoform>document</geoform>
+<serinfo>
+<sername>Technical Paper</sername>
+<issue>No. 40</issue>
+</serinfo>
+<pubinfo>
+<pubplace>Silver Spring, MD, USA</pubplace>
+<publish>NOAA/National Weather Serivce, Office of Hydrology</publish>
+</pubinfo>
+<onlink>http://www.srh.noaa.gov/lub/wx/precip_freq/precip_index.htm</onlink>
+<onlink>http://www.erh.noaa.gov/er/hq/Tp40s.htm</onlink>
+</citeinfo>
+</crossref>
+<crossref>
+<citeinfo>
+<origin>NOAA/National Weather Serivce, Office of Hydrology</origin>
+<pubdate>1977</pubdate>
+<title>Technical Memorandum NWS Hydro 35, Five to 60-minutes Precipitation Frequency for Eastern and Central United States</title>
+<geoform>document</geoform>
+<serinfo>
+<sername>Technical Memorandum</sername>
+<issue>NWS Hydro 35</issue>
+</serinfo>
+<pubinfo>
+<pubplace>Silver Spring, MD, USA</pubplace>
+<publish>NOAA/National Weather Serivce, Office of Hydrology</publish>
+</pubinfo>
+<onlink>http://www.nws.noaa.gov/ohd/hdsc/On-line_reports/TM-Hydro35/Technical%20Memorandum%20NWS%20Hyro-35_1.pdf</onlink>
+</citeinfo>
+</crossref>
+<crossref>
+<citeinfo>
+<origin>U.S. Weather Bureau and U.S. Department of Agriculture</origin>
+<pubdate>1964</pubdate>
+<title>Technical Paper No. 49, Two- to ten-day precipitation for return periods of 2 to 100 years in the contiguous United States</title>
+<geoform>document</geoform>
+<serinfo>
+<sername>Technical Paper</sername>
+<issue>No. 49</issue>
+</serinfo>
+<pubinfo>
+<pubplace>Silver Spring, MD, USA</pubplace>
+<publish>U.S. Weather Bureau</publish>
+</pubinfo>
+<onlink>http://www.nws.noaa.gov/ohd/hdsc/studies/prcpfreq.html</onlink>
+</citeinfo>
+</crossref>
+</idinfo>
+<dataqual>
+<attracc>
+<attraccr>All attributes created during the creation process were tested for internal consistency. In addition, thorough comparisons where conducted with Technical Memo 35, TP-40 and TP-49.</attraccr>
+</attracc>
+<logic>All data were based on precipitation-reporting stations that had at least 20 years of hourly and/or 30 years of daily precipitation data between 1893 and 2002. Similar quality assurance procedures were used with all input data sets.</logic>
+<complete>Observed point precipitation values originated from a variety of sources. All station data were subjected to quality control checks by the National Climatic Data Center (NCDC) and the Hydrometeorological Design Studies Center. Some data what was not already digitized by NCDC was done so by the National Weather Service.</complete>
+<lineage>
+<srcinfo>
+<srccite>
+<citeinfo>
+<origin>National Climatic Data Center (NCDC)</origin>
+<pubdate>2000</pubdate>
+<title>Hourly Precipitation Data</title>
+<geoform>tabular digital data</geoform>
+<serinfo>
+<sername>DSI3240</sername>
+<issue>n/a</issue>
+</serinfo>
+<pubinfo>
+<pubplace>Asheville, NC, USA</pubplace>
+<publish>National Climatic Data Center (NCDC)</publish>
+</pubinfo>
+<onlink>http://lwf.ncdc.noaa.gov/oa/ncdc.html</onlink>
+</citeinfo>
+</srccite>
+<typesrc>online</typesrc>
+<srctime>
+<timeinfo>
+<rngdates>
+<begdate>19480101</begdate>
+<enddate>20001231</enddate>
+</rngdates>
+</timeinfo>
+<srccurr>ground condition</srccurr>
+</srctime>
+<srccitea>DSI3240</srccitea>
+<srccontr>Location and values of known hourly precipitation amounts.</srccontr>
+</srcinfo>
+<srcinfo>
+<srccite>
+<citeinfo>
+<origin>National Climatic Data Center (NCDC)</origin>
+<pubdate>2000</pubdate>
+<title>Daily Cooperative Summary of the Day</title>
+<geoform>tabular digital data</geoform>
+<serinfo>
+<sername>DSI3200</sername>
+<issue>n/a</issue>
+</serinfo>
+<pubinfo>
+<pubplace>Asheville, NC, USA</pubplace>
+<publish>National Climatic Data Center (NCDC)</publish>
+</pubinfo>
+<onlink>http://lwf.ncdc.noaa.gov/oa/ncdc.html</onlink>
+</citeinfo>
+</srccite>
+<typesrc>online</typesrc>
+<srctime>
+<timeinfo>
+<rngdates>
+<begdate>18630401</begdate>
+<enddate>20001231</enddate>
+</rngdates>
+</timeinfo>
+<srccurr>ground condition</srccurr>
+</srctime>
+<srccitea>DSI3200</srccitea>
+<srccontr>Location and values of known daily precipitation amounts.</srccontr>
+</srcinfo>
+<srcinfo>
+<srccite>
+<citeinfo>
+<origin>National Climatic Data Center (NCDC)</origin>
+<pubdate>2000</pubdate>
+<title>First Order Summary of the Day</title>
+<geoform>tabular digital data</geoform>
+<serinfo>
+<sername>First Order Summary of the Day</sername>
+<issue>n/a</issue>
+</serinfo>
+<pubinfo>
+<pubplace>Asheville, NC, USA</pubplace>
+<publish>National Climatic Data Center (NCDC)</publish>
+</pubinfo>
+<onlink>http://lwf.ncdc.noaa.gov/oa/ncdc.html</onlink>
+</citeinfo>
+</srccite>
+<typesrc>online</typesrc>
+<srctime>
+<timeinfo>
+<rngdates>
+<begdate>18630401</begdate>
+<enddate>20001231</enddate>
+</rngdates>
+</timeinfo>
+<srccurr>ground condition</srccurr>
+</srctime>
+<srccitea>DSI3210</srccitea>
+<srccontr>Location and values of known hourly and daily precipitation amounts at National Weather Service First Order stations.</srccontr>
+</srcinfo>
+<procstep>
+<procdesc>This spatial data set was prepared by spatially interpolating point precipitation frequency estimates. The precipitation frequency estimates were calculated using regional L-moment statistics based on an annual maximum data series. The spatial interpolation of the point precipitation frequency estimates was accomplished with PRISM coupled with a derivation process called the cascade, residual add-back (CRAB) procedure. So-called "index flood," otherwise known as the mean annual maximum, grids were created using PRISM, Parameter-elevation Regressions on Independent Slopes Model, at Oregon State University. PRISM is an analytical tool that uses point data, a digital elevation model, and other spatial data sets to generate gridded estimates of climatic parameters. PRISM is uniquely designed and constantly updated to map climate in the most difficult situations, including high mountains, rain shadows, temperature inversions, coastal regions, and other complex climatic regimes. Meanwhile, CRAB is used to actually derive the precipitation frequency grids. CRAB is a derivation process that utilizes the strong, linear relationship between a particular duration and frequency (e.g. 50-year 24-hour) and the next higher frequency (e.g. 100-year 24-hour). In fact, within an L-moment region this relationship is constant and known as the Regional Growth Factor (RGF). With the CRAB procedure however, a global (all-region) relationship is developed based on actual observing-site data, then the linear relationship is applied to the preceding grid (i.e. 50-year 24-hour) to establish a first guess 100-year 24-hour grid. Knowing regional differences occur, residuals (predicted minus observed) are calculated for each observing-site and then normalized (divided by) by the preceding estimate (50-year 24-hour). These (point) normalized residuals are then spatially interpolated to a grid. The resultant grid is then un-normalized by multiplying it by the preceding grid to obtain a grid of actual residuals, in inches. The last step is to simply add the residual grid to the first guess grid to arrive at the final 100-year 24-hour grid. The process, as the term cascade implies, utilizes a previously derived grid to derive the next grid. So the same process is followed for deriving the 200-year 24-hour grid, but instead of the 50-year 24-hour grid being used as the predictor, the new 100-year 24-hour grid is used. For more details about the processes used to create this grid, please see the project quarterly reports posted here: &lt;http://www.nws.noaa.gov/ohd/hdsc/current-projects/project.html&gt; or the NOAA Atlas 14 Documention.</procdesc>
+<procdate>20060817</procdate>
+</procstep>
+</lineage>
+</dataqual>
+<spdoinfo>
+<direct>Raster</direct>
+<rastinfo>
+<cvaltype>integer</cvaltype>
+<rasttype>Grid Cell</rasttype>
+<rowcount>1269</rowcount>
+<colcount>2120</colcount>
+<vrtcount>1</vrtcount>
+</rastinfo>
+</spdoinfo>
+<spref>
+<horizsys>
+<geograph>
+<latres>0.00833333</latres>
+<longres>0.00833333</longres>
+<geogunit>Decimal degrees</geogunit>
+</geograph>
+<geodetic>
+<horizdn>D_WGS_1972 (WGS72)</horizdn>
+<ellips>D_WGS_1972</ellips>
+<semiaxis>6378135.000000</semiaxis>
+<denflat>298.260000</denflat>
+</geodetic>
+</horizsys>
+</spref>
+<eainfo>
+<detailed>
+<enttyp>
+<enttypl>precipitation frequency grid cell value</enttypl>
+<enttypd>ASCII integer from GRASS 4.2 (Geographic Resources Analysis Support System) GIS</enttypd>
+<enttypds>Self-evident</enttypds>
+</enttyp>
+<attr>
+<attrlabl>precipitation frequency grid cell value</attrlabl>
+<attrdef>spatially gridded precipitation frequency estimates</attrdef>
+<attrdefs>HDSC</attrdefs>
+<attrdomv>
+<udom>Sequential unique whole numbers that are automatically generated.</udom>
+</attrdomv>
+</attr>
+<attr>
+<attrlabl>Value</attrlabl>
+<attrdef>Feature geometry. Grid cell precipitation in inches*1000</attrdef>
+<attrdefs>HDSC</attrdefs>
+<attrdomv>
+<rdom>
+<rdommin>0</rdommin>
+<rdommax>9999999</rdommax>
+<attrunit>1000ths of inches</attrunit>
+</rdom>
+</attrdomv>
+<attrvai>
+<attrva>0.01</attrva>
+<attrvae>measurement accuracy of precipitation gauges in inches</attrvae>
+</attrvai>
+</attr>
+</detailed>
+</eainfo>
+<distinfo>
+<distrib>
+<cntinfo>
+<cntorgp>
+<cntorg>NOAA/NWS/OHD/Hydrometeorological Design Studies Center</cntorg>
+</cntorgp>
+<cntaddr>
+<addrtype>mailing and physical</addrtype>
+<address>NOAA/NWS/Office of Hydrologic Development</address>
+<address>SSMC2, W/OHD 12</address>
+<address>1325 East-West Highway</address>
+<city>Silver Spring</city>
+<state>MD</state>
+<postal>20910</postal>
+<country>USA</country>
+</cntaddr>
+<cntemail>hdsc.questions@noaa.gov</cntemail>
+</cntinfo>
+</distrib>
+<resdesc>Downloadable data.</resdesc>
+<distliab>Users must assume responsibility to determine the appropriate use of these data.</distliab>
+<stdorder>
+<digform>
+<digtinfo>
+<formname>ASCII</formname>
+<transize>4.0</transize>
+</digtinfo>
+<digtopt>
+<onlinopt>
+<computer>
+<networka>
+<networkr>HDSC PFDS;</networkr>
+<networkr>orbXyrYY.ver2 (X = average recurrence interval, YY = duration; u = upper limit, l= lower limit)</networkr>
+</networka>
+</computer>
+</onlinopt>
+</digtopt>
+</digform>
+<fees>None</fees>
+</stdorder>
+<techpreq>An grid-based GIS such as ArcInfo (GRID) or Arcview 3.x/8.x/9.x (with Spatial Analyst Extension). The grids can however be converted into GRASS ASCII grids by manipulating the header.</techpreq>
+</distinfo>
+<metainfo>
+<metd>201107</metd>
+<metc>
+<cntinfo>
+<cntorgp>
+<cntorg>NOAA/NWS/OHD/Hydrometeorological Design Studies Center</cntorg>
+</cntorgp>
+<cntaddr>
+<addrtype>mailing address</addrtype>
+<address>NOAA/NWS/Office of Hydrologic Development</address>
+<address>SSMC2, W/OHD 12</address>
+<address>1325 East-West Highway</address>
+<city>Silver Spring</city>
+<state>MD</state>
+<postal>20910</postal>
+<country>USA</country>
+</cntaddr>
+<cntemail>hdsc.questions@noaa.gov</cntemail>
+<hours>9 a.m. to 5 p.m. Eastern, Monday-Friday</hours>
+</cntinfo>
+</metc>
+<metstdn>FGDC Content Standards for Digital Geospatial Metadata</metstdn>
+<metstdv>FGDC-STD-012-2002</metstdv>
+<mettc>local time</mettc>
+</metainfo>
+</metadata>
