@@ -97,9 +97,19 @@ public class ImportableUnit {
 
         Rectangle2D env;
         String envWkt;
+
         if (geoOptions.containsKey("pathToShp") && new File(geoOptions.get("pathToShp")).exists()) {
             env = VectorUtils.getEnvelope(Paths.get(geoOptions.get("pathToShp")));
             envWkt = VectorUtils.getWkt(Paths.get(geoOptions.get("pathToShp")));
+        } else if (geoOptions.containsKey("minX") && geoOptions.containsKey("maxX")
+                && geoOptions.containsKey("minY") && geoOptions.containsKey("maxY")
+                && geoOptions.containsKey("envWkt")) {
+            double minX = Double.parseDouble(geoOptions.get("minX"));
+            double maxX = Double.parseDouble(geoOptions.get("maxX"));
+            double minY = Double.parseDouble(geoOptions.get("minY"));
+            double maxY = Double.parseDouble(geoOptions.get("maxY"));
+            env = new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
+            envWkt = geoOptions.get("envWkt");
         } else {
             env = null;
             envWkt = null;
@@ -113,13 +123,7 @@ public class ImportableUnit {
 
             VortexGrid grid = (VortexGrid) reader.getDto(i);
 
-            String destWkt;
-
-            if (geoOptions.containsKey("targetWkt")) {
-                destWkt = geoOptions.get("targetWkt");
-            } else {
-                destWkt = grid.wkt();
-            }
+            String destWkt = geoOptions.getOrDefault("targetWkt", grid.wkt());
 
             double cellSize;
             if (geoOptions.containsKey("targetCellSize")) {
