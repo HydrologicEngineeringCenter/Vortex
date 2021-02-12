@@ -5,22 +5,19 @@ import mil.army.usace.hec.vortex.io.DataReader;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class BatchTransposer {
-    private String pathToInput;
-    private Set<String> variables;
-    private double angle;
-    private Double stormCenterX;
-    private Double stormCenterY;
-    private Double scaleFactor;
-    private Path destination;
-    private Options writeOptions;
+    private final String pathToInput;
+    private final Set<String> variables;
+    private final double angle;
+    private final Double stormCenterX;
+    private final Double stormCenterY;
+    private final Double scaleFactor;
+    private final Path destination;
+    private final Map<String, String> writeOptions;
 
-    private BatchTransposer(BatchTransposerBuilder builder){
+    private BatchTransposer(Builder builder){
         pathToInput = builder.pathToInput;
         variables = builder.variables;
         angle = builder.angle;
@@ -31,7 +28,7 @@ public class BatchTransposer {
         writeOptions = builder.writeOptions;
     }
 
-    public static class BatchTransposerBuilder {
+    public static class Builder {
 
         private String pathToInput;
         private Set<String> variables;
@@ -41,50 +38,61 @@ public class BatchTransposer {
         private Double stormCenterY;
         private Double scaleFactor;
         private Path destination;
-        private Options writeOptions;
+        private final Map<String, String> writeOptions = new HashMap<>();
 
-        public BatchTransposerBuilder pathToInput(String pathToInput) {
+        public Builder pathToInput(String pathToInput) {
             this.pathToInput = pathToInput;
             return this;
         }
 
-        public BatchTransposerBuilder variables(List<String> variables) {
+        public Builder variables(List<String> variables) {
             this.variables = new HashSet<>(variables);
             return this;
         }
 
-        public BatchTransposerBuilder selectAllVariables(){
+        public Builder selectAllVariables(){
             this.isSelectAll = true;
             return this;
         }
 
-        public BatchTransposerBuilder angle(double angle) {
+        public Builder angle(double angle) {
             this.angle = angle;
             return this;
         }
 
-        public BatchTransposerBuilder stormCenterX(Double stormCenterX) {
+        public Builder stormCenterX(Double stormCenterX) {
             this.stormCenterX = stormCenterX;
             return this;
         }
 
-        public BatchTransposerBuilder stormCenterY(Double stormCenterY) {
+        public Builder stormCenterY(Double stormCenterY) {
             this.stormCenterY = stormCenterY;
             return this;
         }
 
-        public BatchTransposerBuilder scaleFactor(Double scaleFactor){
+        public Builder scaleFactor(Double scaleFactor){
             this.scaleFactor = scaleFactor;
             return this;
         }
 
-        public BatchTransposerBuilder destination(String destination) {
+        public Builder destination(String destination) {
             this.destination = Paths.get(destination);
             return this;
         }
 
-        public BatchTransposerBuilder writeOptions(Options writeOptions) {
-            this.writeOptions = writeOptions;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
             return this;
         }
 
@@ -97,8 +105,8 @@ public class BatchTransposer {
         }
     }
 
-    public static BatchTransposerBuilder builder(){
-        return new BatchTransposerBuilder();
+    public static Builder builder(){
+        return new Builder();
     }
 
     public void process(){

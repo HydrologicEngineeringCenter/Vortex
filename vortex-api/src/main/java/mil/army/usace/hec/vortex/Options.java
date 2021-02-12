@@ -3,9 +3,13 @@ package mil.army.usace.hec.vortex;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated since 0.10.16, use a Map instead
+ */
+@Deprecated
 public class Options {
 
-    private Map<String, String> options = new HashMap<>();
+    private final Map<String, String> options = new HashMap<>();
 
     private Options(){}
 

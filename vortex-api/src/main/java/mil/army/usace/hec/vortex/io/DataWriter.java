@@ -6,45 +6,59 @@ import mil.army.usace.hec.vortex.VortexData;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public abstract class DataWriter {
     final Path destination;
     final List<VortexData> data;
-    final Options options;
+    final Map<String, String> options = new HashMap<>();
 
-    DataWriter(DataWriterBuilder builder){
+    DataWriter(Builder builder){
         this.destination = builder.destination;
         this.data = builder.data;
-        this.options = builder.options;
+        this.options.putAll(builder.options);
     }
 
-    public static class DataWriterBuilder{
+    public static class Builder {
         private Path destination;
         private List<VortexData> data;
-        private Options options;
+        private final Map<String, String> options = new HashMap<>();
 
-        public DataWriterBuilder destination (final Path destination){
+        public Builder destination (final Path destination){
             this.destination = destination;
             return this;
         }
 
-        public DataWriterBuilder data (final List<VortexData> data){
+        public Builder data (final List<VortexData> data){
             this.data = data;
             return this;
         }
 
-        public DataWriterBuilder options (final Options options){
-            this.options = options;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #options}
+         * @param options  the geographic options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder options (final Options options) {
+            Optional.ofNullable(options).ifPresent(o -> this.options.putAll(o.getOptions()));
             return this;
         }
 
-        public DataWriter build(){
+        public Builder options (final Map<String, String> options) {
+            this.options.putAll(options);
+            return this;
+        }
+
+        public DataWriter build() {
             if (destination == null){
                 throw new IllegalStateException("Invalid destination.");
             }
 
-            if (data == null){
+            if (data == null) {
                 throw new IllegalStateException("Invalid data.");
             }
 
@@ -67,7 +81,7 @@ public abstract class DataWriter {
         }
     }
 
-    public static DataWriterBuilder builder(){return new DataWriterBuilder();}
+    public static Builder builder(){return new Builder();}
 
     public abstract void write();
 

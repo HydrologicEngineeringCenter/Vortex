@@ -8,7 +8,6 @@ import hec.heclib.dss.HecTimeSeries;
 import hec.heclib.grid.*;
 import hec.heclib.util.HecTime;
 import hec.io.TimeSeriesContainer;
-import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
@@ -40,7 +39,7 @@ public class DssDataWriter extends DataWriter {
 
     private static final Logger logger = Logger.getLogger(DssDataWriter.class.getName());
 
-    DssDataWriter(DataWriterBuilder builder) {
+    DssDataWriter(Builder builder) {
         super(builder);
     }
 
@@ -94,21 +93,19 @@ public class DssDataWriter extends DataWriter {
                     cPart = getCPart(grid.description());
                 }
                 dssPathname.setCPart(cPart);
-
-                if (options != null) {
-                    Map<String, String> parts = options.getOptions();
-                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
-                        DSSPathname pathnameIn = new DSSPathname();
-                        int status = pathnameIn.setPathname(grid.fullName());
-                        if (status == 0) {
-                            dssPathname.setFPart(pathnameIn.getFPart());
-                        }
-                    }
-                    if (parts.containsKey("units")) {
-                        String unitString = parts.get("units");
-                        gridInfo.setDataUnits(unitString);
+                
+                if (options.containsKey("partF") && options.get("partF").equals("*")) {
+                    DSSPathname pathnameIn = new DSSPathname();
+                    int status = pathnameIn.setPathname(grid.fullName());
+                    if (status == 0) {
+                        dssPathname.setFPart(pathnameIn.getFPart());
                     }
                 }
+                if (options.containsKey("units")) {
+                    String unitString = options.get("units");
+                    gridInfo.setDataUnits(unitString);
+                }
+
 
                 write(convertedData, gridInfo, dssPathname);
 
@@ -134,19 +131,16 @@ public class DssDataWriter extends DataWriter {
                 }
                 dssPathname.setCPart(cPart);
 
-                if (options != null) {
-                    Map<String, String> parts = options.getOptions();
-                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
-                        DSSPathname pathnameIn = new DSSPathname();
-                        int status = pathnameIn.setPathname(grid.fullName());
-                        if (status == 0) {
-                            dssPathname.setFPart(pathnameIn.getFPart());
-                        }
+                if (options.containsKey("partF") && options.get("partF").equals("*")) {
+                    DSSPathname pathnameIn = new DSSPathname();
+                    int status = pathnameIn.setPathname(grid.fullName());
+                    if (status == 0) {
+                        dssPathname.setFPart(pathnameIn.getFPart());
                     }
-                    if (parts.containsKey("units")) {
-                        String unitString = parts.get("units");
-                        gridInfo.setDataUnits(unitString);
-                    }
+                }
+                if (options.containsKey("units")) {
+                    String unitString = options.get("units");
+                    gridInfo.setDataUnits(unitString);
                 }
 
                 write(convertedData, gridInfo, dssPathname);
@@ -192,30 +186,27 @@ public class DssDataWriter extends DataWriter {
                 }
                 dssPathname.setCPart(cPart);
 
-                if (options != null) {
-                    Map<String, String> parts = options.getOptions();
-                    if (parts.containsKey("partF") && parts.get("partF").equals("*")) {
-                        DSSPathname pathnameIn = new DSSPathname();
-                        int status = pathnameIn.setPathname(grid.fullName());
-                        if (status == 0) {
-                            dssPathname.setFPart(pathnameIn.getFPart());
-                        }
+                if (options.containsKey("partF") && options.get("partF").equals("*")) {
+                    DSSPathname pathnameIn = new DSSPathname();
+                    int status = pathnameIn.setPathname(grid.fullName());
+                    if (status == 0) {
+                        dssPathname.setFPart(pathnameIn.getFPart());
                     }
-                    if (parts.containsKey("units")) {
-                        String unitString = parts.get("units");
-                        gridInfo.setDataUnits(unitString);
-                    }
-                    if (parts.containsKey("dataType")) {
-                        String dataType = parts.get("dataType");
-                        if (dataType.equals("INST-VAL"))
-                            gridInfo.setDataType(DssDataType.INST_VAL.value());
-                        if (dataType.equals("PER-AVER"))
-                            gridInfo.setDataType(DssDataType.PER_AVER.value());
-                        if (dataType.equals("PER-CUM"))
-                            gridInfo.setDataType(DssDataType.PER_CUM.value());
-                        if (dataType.equals("INST-VAL"))
-                            gridInfo.setDataType(DssDataType.INST_VAL.value());
-                    }
+                }
+                if (options.containsKey("units")) {
+                    String unitString = options.get("units");
+                    gridInfo.setDataUnits(unitString);
+                }
+                if (options.containsKey("dataType")) {
+                    String dataType = options.get("dataType");
+                    if (dataType.equals("INST-VAL"))
+                        gridInfo.setDataType(DssDataType.INST_VAL.value());
+                    if (dataType.equals("PER-AVER"))
+                        gridInfo.setDataType(DssDataType.PER_AVER.value());
+                    if (dataType.equals("PER-CUM"))
+                        gridInfo.setDataType(DssDataType.PER_CUM.value());
+                    if (dataType.equals("INST-VAL"))
+                        gridInfo.setDataType(DssDataType.INST_VAL.value());
                 }
 
                 write(data, gridInfo, dssPathname);
@@ -394,29 +385,26 @@ public class DssDataWriter extends DataWriter {
         }
     }
 
-    private static DSSPathname updatePathname(DSSPathname pathnameIn, Options options) {
+    private static DSSPathname updatePathname(DSSPathname pathnameIn, Map<String, String> options) {
         DSSPathname pathnameOut = new DSSPathname(pathnameIn.getPathname());
 
-        if (options != null) {
-            Map<String, String> parts = options.getOptions();
-            if (parts.containsKey("partA") && !parts.get("partA").equals("*")) {
-                pathnameOut.setAPart(parts.get("partA"));
-            }
-            if (parts.containsKey("partB") && !parts.get("partB").equals("*")) {
-                pathnameOut.setBPart(parts.get("partB"));
-            }
-            if (parts.containsKey("partC") && !parts.get("partC").equals("*")) {
-                pathnameOut.setCPart(parts.get("partC"));
-            }
-            if (parts.containsKey("partD") && !parts.get("partD").equals("*")) {
-                pathnameOut.setDPart(parts.get("partD"));
-            }
-            if (parts.containsKey("partE") && !parts.get("partE").equals("*")) {
-                pathnameOut.setEPart(parts.get("partE"));
-            }
-            if (parts.containsKey("partF") && !parts.get("partF").equals("*")) {
-                pathnameOut.setFPart(parts.get("partF"));
-            }
+        if (options.containsKey("partA") && !options.get("partA").equals("*")) {
+            pathnameOut.setAPart(options.get("partA"));
+        }
+        if (options.containsKey("partB") && !options.get("partB").equals("*")) {
+            pathnameOut.setBPart(options.get("partB"));
+        }
+        if (options.containsKey("partC") && !options.get("partC").equals("*")) {
+            pathnameOut.setCPart(options.get("partC"));
+        }
+        if (options.containsKey("partD") && !options.get("partD").equals("*")) {
+            pathnameOut.setDPart(options.get("partD"));
+        }
+        if (options.containsKey("partE") && !options.get("partE").equals("*")) {
+            pathnameOut.setEPart(options.get("partE"));
+        }
+        if (options.containsKey("partF") && !options.get("partF").equals("*")) {
+            pathnameOut.setFPart(options.get("partF"));
         }
 
         return pathnameOut;

@@ -8,20 +8,19 @@ import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.math.Scaler;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class TransposableUnit {
-    private DataReader reader;
-    private double angle;
-    private Double stormCenterX;
-    private Double stormCenterY;
-    private double scaleFactor;
-    private Path destination;
-    private Options writeOptions;
+    private final DataReader reader;
+    private final double angle;
+    private final Double stormCenterX;
+    private final Double stormCenterY;
+    private final double scaleFactor;
+    private final Path destination;
+    private final Map<String, String> writeOptions;
 
-    private TransposableUnit(TransposableUnitBuilder builder){
+    private TransposableUnit(Builder builder){
         this.reader = builder.reader;
         this.angle = builder.angle;
         this.stormCenterX = builder.stormCenterX;
@@ -31,47 +30,58 @@ class TransposableUnit {
         this.writeOptions = builder.writeOptions;
     }
 
-    public static class TransposableUnitBuilder {
+    public static class Builder {
         private DataReader reader;
         private Double angle;
         private Double stormCenterX;
         private Double stormCenterY;
         private Double scaleFactor;
         private Path destination;
-        private Options writeOptions;
+        private final Map<String, String> writeOptions = new HashMap<>();
 
-        public TransposableUnitBuilder reader(DataReader reader){
+        public Builder reader(DataReader reader){
             this.reader = reader;
             return this;
         }
 
-        public TransposableUnitBuilder angle (double angle){
+        public Builder angle (double angle){
             this.angle = angle;
             return this;
         }
 
-        public TransposableUnitBuilder stormCenterX (Double stormCenterX){
+        public Builder stormCenterX (Double stormCenterX){
             this.stormCenterX = stormCenterX;
             return this;
         }
 
-        public TransposableUnitBuilder stormCenterY (Double stormCenterY){
+        public Builder stormCenterY (Double stormCenterY){
             this.stormCenterY = stormCenterY;
             return this;
         }
 
-        public TransposableUnitBuilder scaleFactor (Double scaleFactor){
+        public Builder scaleFactor (Double scaleFactor){
             this.scaleFactor = scaleFactor;
             return this;
         }
 
-        public TransposableUnitBuilder destination(Path destination){
+        public Builder destination(Path destination){
             this.destination = destination;
             return this;
         }
 
-        public TransposableUnitBuilder writeOptions(Options writeOptions){
-            this.writeOptions = writeOptions;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
             return this;
         }
 
@@ -92,7 +102,7 @@ class TransposableUnit {
         }
     }
 
-    public static TransposableUnitBuilder builder() {return new TransposableUnitBuilder();}
+    public static Builder builder() {return new Builder();}
 
     public void process(){
         List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid)grid).collect(Collectors.toList());

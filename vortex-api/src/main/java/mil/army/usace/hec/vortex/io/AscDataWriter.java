@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class AscDataWriter extends DataWriter {
 
-    AscDataWriter(DataWriterBuilder builder) {
+    AscDataWriter(Builder builder) {
         super(builder);
     }
 

@@ -12,21 +12,19 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public class ImportableUnit {
 
-    private DataReader reader;
-    private Map<String,String> geoOptions;
-    private Path destination;
-    private Options writeOptions;
+    private final DataReader reader;
+    private final Map<String,String> geoOptions;
+    private final Path destination;
+    private final Map<String, String> writeOptions;
 
-    private PropertyChangeSupport support;
+    private final PropertyChangeSupport support;
 
-    private ImportableUnit(ImportableUnitBuilder builder){
+    private ImportableUnit(Builder builder) {
         this.reader = builder.reader;
         this.geoOptions = builder.geoOptions;
         this.destination = builder.destination;
@@ -34,33 +32,51 @@ public class ImportableUnit {
         this.support = new PropertyChangeSupport(this);
     }
 
-    public static class ImportableUnitBuilder {
+    public static class Builder {
         private DataReader reader;
-        private Map<String,String> geoOptions;
+        private final Map<String,String> geoOptions = new HashMap<>();
         private Path destination;
-        private Options writeOptions;
+        private final Map<String, String> writeOptions = new HashMap<>();
 
-        public ImportableUnitBuilder reader(DataReader reader){
+        public Builder reader(DataReader reader){
             this.reader = reader;
             return this;
         }
 
-        public ImportableUnitBuilder geoOptions(Options geoOptions){
-            if (geoOptions == null) {
-                this.geoOptions = Options.create().getOptions();
-            } else {
-                this.geoOptions = geoOptions.getOptions();
-            }
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #geoOptions}
+         * @param geoOptions  the geographic options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder geoOptions(Options geoOptions){
+            Optional.ofNullable(geoOptions).ifPresent(o -> this.geoOptions.putAll(o.getOptions()));
             return this;
         }
 
-        public ImportableUnitBuilder destination(Path destination){
+        public Builder geoOptions(Map<String, String> geoOptions){
+            this.geoOptions.putAll(geoOptions);
+            return this;
+        }
+
+        public Builder destination(Path destination){
             this.destination = destination;
             return this;
         }
 
-        public ImportableUnitBuilder writeOptions(Options writeOptions){
-            this.writeOptions = writeOptions;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
             return this;
         }
 
@@ -75,7 +91,7 @@ public class ImportableUnit {
         }
     }
 
-    public static ImportableUnitBuilder builder() {return new ImportableUnitBuilder();}
+    public static Builder builder() {return new Builder();}
 
     public void process(){
 

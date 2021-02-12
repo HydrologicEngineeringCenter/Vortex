@@ -8,9 +8,7 @@ import org.locationtech.jts.geom.Envelope;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class BatchSubsetter {
     static {
@@ -19,7 +17,7 @@ public class BatchSubsetter {
     private final String pathToInput;
     private final Set<String> variables;
     private final Path destination;
-    private final Options writeOptions;
+    private final Map<String, String> writeOptions;
 
     private final Envelope envelope;
     private final String envelopeWkt;
@@ -43,7 +41,7 @@ public class BatchSubsetter {
         private boolean isSelectAll;
         private String envelopeDataSource;
         private Path destination;
-        private Options writeOptions;
+        private final Map<String, String> writeOptions = new HashMap<>();
 
         public Builder pathToInput(String pathToInput) {
             this.pathToInput = pathToInput;
@@ -70,8 +68,19 @@ public class BatchSubsetter {
             return this;
         }
 
-        public Builder writeOptions(Options writeOptions) {
-            this.writeOptions = writeOptions;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
             return this;
         }
 

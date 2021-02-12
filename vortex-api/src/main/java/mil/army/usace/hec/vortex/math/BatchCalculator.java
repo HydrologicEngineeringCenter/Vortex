@@ -5,10 +5,7 @@ import mil.army.usace.hec.vortex.io.DataReader;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class BatchCalculator {
     private final String pathToInput;
@@ -18,7 +15,7 @@ public class BatchCalculator {
     private final float addValue;
     private final float subtractValue;
     private final Path destination;
-    private final Options writeOptions;
+    private final Map<String, String> writeOptions;
 
     private BatchCalculator(Builder builder){
         pathToInput = builder.pathToInput;
@@ -41,7 +38,7 @@ public class BatchCalculator {
         private float addValue = Float.NaN;
         private float subtractValue = Float.NaN;
         private Path destination;
-        private Options writeOptions;
+        private Map<String, String> writeOptions = new HashMap<>();
 
         public Builder pathToInput(String pathToInput) {
             this.pathToInput = pathToInput;
@@ -83,7 +80,18 @@ public class BatchCalculator {
             return this;
         }
 
-        public Builder writeOptions(Options writeOptions) {
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(Map<String, String> writeOptions) {
             this.writeOptions = writeOptions;
             return this;
         }

@@ -3,15 +3,20 @@ package mil.army.usace.hec.vortex.io;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
-import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BatchImporterTest {
 
@@ -29,11 +34,11 @@ class BatchImporterTest {
         Path shapefile = new File(getClass().getResource(
                 "/Truckee_River_Watershed_5mi_buffer/Truckee_River_Watershed_5mi_buffer.shp").getFile()).toPath();
 
-        Options options = Options.create();
-        options.add("pathToShp", shapefile.toString());
-        options.add("targetCellSize", "2000");
-        options.add("targetWkt", WktFactory.shg());
-        options.add("resamplingMethod", "Bilinear");
+        Map<String, String> options = new HashMap<>();
+        options.put("pathToShp", shapefile.toString());
+        options.put("targetCellSize", "2000");
+        options.put("targetWkt", WktFactory.shg());
+        options.put("resamplingMethod", "Bilinear");
 
         File outFile = new File(getClass().getResource(
                 "/regression/mrms/mrms.dss").getFile());
@@ -104,14 +109,14 @@ class BatchImporterTest {
         Path shapefile = new File(getClass().getResource(
                 "/Truckee_River_Watershed_5mi_buffer/Truckee_River_Watershed_5mi_buffer.shp").getFile()).toPath();
 
-        Options options = Options.create();
-        options.add("pathToShp", shapefile.toString());
-        options.add("targetCellSize", "2000");
-        options.add("targetWkt", WktFactory.shg());
-        options.add("resamplingMethod", "Bilinear");
+        Map<String, String> options = new HashMap<>();
+        options.put("pathToShp", shapefile.toString());
+        options.put("targetCellSize", "2000");
+        options.put("targetWkt", WktFactory.shg());
+        options.put("resamplingMethod", "Bilinear");
 
-        Options writeOptions = Options.create();
-        writeOptions.add("partB", "Truckee River");
+        Map<String, String> writeOptions = new HashMap<>();
+        writeOptions.put("partB", "Truckee River");
 
         File outFile = new File(getClass().getResource(
                 "/regression/rtma/rtma.dss").getFile());

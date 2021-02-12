@@ -12,7 +12,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.StageStyle;
-import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.math.Shifter;
 import mil.army.usace.hec.vortex.ui.BrowseLocationPersister;
 import mil.army.usace.hec.vortex.util.DssUtil;
@@ -23,10 +22,7 @@ import shifter.WizardData;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class Step3Controller implements BrowseLocationPersister {
 
@@ -141,14 +137,14 @@ public class Step3Controller implements BrowseLocationPersister {
 
         String destination = model.getDestinationOut();
 
-        Options options = Options.create();
+        Map<String, String> options = new HashMap<>();
         if (destination.toLowerCase().endsWith(".dss")) {
-            options.add("partA", dssPathnamePartsController.getPartA());
-            options.add("partB", dssPathnamePartsController.getPartB());
-            options.add("partC", dssPathnamePartsController.getPartC());
-            options.add("partD", dssPathnamePartsController.getPartD());
-            options.add("partE", dssPathnamePartsController.getPartE());
-            options.add("partF", dssPathnamePartsController.getPartF());
+            options.put("partA", dssPathnamePartsController.getPartA());
+            options.put("partB", dssPathnamePartsController.getPartB());
+            options.put("partC", dssPathnamePartsController.getPartC());
+            options.put("partD", dssPathnamePartsController.getPartD());
+            options.put("partE", dssPathnamePartsController.getPartE());
+            options.put("partF", dssPathnamePartsController.getPartF());
         }
 
         Shifter shifter = Shifter.builder()

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class TiffDataWriter extends DataWriter {
 
-    TiffDataWriter(DataWriterBuilder builder) {
+    TiffDataWriter(Builder builder) {
         super(builder);
     }
 

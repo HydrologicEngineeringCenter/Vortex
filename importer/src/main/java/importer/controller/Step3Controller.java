@@ -13,7 +13,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.StageStyle;
-import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.ui.BrowseLocationPersister;
 import mil.army.usace.hec.vortex.util.DssUtil;
@@ -22,10 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Step3Controller implements BrowseLocationPersister {
@@ -134,32 +130,32 @@ public class Step3Controller implements BrowseLocationPersister {
 
         List<String> variables = model.getSelectedVariables();
 
-        Options geoOptions = Options.create();
+        Map<String, String> geoOptions = new HashMap<>();
         Optional.ofNullable(model.getClipDataSource()).ifPresent(entry -> {
             if (!entry.isEmpty())
-                geoOptions.add("pathToShp", entry);
+                geoOptions.put("pathToShp", entry);
         });
 
         Optional.ofNullable(model.getTargetWkt()).ifPresent(entry -> {
             if (!entry.isEmpty())
-                geoOptions.add("targetWkt", entry);
+                geoOptions.put("targetWkt", entry);
         });
 
         Optional.ofNullable(model.getTargetCellSize()).ifPresent(entry -> {
             if (!entry.isEmpty())
-                geoOptions.add("targetCellSize", entry);
+                geoOptions.put("targetCellSize", entry);
         });
 
-        geoOptions.add("resamplingMethod", model.resamplingMethodProperty().getValue());
+        geoOptions.put("resamplingMethod", model.resamplingMethodProperty().getValue());
 
         String destination = model.getDestinationOut();
 
-        Options writeOptions = Options.create();
+        Map<String, String> writeOptions = new HashMap<>();
         if (destination.toLowerCase().endsWith(".dss")) {
-            writeOptions.add("partA", dssPathnamePartsController.getPartA());
-            writeOptions.add("partB", dssPathnamePartsController.getPartB());
-            writeOptions.add("partC", dssPathnamePartsController.getPartC());
-            writeOptions.add("partF", dssPathnamePartsController.getPartF());
+            writeOptions.put("partA", dssPathnamePartsController.getPartA());
+            writeOptions.put("partB", dssPathnamePartsController.getPartB());
+            writeOptions.put("partC", dssPathnamePartsController.getPartC());
+            writeOptions.put("partF", dssPathnamePartsController.getPartF());
         }
 
         BatchImporter importer = BatchImporter.builder()

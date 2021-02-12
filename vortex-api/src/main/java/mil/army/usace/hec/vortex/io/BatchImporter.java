@@ -6,21 +6,20 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BatchImporter {
-    private List<String> inFiles;
-    private List<String> variables;
-    private Path destination;
-    private Options geoOptions;
-    private Options writeOptions;
+    private final List<String> inFiles;
+    private final List<String> variables;
+    private final Path destination;
+    private final Map<String, String> geoOptions;
+    private final Map<String, String> writeOptions;
 
-    private PropertyChangeSupport support;
+    private final PropertyChangeSupport support;
     private final AtomicInteger doneCount;
 
-    private BatchImporter(BatchImporterBuilder builder){
+    private BatchImporter(Builder builder){
         this.inFiles = builder.inFiles;
         this.variables = builder.variables;
         this.destination = builder.destination;
@@ -30,35 +29,57 @@ public class BatchImporter {
         this.doneCount = new AtomicInteger();
     }
 
-    public static class BatchImporterBuilder {
+    public static class Builder {
         private List<String> inFiles;
         private List<String> variables;
         private Path destination;
-        private Options geoOptions;
-        private Options writeOptions;
+        private final Map<String, String> geoOptions = new HashMap<>();
+        private final Map<String, String> writeOptions = new HashMap<>();
 
-        public BatchImporterBuilder inFiles(final List<String> inFiles){
+        public Builder inFiles(final List<String> inFiles){
             this.inFiles = inFiles;
             return this;
         }
 
-        public BatchImporterBuilder variables(final List<String> variables){
+        public Builder variables(final List<String> variables){
             this.variables = variables;
             return this;
         }
 
-        public BatchImporterBuilder destination(final String destination){
+        public Builder destination(final String destination){
             this.destination = Paths.get(destination);
             return this;
         }
 
-        public BatchImporterBuilder geoOptions(final Options geoOptions){
-            this.geoOptions = geoOptions;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #geoOptions}
+         * @param geoOptions  the geographic options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder geoOptions(final Options geoOptions){
+            Optional.ofNullable(geoOptions).ifPresent(o -> this.geoOptions.putAll(o.getOptions()));
             return this;
         }
 
-        public BatchImporterBuilder writeOptions(final Options writeOptions){
-            this.writeOptions = writeOptions;
+        public Builder geoOptions(final Map<String, String> geoOptions){
+            this.geoOptions.putAll(geoOptions);
+            return this;
+        }
+
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
             return this;
         }
 
@@ -67,7 +88,7 @@ public class BatchImporter {
         }
     }
 
-    public static BatchImporterBuilder builder() {return new BatchImporterBuilder();}
+    public static Builder builder() {return new Builder();}
 
     public void process() {
 

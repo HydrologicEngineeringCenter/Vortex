@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
 
 public class GridToPointConverter {
 
-    private String pathToGrids;
-    private Set<String> variables;
-    private Path pathToZoneDataset;
-    private String field;
-    private Path destination;
-    private Options writeOptions;
+    private final String pathToGrids;
+    private final Set<String> variables;
+    private final Path pathToZoneDataset;
+    private final String field;
+    private final Path destination;
+    private final Map<String, String> writeOptions;
 
     private GridToPointConverter(GridToPointConverterBuilder builder){
         this.pathToGrids = builder.pathToGrids;
@@ -39,7 +39,7 @@ public class GridToPointConverter {
         private Path pathToFeatures;
         private String field;
         private Path destination;
-        private Options writeOptions;
+        private final Map<String, String> writeOptions = new HashMap<>();
 
         public GridToPointConverterBuilder pathToGrids (final String pathToGrids){
             this.pathToGrids = pathToGrids;
@@ -66,8 +66,19 @@ public class GridToPointConverter {
             return this;
         }
 
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
         public GridToPointConverterBuilder writeOptions (final Options writeOptions){
-            this.writeOptions = writeOptions;
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public GridToPointConverterBuilder writeOptions (final Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
             return this;
         }
 

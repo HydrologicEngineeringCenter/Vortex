@@ -3,13 +3,14 @@ package mil.army.usace.hec.vortex.convert;
 import hec.heclib.dss.HecDataManager;
 import hec.heclib.dss.HecTimeSeries;
 import hec.io.TimeSeriesContainer;
-import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.io.DataReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,8 +65,8 @@ class GridToPointConverterTest {
         Path destination = new File(getClass().getResource(
                 "/regression/grid-to-point-converter/grid-to-point-converter.dss").getFile()).toPath();
 
-        Options options = Options.create();
-        options.add("partF", "test");
+        Map<String, String> options = new HashMap<>();
+        options.put("partF", "test");
 
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)

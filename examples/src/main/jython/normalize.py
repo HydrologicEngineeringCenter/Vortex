@@ -1,6 +1,5 @@
 from mil.army.usace.hec.vortex.math import Normalizer
 from mil.army.usace.hec.vortex.io import DataReader
-from mil.army.usace.hec.vortex import Options
 
 from java.time import ZonedDateTime
 from java.time import LocalDateTime
@@ -19,8 +18,7 @@ interval = Duration.ofDays(1)
 
 destination = 'C:/Temp/normalized.dss'
 
-options = Options.create()
-options.add('partF', 'my normalized grids')
+options = {'partF': 'my normalized grids'}
 
 normalizer = Normalizer.builder() \
     .startTime(start) \

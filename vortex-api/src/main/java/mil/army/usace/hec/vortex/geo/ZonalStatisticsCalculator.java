@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 public class ZonalStatisticsCalculator {
-    private VortexGrid grid;
-    private Map<String, Integer[]> zoneMasks;
+    private final VortexGrid grid;
+    private final Map<String, Integer[]> zoneMasks;
 
     private ZonalStatisticsCalculator(ZonalStatisticsCalculatorBuilder builder) {
         this.grid = builder.grid;

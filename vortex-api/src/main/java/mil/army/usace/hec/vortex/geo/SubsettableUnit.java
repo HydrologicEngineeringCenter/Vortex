@@ -8,8 +8,7 @@ import mil.army.usace.hec.vortex.io.DataWriter;
 import org.locationtech.jts.geom.Envelope;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SubsettableUnit {
@@ -17,7 +16,7 @@ public class SubsettableUnit {
     private final Envelope envelope;
     private final String envelopeWkt;
     private final Path destination;
-    private final Options writeOptions;
+    private final Map<String, String> writeOptions;
 
     private SubsettableUnit(Builder builder) {
         reader = builder.reader;
@@ -32,7 +31,7 @@ public class SubsettableUnit {
         private Envelope envelope;
         private String envelopeWkt;
         private Path destination;
-        private Options writeOptions;
+        private final Map<String, String> writeOptions = new HashMap<>();
 
         public Builder reader(DataReader reader) {
             this.reader = reader;
@@ -54,8 +53,19 @@ public class SubsettableUnit {
             return this;
         }
 
-        public Builder writeOptions(Options writeOptions) {
-            this.writeOptions = writeOptions;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
             return this;
         }
 

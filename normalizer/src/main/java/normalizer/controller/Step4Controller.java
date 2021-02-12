@@ -155,12 +155,12 @@ public class Step4Controller implements BrowseLocationPersister {
 
         String destination = model.getDestinationOut();
 
-        Options options = Options.create();
+        Map<String, String> options = new HashMap<>();
         if (destination.toLowerCase().endsWith(".dss")) {
-            options.add("partA", dssPathnamePartsController.getPartA());
-            options.add("partB", dssPathnamePartsController.getPartB());
-            options.add("partC", dssPathnamePartsController.getPartC());
-            options.add("partF", dssPathnamePartsController.getPartF());
+            options.put("partA", dssPathnamePartsController.getPartA());
+            options.put("partB", dssPathnamePartsController.getPartB());
+            options.put("partC", dssPathnamePartsController.getPartC());
+            options.put("partF", dssPathnamePartsController.getPartF());
         }
 
         SimpleFormatter formatter = new SimpleFormatter(){

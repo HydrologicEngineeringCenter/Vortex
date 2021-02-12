@@ -10,19 +10,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Shifter {
 
-    private String pathToFile;
-    private Set<String> grids;
-    private Duration shift;
-    private Path destination;
-    private Options options;
+    private final String pathToFile;
+    private final Set<String> grids;
+    private final Duration shift;
+    private final Path destination;
+    private final Map<String, String> options;
 
-    private Shifter (ShifterBuilder builder){
+    private Shifter (Builder builder){
         this.pathToFile = builder.pathToFile;
         this.grids = builder.grids;
         this.shift = builder.shift;
@@ -30,34 +28,45 @@ public class Shifter {
         this.options = builder.options;
     }
 
-    public static class ShifterBuilder{
+    public static class Builder {
         private String pathToFile;
         private Set<String> grids;
         Duration shift;
         private Path destination;
-        private Options options;
+        private Map<String, String> options = new HashMap<>();
 
-        public ShifterBuilder pathToFile (final String pathToFile){
+        public Builder pathToFile (final String pathToFile){
             this.pathToFile = pathToFile;
             return this;
         }
 
-        public ShifterBuilder grids (final Set<String> grids){
+        public Builder grids (final Set<String> grids){
             this.grids = grids;
             return this;
         }
 
-        public ShifterBuilder shift (final Duration shift){
+        public Builder shift (final Duration shift){
             this.shift = shift;
             return this;
         }
 
-        public ShifterBuilder destination (final String destination){
+        public Builder destination (final String destination){
             this.destination = Paths.get(destination);
             return this;
         }
 
-        public ShifterBuilder writeOptions(final Options options){
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.options.putAll(o.getOptions()));
+            return this;
+        }
+
+        public Builder writeOptions(final Map<String, String> options){
             this.options = options;
             return this;
         }
@@ -67,7 +76,7 @@ public class Shifter {
         }
     }
 
-    public static ShifterBuilder builder(){return new ShifterBuilder();}
+    public static Builder builder(){return new Builder();}
 
     public void shift(){
         List<VortexData> targets = new ArrayList<>();

@@ -12,10 +12,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,20 +25,20 @@ import static java.lang.String.format;
 
 public class Normalizer {
 
-    private static Logger logger = Logger.getLogger(Normalizer.class.getName());
-    private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm").withZone(ZoneId.of("UTC"));
+    private static final Logger logger = Logger.getLogger(Normalizer.class.getName());
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm").withZone(ZoneId.of("UTC"));
 
-    private String pathToSource;
-    private String pathToNormals;
-    private Set<String> sourceVariables;
-    private Set<String> normalsVariables;
-    private ZonedDateTime startTime;
-    private ZonedDateTime endTime;
-    private Duration interval;
-    private Path destination;
-    private Options writeOptions;
+    private final String pathToSource;
+    private final String pathToNormals;
+    private final Set<String> sourceVariables;
+    private final Set<String> normalsVariables;
+    private final ZonedDateTime startTime;
+    private final ZonedDateTime endTime;
+    private final Duration interval;
+    private final Path destination;
+    private final Map<String, String> writeOptions;
 
-    private Normalizer (NormalizerBuilder builder){
+    private Normalizer (Builder builder){
         this.pathToSource = builder.pathToSource;
         this.pathToNormals = builder.pathToNormals;
         this.sourceVariables = builder.sourceVariables;
@@ -56,64 +53,75 @@ public class Normalizer {
         builder.handlers.forEach(handler -> logger.addHandler(handler));
     }
 
-    public static class NormalizerBuilder{
+    public static class Builder {
         private String pathToSource;
         private String pathToNormals;
         private Set<String> sourceVariables;
         private Set<String> normalsVariables;
-        ZonedDateTime startTime;
-        ZonedDateTime endTime;
-        Duration interval;
+        private ZonedDateTime startTime;
+        private ZonedDateTime endTime;
+        private Duration interval;
         private Path destination;
-        Options writeOptions;
-        List<Handler> handlers = new ArrayList<>();
+        private final Map<String, String> writeOptions = new HashMap<>();
+        private List<Handler> handlers = new ArrayList<>();
 
-        public NormalizerBuilder pathToSource (final String pathToSource){
+        public Builder pathToSource (final String pathToSource){
             this.pathToSource = pathToSource;
             return this;
         }
 
-        public NormalizerBuilder pathToNormals (final String pathToNormals){
+        public Builder pathToNormals (final String pathToNormals){
             this.pathToNormals = pathToNormals;
             return this;
         }
 
-        public NormalizerBuilder sourceVariables(final Set<String> sourceVariables){
+        public Builder sourceVariables(final Set<String> sourceVariables){
             this.sourceVariables = sourceVariables;
             return this;
         }
 
-        public NormalizerBuilder normalsVariables(final Set<String> normalsVariables){
+        public Builder normalsVariables(final Set<String> normalsVariables){
             this.normalsVariables = normalsVariables;
             return this;
         }
 
-        public NormalizerBuilder startTime (final ZonedDateTime startTime){
+        public Builder startTime (final ZonedDateTime startTime){
             this.startTime = startTime;
             return this;
         }
 
-        public NormalizerBuilder endTime (final ZonedDateTime endTime){
+        public Builder endTime (final ZonedDateTime endTime){
             this.endTime = endTime;
             return this;
         }
 
-        public NormalizerBuilder interval (final Duration interval){
+        public Builder interval (final Duration interval){
             this.interval = interval;
             return this;
         }
 
-        public NormalizerBuilder destination (final String destination){
+        public Builder destination (final String destination){
             this.destination = Paths.get(destination);
             return this;
         }
 
-        public NormalizerBuilder writeOptions (final Options writeOptions){
-            this.writeOptions = writeOptions;
+        /**
+         * @deprecated since 0.10.16, replaced by {@link #writeOptions}
+         * @param writeOptions  the file write options
+         * @return the builder
+         */
+        @Deprecated
+        public Builder writeOptions(final Options writeOptions){
+            Optional.ofNullable(writeOptions).ifPresent(o -> this.writeOptions.putAll(o.getOptions()));
             return this;
         }
 
-        public NormalizerBuilder handlers (final List<Handler> handlers){
+        public Builder writeOptions(Map<String, String> writeOptions){
+            this.writeOptions.putAll(writeOptions);
+            return this;
+        }
+
+        public Builder handlers (final List<Handler> handlers){
             this.handlers.addAll(handlers);
             return this;
         }
@@ -123,7 +131,7 @@ public class Normalizer {
         }
     }
 
-    public static NormalizerBuilder builder() {return new NormalizerBuilder();}
+    public static Builder builder() {return new Builder();}
 
     public void normalize(){
 
