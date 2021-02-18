@@ -6,6 +6,8 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -37,6 +39,7 @@ public class Normalizer {
     private final Duration interval;
     private final Path destination;
     private final Map<String, String> writeOptions;
+    private final PropertyChangeSupport support;
 
     private Normalizer (Builder builder){
         this.pathToSource = builder.pathToSource;
@@ -48,6 +51,7 @@ public class Normalizer {
         this.interval = builder.interval;
         this.destination = builder.destination;
         this.writeOptions = builder.writeOptions;
+        this.support = new PropertyChangeSupport(this);
 
         logger.setLevel(Level.INFO);
         builder.handlers.forEach(handler -> logger.addHandler(handler));
@@ -157,6 +161,9 @@ public class Normalizer {
         intervalStart.set(startTime);
 
         AtomicInteger count = new AtomicInteger();
+        AtomicInteger currentIntervalCount = new AtomicInteger();
+        int maxIntervalCount = (int) (Duration.between(intervalStart.get(), endTime)).dividedBy(interval);
+
         while (intervalStart.get().isBefore(endTime)){
             ZonedDateTime start = intervalStart.get();
             ZonedDateTime end = intervalStart.get().plus(interval);
@@ -181,7 +188,14 @@ public class Normalizer {
 
             List<VortexGrid> output = normalize(sourceFiltered, normalsFiltered);
 
+            float percentageWeight = (float) 1 / maxIntervalCount;
+            float intervalWeight   = (float) currentIntervalCount.getAndIncrement() / maxIntervalCount;
+            AtomicInteger outputDoneCount = new AtomicInteger();
+
             output.forEach(grid -> {
+                float outputDonePercent = percentageWeight * outputDoneCount.incrementAndGet() / output.size();
+                int progressValue = (int) ((outputDonePercent + intervalWeight) * 100);
+                support.firePropertyChange("progress", null, progressValue);
                 List<VortexData> data = new ArrayList<>();
                 data.add(grid);
 
@@ -332,5 +346,13 @@ public class Normalizer {
                 + " dx: " + reference.dx() + " dy: " + reference.dy() + "."
                 + " Review file: " + invalid.fileName() + ", variable: " + invalid.fullName()
         );
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }
