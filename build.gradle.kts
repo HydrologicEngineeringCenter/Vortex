@@ -25,7 +25,7 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
     windows_x64 ("net.adoptopenjdk:jre:11.0.6_10@zip")
     windows_x64 ("mil.army.usace.hec:javaHeclib:7-HK@zip")
-    windows_x64 ("org.gdal:gdal:3.1.4-win-x64@zip")
+    windows_x64 ("org.gdal:gdal:3.2.1-win-x64@zip")
     linux_x64("net.adoptopenjdk:jre:11.0.9_10-linux64@tar.gz")
     linux_x64("mil.army.usace.hec:javaHeclib:7-HK-Linux64@tar.gz")
     macOS_x64("net.adoptopenjdk:jre:11.0.7-macOS@zip")
