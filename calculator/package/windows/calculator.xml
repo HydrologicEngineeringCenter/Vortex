@@ -15,7 +15,6 @@
   <manifest></manifest>
   <icon>C:\Projects\vortex\calculator\package\windows\vortex_black.ico</icon>
   <var>PATH=.\gdal;%PATH%</var>
-  <var>GDAL_DRIVER_PATH=.\gdal\gdalplugins</var>
   <var>GDAL_DATA=.\gdal\gdal-data</var>
   <var>PROJ_LIB=.\gdal\projlib</var>
   <classPath>
