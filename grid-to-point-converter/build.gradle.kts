@@ -17,7 +17,7 @@ dependencies {
     implementation(project(":vortex-api"))
     implementation("org.slf4j:slf4j-simple:1.7.25")
     implementation("org.openjfx:javafx-fxml:11")
-    implementation("com.google.inject:guice:5.0.0-BETA-1")
+    implementation("com.google.inject:guice:5.0.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
