@@ -320,11 +320,12 @@ public class DssDataWriter extends DataWriter {
         } else if (desc.contains("pressure") && desc.contains("surface")) {
             return "PRESSURE";
         } else if (desc.contains("precipitation")
-                    || desc.contains("precip")
-                    || desc.contains("precip") && desc.contains("rate")
-                    || desc.contains("qpe01h")
-                    || desc.contains("rainfall")
-                    || desc.contains("pr")) {
+                || desc.contains("precip")
+                || desc.contains("precip") && desc.contains("rate")
+                || desc.contains("qpe01h")
+                || desc.contains("var209-6")
+                || desc.contains("rainfall")
+                || desc.contains("pr")) {
             return "PRECIPITATION";
         } else if (desc.contains("temperature")
                 || desc.equals("airtemp")
@@ -366,7 +367,8 @@ public class DssDataWriter extends DataWriter {
             return DssDataType.INST_VAL;
         } else if (desc.contains("precipitation")
                 || desc.contains("precip") && desc.contains("rate")
-                || desc.contains("qpe01h")) {
+                || desc.contains("qpe01h")
+                || desc.contains("var209-6")) {
             return DssDataType.PER_CUM;
         } else if (desc.contains("temperature")
                 || desc.equals("temp-air")) {

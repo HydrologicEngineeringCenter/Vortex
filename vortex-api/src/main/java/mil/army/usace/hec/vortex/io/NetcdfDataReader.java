@@ -309,7 +309,8 @@ public class NetcdfDataReader extends DataReader {
 
                 String fileName = new File(path).getName().toLowerCase();
                 if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
-                        || fileName.matches(".*radaronly.*qpe.*01h.*grib2")) {
+                        || fileName.matches(".*radaronly.*qpe.*01h.*grib2")
+                        || fileName.matches(".*multisensor.*qpe.*01h.*grib2")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
@@ -556,13 +557,19 @@ public class NetcdfDataReader extends DataReader {
             endTime = null;
             interval = null;
         }
+        String units;
+        if (variable.toLowerCase().contains("var209-6")) {
+            units = "mm";
+        } else {
+            units = gridDatatype.getUnitsString();
+        }
         return VortexGrid.builder()
                 .dx(grid.getDx()).dy(grid.getDy())
                 .nx(grid.getNx()).ny(grid.getNy())
                 .originX(grid.getOriginX()).originY(grid.getOriginY())
                 .wkt(wkt)
                 .data(data)
-                .units(gridDatatype.getUnitsString())
+                .units(units)
                 .fileName(dataset.getLocation())
                 .shortName(gridDatatype.getShortName())
                 .fullName(gridDatatype.getFullName())
