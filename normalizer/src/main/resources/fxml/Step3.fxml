@@ -28,10 +28,10 @@
                <children>
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Start:" />
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="End:" GridPane.rowIndex="1" />
-                  <TextField fx:id="startDate" maxWidth="-Infinity" minWidth="-Infinity" promptText="1/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" />
-                  <TextField fx:id="startTime" promptText="0000" GridPane.columnIndex="4" />
-                  <TextField fx:id="endDate" maxWidth="-Infinity" minWidth="-Infinity" promptText="2/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1" />
-                  <TextField fx:id="endTime" promptText="0000" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+                  <TextField fx:id="startDateTextField" maxWidth="-Infinity" minWidth="-Infinity" promptText="1/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" />
+                  <TextField fx:id="startTimeTextField" promptText="0000" GridPane.columnIndex="4" />
+                  <TextField fx:id="endDateTextField" maxWidth="-Infinity" minWidth="-Infinity" promptText="2/1/2000" GridPane.columnIndex="2" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="1" />
+                  <TextField fx:id="endTimeTextField" promptText="0000" GridPane.columnIndex="4" GridPane.rowIndex="1" />
                </children>
             </GridPane>
             <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Set Normalization Interval:" />
