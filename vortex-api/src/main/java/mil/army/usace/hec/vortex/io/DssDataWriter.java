@@ -670,10 +670,12 @@ public class DssDataWriter extends DataWriter {
         HecTime startTime = getStartTime(gridData.getGridInfo());
         HecTime endTime = getEndTime(gridData.getGridInfo());
 
-        if (gridData.getGridInfo().getDataType() == DssDataType.INST_VAL.value()){
-            griddedData.setGridTime(endTime);
-        } else {
-            griddedData.setGriddedTimeWindow(startTime, endTime);
+        if (endTime != null) {
+            if (gridData.getGridInfo().getDataType() == DssDataType.INST_VAL.value()) {
+                griddedData.setGridTime(endTime);
+            } else {
+                griddedData.setGriddedTimeWindow(startTime, endTime);
+            }
         }
 
         int status = griddedData.storeGriddedData(info, gridData);
