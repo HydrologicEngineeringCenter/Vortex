@@ -101,11 +101,6 @@ public class DssDataWriter extends DataWriter {
                         dssPathname.setFPart(pathnameIn.getFPart());
                     }
                 }
-                if (options.containsKey("units")) {
-                    String unitString = options.get("units");
-                    gridInfo.setDataUnits(unitString);
-                }
-
 
                 write(convertedData, gridInfo, dssPathname);
 
@@ -137,10 +132,6 @@ public class DssDataWriter extends DataWriter {
                     if (status == 0) {
                         dssPathname.setFPart(pathnameIn.getFPart());
                     }
-                }
-                if (options.containsKey("units")) {
-                    String unitString = options.get("units");
-                    gridInfo.setDataUnits(unitString);
                 }
 
                 write(convertedData, gridInfo, dssPathname);
@@ -192,21 +183,6 @@ public class DssDataWriter extends DataWriter {
                     if (status == 0) {
                         dssPathname.setFPart(pathnameIn.getFPart());
                     }
-                }
-                if (options.containsKey("units")) {
-                    String unitString = options.get("units");
-                    gridInfo.setDataUnits(unitString);
-                }
-                if (options.containsKey("dataType")) {
-                    String dataType = options.get("dataType");
-                    if (dataType.equals("INST-VAL"))
-                        gridInfo.setDataType(DssDataType.INST_VAL.value());
-                    if (dataType.equals("PER-AVER"))
-                        gridInfo.setDataType(DssDataType.PER_AVER.value());
-                    if (dataType.equals("PER-CUM"))
-                        gridInfo.setDataType(DssDataType.PER_CUM.value());
-                    if (dataType.equals("INST-VAL"))
-                        gridInfo.setDataType(DssDataType.INST_VAL.value());
                 }
 
                 write(data, gridInfo, dssPathname);
@@ -662,6 +638,23 @@ public class DssDataWriter extends DataWriter {
     }
 
     private void write(float[] data, GridInfo info, DSSPathname pathname){
+        if (options.containsKey("units")) {
+            String unitString = options.get("units");
+            info.setDataUnits(unitString);
+        }
+
+        if (options.containsKey("dataType")) {
+            String dataType = options.get("dataType");
+            if (dataType.equals("INST-VAL"))
+                info.setDataType(DssDataType.INST_VAL.value());
+            if (dataType.equals("PER-AVER"))
+                info.setDataType(DssDataType.PER_AVER.value());
+            if (dataType.equals("PER-CUM"))
+                info.setDataType(DssDataType.PER_CUM.value());
+            if (dataType.equals("INST-CUM"))
+                info.setDataType(DssDataType.INST_CUM.value());
+        }
+
         GridData gridData = new GridData(data, info);
 
         GriddedData griddedData = new GriddedData();

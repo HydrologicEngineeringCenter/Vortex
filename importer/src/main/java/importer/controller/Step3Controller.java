@@ -29,20 +29,26 @@ public class Step3Controller implements BrowseLocationPersister {
     private Logger log = LoggerFactory.getLogger(Step3Controller.class);
 
     @FXML
-    VBox content;
+    private VBox content;
 
     @FXML
-    TextField destination;
+    private TextField destination;
 
     @FXML
-    Button browse;
+    private Button browse;
 
     @Inject
-    WizardData model;
+    private WizardData model;
 
     private boolean dssInitialized = false;
-    Parent dssPathnamePartsView;
-    DssPathnamePartsController dssPathnamePartsController;
+    private Parent dssPathnamePartsView;
+    private DssPathnamePartsController dssPathnamePartsController;
+
+    private Parent dssUnitsOverrideView;
+    private DssUnitsOverrideController dssUnitsOverrideController;
+
+    private Parent dssDataTypeOverrideView;
+    private DssDataTypeOverrideController dssDataTypeOverrideController;
 
     @FXML
     public void initialize() {
@@ -63,14 +69,40 @@ public class Step3Controller implements BrowseLocationPersister {
                     dssPathnamePartsController = fxmlLoader.getController();
                     initializeDssParts();
                     dssInitialized = true;
+
+                    FXMLLoader unitsLoader = new FXMLLoader( getClass().getResource("/fxml/DssUnitsOverride.fxml"));
+                    dssUnitsOverrideView = null;
+                    try {
+                        dssUnitsOverrideView = unitsLoader.load();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    dssUnitsOverrideController = unitsLoader.getController();
+
+                    FXMLLoader dataTypeLoader = new FXMLLoader( getClass().getResource("/fxml/DssDataTypeOverride.fxml"));
+                    dssDataTypeOverrideView = null;
+                    try {
+                        dssDataTypeOverrideView = dataTypeLoader.load();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    dssDataTypeOverrideController = dataTypeLoader.getController();
+
                 } else {
                     content.getChildren().remove(destination.getScene().lookup("#dssPathnameParts"));
+                    content.getChildren().remove(destination.getScene().lookup("#dssUnitsOverride"));
+                    content.getChildren().remove(destination.getScene().lookup("#dssDataTypeOverride"));
                 }
 
                 content.getChildren().add(dssPathnamePartsView);
+                content.getChildren().add(dssUnitsOverrideView);
+                content.getChildren().add(dssDataTypeOverrideView);
+
 
             } else {
                 content.getChildren().remove(destination.getScene().lookup("#dssPathnameParts"));
+                content.getChildren().remove(destination.getScene().lookup("#dssUnitsOverride"));
+                content.getChildren().remove(destination.getScene().lookup("#dssDataTypeOverride"));
             }
         });
 
@@ -156,6 +188,14 @@ public class Step3Controller implements BrowseLocationPersister {
             writeOptions.put("partB", dssPathnamePartsController.getPartB());
             writeOptions.put("partC", dssPathnamePartsController.getPartC());
             writeOptions.put("partF", dssPathnamePartsController.getPartF());
+
+            String unitsString = dssUnitsOverrideController.getUnitsString();
+            if (!unitsString.isEmpty())
+                writeOptions.put("units", unitsString);
+
+            String dataType = dssDataTypeOverrideController.getSelectedItem();
+            if (dataType != null && !dataType.isEmpty())
+                writeOptions.put("dataType", dataType);
         }
 
         BatchImporter importer = BatchImporter.builder()
