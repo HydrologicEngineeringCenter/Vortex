@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class Step3Controller implements BrowseLocationPersister {
@@ -124,13 +122,13 @@ public class Step3Controller implements BrowseLocationPersister {
         String pathToSource = model.getInFile();
         Set<String> sourceGrids = new HashSet<>(model.getSelectedVariables());
 
-        Path destination = Paths.get(model.getDestinationOut());
+        String destination = model.getDestinationOut();
 
-        Path zonesShapefile = Paths.get(model.getZonesShapefile());
+        String zonesShapefile = model.getZonesShapefile();
         String field = model.getField();
 
         Map<String, String> options = new HashMap<>();
-        if (destination.toString().toLowerCase().endsWith(".dss")) {
+        if (destination.toLowerCase().endsWith(".dss")) {
             options.put("partA", dssPathnamePartsController.getPartA());
             options.put("partB", dssPathnamePartsController.getPartB());
             options.put("partC", dssPathnamePartsController.getPartC());
@@ -188,4 +186,3 @@ public class Step3Controller implements BrowseLocationPersister {
         }
     }
 }
-

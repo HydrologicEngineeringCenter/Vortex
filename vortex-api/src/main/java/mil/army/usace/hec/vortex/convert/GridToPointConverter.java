@@ -11,6 +11,7 @@ import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -51,8 +52,19 @@ public class GridToPointConverter {
             return this;
         }
 
+        /**
+         * @deprecated since 0.10.20, replaced by {@link #pathToFeatures}
+         * @param pathToFeatures  the path to features file
+         * @return the builder
+         */
+        @Deprecated
         public GridToPointConverterBuilder pathToFeatures (final Path pathToFeatures){
             this.pathToFeatures = pathToFeatures;
+            return this;
+        }
+
+        public GridToPointConverterBuilder pathToFeatures (final String pathToFeatures){
+            this.pathToFeatures = Paths.get(pathToFeatures);
             return this;
         }
 
@@ -61,6 +73,17 @@ public class GridToPointConverter {
             return this;
         }
 
+        public GridToPointConverterBuilder destination (final String destination){
+            this.destination = Paths.get(destination);
+            return this;
+        }
+
+        /**
+         * @deprecated since 0.10.20, replaced by {@link #destination}
+         * @param destination  the destinationDep
+         * @return the builder
+         */
+        @Deprecated
         public GridToPointConverterBuilder destination (final Path destination){
             this.destination = destination;
             return this;

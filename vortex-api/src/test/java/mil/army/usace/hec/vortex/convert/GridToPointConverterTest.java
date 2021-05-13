@@ -7,7 +7,6 @@ import mil.army.usace.hec.vortex.io.DataReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,11 +23,11 @@ class GridToPointConverterTest {
 
         Set<String> variables = DataReader.getVariables(pathToGrids);
 
-        Path pathToShp = new File(getClass().getResource(
-                "/truckee_subbasins/truckee_subbasins.shp").getFile()).toPath();
+        String pathToShp = new File(getClass().getResource(
+                "/truckee_subbasins/truckee_subbasins.shp").getFile()).toString();
 
-        Path destination = new File(getClass().getResource(
-                "/regression/grid-to-point-converter/grid-to-point-converter.dss").getFile()).toPath();
+        String destination = new File(getClass().getResource(
+                "/regression/grid-to-point-converter/grid-to-point-converter.dss").getFile()).toString();
 
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)
@@ -59,11 +58,11 @@ class GridToPointConverterTest {
 
         Set<String> variables = DataReader.getVariables(pathToGrids);
 
-        Path pathToShp = new File(getClass().getResource(
-                "/truckee_subbasins/truckee_subbasins.shp").getFile()).toPath();
+        String pathToShp = new File(getClass().getResource(
+                "/truckee_subbasins/truckee_subbasins.shp").getFile()).toString();
 
-        Path destination = new File(getClass().getResource(
-                "/regression/grid-to-point-converter/grid-to-point-converter.dss").getFile()).toPath();
+        String destination = new File(getClass().getResource(
+                "/regression/grid-to-point-converter/grid-to-point-converter.dss").getFile()).toString();
 
         Map<String, String> options = new HashMap<>();
         options.put("partF", "test");
