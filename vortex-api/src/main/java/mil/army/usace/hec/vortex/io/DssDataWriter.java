@@ -311,7 +311,7 @@ public class DssDataWriter extends DataWriter {
         } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
                 && desc.contains("radiation")){
             return "SOLAR RADIATION";
-        } else if ((desc.contains("wind")) && (desc.contains("speed"))){
+        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
             return "WINDSPEED";
         } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
                 || desc.equals("swe")) {
@@ -320,8 +320,14 @@ public class DssDataWriter extends DataWriter {
             return "SNOWFALL ACCUMLATION";
         } else if (desc.contains("albedo")) {
             return "ALBEDO";
+        } else if (desc.contains("snow") && desc.contains("depth")) {
+            return "SNOW DEPTH";
+        } else if (desc.contains("snow") && desc.contains("melt") && desc.contains("runoff")) {
+            return "LIQUID WATER";
+        } else if (desc.contains("snow") && desc.contains("sublimation")) {
+            return "SNOW SUBLIMATION";
         } else if (desc.equals("cold content")){
-                return "COLD CONTENT";
+            return "COLD CONTENT";
         } else if (desc.equals("cold content ati")){
             return "COLD CONTENT ATI";
         } else if (desc.equals("liquid water")){

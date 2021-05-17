@@ -57,4 +57,25 @@ class TiffDataWriterTest {
         writer.write();
     }
 
+    @Test
+    void TiffDataWriterWritesSnodasFile() {
+        String inFile = new File(getClass().getResource(
+                "/regression/io/snodas_reader/unzipFolder/us_ssmv01025SlL00T0024TTNATS2019110105DP001.dat").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .build();
+
+        List<VortexData> dtos = new ArrayList<>(reader.getDtos());
+
+        Path destination = Paths.get("C:\\Projects\\Vortex\\vortex-api\\build\\resources\\test\\regression\\io\\snodas_reader\\chicken.tiff");
+
+        DataWriter writer = DataWriter.builder()
+                .destination(destination)
+                .data(dtos)
+                .build();
+
+        writer.write();
+    }
+
 }
