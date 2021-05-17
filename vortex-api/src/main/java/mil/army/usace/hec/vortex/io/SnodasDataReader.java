@@ -5,19 +5,19 @@ import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.gdal.gdal.*;
+import org.gdal.gdal.Band;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.TranslateOptions;
+import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
-import visad.SingletonSet;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class SnodasDataReader extends DataReader {
     static {GdalRegister.getInstance();}
