@@ -109,7 +109,10 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         } // Loop through unzipped Folder
 
         // Clean up: deleting untarFolder
-        Files.delete(untarFolder.toPath());
+        Files.walk(untarFolder.toPath())
+                .sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .forEach(File::delete);
     } // updateTar()
 
     private boolean matchedVariable(String fileName, String variableName) {
