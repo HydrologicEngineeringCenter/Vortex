@@ -38,6 +38,14 @@ public abstract class DataReader {
                 return new AscDataReader(this);
             }
 
+            if (path.toLowerCase().contains("snodas") && path.endsWith(".tar")) {
+                return new SnodasTarDataReader(this);
+            }
+
+            if (path.toLowerCase().contains("snodas") && path.endsWith(".dat")) {
+                return new SnodasDataReader(this);
+            }
+
             if (path.matches(".*\\.bil")) {
                 return new BilDataReader(this);
             }
@@ -74,6 +82,9 @@ public abstract class DataReader {
         }
         if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
             return BilDataReader.getVariables(path);
+        }
+        if (fileName.contains("snodas")){
+            return SnodasDataReader.getVariables(path);
         }
         if (fileName.endsWith(".dss")){
             return DssDataReader.getVariables(path);
