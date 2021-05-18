@@ -69,7 +69,7 @@ public class Step1Controller implements BrowseLocationPersister {
         FileChooser.ExtensionFilter recognizedFilter = new FileChooser.ExtensionFilter(
                 "All recognized files", "*.nc", "*.nc4", "*.hdf", "*.hdf5", "*.h5",
                 "*.grib", "*.gb2", "*.grb2", "*.grib2", "*.grb",
-                "*.asc", "*.bil", "*bil.zip", "*.dss", "*.tif", "*.tiff", "*.tar");
+                "*.asc", "*.bil", "*bil.zip", "*.dss", "*.tif", "*.tiff", "*.dat", "*.tar");
         fileChooser.getExtensionFilters().add(recognizedFilter);
         FileChooser.ExtensionFilter ncFilter = new FileChooser.ExtensionFilter(
                 "netCDF datasets", "*.nc", "*.nc4");
@@ -94,7 +94,7 @@ public class Step1Controller implements BrowseLocationPersister {
         fileChooser.getExtensionFilters().add(bilFilter);
 
         FileChooser.ExtensionFilter tarFilter = new FileChooser.ExtensionFilter(
-                "SNODAS datasets", "*.tar");
+                "SNODAS datasets", "*.tar", "*.dat");
         fileChooser.getExtensionFilters().add(tarFilter);
 
         FileChooser.ExtensionFilter dssFilter = new FileChooser.ExtensionFilter(

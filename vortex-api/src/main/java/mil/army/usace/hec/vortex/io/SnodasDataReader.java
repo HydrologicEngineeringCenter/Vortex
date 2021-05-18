@@ -217,10 +217,14 @@ class SnodasDataReader extends DataReader {
         return dto;
     } // getGrid()
 
-    public static Set<String> getVariables(String pathToTar) {
+    public static Set<String> getVariables(String pathToFile) {
+        if(pathToFile.endsWith(".dat")) {
+            return Collections.singleton(getVariable(pathToFile));
+        }
+
         // Create input stream for Tar, to read its contents
-        String directoryPath = Paths.get(pathToTar).getParent().toString();
-        String tarFileName = Paths.get(pathToTar).getFileName().toString();
+        String directoryPath = Paths.get(pathToFile).getParent().toString();
+        String tarFileName = Paths.get(pathToFile).getFileName().toString();
         File tarFile = new File(directoryPath, tarFileName);
         List<String> fileNames = new ArrayList<>();
 
@@ -232,7 +236,6 @@ class SnodasDataReader extends DataReader {
             while((nextEntry = tarStream.getNextEntry()) != null) {
                 String entryFileName = nextEntry.getName();
                 if (entryFileName.contains(".dat")) {
-                    entryFileName = entryFileName.substring(0, entryFileName.lastIndexOf(".dat"));
                     fileNames.add(entryFileName);
                 } // If the entry is .dat file
             } // Get a list of file names (that ended with .dat)
@@ -242,12 +245,17 @@ class SnodasDataReader extends DataReader {
 
         // Parse file names to map with variable, and save to a HashSet
         HashSet<String> variables = new HashSet<>();
-        for (String fileName : fileNames) {
-            Map<String, String> info = parseFile(fileName);
-            variables.add(getName(info));
-        }
+        fileNames.forEach(f -> variables.add(getVariable(f)));
 
         return variables;
     } // getVariables()
+
+    public static String getVariable(String pathToDat) {
+        if(pathToDat.contains(File.separator)) {
+            File datFile = new File(pathToDat);
+            pathToDat = datFile.getName();
+        }
+        return getName(parseFile(pathToDat.substring(0, pathToDat.lastIndexOf(".dat"))));
+    }
 
 } // SnodasDataReader class
