@@ -20,7 +20,6 @@ dependencies {
     implementation("systems.uom:systems-common:2.0.2")
     implementation("edu.ucar:cdm-core:5.4.1")
     implementation("org.apache.commons:commons-compress:1.20")
-    implementation("commons-io:commons-io:2.8.0")
     runtimeOnly("com.rmanet:rma:6.0.0.51")
     runtimeOnly("edu.ucar:grib:5.4.1")
     runtimeOnly("edu.ucar:netcdf4:5.4.1")
