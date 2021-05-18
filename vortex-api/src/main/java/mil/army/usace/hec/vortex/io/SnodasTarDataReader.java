@@ -2,31 +2,19 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
-import org.gdal.gdal.Band;
-import org.gdal.gdal.Dataset;
-import org.gdal.gdal.TranslateOptions;
-import org.gdal.gdal.gdal;
-import org.gdal.gdalconst.gdalconst;
-
-import org.apache.commons.compress.archivers.*;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.io.FileUtils;
+import org.gdal.gdal.gdal;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
     static {GdalRegister.getInstance();}
@@ -96,9 +84,8 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
 
     private void updateTar(String pathToFile) throws IOException {
         // Get DirectoryPath, TarFilePath, and TarFileName
-        String tarFilePath = pathToFile;
-        String directoryPath = Paths.get(tarFilePath).getParent().toString();
-        String tarFileName = Paths.get(tarFilePath).getFileName().toString();
+        String directoryPath = Paths.get(pathToFile).getParent().toString();
+        String tarFileName = Paths.get(pathToFile).getFileName().toString();
         // Creating an input stream for the original tar file
         File originalTarFile = new File(directoryPath, tarFileName);
         TarArchiveInputStream originalStream = new TarArchiveInputStream(new FileInputStream(originalTarFile));
@@ -122,7 +109,10 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         } // Loop through unzipped Folder
 
         // Clean up: deleting untarFolder
-        FileUtils.deleteDirectory(untarFolder);
+        Files.walk(untarFolder.toPath())
+                .sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .forEach(File::delete);
     } // updateTar()
 
     private boolean matchedVariable(String fileName, String variableName) {
