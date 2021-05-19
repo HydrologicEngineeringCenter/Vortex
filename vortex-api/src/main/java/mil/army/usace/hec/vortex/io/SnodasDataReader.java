@@ -110,19 +110,45 @@ class SnodasDataReader extends DataReader {
 
     private static String getUnits(Map<String,String> info) {
         String productCode = info.get("product");
-        String unit = "";
+        String unit;
 
-        if(productCode.equals("1034") || productCode.equals("1036") || productCode.equals("1044") || productCode.equals("1050") || productCode.equals("1039"))
-            unit = "m"; // meters
-        else if(productCode.equals("1025"))
-            unit = "kg/m^2";
-        else if(productCode.equals("1038"))
-            unit = "k"; // kelvin
-        else
-            unit = "Error: Invalid product code";
+        switch (productCode) {
+            case "1034":
+            case "1036":
+                unit = "mm";
+                break;
+            case "1044":
+            case "1050":
+            case "1039":
+                unit = "m";
+                break;
+            case "1025":
+                unit = "kg/m^2";
+                break;
+            case "1038":
+                unit = "k"; // kelvin
+                break;
+            default:
+                unit = "Error: Invalid product code";
+                break;
+        }
 
         return unit;
     } // getUnits()
+
+    private static float getScaleFactor(Map<String, String> info) {
+        String productCode = info.get("product");
+        switch (productCode) {
+            case "1044":
+            case "1050":
+            case "1039":
+                return 100000.0f;
+            case "1025":
+                return 10.0f;
+            default:
+                return 1.0f;
+        }
+    }
 
     private static String getName(Map<String, String> info) {
         String productCode = info.get("product");
@@ -200,6 +226,11 @@ class SnodasDataReader extends DataReader {
         startTime = timeSpan[0];
         endTime   = timeSpan[1];
         Duration interval = Duration.between(startTime, endTime);
+
+        float scaleFactor = getScaleFactor(parsedInfo);
+        for (int i = 0; i < data.length; i++) {
+            data[i] = data[i] / scaleFactor;
+        }
 
         // Build grid from extracted info
         VortexGrid dto = VortexGrid.builder()
