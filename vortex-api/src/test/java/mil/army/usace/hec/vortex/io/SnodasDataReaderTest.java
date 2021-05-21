@@ -1,25 +1,41 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.heclib.dss.HecDataManager;
-import hec.heclib.dss.HecDssCatalog;
-import mil.army.usace.hec.vortex.VortexGrid;
-import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class SnodasDataReaderTest {
-    private static VortexGrid grid;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    boolean deleteFile(Path path) {
+        try {
+            Files.delete(path);
+            return true;
+        }
+        catch(IOException exception) { return false; }
+    }
+
+    boolean deleteFolder(String folderPath) {
+        try {
+            Files.walk(Path.of(folderPath.substring(0, folderPath.lastIndexOf(".tar")) + "_unzip"))
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(this::deleteFile);
+            return true;
+        }
+        catch(IOException exception) { return false; }
+    }
+
     @Test
     void gdalTest() {
         String path = new File(getClass().getResource(
@@ -52,5 +68,22 @@ class SnodasDataReaderTest {
 
             importer.process();
         } // Import all variables
+
+        // Removing generated files
+        AtomicBoolean filesRemoved = new AtomicBoolean(false);
+        while(!filesRemoved.get()) {
+            Runnable attemptRemove = () -> {
+                boolean fileDeleted = deleteFile(Path.of(outFile));
+                if(!fileDeleted) return;
+                boolean folderDeleted = deleteFolder(path);
+                if(!folderDeleted) return;
+                filesRemoved.set(true);
+            };
+
+            ScheduledFuture<?> beeperHandle = scheduler.scheduleAtFixedRate(attemptRemove, 10, 10, TimeUnit.SECONDS);
+            Runnable canceller = () -> beeperHandle.cancel(false);
+            scheduler.schedule(canceller, 1, TimeUnit.HOURS);
+        }
+
     } // SnodasTest
 } // BilZipDataReaderTest
