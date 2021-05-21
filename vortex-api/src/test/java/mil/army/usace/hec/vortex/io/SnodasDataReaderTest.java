@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 
 class SnodasDataReaderTest {
@@ -50,7 +48,8 @@ class SnodasDataReaderTest {
 
         try {
             Files.delete(Path.of(outFile));
-            Files.walk(Path.of(path.substring(0, path.lastIndexOf(".tar")) + "_unzip"))
+            Path folderPath = Paths.get("src/test/resources/regression/io/snodas_reader/SNODAS_20191101_unzip");
+            Files.walk(folderPath)
                     .sorted(Comparator.reverseOrder())
                     .forEach(p -> {
                         try { Files.delete(p); }
