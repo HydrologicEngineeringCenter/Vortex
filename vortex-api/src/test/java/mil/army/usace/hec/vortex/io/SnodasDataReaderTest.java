@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.dss.HecDSSFileDataManager;
 import org.gdal.gdal.gdal;
 import org.junit.jupiter.api.Test;
 
@@ -9,32 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class SnodasDataReaderTest {
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
-    boolean deleteFile(Path path) {
-        try {
-            Files.delete(path);
-            return true;
-        }
-        catch(IOException exception) { return false; }
-    }
-
-    boolean deleteFolder(String folderPath) {
-        try {
-            Files.walk(Path.of(folderPath.substring(0, folderPath.lastIndexOf(".tar")) + "_unzip"))
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(this::deleteFile);
-            return true;
-        }
-        catch(IOException exception) { return false; }
-    }
 
     @Test
     void gdalTest() {
@@ -69,21 +46,17 @@ class SnodasDataReaderTest {
             importer.process();
         } // Import all variables
 
-        // Removing generated files
-        AtomicBoolean filesRemoved = new AtomicBoolean(false);
-        while(!filesRemoved.get()) {
-            Runnable attemptRemove = () -> {
-                boolean fileDeleted = deleteFile(Path.of(outFile));
-                if(!fileDeleted) return;
-                boolean folderDeleted = deleteFolder(path);
-                if(!folderDeleted) return;
-                filesRemoved.set(true);
-            };
+        HecDSSFileDataManager fileManager = new HecDSSFileDataManager();
+        fileManager.closeFile(outFile);
 
-            ScheduledFuture<?> beeperHandle = scheduler.scheduleAtFixedRate(attemptRemove, 10, 10, TimeUnit.SECONDS);
-            Runnable canceller = () -> beeperHandle.cancel(false);
-            scheduler.schedule(canceller, 1, TimeUnit.HOURS);
-        }
-
+        try {
+            Files.delete(Path.of(outFile));
+            Files.walk(Path.of(path.substring(0, path.lastIndexOf(".tar")) + "_unzip"))
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(p -> {
+                        try { Files.delete(p); }
+                        catch(IOException exception) { exception.printStackTrace(); }
+                    });
+        } catch(IOException exception) { throw new IllegalArgumentException(); }
     } // SnodasTest
 } // BilZipDataReaderTest
