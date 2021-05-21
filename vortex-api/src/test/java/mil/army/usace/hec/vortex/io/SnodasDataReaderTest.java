@@ -18,8 +18,7 @@ class SnodasDataReaderTest {
         String path = new File(getClass().getResource(
                 "/regression/io/snodas_reader/SNODAS_20191031.tar").getFile()).toString();
         String virtualPath = "/vsizip/" + path;
-        Vector x = gdal.ReadDir(virtualPath);
-        
+        gdal.ReadDir(virtualPath);
     } // gdalTest
 
     @Test
