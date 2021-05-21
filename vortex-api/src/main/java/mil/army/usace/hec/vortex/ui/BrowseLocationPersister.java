@@ -16,6 +16,9 @@ import static java.nio.file.StandardOpenOption.CREATE;
 public interface BrowseLocationPersister {
 
     default void setPersistedBrowseLocation(File file) {
+        if (file == null)
+            return;
+
         String className = this.getClass().getName();
 
         Path pathToProperties = Paths.get(System.getProperty("user.home")
