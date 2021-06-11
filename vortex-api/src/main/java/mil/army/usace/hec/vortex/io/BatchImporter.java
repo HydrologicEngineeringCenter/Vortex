@@ -6,10 +6,14 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 public class BatchImporter {
+    private static final Logger logger = Logger.getLogger(BatchImporter.class.getName());
     private final List<String> inFiles;
     private final List<String> variables;
     private final Path destination;
@@ -91,7 +95,7 @@ public class BatchImporter {
     public static Builder builder() {return new Builder();}
 
     public void process() {
-
+        Instant start = Instant.now();
         List<ImportableUnit> importableUnits = new ArrayList<>();
         inFiles.forEach(file -> variables.forEach(variable -> {
             if (DataReader.getVariables(file).contains(variable)) {
@@ -124,6 +128,10 @@ public class BatchImporter {
 
             importableUnit.process();
         });
+        Duration duration = Duration.between(start, Instant.now());
+        long seconds = duration.toSeconds();
+
+        logger.info(String.format("Batch import time: %d:%02d:%02d%n", seconds / 3600, (seconds % 3600) / 60, (seconds % 60)));
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
