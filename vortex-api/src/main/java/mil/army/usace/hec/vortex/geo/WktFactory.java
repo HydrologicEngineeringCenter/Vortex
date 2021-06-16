@@ -221,4 +221,12 @@ public class WktFactory {
                 "PARAMETER[\"Latitude_Of_Origin\",23.0]," +
                 "UNIT[\"Meter\",1.0]]";
     }
+
+    public static String fromEpsg (int epsg) {
+        SpatialReference srs = new SpatialReference();
+        srs.ImportFromEPSG(epsg);
+        String wkt = srs.ExportToPrettyWkt();
+        srs.delete();
+        return wkt;
+    }
 }

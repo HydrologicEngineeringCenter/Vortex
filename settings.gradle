@@ -11,3 +11,5 @@ include 'sanitizer'
 include 'image-exporter'
 include 'examples'
 include 'calculator'
+include 'vortex-ui'
+
