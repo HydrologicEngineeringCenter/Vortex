@@ -5,8 +5,6 @@ import mil.army.usace.hec.vortex.math.Normalizer;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -23,23 +21,19 @@ import java.util.logging.*;
 
 public class NormalizerWizard extends JFrame {
     private final Frame frame;
+    private DestinationSelectionPanel destinationSelectionPanel;
     
     private Container contentCards;
     private CardLayout cardLayout;
     private JButton backButton, nextButton, cancelButton;
     private int cardNumber;
 
-    private JTextField sourceFileTextField, normalFileTextField, selectDestinationTextField;
-    private JTextField dssFieldA;
-    private JTextField dssFieldB;
-    private JTextField dssFieldC;
-    private JTextField dssFieldF;
+    private JTextField sourceFileTextField, normalFileTextField;
     private InputHintTextField startDateTextField, startTimeTextField;
     private InputHintTextField endDateTextField, endTimeTextField;
     private InputHintTextField normalIntervalTextField;
     private JList<String> availableSourceGridsList, chosenSourceGridsList;
     private JList<String> availableNormalGridsList, chosenNormalGridsList;
-    private JPanel dssPartsSectionPanel;
     private JComboBox<String> timeUnitComboBox;
     private JProgressBar progressBar;
 
@@ -186,10 +180,10 @@ public class NormalizerWizard extends JFrame {
         timeUnitComboBox.setSelectedItem(TextProperties.getInstance().getProperty("NormalizerWiz_TimeUnit_Days"));
 
         /* Clearing Step Four Panel */
-        selectDestinationTextField.setText("");
-        dssFieldA.setText("");
-        dssFieldB.setText("");
-        dssFieldF.setText("");
+        destinationSelectionPanel.getDestinationTextField().setText("");
+        destinationSelectionPanel.getFieldA().setText("");
+        destinationSelectionPanel.getFieldB().setText("");
+        destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Five Panel */
         progressBar.setIndeterminate(true);
@@ -841,180 +835,13 @@ public class NormalizerWizard extends JFrame {
     }
 
     private JPanel stepFourPanel() {
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        gridBagLayout.columnWidths = new int[]{this.getPreferredSize().width, 0};
-        gridBagLayout.rowHeights = new int[] {50, 100, 0};
-        gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-        gridBagLayout.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
-
-        JPanel stepFourPanel = new JPanel(gridBagLayout);
-        stepFourPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,8));
-
-        GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.anchor = GridBagConstraints.NORTH;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.gridx = 0;
-
-        /* Select Destination Section Panel */
-        gridBagConstraints.gridy = 0;
-        stepFourPanel.add(stepFourSelectDestinationPanel(), gridBagConstraints);
-
-        /* DSS Parts Panel (Only appears when selected destination is a DSS file */
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.insets = new Insets(10,0,0,0);
-        dssPartsSectionPanel = stepFourDssPartsSectionPanel();
-        dssPartsSectionPanel.setVisible(false);
-        stepFourPanel.add(dssPartsSectionPanel, gridBagConstraints);
-
-        return stepFourPanel;
-    }
-
-    private JPanel stepFourSelectDestinationPanel() {
-        /* Select Destination section (of stepFourPanel) */
-        JLabel selectDestinationLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_SelectDestination_L"));
-        JPanel selectDestinationLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        selectDestinationLabelPanel.add(selectDestinationLabel);
-
-        JPanel selectDestinationTextFieldPanel = new JPanel();
-        selectDestinationTextFieldPanel.setLayout(new BoxLayout(selectDestinationTextFieldPanel, BoxLayout.X_AXIS));
-
-        selectDestinationTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
-
-        selectDestinationTextField = new JTextField();
-        selectDestinationTextField.setColumns(0);
-        selectDestinationTextField.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) { textUpdated(); }
-            public void removeUpdate(DocumentEvent e) { textUpdated(); }
-            public void insertUpdate(DocumentEvent e) { textUpdated(); }
-            void textUpdated() { dssPartsSectionPanel.setVisible(selectDestinationTextField.getText().endsWith(".dss")); }
-        });
-        selectDestinationTextFieldPanel.add(selectDestinationTextField);
-
-        selectDestinationTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
-
-        FileBrowseButton selectDestinationBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
-        selectDestinationBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
-        selectDestinationBrowseButton.setPreferredSize(new Dimension(22,22));
-        selectDestinationBrowseButton.addActionListener(evt -> selectDestinationBrowseAction(selectDestinationBrowseButton));
-        selectDestinationTextFieldPanel.add(selectDestinationBrowseButton);
-
-        JPanel selectDestinationSectionPanel = new JPanel();
-        selectDestinationSectionPanel.setLayout(new BoxLayout(selectDestinationSectionPanel, BoxLayout.Y_AXIS));
-        selectDestinationSectionPanel.add(selectDestinationLabelPanel);
-        selectDestinationSectionPanel.add(selectDestinationTextFieldPanel);
-
-        return selectDestinationSectionPanel;
-    }
-
-    private JPanel stepFourDssPartsSectionPanel() {
-        GridBagLayout dssGridLayout = new GridBagLayout();
-        JPanel dssPartsPanel = new JPanel(dssGridLayout);
-
-        GridBagConstraints dssPartsConstraints = new GridBagConstraints();
-        dssPartsConstraints.fill = GridBagConstraints.HORIZONTAL;
-
-        dssFieldA = new JTextField();
-        dssFieldB = new JTextField();
-        dssFieldC = new JTextField();
-        dssFieldC.setText("*");
-        dssFieldC.setEditable(false);
-        JTextField dssFieldD = new JTextField();
-        dssFieldD.setText("*");
-        dssFieldD.setEditable(false);
-        JTextField dssFieldE = new JTextField();
-        dssFieldE.setText("*");
-        dssFieldE.setEditable(false);
-        dssFieldF = new JTextField();
-
-        dssPartsConstraints.gridy = 0;
-        dssPartsConstraints.gridx = 0;
-        dssPartsConstraints.weightx = 1;
-        JPanel partAPanel = new JPanel();
-        partAPanel.setLayout(new BoxLayout(partAPanel, BoxLayout.X_AXIS));
-        partAPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partAPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartA_L")));
-        partAPanel.add(dssFieldA);
-        dssPartsPanel.add(partAPanel, dssPartsConstraints);
-
-        dssPartsConstraints.gridy = 0;
-        dssPartsConstraints.gridx = 1;
-        dssPartsConstraints.weightx = 1;
-        JPanel partBPanel = new JPanel();
-        partBPanel.setLayout(new BoxLayout(partBPanel, BoxLayout.X_AXIS));
-        partBPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partBPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartB_L")));
-        partBPanel.add(dssFieldB);
-        dssPartsPanel.add(partBPanel, dssPartsConstraints);
-
-        dssPartsConstraints.gridy = 0;
-        dssPartsConstraints.gridx = 2;
-        dssPartsConstraints.weightx = 1;
-        JPanel partCPanel = new JPanel();
-        partCPanel.setLayout(new BoxLayout(partCPanel, BoxLayout.X_AXIS));
-        partCPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partCPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartC_L")));
-        partCPanel.add(dssFieldC);
-        dssPartsPanel.add(partCPanel, dssPartsConstraints);
-
-        dssPartsConstraints.gridy = 1;
-        dssPartsConstraints.gridx = 0;
-        dssPartsConstraints.weightx = 1;
-        dssPartsConstraints.insets = new Insets(10,0,0,0);
-        JPanel partDPanel = new JPanel();
-        partDPanel.setLayout(new BoxLayout(partDPanel, BoxLayout.X_AXIS));
-        partDPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partDPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartD_L")));
-        partDPanel.add(dssFieldD);
-        dssPartsPanel.add(partDPanel, dssPartsConstraints);
-
-        dssPartsConstraints.gridy = 1;
-        dssPartsConstraints.gridx = 1;
-        dssPartsConstraints.weightx = 1;
-        JPanel partEPanel = new JPanel();
-        partEPanel.setLayout(new BoxLayout(partEPanel, BoxLayout.X_AXIS));
-        partEPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partEPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartE_L")));
-        partEPanel.add(dssFieldE);
-        dssPartsPanel.add(partEPanel, dssPartsConstraints);
-
-        dssPartsConstraints.gridy = 1;
-        dssPartsConstraints.gridx = 2;
-        dssPartsConstraints.weightx = 1;
-        JPanel partFPanel = new JPanel();
-        partFPanel.setLayout(new BoxLayout(partFPanel, BoxLayout.X_AXIS));
-        partFPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partFPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartF_L")));
-        partFPanel.add(Box.createRigidArea(new Dimension(1,0)));
-        partFPanel.add(dssFieldF);
-        dssPartsPanel.add(partFPanel, dssPartsConstraints);
-
-        return dssPartsPanel;
-    }
-
-    private void selectDestinationBrowseAction(FileBrowseButton fileBrowseButton) {
-        JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
-
-        // Configuring fileChooser dialog
-        fileChooser.setAcceptAllFileFilterUsed(true);
-        FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("DSS Files (*.dss)", "dss");
-        fileChooser.setFileFilter(acceptableExtension);
-
-        // Pop up fileChooser dialog
-        int userChoice = fileChooser.showOpenDialog(this);
-
-        // Deal with user's choice
-        if(userChoice == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            String selectedPath = selectedFile.getAbsolutePath();
-            if(!selectedFile.getName().contains(".")) { selectedPath = selectedPath + ".dss"; }
-            selectDestinationTextField.setText(selectedPath);
-            File finalFile = new File(selectedPath);
-            fileBrowseButton.setPersistedBrowseLocation(finalFile);
-        }
+        destinationSelectionPanel = new DestinationSelectionPanel(this);
+        return destinationSelectionPanel;
     }
 
     private boolean validateStepFour() {
-        if(selectDestinationTextField.getText() == null || selectDestinationTextField.getText().isEmpty() ) {
+        String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
+        if(destinationFile == null || destinationFile.isEmpty() ) {
             JOptionPane.showMessageDialog(this, "Destination file is required.",
                     "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
             return false;
@@ -1070,7 +897,7 @@ public class NormalizerWizard extends JFrame {
                 break;
         }
 
-        String destination = selectDestinationTextField.getText();
+        String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
         /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
@@ -1086,11 +913,16 @@ public class NormalizerWizard extends JFrame {
         String partF = (partFList.size() == 1) ? partFList.get(0) : "*";
 
         Map<String, String> writeOptions = new HashMap<>();
+        String dssFieldA = destinationSelectionPanel.getFieldA().getText();
+        String dssFieldB = destinationSelectionPanel.getFieldB().getText();
+        String dssFieldC = destinationSelectionPanel.getFieldC().getText();
+        String dssFieldF = destinationSelectionPanel.getFieldF().getText();
+
         if (destination.toLowerCase().endsWith(".dss")) {
-            writeOptions.put("partA", (dssFieldA.getText().isEmpty()) ? partA : dssFieldA.getText());
-            writeOptions.put("partB", (dssFieldB.getText().isEmpty()) ? partB : dssFieldB.getText());
-            writeOptions.put("partC", (dssFieldC.getText().isEmpty()) ? partC : dssFieldC.getText());
-            writeOptions.put("partF", (dssFieldF.getText().isEmpty()) ? partF : dssFieldF.getText());
+            writeOptions.put("partA", (dssFieldA.isEmpty()) ? partA : dssFieldA);
+            writeOptions.put("partB", (dssFieldB.isEmpty()) ? partB : dssFieldB);
+            writeOptions.put("partC", (dssFieldC.isEmpty()) ? partC : dssFieldC);
+            writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
         }
 
         List<Handler> handlers = handlersForNormalizer();
@@ -1143,6 +975,7 @@ public class NormalizerWizard extends JFrame {
         StreamHandler handler = new StreamHandler(new OutputStream() {
             @Override
             public void write(int b) {
+                @SuppressWarnings("unused")
                 String s = String.valueOf((char)b);
             }
         }, formatter){
