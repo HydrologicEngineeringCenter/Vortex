@@ -1,32 +1,22 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.heclib.dss.HecDataManager;
-import hec.heclib.dss.HecDssCatalog;
-import mil.army.usace.hec.vortex.VortexGrid;
-import org.gdal.gdal.Dataset;
+import hec.heclib.dss.HecDSSFileDataManager;
 import org.gdal.gdal.gdal;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.*;
 
 class SnodasDataReaderTest {
-    private static VortexGrid grid;
+
     @Test
     void gdalTest() {
         String path = new File(getClass().getResource(
                 "/regression/io/snodas_reader/SNODAS_20191031.tar").getFile()).toString();
         String virtualPath = "/vsizip/" + path;
-        Vector x = gdal.ReadDir(virtualPath);
-        
+        gdal.ReadDir(virtualPath);
     } // gdalTest
 
     @Test
@@ -52,5 +42,19 @@ class SnodasDataReaderTest {
 
             importer.process();
         } // Import all variables
+
+        HecDSSFileDataManager fileManager = new HecDSSFileDataManager();
+        fileManager.closeFile(outFile);
+
+        try {
+            Files.delete(Path.of(outFile));
+            Path folderPath = Paths.get("src/test/resources/regression/io/snodas_reader/SNODAS_20191101_unzip");
+            Files.walk(folderPath)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(p -> {
+                        try { Files.delete(p); }
+                        catch(IOException exception) { exception.printStackTrace(); }
+                    });
+        } catch(IOException exception) { throw new IllegalArgumentException(); }
     } // SnodasTest
 } // BilZipDataReaderTest
