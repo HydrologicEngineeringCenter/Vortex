@@ -52,13 +52,13 @@ class BilDataReader extends DataReader {
         AtomicBoolean isPrismTemporalDaily = new AtomicBoolean();
         AtomicBoolean isPrismTemporalMonthly = new AtomicBoolean();
         AtomicBoolean isPrismNormal = new AtomicBoolean();
-        if (fileName.matches("prism.*ppt.*(stable|provisional).*")) {
+        if (fileName.matches("prism.*ppt.*(stable|provisional|early).*")) {
             shortName = "precipitation";
             fullName = "precipitation";
             description = "precipitation";
-            if (fileName.matches("prism.*ppt.*(stable|provisional).*(d1|d2).*"))
+            if (fileName.matches("prism.*ppt.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*ppt.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*ppt.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*ppt.*normal.*")) {
             shortName = "precipitation";
