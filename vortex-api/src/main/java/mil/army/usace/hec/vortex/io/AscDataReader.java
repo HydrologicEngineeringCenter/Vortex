@@ -43,66 +43,66 @@ class AscDataReader extends DataReader {
         AtomicBoolean isPrismNormal = new AtomicBoolean();
         AtomicBoolean isQpfHourly = new AtomicBoolean();
 
-        if (fileName.matches("prism.*ppt.*(stable|provisional).*")) {
+        if (fileName.matches("prism.*ppt.*(stable|provisional|early).*")) {
             shortName = "precipitation";
             fullName = "precipitation";
             description = "precipitation";
-            if (fileName.matches("prism.*ppt.*(stable|provisional).*(d1|d2).*"))
+            if (fileName.matches("prism.*ppt.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*ppt.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*ppt.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("prism.*ppt.*normal.*")) {
             shortName = "precipitation";
             fullName = "precipitation";
             description = "precipitation";
             isPrismNormal.set(true);
-        } else if (fileName.matches("prism.*tmean.*(stable|provisional).*")){
+        } else if (fileName.matches("prism.*tmean.*(stable|provisional|early).*")){
             shortName = "mean temperature";
             fullName = "mean temperature";
             description = "mean temperature";
-            if (fileName.matches("prism.*tmean.*(stable|provisional).*(d1|d2).*"))
+            if (fileName.matches("prism.*tmean.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*tmean.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*tmean.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
-        } else if (fileName.matches("prism.*tmin.*(stable|provisional).*")){
+        } else if (fileName.matches("prism.*tmin.*(stable|provisional|early).*")){
             shortName = "minimum temperature";
             fullName = "minimum temperature";
             description = "minimum temperature";
-            if (fileName.matches("prism.*tmin.*(stable|provisional).*d2.*(d1|d2).*"))
+            if (fileName.matches("prism.*tmin.*(stable|provisional|early).*d2.*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*tmin.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*tmin.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
-        } else if (fileName.matches("prism.*tmax.*(stable|provisional).*")){
+        } else if (fileName.matches("prism.*tmax.*(stable|provisional|early).*")){
             shortName = "maximum temperature";
             fullName = "maximum temperature";
             description = "maximum temperature";
-            if (fileName.matches("prism.*tmax.*(stable|provisional).*(d1|d2).*"))
+            if (fileName.matches("prism.*tmax.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*tmax.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*tmax.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
-        } else if (fileName.matches("prism.*tdmean.*(stable|provisional).*")){
+        } else if (fileName.matches("prism.*tdmean.*(stable|provisional|early).*")){
             shortName = "mean dewpoint temperature";
             fullName = "mean dewpoint temperature";
             description = "mean dewpoint temperature";
-            if (fileName.matches("prism.*tdmean.*(stable|provisional).*(d1|d2).*"))
+            if (fileName.matches("prism.*tdmean.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*tdmean.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*tdmean.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
-        } else if (fileName.matches("prism.*vpdmin.*(stable|provisional).*")){
+        } else if (fileName.matches("prism.*vpdmin.*(stable|provisional|early).*")){
             shortName = "minimum vapor pressure deficit";
             fullName = "minimum vapor pressure deficit";
             description = "minimum vapor pressure deficit";
-            if (fileName.matches("prism.*vpdmin.*(stable|provisional).*(d1|d2).*"))
+            if (fileName.matches("prism.*vpdmin.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*vpdmin.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*vpdmin.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
-        } else if (fileName.matches("prism.*vpdmax.*(stable|provisional).*")){
+        } else if (fileName.matches("prism.*vpdmax.*(stable|provisional|early).*")){
             shortName = "maximum vapor pressure deficit";
             fullName = "maximum vapor pressure deficit";
             description = "maximum vapor pressure deficit";
-            if (fileName.matches("prism.*vpdmax.*(stable|provisional).*(d1|d2).*"))
+            if (fileName.matches("prism.*vpdmax.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
-            if (fileName.matches("prism.*vpdmax.*(stable|provisional).*m3.*"))
+            if (fileName.matches("prism.*vpdmax.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
         } else if (fileName.matches("qpf.*1hr.*")) {
             shortName = "precipitation";
