@@ -208,7 +208,7 @@ class AscDataReader extends DataReader {
             units = "hPa";
         } else if (fileName.contains("vpdmax")) {
             units = "hPa";
-        } else if (fileName.matches(".*yr.*ha.*")) {
+        } else if (fileName.matches(".*yr.*(ha|ma|da).*")) {
             units = "1/1000 in";
         } else {
             units = "";
