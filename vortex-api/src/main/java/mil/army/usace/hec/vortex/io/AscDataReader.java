@@ -109,7 +109,7 @@ class AscDataReader extends DataReader {
             fullName = "precipitation";
             description = "precipitation";
             isQpfHourly.set(true);
-        } else if (fileName.matches(".*yr.*ha.*")) {
+        } else if (fileName.matches(".*yr.*(ha|ma|da).*")) {
             shortName = "precipitation-frequency";
             fullName = "precipitation-frequency";
             description = "precipitation-frequency";
