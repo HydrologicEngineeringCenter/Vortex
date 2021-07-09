@@ -66,6 +66,21 @@ public class DssDataWriter extends DataWriter {
 
             Unit<?> units = getUnits(grid.units());
 
+            DSSPathname dssPathname = new DSSPathname();
+            String cPart;
+            if (!getCPart(grid.shortName()).isEmpty()){
+                cPart = getCPart(grid.shortName());
+            } else {
+                cPart = getCPart(grid.description());
+            }
+
+            dssPathname.setCPart(cPart);
+
+            if (cPart.equals("PRECIPITATION-FREQUENCY")
+                    && (!options.containsKey("partF") || options.get("partF").isEmpty())) {
+                options.put("partF", grid.description());
+            }
+
             if (units.equals(MILLI(METRE).divide(SECOND))
                     || units.equals(MILLI(METRE).divide(HOUR))
                     || units.equals(MILLI(METRE).divide(DAY))) {
@@ -84,15 +99,6 @@ public class DssDataWriter extends DataWriter {
 
                 gridInfo.setDataUnits("MM");
                 gridInfo.setDataType(DssDataType.PER_CUM.value());
-
-                DSSPathname dssPathname = new DSSPathname();
-                String cPart;
-                if (!getCPart(grid.shortName()).isEmpty()){
-                    cPart = getCPart(grid.shortName());
-                } else {
-                    cPart = getCPart(grid.description());
-                }
-                dssPathname.setCPart(cPart);
                 
                 if (options.containsKey("partF") && options.get("partF").equals("*")) {
                     DSSPathname pathnameIn = new DSSPathname();
@@ -117,15 +123,6 @@ public class DssDataWriter extends DataWriter {
                     gridInfo.setDataUnits("DEG C");
                 }
 
-                DSSPathname dssPathname = new DSSPathname();
-                String cPart;
-                if (!getCPart(grid.shortName()).isEmpty()){
-                    cPart = getCPart(grid.shortName());
-                } else {
-                    cPart = getCPart(grid.description());
-                }
-                dssPathname.setCPart(cPart);
-
                 if (options.containsKey("partF") && options.get("partF").equals("*")) {
                     DSSPathname pathnameIn = new DSSPathname();
                     int status = pathnameIn.setPathname(grid.fullName());
@@ -141,15 +138,6 @@ public class DssDataWriter extends DataWriter {
 
                 gridInfo.setDataUnits("IN");
 
-                DSSPathname dssPathname = new DSSPathname();
-                String cPart;
-                if (!getCPart(grid.shortName()).isEmpty()){
-                    cPart = getCPart(grid.shortName());
-                } else {
-                    cPart = getCPart(grid.description());
-                }
-                dssPathname.setCPart(cPart);
-
                 write(convertedData, gridInfo, dssPathname);
             } else if (units.equals(PASCAL)) {
                 float[] convertedData = new float[data.length];
@@ -157,26 +145,8 @@ public class DssDataWriter extends DataWriter {
 
                 gridInfo.setDataUnits("KPA");
 
-                DSSPathname dssPathname = new DSSPathname();
-                String cPart;
-                if (!getCPart(grid.shortName()).isEmpty()){
-                    cPart = getCPart(grid.shortName());
-                } else {
-                    cPart = getCPart(grid.description());
-                }
-                dssPathname.setCPart(cPart);
-
                 write(convertedData, gridInfo, dssPathname);
             } else {
-                DSSPathname dssPathname = new DSSPathname();
-                String cPart;
-                if (!getCPart(grid.shortName()).isEmpty()){
-                    cPart = getCPart(grid.shortName());
-                } else {
-                    cPart = getCPart(grid.description());
-                }
-                dssPathname.setCPart(cPart);
-
                 if (options.containsKey("partF") && options.get("partF").equals("*")) {
                     DSSPathname pathnameIn = new DSSPathname();
                     int status = pathnameIn.setPathname(grid.fullName());
@@ -665,6 +635,7 @@ public class DssDataWriter extends DataWriter {
 
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(destination.toString());
+
         griddedData.setPathname(updatePathname(pathname, options).getPathname());
         HecTime startTime = getStartTime(gridData.getGridInfo());
         HecTime endTime = getEndTime(gridData.getGridInfo());

@@ -3,12 +3,14 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.util.FilenameUtil;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -112,7 +114,7 @@ class AscDataReader extends DataReader {
         } else if (fileName.matches(".*yr.*(ha|ma|da).*")) {
             shortName = "precipitation-frequency";
             fullName = "precipitation-frequency";
-            description = "precipitation-frequency";
+            description = FilenameUtil.removeExtension(Paths.get(fileName).getFileName().toString(), true);
         } else if (fileName.toLowerCase().matches("windspeed.*")) {
             shortName = "windspeed";
             fullName = "windspeed";
@@ -232,12 +234,19 @@ class AscDataReader extends DataReader {
         band.delete();
 
         VortexGrid dto = VortexGrid.builder()
-                .dx(dx).dy(dy).nx(nx).ny(ny)
-                .originX(ulx).originY(uly)
-                .wkt(wkt).data(data).units(units)
-                .fileName(path).shortName(shortName)
-                .fullName(fullName).description(description)
-                .startTime(startTime).endTime(endTime)
+                .dx(dx).dy(dy)
+                .nx(nx).ny(ny)
+                .originX(ulx)
+                .originY(uly)
+                .wkt(wkt)
+                .data(data)
+                .units(units)
+                .fileName(path)
+                .shortName(shortName)
+                .fullName(fullName)
+                .description(description)
+                .startTime(startTime)
+                .endTime(endTime)
                 .interval(interval)
                 .build();
 
