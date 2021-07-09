@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.ui;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,6 +15,8 @@ public class IconResources {
 
     public static Icon loadIcon(String key) {
         try {
+            File vortexHome = new File(System.getProperty("user.home") + File.separator + ".vortex");
+            ImageIO.setCacheDirectory(vortexHome);
             return new ImageIcon(ImageIO.read( ClassLoader.getSystemResource( key )));
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
@@ -23,6 +26,8 @@ public class IconResources {
 
     public static Image loadImage(String key) {
         try {
+            File vortexHome = new File(System.getProperty("user.home") + File.separator + ".vortex");
+            ImageIO.setCacheDirectory(vortexHome);
             return ImageIO.read( ClassLoader.getSystemResource( key ));
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
