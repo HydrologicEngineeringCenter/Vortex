@@ -73,3 +73,30 @@ tasks.named<Test>("test") {
     ignoreFailures = true
     useJUnitPlatform()
 }
+
+val mavenUser: String by project
+val mavenPassword: String by project
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "mil.army.usace.hec"
+            artifactId = "vortex-ui"
+
+            from(components["java"])
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username = "$mavenUser"
+                password = "$mavenPassword"
+            }
+            val releasesRepoUrl = uri("https://www.hec.usace.army.mil/nexus/repository/maven-releases/")
+            val snapshotsRepoUrl = uri("https://www.hec.usace.army.mil/nexus/repository/maven-snapshots/")
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+        }
+    }
+}
+
+tasks.getByName("publish").dependsOn("jar")

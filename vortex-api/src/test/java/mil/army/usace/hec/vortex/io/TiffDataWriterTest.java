@@ -59,8 +59,7 @@ class TiffDataWriterTest {
 
     @Test
     void TiffDataWriterWritesSnodasFile() {
-        String inFile = new File(getClass().getResource(
-                "/regression/io/snodas_reader/unzipFolder/us_ssmv01025SlL00T0024TTNATS2019110105DP001.dat").getFile()).toString();
+        String inFile = new File(getClass().getResource("/regression/io/snodas_reader/SNODAS_20191101.tar").getFile()).toString();
 
         DataReader reader = DataReader.builder()
                 .path(inFile)
@@ -68,7 +67,7 @@ class TiffDataWriterTest {
 
         List<VortexData> dtos = new ArrayList<>(reader.getDtos());
 
-        Path destination = Paths.get("C:\\Projects\\Vortex\\vortex-api\\build\\resources\\test\\regression\\io\\snodas_reader\\chicken.tiff");
+        Path destination = Paths.get("C:/Temp/.tiff");
 
         DataWriter writer = DataWriter.builder()
                 .destination(destination)
