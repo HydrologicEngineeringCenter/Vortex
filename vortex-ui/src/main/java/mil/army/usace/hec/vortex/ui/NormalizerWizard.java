@@ -43,8 +43,14 @@ public class NormalizerWizard extends JFrame {
     
     public NormalizerWizard(Frame frame) {
         this.frame = frame;
-
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                setVisible(false);
+                dispose();
+            }
+        });
     }
 
     public void buildAndShowUI() {
