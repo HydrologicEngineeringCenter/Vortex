@@ -5,6 +5,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,8 +18,7 @@ public class IconResources {
 
     public static Icon loadIcon(String key) {
         try {
-            File vortexHome = new File(System.getProperty("user.home") + File.separator + ".vortex");
-            ImageIO.setCacheDirectory(vortexHome);
+            setCacheDir();
             return new ImageIcon(ImageIO.read( ClassLoader.getSystemResource( key )));
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
@@ -26,12 +28,17 @@ public class IconResources {
 
     public static Image loadImage(String key) {
         try {
-            File vortexHome = new File(System.getProperty("user.home") + File.separator + ".vortex");
-            ImageIO.setCacheDirectory(vortexHome);
+            setCacheDir();
             return ImageIO.read( ClassLoader.getSystemResource( key ));
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
         return null;
+    }
+
+    public static void setCacheDir() throws IOException {
+        Path vortexHome = Paths.get(System.getProperty("user.home") + File.separator + ".vortex");
+        Files.createDirectories(vortexHome);
+        ImageIO.setCacheDirectory(vortexHome.toFile());
     }
 }
