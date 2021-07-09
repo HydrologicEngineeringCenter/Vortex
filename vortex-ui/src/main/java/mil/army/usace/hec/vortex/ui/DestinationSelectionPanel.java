@@ -6,11 +6,14 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
 
 public class DestinationSelectionPanel extends JPanel {
     private final JFrame parent;
     private final JPanel dssPartsSelectionPanel;
     private JTextField selectDestinationTextField;
+    private JTextField unitsTextField;
+    private JComboBox<String> dataTypeCombo;
 
     @SuppressWarnings("unused")
     private JTextField dssFieldA, dssFieldB, dssFieldC, dssFieldD, dssFieldE, dssFieldF;
@@ -163,7 +166,69 @@ public class DestinationSelectionPanel extends JPanel {
         partFPanel.add(dssFieldF);
         dssPartsPanel.add(partFPanel, dssPartsConstraints);
 
+        dssPartsConstraints.gridy = 2;
+        dssPartsConstraints.gridx = 0;
+        dssPartsConstraints.weightx = 0;
+        dssPartsConstraints.gridwidth = 3;
+        dssPartsPanel.add(overridePanel(), dssPartsConstraints);
+
         return dssPartsPanel;
+    }
+
+    private JPanel overridePanel() {
+        JPanel overridePanel = new JPanel(new GridBagLayout());
+
+        JCheckBox unitCheckBox = new JCheckBox("Override DSS units");
+        overridePanel.add(unitCheckBox, overrideConstraints(0,0));
+        overridePanel.add(Box.createHorizontalGlue(), overrideConstraints(0,2));
+
+        JLabel unitsLabel = new JLabel("Units string:");
+        unitsLabel.setBorder(BorderFactory.createEmptyBorder(0,50,0,0));
+        overridePanel.add(unitsLabel, overrideConstraints(1,0));
+        unitsTextField = new JTextField();
+        unitsTextField.setColumns(12);
+        unitsTextField.setEnabled(false);
+        overridePanel.add(unitsTextField, overrideConstraints(1,1));
+        overridePanel.add(Box.createHorizontalGlue(), overrideConstraints(1,3));
+
+        JCheckBox typeCheckBox = new JCheckBox("Override DSS data type");
+        overridePanel.add(typeCheckBox, overrideConstraints(2,0));
+        overridePanel.add(Box.createHorizontalGlue(), overrideConstraints(2,2));
+
+        JLabel typeLabel = new JLabel("Data type:");
+        typeLabel.setBorder(BorderFactory.createEmptyBorder(0,50,0,0));
+        overridePanel.add(typeLabel, overrideConstraints(3,0));
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+        model.addAll(Arrays.asList("INST-VAL", "PER-CUM", "PER-AVER", "INST-CUM"));
+        dataTypeCombo = new JComboBox<>(model);
+        dataTypeCombo.setEnabled(false);
+        overridePanel.add(dataTypeCombo, overrideConstraints(3,1));
+        overridePanel.add(Box.createHorizontalGlue(), overrideConstraints(3,3));
+
+        unitCheckBox.addActionListener(evt -> {
+            unitsTextField.setText("");
+            unitsTextField.setEnabled(unitCheckBox.isSelected());
+        });
+
+        typeCheckBox.addActionListener(evt -> {
+            dataTypeCombo.setSelectedIndex(-1);
+            dataTypeCombo.setEnabled(typeCheckBox.isSelected());
+        });
+
+        return overridePanel;
+    }
+
+    private GridBagConstraints overrideConstraints(int y, int x) {
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridy = y;
+        constraints.gridx = x;
+        constraints.weightx = (x == 3) ? 1 : 0;
+
+        if(y == 0 || y == 2)
+            constraints.insets = new Insets(10,0,0,0);
+
+        return constraints;
     }
 
     private void selectDestinationBrowseAction(FileBrowseButton fileBrowseButton) {
@@ -217,5 +282,14 @@ public class DestinationSelectionPanel extends JPanel {
 
     public JTextField getDestinationTextField() {
         return selectDestinationTextField;
+    }
+
+    public String getUnitsString() {
+        return unitsTextField.getText();
+    }
+
+    public String getDataType() {
+        Object dataType = dataTypeCombo.getSelectedItem();
+        return (dataType != null) ? dataType.toString() : "";
     }
 }

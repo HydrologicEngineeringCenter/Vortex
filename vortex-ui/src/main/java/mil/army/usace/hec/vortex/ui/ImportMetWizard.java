@@ -383,6 +383,14 @@ public class ImportMetWizard extends JFrame {
             writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
         }
 
+        String unitsString = destinationSelectionPanel.getUnitsString();
+        if (!unitsString.isEmpty())
+            writeOptions.put("units", unitsString);
+
+        String dataType = destinationSelectionPanel.getDataType();
+        if (dataType != null && !dataType.isEmpty())
+            writeOptions.put("dataType", dataType);
+
         BatchImporter importer = BatchImporter.builder()
                 .inFiles(inFilesList)
                 .variables(selectedVariables)
