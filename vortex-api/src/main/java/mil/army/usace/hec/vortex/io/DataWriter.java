@@ -77,7 +77,7 @@ public abstract class DataWriter {
                 return new AscDataWriter(this);
             }
 
-            throw new IllegalStateException("Invalid destination.");
+            throw new IllegalStateException("Invalid destination: " + destination);
         }
     }
 
