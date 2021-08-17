@@ -34,7 +34,7 @@
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Part F:" GridPane.columnIndex="8" GridPane.rowIndex="2" />
       <TextField fx:id="partA" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" />
       <TextField fx:id="partB" GridPane.columnIndex="6" GridPane.hgrow="ALWAYS" />
-      <TextField fx:id="partC" editable="false" text="*" GridPane.columnIndex="10" GridPane.hgrow="ALWAYS" />
+      <TextField fx:id="partC" text="*" GridPane.columnIndex="10" GridPane.hgrow="ALWAYS" />
       <TextField fx:id="partD" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" />
       <TextField fx:id="partE" GridPane.columnIndex="6" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" />
       <TextField fx:id="partF" GridPane.columnIndex="10" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" />

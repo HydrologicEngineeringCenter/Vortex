@@ -13,7 +13,6 @@ public class DssPathnamePartsController {
         partA.setText("*");
         partB.setText("*");
         partC.setText("*");
-        partC.setEditable(true);
         partD.setText("*");
         partE.setText("*");
         partF.setText("*");
