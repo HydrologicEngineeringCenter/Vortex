@@ -77,7 +77,7 @@ class BilDataReader extends DataReader {
             shortName = "minimum temperature";
             fullName = "minimum temperature";
             description = "minimum temperature";
-            if (fileName.matches("prism.*tmin.*(stable|provisional|early).*d2.*(d1|d2).*"))
+            if (fileName.matches("prism.*tmin.*(stable|provisional|early).*(d1|d2).*"))
                 isPrismTemporalDaily.set(true);
             if (fileName.matches("prism.*tmin.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
