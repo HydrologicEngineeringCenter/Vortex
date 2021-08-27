@@ -2,22 +2,22 @@ package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.math.BatchSanitizer;
-import mil.army.usace.hec.vortex.math.Sanitizer;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.time.*;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.*;
-import java.util.logging.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SanitizerWizard extends JFrame {
     private final Frame frame;
@@ -119,10 +119,19 @@ public class SanitizerWizard extends JFrame {
         cardNumber++;
         backButton.setEnabled(true);
 
-        if(cardNumber == 4) {
+        if(cardNumber == 3) {
             backButton.setEnabled(false);
             nextButton.setEnabled(false);
-        } // If: Step Five (Processing...) Then disable Back and Next button
+        } // If: Step Four (Processing...) Then disable Back and Next button
+
+        if(cardNumber == 4) {
+            backButton.setVisible(false);
+            nextButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Restart"));
+            nextButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Restart_TT"));
+            nextButton.setEnabled(true);
+            cancelButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Close"));
+            cancelButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Close_TT"));
+        } // If: Step Five (Change Cancel to Close)
 
         cardLayout.next(contentCards);
     }
@@ -133,15 +142,6 @@ public class SanitizerWizard extends JFrame {
             backButton.setEnabled(false);
         }
         cardLayout.previous(contentCards);
-    }
-
-    private void sanitizerEndUI() {
-        backButton.setVisible(false);
-        nextButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Restart"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Restart_TT"));
-        nextButton.setEnabled(true);
-        cancelButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Close"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Close_TT"));
     }
 
     private void restartAction() {
@@ -656,7 +656,9 @@ public class SanitizerWizard extends JFrame {
             }
 
             @Override
-            protected void done() { sanitizerEndUI(); }
+            protected void done() {
+                nextAction();
+            }
         };
 
         task.execute();
