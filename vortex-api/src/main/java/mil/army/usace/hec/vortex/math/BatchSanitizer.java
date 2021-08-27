@@ -141,11 +141,14 @@ public class BatchSanitizer {
         });
 
         AtomicInteger processed = new AtomicInteger();
-        int count = units.size();
+        int total = units.size();
         units.parallelStream().forEach(unit -> {
+            unit.addPropertyChangeListener(evt -> {
+                int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+                support.firePropertyChange("progress", null, newValue);
+            });
+
             unit.process();
-            int newValue = (int) (((float) processed.incrementAndGet() / count) * 100);
-            support.firePropertyChange("progress", null, newValue);
         });
     }
 
