@@ -6,6 +6,8 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,6 +21,8 @@ public class SanitizableUnit {
     private final Path destination;
     private final Map<String, String> writeOptions;
 
+    private final PropertyChangeSupport support;
+
     private SanitizableUnit(Builder builder) {
         reader = builder.reader;
         minimumThreshold = builder.minimumThreshold;
@@ -27,6 +31,8 @@ public class SanitizableUnit {
         maximumReplacementValue = builder.maximumReplacementValue;
         destination = builder.destination;
         writeOptions = builder.writeOptions;
+
+        support = new PropertyChangeSupport(this);
     }
 
     public static class Builder {
@@ -124,5 +130,15 @@ public class SanitizableUnit {
 
             writer.write();
         });
+
+        support.firePropertyChange("complete", null, null);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }

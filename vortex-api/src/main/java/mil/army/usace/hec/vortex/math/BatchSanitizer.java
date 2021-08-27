@@ -3,9 +3,12 @@ package mil.army.usace.hec.vortex.math;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.io.DataReader;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BatchSanitizer {
     private final String pathToInput;
@@ -17,6 +20,8 @@ public class BatchSanitizer {
     private final Path destination;
     private final Map<String, String> writeOptions;
 
+    private final PropertyChangeSupport support;
+
     private BatchSanitizer(Builder builder){
         pathToInput = builder.pathToInput;
         variables = builder.variables;
@@ -26,6 +31,8 @@ public class BatchSanitizer {
         maximumReplacementValue = builder.maximumReplacementValue;
         destination = builder.destination;
         writeOptions = builder.writeOptions;
+
+        support = new PropertyChangeSupport(this);
     }
 
     public static class Builder {
@@ -132,6 +139,24 @@ public class BatchSanitizer {
                 units.add(unit);
             }
         });
-        units.parallelStream().forEach(SanitizableUnit::process);
+
+        AtomicInteger processed = new AtomicInteger();
+        int total = units.size();
+        units.parallelStream().forEach(unit -> {
+            unit.addPropertyChangeListener(evt -> {
+                int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+                support.firePropertyChange("progress", null, newValue);
+            });
+
+            unit.process();
+        });
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }
