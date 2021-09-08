@@ -6,19 +6,30 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class Shifter {
+    private static final Logger logger = Logger.getLogger(Normalizer.class.getName());
 
     private final String pathToFile;
     private final Set<String> grids;
     private final Duration shift;
     private final Path destination;
     private final Map<String, String> options;
+    private final PropertyChangeSupport support;
 
     private Shifter (Builder builder){
         this.pathToFile = builder.pathToFile;
@@ -26,6 +37,10 @@ public class Shifter {
         this.shift = builder.shift;
         this.destination = builder.destination;
         this.options = builder.options;
+        this.support = new PropertyChangeSupport(this);
+
+        logger.setLevel(Level.INFO);
+        builder.handlers.forEach(logger::addHandler);
     }
 
     public static class Builder {
@@ -34,6 +49,7 @@ public class Shifter {
         Duration shift;
         private Path destination;
         private Map<String, String> options = new HashMap<>();
+        private List<Handler> handlers = new ArrayList<>();
 
         public Builder pathToFile (final String pathToFile){
             this.pathToFile = pathToFile;
@@ -71,6 +87,11 @@ public class Shifter {
             return this;
         }
 
+        public Builder handlers (final List<Handler> handlers){
+            this.handlers.addAll(handlers);
+            return this;
+        }
+
         public Shifter build(){
             return new Shifter(this);
         }
@@ -79,6 +100,9 @@ public class Shifter {
     public static Builder builder(){return new Builder();}
 
     public void shift(){
+
+        logger.info(() -> "Time-shift started...");
+
         List<VortexData> targets = new ArrayList<>();
         grids.forEach(grid -> targets.addAll(
                 DataReader.builder()
@@ -90,7 +114,12 @@ public class Shifter {
         List<VortexGrid> output = new ArrayList<>();
         targets.forEach(grid -> output.add(shift((VortexGrid) grid, shift)));
 
+        AtomicInteger processed = new AtomicInteger();
+        int total = grids.size();
         output.parallelStream().forEach(dto ->{
+            int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+            support.firePropertyChange("progress", null, newValue);
+
             List<VortexData> data = new ArrayList<>();
             data.add(dto);
 
@@ -129,5 +158,13 @@ public class Shifter {
                 .fullName(dto.shortName()).description(dto.description())
                 .startTime(shiftedStart).endTime(shiftedEnd)
                 .interval(dto.interval()).build();
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }

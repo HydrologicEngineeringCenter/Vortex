@@ -58,6 +58,17 @@ task("calculator", JavaExec::class) {
             "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
 }
 
+task("shifter", JavaExec::class) {
+    group = "application"
+    main = "mil.army.usace.hec.vortex.ui.ShifterWizard"
+    classpath = sourceSets["main"].runtimeClasspath
+    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
+    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
+}
+
 tasks.test {
     useJUnit()
 
