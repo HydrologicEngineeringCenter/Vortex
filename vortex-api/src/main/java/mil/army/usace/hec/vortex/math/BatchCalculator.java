@@ -147,8 +147,11 @@ public class BatchCalculator {
         AtomicInteger processed = new AtomicInteger();
         int total = units.size();
         units.parallelStream().forEach(unit -> {
-            int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
-            support.firePropertyChange("progress", null, newValue);
+            unit.addPropertyChangeListener(evt -> {
+                int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+                support.firePropertyChange("progress", null, newValue);
+            });
+
             unit.process();
         });
     }

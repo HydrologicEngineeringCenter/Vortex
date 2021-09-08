@@ -130,6 +130,8 @@ public class CalculatableUnit {
 
             writer.write();
         });
+
+        support.firePropertyChange("complete", null, null);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
