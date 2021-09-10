@@ -24,8 +24,7 @@ public class FileBrowseButton extends JButton {
     }
 
     public void setPersistedBrowseLocation(File file) {
-        Path pathToProperties = Paths.get(System.getProperty("user.home")
-                + File.separator + ".hms" + File.separator + uniqueId + ".properties" );
+        Path pathToProperties = Paths.get(Util.getCacheDir() + File.separator + uniqueId + ".properties" );
 
         if(Files.notExists(pathToProperties.getParent())){
             try {
@@ -45,8 +44,9 @@ public class FileBrowseButton extends JButton {
     }
 
     public File getPersistedBrowseLocation() {
-        Path pathToProperties = Paths.get(System.getProperty("user.home")
-                + File.separator + ".hms" + File.separator + uniqueId + ".properties" );
+        String filename = uniqueId + ".properties";
+        Path pathToProperties = Paths.get(Util.getCacheDir() + File.separator + filename);
+        if(!Files.exists(pathToProperties)) Util.migrateFromOldCacheDir(filename);
 
         if (Files.exists(pathToProperties)) {
             try (InputStream input = Files.newInputStream(pathToProperties)) {
