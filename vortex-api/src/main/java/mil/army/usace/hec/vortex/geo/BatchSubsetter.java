@@ -1,23 +1,24 @@
 package mil.army.usace.hec.vortex.geo;
 
-import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.io.DataReader;
 import org.locationtech.jts.geom.Envelope;
 
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BatchSubsetter {
-    static {
-        GdalRegister.getInstance();
-    }
+
     private final String pathToInput;
     private final Set<String> variables;
     private final Path destination;
     private final Map<String, String> writeOptions;
+    private final PropertyChangeSupport support;
 
     private final Envelope envelope;
     private final String envelopeWkt;
@@ -27,6 +28,7 @@ public class BatchSubsetter {
         variables = builder.variables;
         destination = builder.destination;
         writeOptions = builder.writeOptions;
+        this.support = new PropertyChangeSupport(this);
 
         String envelopeDataSource = builder.envelopeDataSource;
         Rectangle2D rectangle = VectorUtils.getEnvelope(Paths.get(envelopeDataSource));
@@ -98,22 +100,39 @@ public class BatchSubsetter {
     }
 
     public void process(){
+        List<SubsettableUnit> units = new ArrayList<>();
+        variables.forEach(variable -> {
+            if (DataReader.getVariables(pathToInput).contains(variable)) {
+                DataReader reader = DataReader.builder()
+                        .path(pathToInput)
+                        .variable(variable)
+                        .build();
 
-        variables.parallelStream().forEach(variable -> {
-            DataReader reader = DataReader.builder()
-                    .path(pathToInput)
-                    .variable(variable)
-                    .build();
+                SubsettableUnit unit = SubsettableUnit.builder()
+                        .reader(reader)
+                        .setEnvelope(envelope)
+                        .setEnvelopeWkt(envelopeWkt)
+                        .destination(destination)
+                        .writeOptions(writeOptions)
+                        .build();
 
-            SubsettableUnit unit = SubsettableUnit.builder()
-                    .reader(reader)
-                    .setEnvelope(envelope)
-                    .setEnvelopeWkt(envelopeWkt)
-                    .destination(destination)
-                    .writeOptions(writeOptions)
-                    .build();
-
+               units.add(unit);
+            }
+        });
+        AtomicInteger processed = new AtomicInteger();
+        int total = units.size();
+        units.parallelStream().forEach(unit -> {
+            int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+            support.firePropertyChange("progress", null, newValue);
             unit.process();
         });
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }
