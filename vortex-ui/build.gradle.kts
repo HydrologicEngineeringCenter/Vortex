@@ -25,9 +25,20 @@ dependencies {
 base.archivesBaseName = "vortex"
 project.version = project.version.toString()
 
-task("normalizer", JavaExec::class) {
+task("calculator", JavaExec::class) {
     group = "application"
-    main = "mil.army.usace.hec.vortex.ui.NormalizerWizard"
+    main = "mil.army.usace.hec.vortex.ui.CalculatorWizard"
+    classpath = sourceSets["main"].runtimeClasspath
+    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
+    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
+}
+
+task("clipper", JavaExec::class) {
+    group = "application"
+    main = "mil.army.usace.hec.vortex.ui.ClipperWizard"
     classpath = sourceSets["main"].runtimeClasspath
     jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
     environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
@@ -47,9 +58,20 @@ task("importer", JavaExec::class) {
             "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
 }
 
-task("calculator", JavaExec::class) {
+task("normalizer", JavaExec::class) {
     group = "application"
-    main = "mil.army.usace.hec.vortex.ui.CalculatorWizard"
+    main = "mil.army.usace.hec.vortex.ui.NormalizerWizard"
+    classpath = sourceSets["main"].runtimeClasspath
+    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
+    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
+}
+
+task("sanitizer", JavaExec::class) {
+    group = "application"
+    main = "mil.army.usace.hec.vortex.ui.SanitizerWizard"
     classpath = sourceSets["main"].runtimeClasspath
     jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
     environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
