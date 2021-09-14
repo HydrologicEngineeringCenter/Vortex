@@ -37,7 +37,6 @@ public class BatchSubsetter {
     }
 
     public static class Builder {
-
         private String pathToInput;
         private Set<String> variables;
         private boolean isSelectAll;

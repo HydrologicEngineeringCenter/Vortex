@@ -532,7 +532,6 @@ public class ClipperWizard extends JFrame {
 
         // Clipping Datasource
         String clippingDatasource = dataSourceTextField.getText();
-
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
         /* Setting parts */
