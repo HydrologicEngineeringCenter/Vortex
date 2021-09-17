@@ -477,7 +477,8 @@ public class ImportMetWizard extends JFrame {
 
         /* Browse Button */
         JPanel browsePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
-        FileBrowseButton browseButton = new FileBrowseButton(this.getClass().getName(), "");
+        String uniqueId = this.getClass().getName() + ".addFiles";
+        FileBrowseButton browseButton = new FileBrowseButton(uniqueId, "");
         browseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
         browseButton.setPreferredSize(new Dimension(22,22));
         browsePanel.add(Box.createRigidArea(new Dimension(8,0)));
@@ -649,7 +650,8 @@ public class ImportMetWizard extends JFrame {
 
         dataSourceTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
-        FileBrowseButton dataSourceBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
+        String uniqueId = this.getClass().getName() + ".dataSource";
+        FileBrowseButton dataSourceBrowseButton = new FileBrowseButton(uniqueId, "");
         dataSourceBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
         dataSourceBrowseButton.setPreferredSize(new Dimension(22,22));
         dataSourceBrowseButton.addActionListener(evt -> dataSourceBrowseAction(dataSourceBrowseButton));
@@ -687,7 +689,8 @@ public class ImportMetWizard extends JFrame {
         JPanel targetWktButtonsPanel = new JPanel();
         targetWktButtonsPanel.setLayout(new BoxLayout(targetWktButtonsPanel, BoxLayout.Y_AXIS));
 
-        FileBrowseButton targetWktBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
+        String uniqueId = this.getClass().getName() + ".targetWkt";
+        FileBrowseButton targetWktBrowseButton = new FileBrowseButton(uniqueId, "");
         targetWktBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
         targetWktBrowseButton.setPreferredSize(new Dimension(22,22));
         targetWktBrowseButton.addActionListener(evt -> targetWktBrowseAction(targetWktBrowseButton));
@@ -823,7 +826,7 @@ public class ImportMetWizard extends JFrame {
                     if(!elementList.contains(file.getAbsolutePath()))
                         defaultListModel.addElement(file.getAbsolutePath());
                 }
-                fileBrowseButton.setPersistedBrowseLocation(new File(defaultListModel.get(0)));
+                fileBrowseButton.setPersistedBrowseLocation(selectedFiles[0]);
             }
         } // If: User selected OK -> Add to 'AddFiles' List
     }

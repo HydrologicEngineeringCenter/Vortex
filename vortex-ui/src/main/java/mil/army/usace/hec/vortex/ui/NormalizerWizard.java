@@ -295,7 +295,8 @@ public class NormalizerWizard extends JFrame {
 
         sourceFileTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
-        FileBrowseButton sourceFileBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
+        String uniqueId = this.getClass().getName() + ".sourceFile";
+        FileBrowseButton sourceFileBrowseButton = new FileBrowseButton(uniqueId, "");
         sourceFileBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
         sourceFileBrowseButton.setPreferredSize(new Dimension(22,22));
         sourceFileBrowseButton.addActionListener(evt -> sourceFileBrowseAction(sourceFileBrowseButton));
@@ -528,7 +529,8 @@ public class NormalizerWizard extends JFrame {
 
         normalFileTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
-        FileBrowseButton normalFileBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
+        String uniqueId = this.getClass().getName() + ".normalFile";
+        FileBrowseButton normalFileBrowseButton = new FileBrowseButton(uniqueId, "");
         normalFileBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
         normalFileBrowseButton.setPreferredSize(new Dimension(22,22));
         normalFileBrowseButton.addActionListener(evt -> normalFileBrowseAction(normalFileBrowseButton));
