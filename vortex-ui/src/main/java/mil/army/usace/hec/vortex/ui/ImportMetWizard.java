@@ -5,7 +5,6 @@ import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -807,10 +806,44 @@ public class ImportMetWizard extends JFrame {
 
         // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("All recognized files",
-                "nc", "nc4", "hdf", "hdf5", "h5", "grib", "gb2", "grb2",
-                "grib2", "grb", "asc", "bil", "bil.zip", "dss", "tif", "tiff");
-        fileChooser.addChoosableFileFilter(acceptableExtension);
+        FileNameExtensionFilterEnhanced recognizedFilter = new FileNameExtensionFilterEnhanced(
+                "All recognized files", ".nc", ".nc4", ".hdf", ".hdf5", ".h5",
+                ".grib", ".gb2", ".grb2", ".grib2", ".grb",
+                ".asc", ".bil", "*bil.zip", ".dss", ".tif", ".tiff", ".dat", ".tar", "bil.zip");
+        fileChooser.addChoosableFileFilter(recognizedFilter);
+        FileNameExtensionFilterEnhanced ncFilter = new FileNameExtensionFilterEnhanced(
+                "netCDF datasets", ".nc", ".nc4");
+        fileChooser.addChoosableFileFilter(ncFilter);
+        FileNameExtensionFilterEnhanced hdfFilter = new FileNameExtensionFilterEnhanced(
+                "HDF datasets", ".hdf", ".hdf5");
+        fileChooser.addChoosableFileFilter(hdfFilter);
+        FileNameExtensionFilterEnhanced gribFilter = new FileNameExtensionFilterEnhanced(
+                "GRIB datasets", ".grib", ".gb2", ".grb2", ".grib2", ".grb");
+        fileChooser.addChoosableFileFilter(gribFilter);
+
+        FileNameExtensionFilterEnhanced ascFilter = new FileNameExtensionFilterEnhanced(
+                "ASC datasets", ".asc");
+        fileChooser.addChoosableFileFilter(ascFilter);
+
+        FileNameExtensionFilterEnhanced tifFilter = new FileNameExtensionFilterEnhanced(
+                "TIF datasets", ".tif");
+        fileChooser.addChoosableFileFilter(tifFilter);
+
+        FileNameExtensionFilterEnhanced bilFilter = new FileNameExtensionFilterEnhanced(
+                "BIL datasets", ".bil", "bil.zip");
+        fileChooser.addChoosableFileFilter(bilFilter);
+
+        FileNameExtensionFilterEnhanced tarFilter = new FileNameExtensionFilterEnhanced(
+                "SNODAS datasets", ".tar", ".dat");
+        fileChooser.addChoosableFileFilter(tarFilter);
+
+        FileNameExtensionFilterEnhanced dssFilter = new FileNameExtensionFilterEnhanced(
+                "DSS datasets", ".dss");
+        fileChooser.addChoosableFileFilter(dssFilter);
+
+        FileNameExtensionFilterEnhanced allFilesFilter = new FileNameExtensionFilterEnhanced(
+                "All files", "");
+        fileChooser.addChoosableFileFilter(allFilesFilter);
 
         // Pop up fileChooser dialog
         int userChoice = fileChooser.showOpenDialog(this);
@@ -836,7 +869,7 @@ public class ImportMetWizard extends JFrame {
 
         // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("Shapefiles (*.shp)", "shp");
+        FileNameExtensionFilterEnhanced acceptableExtension = new FileNameExtensionFilterEnhanced("Shapefiles (*.shp)", ".shp");
         fileChooser.addChoosableFileFilter(acceptableExtension);
 
         // Pop up fileChooser dialog
@@ -855,7 +888,7 @@ public class ImportMetWizard extends JFrame {
 
         // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("Projection Files (*.prj)", "prj");
+        FileNameExtensionFilterEnhanced acceptableExtension = new FileNameExtensionFilterEnhanced("Projection Files (*.prj)", ".prj");
         fileChooser.setFileFilter(acceptableExtension);
 
         // Pop up fileChooser dialog
