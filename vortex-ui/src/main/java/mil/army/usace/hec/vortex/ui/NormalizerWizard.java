@@ -5,7 +5,6 @@ import mil.army.usace.hec.vortex.math.Normalizer;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -295,7 +294,8 @@ public class NormalizerWizard extends JFrame {
 
         sourceFileTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
-        FileBrowseButton sourceFileBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
+        String uniqueId = this.getClass().getName() + ".sourceFile";
+        FileBrowseButton sourceFileBrowseButton = new FileBrowseButton(uniqueId, "");
         sourceFileBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
         sourceFileBrowseButton.setPreferredSize(new Dimension(22,22));
         sourceFileBrowseButton.addActionListener(evt -> sourceFileBrowseAction(sourceFileBrowseButton));
@@ -432,9 +432,7 @@ public class NormalizerWizard extends JFrame {
 
         // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("All recognized files",
-                "nc", "hdf", "grib", "gb2", "grb2", "grib2", "grb", "asc", "dss");
-        fileChooser.addChoosableFileFilter(acceptableExtension);
+        normalizerFileFilters().forEach(fileChooser::addChoosableFileFilter);
 
         // Pop up fileChooser dialog
         int userChoice = fileChooser.showOpenDialog(this);
@@ -528,7 +526,8 @@ public class NormalizerWizard extends JFrame {
 
         normalFileTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
-        FileBrowseButton normalFileBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
+        String uniqueId = this.getClass().getName() + ".normalFile";
+        FileBrowseButton normalFileBrowseButton = new FileBrowseButton(uniqueId, "");
         normalFileBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
         normalFileBrowseButton.setPreferredSize(new Dimension(22,22));
         normalFileBrowseButton.addActionListener(evt -> normalFileBrowseAction(normalFileBrowseButton));
@@ -615,9 +614,7 @@ public class NormalizerWizard extends JFrame {
 
         // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("All recognized files",
-                "nc", "hdf", "grib", "gb2", "grb2", "grib2", "grb", "asc", "dss");
-        fileChooser.addChoosableFileFilter(acceptableExtension);
+        normalizerFileFilters().forEach(fileChooser::addChoosableFileFilter);
 
         // Pop up fileChooser dialog
         int userChoice = fileChooser.showOpenDialog(this);
@@ -639,6 +636,34 @@ public class NormalizerWizard extends JFrame {
                 defaultListModel.addAll(sortedDssVariables);
             }
         } // If: User selected OK -> Populate Available Normal Grids
+    }
+
+    private List<FileNameExtensionFilterEnhanced> normalizerFileFilters() {
+        List<FileNameExtensionFilterEnhanced> filterList = new ArrayList<>();
+
+        FileNameExtensionFilterEnhanced recognizedFilter = new FileNameExtensionFilterEnhanced(
+                "All recognized files", ".nc", ".hdf", ".grib", ".gb2", ".grb2", ".grib2", ".grb", ".asc", ".dss");
+        filterList.add(recognizedFilter);
+
+        FileNameExtensionFilterEnhanced ncFilter = new FileNameExtensionFilterEnhanced(
+                "netCDF datasets", ".nc");
+        filterList.add(ncFilter);
+        FileNameExtensionFilterEnhanced hdfFilter = new FileNameExtensionFilterEnhanced(
+                "HDF datasets", ".hdf");
+        filterList.add(hdfFilter);
+        FileNameExtensionFilterEnhanced gribFilter = new FileNameExtensionFilterEnhanced(
+                "GRIB datasets", ".grib", ".gb2", ".grb2", ".grib2", ".grb");
+        filterList.add(gribFilter);
+
+        FileNameExtensionFilterEnhanced ascFilter = new FileNameExtensionFilterEnhanced(
+                "ASC datasets", ".asc");
+        filterList.add(ascFilter);
+
+        FileNameExtensionFilterEnhanced dssFilter = new FileNameExtensionFilterEnhanced(
+                "DSS datasets", ".dss");
+        filterList.add(dssFilter);
+
+        return filterList;
     }
 
     private void stepTwoAddSelectedVariables() {
