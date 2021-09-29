@@ -204,4 +204,36 @@ class NetcdfDataReaderTest {
         assertTrue(variables.contains("Total_precipitation_surface_1_Hour_Accumulation"));
         assertEquals(2, variables.size());
     }
+
+    @Test
+    void NLDAS_Forcing_APCP(){
+        String inFile = new File(getClass().getResource("/NLDAS_FORA0125_H.A19820101.0000.002.grb.SUB.nc4").getFile()).toString();
+
+        //from NLDAS documentation: precipitation is backward-accumulated (over the entire previous hour before the time listed in the dataset)
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("APCP")
+                .build();
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+        assertEquals(ZonedDateTime.of(1981, 12, 31, 23, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
+
+    @Test
+    void NLDAS_Forcing_TMP(){
+        String inFile = new File(getClass().getResource("/NLDAS_FORA0125_H.A19820101.0000.002.grb.SUB.nc4").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("TMP")
+                .build();
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
 }
