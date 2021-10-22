@@ -10,11 +10,8 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class SourceFileSelectionPanel extends JPanel {
-    private static final Logger logger = Logger.getLogger(SourceFileSelectionPanel.class.getName());
     private final String className;
     private JTextField sourceFileTextField;
     private JList<String> availableSourceGridsList;
@@ -153,7 +150,7 @@ public class SourceFileSelectionPanel extends JPanel {
         List<String> selectedVariables = availableSourceGridsList.getSelectedValuesList();
 
         /* Adding to Right Variables List */
-        DefaultListModel<String> defaultRightModel = getDefaultListModel(chosenSourceGridsList);
+        DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(chosenSourceGridsList);
         if(defaultRightModel == null) { return; }
         List<String> rightVariablesList = Collections.list(defaultRightModel.elements());
         rightVariablesList.addAll(selectedVariables);
@@ -162,7 +159,7 @@ public class SourceFileSelectionPanel extends JPanel {
         defaultRightModel.addAll(rightVariablesList);
 
         /* Removing from Left Variables List */
-        DefaultListModel<String> defaultLeftModel = getDefaultListModel(availableSourceGridsList);
+        DefaultListModel<String> defaultLeftModel = Util.getDefaultListModel(availableSourceGridsList);
         if(defaultLeftModel == null) { return; }
         selectedVariables.forEach(defaultLeftModel::removeElement);
     }
@@ -171,7 +168,7 @@ public class SourceFileSelectionPanel extends JPanel {
         List<String> selectedVariables = chosenSourceGridsList.getSelectedValuesList();
 
         /* Adding to Left Variables List */
-        DefaultListModel<String> defaultLeftModel = getDefaultListModel(availableSourceGridsList);
+        DefaultListModel<String> defaultLeftModel = Util.getDefaultListModel(availableSourceGridsList);
         if(defaultLeftModel == null) { return; }
         List<String> leftVariablesList = Collections.list(defaultLeftModel.elements());
         leftVariablesList.addAll(selectedVariables);
@@ -180,7 +177,7 @@ public class SourceFileSelectionPanel extends JPanel {
         defaultLeftModel.addAll(leftVariablesList);
 
         /* Removing from Left Variables List */
-        DefaultListModel<String> defaultRightModel = getDefaultListModel(chosenSourceGridsList);
+        DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(chosenSourceGridsList);
         if(defaultRightModel == null) { return; }
         selectedVariables.forEach(defaultRightModel::removeElement);
     }
@@ -207,7 +204,7 @@ public class SourceFileSelectionPanel extends JPanel {
 
             /* Populate variables for available source grids list */
             Set<String> variables = DataReader.getVariables(selectedFile.toString());
-            DefaultListModel<String> defaultListModel = getDefaultListModel(availableSourceGridsList);
+            DefaultListModel<String> defaultListModel = Util.getDefaultListModel(availableSourceGridsList);
 
             if(defaultListModel != null) {
                 defaultListModel.clear();
@@ -215,16 +212,6 @@ public class SourceFileSelectionPanel extends JPanel {
                 defaultListModel.addAll(sortedDssVariables);
             }
         } // If: User selected OK -> Populate Available Source Grids
-    }
-
-    private DefaultListModel<String> getDefaultListModel(JList<String> list) {
-        ListModel<String> listModel = list.getModel();
-        if(!(listModel instanceof DefaultListModel)) {
-            logger.log(Level.SEVERE, list.getName() + " may have not been initialized");
-            return null;
-        } // If: listModel is not a DefaultListModel -- should not be happening
-
-        return (DefaultListModel<String>) listModel;
     }
 
     public JList<String> getAvailableSourceGridsList() {
@@ -249,7 +236,7 @@ public class SourceFileSelectionPanel extends JPanel {
         }
 
         /* Popup Alert of No Variables Selected */
-        DefaultListModel<String> chosenGridsModel = getDefaultListModel(chosenSourceGridsList);
+        DefaultListModel<String> chosenGridsModel = Util.getDefaultListModel(chosenSourceGridsList);
         if(chosenGridsModel == null || chosenGridsModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "At least one variable must be selected.",
                     "Error: No Variables Selected", JOptionPane.ERROR_MESSAGE);
