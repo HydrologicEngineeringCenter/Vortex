@@ -258,4 +258,10 @@ public class SourceFileSelectionPanel extends JPanel {
 
         return true;
     }
+
+    public void clear() {
+        sourceFileTextField.setText("");
+        Objects.requireNonNull(Util.getDefaultListModel(availableSourceGridsList)).clear();
+        Objects.requireNonNull(Util.getDefaultListModel(chosenSourceGridsList)).clear();
+    }
 }

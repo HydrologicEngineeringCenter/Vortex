@@ -31,7 +31,7 @@ public class NormalizerWizard extends JFrame {
     private InputHintTextField startDateTextField, startTimeTextField;
     private InputHintTextField endDateTextField, endTimeTextField;
     private InputHintTextField normalIntervalTextField;
-    private JList<String> availableSourceGridsList, chosenSourceGridsList;
+    private JList<String> chosenSourceGridsList;
     private JList<String> availableNormalGridsList, chosenNormalGridsList;
     private JComboBox<String> timeUnitComboBox;
     private JProgressBar progressBar;
@@ -168,9 +168,7 @@ public class NormalizerWizard extends JFrame {
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Cancel_TT"));
 
         /* Clearing Step One Panel */
-        sourceFileTextField.setText("");
-        Objects.requireNonNull(Util.getDefaultListModel(availableSourceGridsList)).clear();
-        Objects.requireNonNull(Util.getDefaultListModel(chosenSourceGridsList)).clear();
+        sourceFileSelectionPanel.clear();
 
         /* Clearing Step Two Panel */
         normalFileTextField.setText("");
@@ -228,7 +226,6 @@ public class NormalizerWizard extends JFrame {
     private JPanel stepOnePanel() {
         sourceFileSelectionPanel = new SourceFileSelectionPanel(NormalizerWizard.class.getName());
         sourceFileTextField = sourceFileSelectionPanel.getSourceFileTextField();
-        availableSourceGridsList = sourceFileSelectionPanel.getAvailableSourceGridsList();
         chosenSourceGridsList = sourceFileSelectionPanel.getChosenSourceGridsList();
         return sourceFileSelectionPanel;
     }
