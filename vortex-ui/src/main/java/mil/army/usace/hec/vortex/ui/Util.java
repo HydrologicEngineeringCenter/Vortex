@@ -1,10 +1,16 @@
 package mil.army.usace.hec.vortex.ui;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,5 +61,29 @@ public class Util {
         if(Files.exists(newFile) || !Files.exists(oldFile)) return;
         try {Files.move(oldFile, newFile);}
         catch(IOException e) {logger.log(Level.WARNING, e.getMessage());}
+    }
+
+    public static List<String> sortDssVariables(List<String> dssVariables) {
+        if(dssVariables == null || dssVariables.isEmpty()) { return null; }
+
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .appendPattern("ddMMMuuuu:HHmm")
+                .toFormatter();
+
+        /* Sort based on D part */
+        dssVariables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+
+        return dssVariables;
+    }
+
+    public static DefaultListModel<String> getDefaultListModel(JList<String> list) {
+        ListModel<String> listModel = list.getModel();
+        if(!(listModel instanceof DefaultListModel)) {
+            logger.log(Level.SEVERE, list.getName() + " may have not been initialized");
+            return null;
+        } // If: listModel is not a DefaultListModel -- should not be happening
+
+        return (DefaultListModel<String>) listModel;
     }
 }
