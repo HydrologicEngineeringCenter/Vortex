@@ -149,6 +149,7 @@ public class NormalizerWizard extends JFrame {
         nextButton.setEnabled(true);
         cancelButton.setText(TextProperties.getInstance().getProperty("NormalizerWiz_Close"));
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Close_TT"));
+        cardLayout.next(contentCards);
     }
 
     private void restartAction() {
