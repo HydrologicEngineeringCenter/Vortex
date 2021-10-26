@@ -322,7 +322,7 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
                 } else if (fileName.matches("[0-9]{2}.nc")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(0));
-                } else if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("ACPC")) {
+                } else if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
