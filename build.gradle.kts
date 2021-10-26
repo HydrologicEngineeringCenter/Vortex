@@ -383,6 +383,7 @@ tasks.getByName("zip").dependsOn("copyJre", "copyRuntimeLibs", "copyJavafx", "co
 
 tasks.getByName("final").dependsOn(":build")
 tasks.getByName("final").dependsOn("vortex-api:publish")
+tasks.getByName("final").dependsOn("vortex-ui:publish")
 tasks.getByName("candidate").dependsOn(":build")
 
 tasks.getByName("jar").enabled = false
