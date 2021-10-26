@@ -10,9 +10,12 @@ import mil.army.usace.hec.vortex.geo.ZonalStatisticsCalculator;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -24,6 +27,7 @@ public class GridToPointConverter {
     private final String field;
     private final Path destination;
     private final Map<String, String> writeOptions;
+    private final PropertyChangeSupport support;
 
     private GridToPointConverter(GridToPointConverterBuilder builder){
         this.pathToGrids = builder.pathToGrids;
@@ -32,6 +36,7 @@ public class GridToPointConverter {
         this.field = builder.field;
         this.destination = builder.destination;
         this.writeOptions = builder.writeOptions;
+        this.support = new PropertyChangeSupport(this);
     }
 
     public static class GridToPointConverterBuilder {
@@ -160,12 +165,27 @@ public class GridToPointConverter {
             });
         });
 
-        DataWriter writer = DataWriter.builder()
-                .destination(destination)
-                .data(points)
-                .options(writeOptions)
-                .build();
+        AtomicInteger processed = new AtomicInteger();
+        int total = grids.size();
+        points.parallelStream().forEach(dto -> {
+            int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+            support.firePropertyChange("progress", null, newValue);
 
-        writer.write();
+            DataWriter writer = DataWriter.builder()
+                    .destination(destination)
+                    .data(points)
+                    .options(writeOptions)
+                    .build();
+
+            writer.write();
+        });
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }

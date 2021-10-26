@@ -1,6 +1,5 @@
 package mil.army.usace.hec.vortex.geo;
 
-import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.io.DataReader;
 import org.locationtech.jts.geom.Envelope;
@@ -14,9 +13,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BatchSubsetter {
-    static {
-        GdalRegister.getInstance();
-    }
 
     private final String pathToInput;
     private final Set<String> variables;
