@@ -1,18 +1,12 @@
 package mil.army.usace.hec.vortex.ui;
 
-import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.geo.BatchSubsetter;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
@@ -20,6 +14,7 @@ import java.util.logging.Logger;
 
 public class ClipperWizard extends JFrame {
     private final Frame frame;
+    private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
 
     private Container contentCards;
@@ -31,7 +26,6 @@ public class ClipperWizard extends JFrame {
 
     private JTextField dataSourceTextField;
     private JTextField sourceFileTextField;
-    private JList<String> availableSourceGridsList;
     private JList<String> chosenSourceGridsList;
     private JProgressBar progressBar;
 
@@ -157,9 +151,7 @@ public class ClipperWizard extends JFrame {
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ClipperWiz_Cancel_TT"));
 
         /* Clearing Step One Panel */
-        sourceFileTextField.setText("");
-        Objects.requireNonNull(getDefaultListModel(availableSourceGridsList)).clear();
-        Objects.requireNonNull(getDefaultListModel(chosenSourceGridsList)).clear();
+        sourceFileSelectionPanel.clear();
 
         /* Clearing Step Two Panel */
         dataSourceTextField.setText("");
@@ -203,237 +195,17 @@ public class ClipperWizard extends JFrame {
     }
 
     private JPanel stepOnePanel() {
-        /* selectSourceFilePanel and selectSourceGridsPanel*/
-        JPanel selectSourceFilePanel = stepOneSourceFilePanel();
-        JPanel selectSourceGridsPanel = stepOneSourceGridsPanel();
-
-        /* Setting GridBagLayout for stepOnePanel */
-        GridBagLayout gridBagLayout = new GridBagLayout();
-        gridBagLayout.columnWidths = new int[]{this.getPreferredSize().width, 0};
-        gridBagLayout.rowHeights = new int[]{50, 100};
-        gridBagLayout.columnWeights = new double[]{1.0, Double.MIN_VALUE};
-        gridBagLayout.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
-
-        /* Adding Panels to stepOnePanel */
-        JPanel stepOnePanel = new JPanel(gridBagLayout);
-        stepOnePanel.setBorder(BorderFactory.createEmptyBorder(5,9,5,8));
-
-        GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.WEST;
-        gridBagConstraints.insets = new Insets(0, 0, 5, 0);
-        gridBagConstraints.gridx = 0;
-
-        gridBagConstraints.gridy = 0;
-        stepOnePanel.add(selectSourceFilePanel, gridBagConstraints);
-
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.weighty = 1;
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
-        stepOnePanel.add(selectSourceGridsPanel, gridBagConstraints);
-
-        return stepOnePanel;
+        sourceFileSelectionPanel = new SourceFileSelectionPanel(ClipperWizard.class.getName());
+        sourceFileTextField = sourceFileSelectionPanel.getSourceFileTextField();
+        chosenSourceGridsList = sourceFileSelectionPanel.getChosenSourceGridsList();
+        return sourceFileSelectionPanel;
     }
 
     private boolean validateStepOne() {
-        /* Popup Alert of Missing Inputs */
-        if(sourceFileTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Input dataset is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
-
-            return false;
-        }
-
-        /* Popup Alert of No Variables Selected */
-        DefaultListModel<String> chosenGridsModel = getDefaultListModel(chosenSourceGridsList);
-        if(chosenGridsModel == null || chosenGridsModel.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "At least one variable must be selected.",
-                    "Error: No Variables Selected", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-
-        return true;
+        return sourceFileSelectionPanel.validateInput();
     }
 
     private void submitStepOne() {}
-
-    private JPanel stepOneSourceFilePanel() {
-        /* selectSourceFileLabel */
-        JLabel selectSourceFileLabel = new JLabel(TextProperties.getInstance().getProperty("ClipperWiz_SelectSourceFile_L"));
-        selectSourceFileLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
-
-        /* TextField and Browse Panel */
-        JPanel sourceFileTextFieldPanel = new JPanel();
-        sourceFileTextFieldPanel.setLayout(new BoxLayout(sourceFileTextFieldPanel, BoxLayout.X_AXIS));
-
-        sourceFileTextField = new JTextField();
-        sourceFileTextField.setColumns(0);
-        sourceFileTextFieldPanel.add(sourceFileTextField);
-
-        sourceFileTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
-
-        FileBrowseButton sourceFileBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
-        sourceFileBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
-        sourceFileBrowseButton.setPreferredSize(new Dimension(22,22));
-        sourceFileBrowseButton.addActionListener(evt -> sourceFileBrowseAction(sourceFileBrowseButton));
-        sourceFileTextFieldPanel.add(sourceFileBrowseButton);
-
-        /* Adding everything together */
-        JPanel sourceFilePanel = new JPanel(new BorderLayout());
-        sourceFilePanel.add(selectSourceFileLabel, BorderLayout.NORTH);
-        sourceFilePanel.add(sourceFileTextFieldPanel, BorderLayout.CENTER);
-
-        return sourceFilePanel;
-    }
-
-    private JPanel stepOneSourceGridsPanel() {
-        /* selectSourceGridsLabel */
-        JLabel selectSourceGridsLabel = new JLabel(TextProperties.getInstance().getProperty("ClipperWiz_SelectSourceGrids_L"));
-        selectSourceGridsLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
-
-        /* Available Source Grids List */
-        DefaultListModel<String> availableGridsListModel = new DefaultListModel<>();
-        availableSourceGridsList = new JList<>(availableGridsListModel);
-        availableSourceGridsList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) { stepOneAddSelectedVariables(); }
-            }
-        });
-        JScrollPane leftScrollPanel = new JScrollPane();
-        leftScrollPanel.setViewportView(availableSourceGridsList);
-
-        /* Chosen Source Grids List */
-        DefaultListModel<String> chosenGridsListModel = new DefaultListModel<>();
-        chosenSourceGridsList = new JList<>(chosenGridsListModel);
-        chosenSourceGridsList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) { stepOneRemoveSelectedVariables(); }
-            }
-        });
-        JScrollPane rightScrollPanel = new JScrollPane();
-        rightScrollPanel.setViewportView(chosenSourceGridsList);
-
-        /* Transfer Buttons Panel */
-        JPanel transferButtonsPanel = new JPanel();
-        transferButtonsPanel.setLayout(new BoxLayout(transferButtonsPanel, BoxLayout.Y_AXIS));
-        JButton addVariableButton = new JButton(IconResources.loadIcon("images/right-arrow-24.png"));
-        addVariableButton.setPreferredSize(new Dimension(22,22));
-        addVariableButton.setMaximumSize(new Dimension(22,22));
-        addVariableButton.addActionListener(evt -> stepOneAddSelectedVariables());
-        JButton removeVariableButton = new JButton(IconResources.loadIcon("images/left-arrow-24.png"));
-        removeVariableButton.setPreferredSize(new Dimension(22,22));
-        removeVariableButton.setMaximumSize(new Dimension(22,22));
-        removeVariableButton.addActionListener(evt -> stepOneRemoveSelectedVariables());
-        transferButtonsPanel.add(addVariableButton);
-        transferButtonsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        transferButtonsPanel.add(removeVariableButton);
-
-        /* Adding grid lists and transfer buttons to sourceGridsSelectionPanel */
-        JPanel sourceGridsSelectionPanel = new JPanel();
-        sourceGridsSelectionPanel.setLayout(new BoxLayout(sourceGridsSelectionPanel, BoxLayout.X_AXIS));
-        sourceGridsSelectionPanel.add(leftScrollPanel);
-        sourceGridsSelectionPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        sourceGridsSelectionPanel.add(transferButtonsPanel);
-        sourceGridsSelectionPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        sourceGridsSelectionPanel.add(rightScrollPanel);
-
-        /* Setting Preferred Sizes of Components */
-        int mainContentWidth = sourceGridsSelectionPanel.getPreferredSize().width;
-        int scrollPanelWidth = mainContentWidth * 45 / 100;
-        leftScrollPanel.setPreferredSize(new Dimension(scrollPanelWidth, 0));
-        rightScrollPanel.setPreferredSize(new Dimension(scrollPanelWidth, 0));
-
-        /* Adding everything together */
-        JPanel sourceGridsPanel = new JPanel(new BorderLayout());
-        sourceGridsPanel.add(selectSourceGridsLabel, BorderLayout.NORTH);
-        sourceGridsPanel.add(sourceGridsSelectionPanel, BorderLayout.CENTER);
-
-        return sourceGridsPanel;
-    }
-
-    private List<String> sortDssVariables(List<String> dssVariables) {
-        if(dssVariables == null || dssVariables.isEmpty()) { return null; }
-
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .parseCaseInsensitive()
-                .appendPattern("ddMMMuuuu:HHmm")
-                .toFormatter();
-
-        /* Sort based on D part */
-        dssVariables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
-
-        return dssVariables;
-    }
-
-    private void stepOneAddSelectedVariables() {
-        List<String> selectedVariables = availableSourceGridsList.getSelectedValuesList();
-
-        /* Adding to Right Variables List */
-        DefaultListModel<String> defaultRightModel = getDefaultListModel(chosenSourceGridsList);
-        if(defaultRightModel == null) { return; }
-        List<String> rightVariablesList = Collections.list(defaultRightModel.elements());
-        rightVariablesList.addAll(selectedVariables);
-        defaultRightModel.clear();
-        rightVariablesList = sortDssVariables(rightVariablesList);
-        defaultRightModel.addAll(rightVariablesList);
-
-        /* Removing from Left Variables List */
-        DefaultListModel<String> defaultLeftModel = getDefaultListModel(availableSourceGridsList);
-        if(defaultLeftModel == null) { return; }
-        selectedVariables.forEach(defaultLeftModel::removeElement);
-    }
-
-    private void stepOneRemoveSelectedVariables() {
-        List<String> selectedVariables = chosenSourceGridsList.getSelectedValuesList();
-
-        /* Adding to Left Variables List */
-        DefaultListModel<String> defaultLeftModel = getDefaultListModel(availableSourceGridsList);
-        if(defaultLeftModel == null) { return; }
-        List<String> leftVariablesList = Collections.list(defaultLeftModel.elements());
-        leftVariablesList.addAll(selectedVariables);
-        defaultLeftModel.clear();
-        leftVariablesList = sortDssVariables(leftVariablesList);
-        defaultLeftModel.addAll(leftVariablesList);
-
-        /* Removing from Left Variables List */
-        DefaultListModel<String> defaultRightModel = getDefaultListModel(chosenSourceGridsList);
-        if(defaultRightModel == null) { return; }
-        selectedVariables.forEach(defaultRightModel::removeElement);
-    }
-
-    private void sourceFileBrowseAction(FileBrowseButton fileBrowseButton) {
-        JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
-        fileChooser.setMultiSelectionEnabled(true);
-
-        // Configuring fileChooser dialog
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("All recognized files",
-                "nc", "hdf", "grib", "gb2", "grb2", "grib2", "grb", "asc", "dss");
-        fileChooser.addChoosableFileFilter(acceptableExtension);
-
-        // Pop up fileChooser dialog
-        int userChoice = fileChooser.showOpenDialog(this);
-
-        // Deal with user's choice
-        if(userChoice == JFileChooser.APPROVE_OPTION) {
-            /* Set path to text field and save browse location */
-            File selectedFile = fileChooser.getSelectedFile();
-            sourceFileTextField.setText(selectedFile.getAbsolutePath());
-            fileBrowseButton.setPersistedBrowseLocation(selectedFile);
-
-            /* Populate variables for available source grids list */
-            Set<String> variables = DataReader.getVariables(selectedFile.toString());
-            DefaultListModel<String> defaultListModel = getDefaultListModel(availableSourceGridsList);
-
-            if(defaultListModel != null) {
-                defaultListModel.clear();
-                List<String> sortedDssVariables = sortDssVariables(new ArrayList<>(variables));
-                defaultListModel.addAll(sortedDssVariables);
-            }
-        } // If: User selected OK -> Populate Available Source Grids
-    }
 
     private JPanel stepTwoPanel() {
         GridBagLayout gridBagLayout = new GridBagLayout();
@@ -648,19 +420,9 @@ public class ClipperWizard extends JFrame {
     }
 
     private List<String> getItemsInList(JList<String> list) {
-        DefaultListModel<String> defaultRightModel = getDefaultListModel(list);
+        DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
         if(defaultRightModel == null) { return null; }
         return Collections.list(defaultRightModel.elements());
-    }
-
-    private DefaultListModel<String> getDefaultListModel(JList<String> list) {
-        ListModel<String> listModel = list.getModel();
-        if(!(listModel instanceof DefaultListModel)) {
-            logger.log(Level.SEVERE, list.getName() + " may have not been initialized");
-            return null;
-        } // If: listModel is not a DefaultListModel -- should not be happening
-
-        return (DefaultListModel<String>) listModel;
     }
 
     /* Add main for quick UI Testing */
