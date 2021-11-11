@@ -236,4 +236,51 @@ class NetcdfDataReaderTest {
         assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
         assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
     }
+
+    @Test
+    void MRMS_RadarOnly_QPE(){
+        String inFile = new File(getClass().getResource("/RadarOnly_QPE_01H_00.00_20210706-000000.grib2").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("RadarOnlyQPE01H_altitude_above_msl")
+                .build();
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
+
+    @Test
+    void MRMS_MultiSensor_QPE(){
+        String inFile = new File(getClass().getResource("/MultiSensor_QPE_01H_Pass2_00.00_20210706-000000.grib2").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("VAR209-6-37_FROM_161-0--1_altitude_above_msl")
+                .build();
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
+
+    @Test
+    void MRMS_PrecipRate(){
+        String inFile = new File(getClass().getResource("/PrecipRate_00.00_20210706-000000.grib2").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("PrecipRate_altitude_above_msl")
+                .build();
+
+        //According to the docs, PrecipRate files are 2 minute: https://www.nssl.noaa.gov/projects/mrms/operational/tables.php
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 58, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
 }

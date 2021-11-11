@@ -314,6 +314,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else if (fileName.matches("mrms_preciprate.*")) {
                     zonedDateTimes[0] = convert(dates[0]).minusMinutes(5);
+                } else if (fileName.matches("preciprate_.*\\.grib2")) {
+                    zonedDateTimes[0] = convert(dates[0]).minusMinutes(2);
                 } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
                 } else if (fileName.matches(".*aorc.*apcp.*nc4.*")) {
