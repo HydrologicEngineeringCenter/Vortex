@@ -39,8 +39,14 @@ public class CalculatorWizard extends JFrame {
 
     public CalculatorWizard(Frame frame) {
         this.frame = frame;
-
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                CalculatorWizard.this.setVisible(false);
+                CalculatorWizard.this.dispose();
+            }
+        });
     }
 
     public void buildAndShowUI() {

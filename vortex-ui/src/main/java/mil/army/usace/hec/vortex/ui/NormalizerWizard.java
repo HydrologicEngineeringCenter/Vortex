@@ -40,15 +40,15 @@ public class NormalizerWizard extends JFrame {
     private ZonedDateTime startDateTime, endDateTime;
 
     private static final Logger logger = Logger.getLogger(NormalizerWizard.class.getName());
-    
+
     public NormalizerWizard(Frame frame) {
         this.frame = frame;
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter() {
+        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                setVisible(false);
-                dispose();
+                NormalizerWizard.this.setVisible(false);
+                NormalizerWizard.this.dispose();
             }
         });
     }
