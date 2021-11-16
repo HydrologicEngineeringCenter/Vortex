@@ -33,8 +33,14 @@ public class ClipperWizard extends JFrame {
 
     public ClipperWizard(Frame frame) {
         this.frame = frame;
-
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                ClipperWizard.this.setVisible(false);
+                ClipperWizard.this.dispose();
+            }
+        });
     }
 
     public void buildAndShowUI() {
