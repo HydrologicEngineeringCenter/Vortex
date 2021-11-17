@@ -9,9 +9,13 @@ import org.locationtech.jts.geom.Envelope;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SubsettableUnit {
+    private static final Logger logger = Logger.getLogger(SubsettableUnit.class.getName());
+
     private final DataReader reader;
     private final Envelope envelope;
     private final String envelopeWkt;
@@ -92,6 +96,12 @@ public class SubsettableUnit {
 
         grids.forEach(grid -> {
             String gridWkt = grid.wkt();
+
+            if (ReferenceUtils.isGeographic(gridWkt)) {
+                logger.log(Level.SEVERE, String.format("Grid \"%s\" uses geographic coordinate system. Can not clip.", grid.fullName()));
+                return;
+            }
+
             Reprojector reprojector = Reprojector.builder()
                     .from(envelopeWkt)
                     .to(gridWkt)
