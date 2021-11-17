@@ -102,4 +102,11 @@ public class ReferenceUtils {
         String units = albersInfo.getProjectionUnits().toLowerCase();
         return units.equals("m") || units.equals("meter") || units.equals("meters") || units.equals("metre");
     }
+
+    public static boolean isGeographic(String wkt) {
+        SpatialReference srs = new SpatialReference(wkt);
+        boolean isGeographic = srs.IsGeographic() == 1;
+        srs.delete();
+        return isGeographic;
+    }
 }
