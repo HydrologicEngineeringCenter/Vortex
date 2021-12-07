@@ -5,6 +5,7 @@ import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Resampler;
 import mil.army.usace.hec.vortex.geo.VectorUtils;
+import mil.army.usace.hec.vortex.geo.WktFactory;
 
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
@@ -123,7 +124,16 @@ public class ImportableUnit {
 
             VortexGrid grid = (VortexGrid) reader.getDto(i);
 
-            String destWkt = geoOptions.getOrDefault("targetWkt", grid.wkt());
+            String wktValue = geoOptions.getOrDefault("targetWkt", grid.wkt());
+            String epsgValue = geoOptions.get("targetEpsg");
+
+            String destWkt;
+            if (epsgValue != null) {
+                int epsg = Integer.parseInt(epsgValue);
+                destWkt = WktFactory.fromEpsg(epsg);
+            } else {
+                destWkt = wktValue;
+            }
 
             double cellSize;
             if (geoOptions.containsKey("targetCellSize")) {
