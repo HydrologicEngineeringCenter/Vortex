@@ -7,7 +7,8 @@ import java.io.File;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class AscDataReaderTest {
 
@@ -59,5 +60,33 @@ class AscDataReaderTest {
 
         VortexGrid grid = (VortexGrid) reader.getDtos().get(0);
         assertNotNull(grid);
+    }
+
+    @Test
+    void TwoIsoDatesImport(){
+        String path = new File(getClass().getResource("/2000-01-01T0000_2000-01-01T0100.tif").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(path)
+                .build();
+
+        VortexGrid grid = (VortexGrid) reader.getDtos().get(0);
+
+        assertEquals(ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), grid.startTime());
+        assertEquals(ZonedDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneId.of("Z")), grid.endTime());
+    }
+
+    @Test
+    void OneIsoDateImport(){
+        String path = new File(getClass().getResource("/2000-01-01T0000.tif").getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(path)
+                .build();
+
+        VortexGrid grid = (VortexGrid) reader.getDtos().get(0);
+
+        assertEquals(ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), grid.startTime());
+        assertEquals(ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), grid.endTime());
     }
 }

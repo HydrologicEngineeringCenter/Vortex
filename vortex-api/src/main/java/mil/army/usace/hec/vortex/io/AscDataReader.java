@@ -171,14 +171,14 @@ class AscDataReader extends DataReader {
             startTime = endTime.minusHours(1);
             interval = Duration.ofHours(1);
         } else {
-            Pattern pattern = Pattern.compile("\\d{4}_\\d{2}_\\d{2}t\\d{4}");
+            Pattern pattern = Pattern.compile("\\d{4}[_-]\\d{2}[_-]\\d{2}[t_-]\\d{4}");
             Matcher matcher = pattern.matcher(fileName);
             List<String> dateStrings = new ArrayList<>();
             while (matcher.find()){
                 dateStrings.add(matcher.group(0));
             }
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd't'Hmm");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy['_']['-']MM['_']['-']dd['t']['_']['-']Hmm");
             if (dateStrings.size() == 2) {
                 startTime = ZonedDateTime.of(LocalDateTime.parse(dateStrings.get(0), formatter), ZoneId.of("Z"));
                 endTime = ZonedDateTime.of(LocalDateTime.parse(dateStrings.get(1), formatter), ZoneId.of("Z"));
