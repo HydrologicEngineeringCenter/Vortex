@@ -7,7 +7,7 @@ import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DataReaderTest {
 
@@ -32,5 +32,17 @@ class DataReaderTest {
         assertEquals(20, bottom, 1E-5);
         assertEquals(-130, left, 1E-5);
         assertEquals(-60, right, 1E-5);
+    }
+
+    @Test
+    void isVariableRequiredForReader() {
+        assertFalse(DataReader.isVariableRequired("file.asc"));
+        assertFalse(DataReader.isVariableRequired("file.asc.zip"));
+        assertFalse(DataReader.isVariableRequired("file.bil"));
+        assertFalse(DataReader.isVariableRequired("file.bil.zip"));
+        assertFalse(DataReader.isVariableRequired("file.tif"));
+        assertFalse(DataReader.isVariableRequired("file.tiff"));
+        assertTrue(DataReader.isVariableRequired("file.nc4"));
+        assertTrue(DataReader.isVariableRequired("file.hdf"));
     }
 }

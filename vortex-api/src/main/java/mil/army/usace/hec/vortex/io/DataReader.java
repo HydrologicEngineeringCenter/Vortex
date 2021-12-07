@@ -95,4 +95,10 @@ public abstract class DataReader {
     public abstract int getDtoCount();
 
     public abstract VortexData getDto(int idx);
+
+    public static boolean isVariableRequired(String pathToFile) {
+        String fileName = new File(pathToFile).getName().toLowerCase();
+
+        return !fileName.matches(".*\\.(asc|tif|tiff|bil|bil.zip|asc.zip)$");
+    }
 } // DataReader class

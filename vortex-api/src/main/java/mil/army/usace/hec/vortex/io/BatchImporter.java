@@ -97,14 +97,30 @@ public class BatchImporter {
     public void process() {
         Instant start = Instant.now();
         List<ImportableUnit> importableUnits = new ArrayList<>();
-        inFiles.forEach(file -> variables.forEach(variable -> {
-            if (DataReader.getVariables(file).contains(variable)) {
 
+        inFiles.forEach(file -> {
+            List<DataReader> readers = new ArrayList<>();
+            if (DataReader.isVariableRequired(file)) {
+                variables.forEach(variable -> {
+                    if (DataReader.getVariables(file).contains(variable)) {
+
+                        DataReader reader = DataReader.builder()
+                                .path(file)
+                                .variable(variable)
+                                .build();
+
+                        readers.add(reader);
+                    }
+                });
+            } else {
                 DataReader reader = DataReader.builder()
                         .path(file)
-                        .variable(variable)
                         .build();
 
+                readers.add(reader);
+            }
+
+            readers.forEach(reader -> {
                 ImportableUnit importableUnit = ImportableUnit.builder()
                         .reader(reader)
                         .geoOptions(geoOptions)
@@ -113,8 +129,8 @@ public class BatchImporter {
                         .build();
 
                 importableUnits.add(importableUnit);
-            }
-        }));
+            });
+        });
 
         int totalCount = importableUnits.size();
 
