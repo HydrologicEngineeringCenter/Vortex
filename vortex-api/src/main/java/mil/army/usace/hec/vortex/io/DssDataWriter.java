@@ -379,6 +379,7 @@ public class DssDataWriter extends DataWriter {
             case "kg.m-2":
             case "kg/m^2":
             case "kg m^-2":
+            case "kg m-2":
             case "mm":
             case "millimeters h20":
                 return MILLI(METRE);
