@@ -256,34 +256,25 @@ public class SanitizerWizard extends JFrame {
         //Is the lower threshold box checked
         if (lowerThresholdCheckBox.isSelected()) {
             try {
-                Integer.parseInt(lowerThresholdTextField.getText());
+                Double.parseDouble(lowerThresholdTextField.getText ());
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Could not parse lower threshold value.",
-                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+                       "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             try {
-                Integer.parseInt(lowerReplacementTextField.getText());
+                Double.parseDouble(lowerReplacementTextField.getText());
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Could not parse lower replacement value.",
                         "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
-            //Is the lower replacement value greater than the value being replaced
-            int x = Integer.parseInt(lowerThresholdTextField.getText());
-            int y = Integer.parseInt(lowerReplacementTextField.getText());
-            if (x >= y) {
-                JOptionPane.showMessageDialog(this, "Lower replacement value must be greater than original values.",
-                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-
         }
 
         //Is the upper threshold box checked
         if (upperThresholdCheckBox.isSelected()) {
             try {
-                Integer.parseInt(upperThresholdTextField.getText());
+                Double.parseDouble(upperThresholdTextField.getText());
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Could not parse upper threshold value.",
                         "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
@@ -291,28 +282,9 @@ public class SanitizerWizard extends JFrame {
             }
 
             try {
-                Integer.parseInt(upperReplacementTextField.getText());
+                Double.parseDouble(upperReplacementTextField.getText());
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Could not parse upper replacement value.",
-                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-            //Is the upper replacement value lower than the value being replaced
-            int x = Integer.parseInt(upperThresholdTextField.getText());
-            int y = Integer.parseInt(upperReplacementTextField.getText());
-            if (x <= y) {
-                JOptionPane.showMessageDialog(this, "Upper replacement value must be lower than original values.",
-                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
-                return false;
-            }
-        }
-
-        //Is the lower replacement value lower than the upper replacement value
-        if (lowerThresholdCheckBox.isSelected() && upperThresholdCheckBox.isSelected()) {
-            int x = Integer.parseInt(lowerReplacementTextField.getText());
-            int y = Integer.parseInt(upperReplacementTextField.getText());
-            if (x > y) {
-                JOptionPane.showMessageDialog(this, "Lower replacement value cannot be greater than upper replacement value.",
                         "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
@@ -450,8 +422,8 @@ public class SanitizerWizard extends JFrame {
         double minimumThreshold;
         float minimumReplacementValue;
         if (lowerThresholdCheckBox.isSelected()) {
-            minimumThreshold = Integer.parseInt(lowerThresholdTextField.getText());
-            minimumReplacementValue = Integer.parseInt(lowerReplacementTextField.getText());
+            minimumThreshold = Double.parseDouble(lowerThresholdTextField.getText());
+            minimumReplacementValue = Float.parseFloat(lowerReplacementTextField.getText());
             if (lowerThresholdTextField == null || lowerReplacementTextField == null) return;
         } else {
             minimumThreshold = Double.NaN;
@@ -461,8 +433,8 @@ public class SanitizerWizard extends JFrame {
         double maximumThreshold;
         float maximumReplacementValue;
         if (upperThresholdCheckBox.isSelected()) {
-            maximumThreshold = Integer.parseInt(upperThresholdTextField.getText());
-            maximumReplacementValue = Integer.parseInt(upperReplacementTextField.getText());
+            maximumThreshold = Double.parseDouble(upperThresholdTextField.getText());
+            maximumReplacementValue = Float.parseFloat(upperReplacementTextField.getText());
             if (upperThresholdTextField == null || upperReplacementTextField == null) return;
         } else {
             maximumThreshold = Double.NaN;
@@ -581,7 +553,7 @@ public class SanitizerWizard extends JFrame {
     }
 
     /* Add main for quick UI Testing */
-    static public void main(String[] args) {
+    public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
         catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) { e.printStackTrace(); }
 
