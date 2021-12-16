@@ -4,11 +4,11 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
 import ucar.unidata.geoloc.ProjectionImpl;
 import ucar.unidata.geoloc.projection.*;
-import ucar.unidata.geoloc.projection.proj4.*;
+import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
+import ucar.unidata.geoloc.projection.proj4.TransverseMercatorProjection;
 import ucar.unidata.util.Parameter;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.gdal.osr.osrConstants.SRS_UL_METER;
 
@@ -127,6 +127,44 @@ public class WktFactory {
                     in.getScale(),
                     in.getFalseEasting(),
                     in.getFalseNorthing()
+            );
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
+            return srs.ExportToPrettyWkt();
+
+        } else if (projection instanceof TransverseMercatorProjection) {
+            TransverseMercatorProjection in = (TransverseMercatorProjection) projection;
+            SpatialReference srs = new SpatialReference();
+            setGcsParameters(in, srs);
+            List<Parameter> parameters = projection.getProjectionParameters();
+
+            Map<String, Double> numericParameters = new HashMap<>();
+            parameters.forEach(parameter -> {
+                if (!parameter.isString()) {
+                    numericParameters.put(parameter.getName(), parameter.getNumericValue());
+                }
+            });
+
+            Map<String, String> stringParameters = new HashMap<>();
+            parameters.forEach(parameter -> {
+                if (parameter.isString()) {
+                    stringParameters.put(parameter.getName(), parameter.getStringValue());
+                }
+            });
+
+            int factor = Objects.equals(stringParameters.get("units"), "km") ? 1000 : 1;
+
+            double centerLatitude = numericParameters.get("latitude_of_projection_origin");
+            double centerLongitude = numericParameters.get("longitude_of_central_meridian");
+            double scaleFactor = numericParameters.get("scale_factor_at_central_meridian");
+            double falseEasting = numericParameters.get("false_easting") * factor;
+            double falseNorthing = numericParameters.get("false_northing") * factor;
+
+            srs.SetTM(
+                    centerLatitude,
+                    centerLongitude,
+                    scaleFactor,
+                    falseEasting,
+                    falseNorthing
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
