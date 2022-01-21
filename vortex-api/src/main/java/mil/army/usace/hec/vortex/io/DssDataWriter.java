@@ -406,7 +406,7 @@ public class DssDataWriter extends DataWriter {
                 return KELVIN;
             case "watt/m2":
                 return WATT.divide(SQUARE_METRE);
-            case "J m**-2":
+            case "j m**-2":
                 return JOULE.divide(SQUARE_METRE);
             case "kph":
                 return KILO(METRE).divide(HOUR);
