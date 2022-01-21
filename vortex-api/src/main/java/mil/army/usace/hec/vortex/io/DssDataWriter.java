@@ -67,11 +67,12 @@ public class DssDataWriter extends DataWriter {
             Unit<?> units = getUnits(grid.units());
 
             DSSPathname dssPathname = new DSSPathname();
-            String cPart;
-            if (!getCPart(grid.shortName()).isEmpty()){
-                cPart = getCPart(grid.shortName());
-            } else {
+            String cPart = getCPart(grid.shortName());
+            if (cPart.isEmpty()) {
                 cPart = getCPart(grid.description());
+            }
+            if (cPart.isEmpty()) {
+                cPart = getCPart(grid.fileName());
             }
 
             dssPathname.setCPart(cPart);
