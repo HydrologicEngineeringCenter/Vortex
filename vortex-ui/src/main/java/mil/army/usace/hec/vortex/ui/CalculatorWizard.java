@@ -382,28 +382,28 @@ public class CalculatorWizard extends JFrame {
 
         float multiplyValue;
         if (multiplyText != null && !multiplyText.isEmpty()) {
-            multiplyValue = Integer.parseInt(multiplyTextField.getText());
+            multiplyValue = Float.parseFloat(multiplyTextField.getText());
         } else {
             multiplyValue = Float.NaN;
         }
 
         float divideValue;
         if (divideText != null && !divideText.isEmpty()) {
-            divideValue = Integer.parseInt(divideTextField.getText());
+            divideValue = Float.parseFloat(divideTextField.getText());
         } else {
             divideValue = Float.NaN;
         }
 
         float addValue;
         if (addText != null && !addText.isEmpty()) {
-            addValue = Integer.parseInt(addTextField.getText());
+            addValue = Float.parseFloat(addTextField.getText());
         } else {
             addValue = Float.NaN;
         }
 
         float subtractValue;
         if (subtractText != null && !subtractText.isEmpty()) {
-            subtractValue = Integer.parseInt(subtractTextField.getText());
+            subtractValue = Float.parseFloat(subtractTextField.getText());
         } else {
             subtractValue = Float.NaN;
         }
