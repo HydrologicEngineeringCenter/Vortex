@@ -7,6 +7,8 @@ import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecTimeSeries;
 import hec.heclib.grid.*;
 import hec.heclib.util.HecTime;
+import hec.hecmath.HecMath;
+import hec.io.DataContainer;
 import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
@@ -214,7 +216,8 @@ public class DssDataWriter extends DataWriter {
 
             DSSPathname pathname = new DSSPathname();
             pathname.setBPart(id);
-            pathname.setCPart(getCPartForTimeSeries(description, type));
+            String cPart = getCPartForTimeSeries(description, type);
+            pathname.setCPart(cPart);
 
             TimeSeriesContainer tsc = new TimeSeriesContainer();
             tsc.units = units;
@@ -260,6 +263,33 @@ public class DssDataWriter extends DataWriter {
             System.out.println(time);
 
             int status = dssTimeSeries.write(tsc);
+
+            if (options.getOrDefault("isAccumulate", "false").equalsIgnoreCase("true")
+                    && cPart.toLowerCase().contains("precip")) {
+                try {
+                    if (tsc.getTimes() == null) {
+                        int[] times = new int[endTimes.size()];
+                        IntStream.range(0, endTimes.size()).forEach(t ->
+                                times[t] = getHecTime(endTimes.get(t)).value());
+                        tsc.times = times;
+                    }
+                    HecMath math = HecMath.createInstance(tsc).accumulation();
+                    DataContainer container = math.getData();
+                    TimeSeriesContainer tscAccum = (TimeSeriesContainer) container;
+                    DSSPathname dssPathname = new DSSPathname(tscAccum.getFullName());
+
+                    dssPathname.setCPart("PRECIP-CUM");
+                    tscAccum.dataType = DssDataType.INST_CUM.value();
+
+                    tscAccum.setFullName(dssPathname.getPathname());
+                    if (dssTimeSeries.write(tscAccum) != 0) {
+                        logger.severe("Dss write error");
+                    }
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, e, e::getMessage);
+                }
+            }
+
             dssTimeSeries.done();
             if (status != 0) logger.severe("Dss write error");
         }));

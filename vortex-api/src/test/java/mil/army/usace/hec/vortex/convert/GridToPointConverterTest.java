@@ -41,7 +41,7 @@ class GridToPointConverterTest {
 
         try {
             TimeSeriesContainer tscRead = new TimeSeriesContainer();
-            tscRead.fullName = "//TruckeeRv_S10/PRECIPITATION/*/1Hour//";
+            tscRead.fullName = "//TruckeeRv_S10/PRECIP-INC/*/1Hour//";
             HecTimeSeries dssTimeSeriesRead = new HecTimeSeries();
             dssTimeSeriesRead.setDSSFileName(destination);
             int status = dssTimeSeriesRead.read(tscRead, true);
@@ -85,7 +85,7 @@ class GridToPointConverterTest {
 
         try {
             TimeSeriesContainer tscRead = new TimeSeriesContainer();
-            tscRead.fullName = "//canyon/PRECIPITATION/*/1Day//";
+            tscRead.fullName = "//canyon/PRECIP-INC/*/1Day//";
             HecTimeSeries dssTimeSeriesRead = new HecTimeSeries();
             dssTimeSeriesRead.setDSSFileName(destination);
             int status = dssTimeSeriesRead.read(tscRead, true);
@@ -133,7 +133,7 @@ class GridToPointConverterTest {
 
         try {
             TimeSeriesContainer tscRead = new TimeSeriesContainer();
-            tscRead.fullName = "//TRUCKEERV_S10//*/1HOUR/TEST/";
+            tscRead.fullName = "//TRUCKEERV_S10/TEMPERATURE/*/1HOUR/TEST/";
             HecTimeSeries dssTimeSeriesRead = new HecTimeSeries();
             dssTimeSeriesRead.setDSSFileName(destination);
             int status = dssTimeSeriesRead.read(tscRead, true);

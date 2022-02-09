@@ -400,6 +400,8 @@ public class GridToPointWizard extends JFrame {
         if (dataType != null && !dataType.isEmpty())
             writeOptions.put("dataType", dataType);
 
+        writeOptions.put("isAccumulate", "true");
+
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToSource)
                 .variables(sourceGrids)

@@ -135,6 +135,7 @@ public class Step3Controller implements BrowseLocationPersister {
             options.put("partD", dssPathnamePartsController.getPartD());
             options.put("partE", dssPathnamePartsController.getPartE());
             options.put("partF", dssPathnamePartsController.getPartF());
+            options.put("isAccumulate", "true");
         }
 
         GridToPointConverter converter = GridToPointConverter.builder()
@@ -165,13 +166,8 @@ public class Step3Controller implements BrowseLocationPersister {
 
         dssPathnamePartsController.partB.textProperty().set("*");
         dssPathnamePartsController.partB.setDisable(true);
-
-        Set<String> cParts = parts.get("cParts");
-        if (cParts.size() == 1){
-            dssPathnamePartsController.partC.textProperty().set(cParts.iterator().next());
-        } else {
-            dssPathnamePartsController.partC.textProperty().set("*");
-        }
+        
+        dssPathnamePartsController.partC.textProperty().set("*");
 
         dssPathnamePartsController.partD.textProperty().set("*");
         dssPathnamePartsController.partD.setDisable(true);
