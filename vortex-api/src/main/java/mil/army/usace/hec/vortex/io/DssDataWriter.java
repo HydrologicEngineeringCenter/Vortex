@@ -288,7 +288,8 @@ public class DssDataWriter extends DataWriter {
         } else if (desc.contains("temperature")
                 || desc.equals("airtemp")
                 || desc.equals("tasmin")
-                || desc.equals("tasmax")){
+                || desc.equals("tasmax")
+                || desc.equals("temp-air")) {
             return "TEMPERATURE";
         } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
                 && desc.contains("radiation")){
