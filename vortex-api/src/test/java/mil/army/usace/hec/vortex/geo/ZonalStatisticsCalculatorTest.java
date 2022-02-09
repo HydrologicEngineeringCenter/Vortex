@@ -54,7 +54,7 @@ class ZonalStatisticsCalculatorTest {
     @Test
     void CreateZoneMasksCreatesZoneMasks(){
         String inFile = new File(getClass().getResource(
-                "/truckee-river-qpe.dss").getFile()).toString();
+                "/truckee/truckee_river_qpe.dss").getFile()).toString();
         Set<String> variables = DataReader.getVariables(inFile);
 
         DataReader reader = DataReader.builder()
@@ -66,7 +66,7 @@ class ZonalStatisticsCalculatorTest {
         VortexGrid dto = data.get(0);
 
         Path pathToShp = new File(getClass().getResource(
-                "/truckee_subbasins/truckee_subbasins.shp").getFile()).toPath();
+                "/truckee/truckee_subbasins.shp").getFile()).toPath();
 
         String field = "Name";
 

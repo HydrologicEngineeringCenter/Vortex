@@ -231,7 +231,13 @@ public class DssDataWriter extends DataWriter {
                 pathname.setEPart(interval.getInterval());
                 tsc.values = values;
                 tsc.numberValues = values.length;
-                tsc.startTime = getHecTime(startTimes.get(0)).value();
+
+                HecTime startTime = getHecTime(startTimes.get(0));
+                if (type.equals(DssDataType.PER_CUM) || type.equals(DssDataType.PER_AVER)) {
+                    startTime.addSeconds(interval.getSeconds());
+                }
+
+                tsc.startTime = startTime.value();
             } else {
                 logger.info(() -> "Inconsistent time-interval in record. Data will be stored as irregular interval.");
                 pathname.setEPart("Ir-Day");
@@ -248,6 +254,11 @@ public class DssDataWriter extends DataWriter {
 
             HecTimeSeries dssTimeSeries = new HecTimeSeries();
             dssTimeSeries.setDSSFileName(destination.toString());
+
+            HecTime time = new HecTime();
+            time.set(tsc.startTime);
+            System.out.println(time);
+
             int status = dssTimeSeries.write(tsc);
             dssTimeSeries.done();
             if (status != 0) logger.severe("Dss write error");
