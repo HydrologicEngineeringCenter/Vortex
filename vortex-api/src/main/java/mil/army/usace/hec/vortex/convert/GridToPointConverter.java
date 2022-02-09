@@ -15,7 +15,6 @@ import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -165,20 +164,15 @@ public class GridToPointConverter {
             });
         });
 
-        AtomicInteger processed = new AtomicInteger();
-        int total = grids.size();
-        points.parallelStream().forEach(dto -> {
-            int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
-            support.firePropertyChange("progress", null, newValue);
+        DataWriter writer = DataWriter.builder()
+                .destination(destination)
+                .data(points)
+                .options(writeOptions)
+                .build();
 
-            DataWriter writer = DataWriter.builder()
-                    .destination(destination)
-                    .data(points)
-                    .options(writeOptions)
-                    .build();
+        writer.write();
 
-            writer.write();
-        });
+        support.firePropertyChange("progress", 0, 100);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
