@@ -6,6 +6,7 @@ import hec.heclib.dss.HecDssCatalog;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
+import hec.heclib.grid.GriddedData;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
@@ -40,10 +41,15 @@ class DssDataReader extends DataReader {
         List<VortexData> dtos = new ArrayList<>();
         Arrays.stream(paths).forEach(path -> {
             int[] status = new int[1];
-            GridData gridData = GridUtilities.retrieveGridFromDss(this.path, path, status);
-            if (gridData != null) {
+            GriddedData griddedData = new GriddedData();
+            griddedData.setDSSFileName(this.path);
+            griddedData.setPathname(path);
+            GridData gridData = new GridData();
+            griddedData.retrieveGriddedData(true, gridData, status);
+            if (status[0] == 0) {
                 dtos.add(dssToDto(gridData));
             }
+
         });
         return dtos;
     }
