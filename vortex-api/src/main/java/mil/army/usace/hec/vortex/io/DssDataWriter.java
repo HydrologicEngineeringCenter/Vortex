@@ -67,12 +67,12 @@ public class DssDataWriter extends DataWriter {
             Unit<?> units = getUnits(grid.units());
 
             DSSPathname dssPathname = new DSSPathname();
-            String cPart = getCPart(grid.shortName());
+            String cPart = getCPartForGrid(grid.shortName());
             if (cPart.isEmpty()) {
-                cPart = getCPart(grid.description());
+                cPart = getCPartForGrid(grid.description());
             }
             if (cPart.isEmpty()) {
-                cPart = getCPart(grid.fileName());
+                cPart = getCPartForGrid(grid.fileName());
             }
 
             dssPathname.setCPart(cPart);
@@ -209,12 +209,12 @@ public class DssDataWriter extends DataWriter {
                     .mapToDouble(VortexPoint::data)
                     .toArray();
 
-            DSSPathname pathname = new DSSPathname();
-            pathname.setBPart(id);
-            pathname.setCPart(getCPart(description));
-
             String units = filtered.get(0).units();
             DssDataType type = getDssDataType(description);
+
+            DSSPathname pathname = new DSSPathname();
+            pathname.setBPart(id);
+            pathname.setCPart(getCPartForTimeSeries(description, type));
 
             TimeSeriesContainer tsc = new TimeSeriesContainer();
             tsc.units = units;
@@ -265,7 +265,7 @@ public class DssDataWriter extends DataWriter {
         }));
     }
 
-    private static String getCPart(String shortName){
+    private static String getCPartForGrid(String shortName){
         String desc;
         if (shortName != null) {
             desc = shortName.toLowerCase();
@@ -322,6 +322,31 @@ public class DssDataWriter extends DataWriter {
             return "SNOW MELT";
         } else {
             return "";
+        }
+    }
+
+    private static String getCPartForTimeSeries(String description, DssDataType type){
+        String desc;
+        if (description != null) {
+            desc = description.toLowerCase();
+        } else {
+            return "";
+        }
+
+        if (desc.contains("precipitation")
+                || desc.contains("precip")
+                || desc.contains("precip") && desc.contains("rate")
+                || desc.contains("qpe01h")
+                || desc.contains("var209-6")
+                || desc.contains("rainfall")
+                || desc.contains("pr")) {
+            if (type.equals(DssDataType.INST_CUM)) {
+                return "PRECIP-CUM";
+            } else {
+                return "PRECIP-INC";
+            }
+        } else {
+            return getCPartForGrid(description);
         }
     }
 
