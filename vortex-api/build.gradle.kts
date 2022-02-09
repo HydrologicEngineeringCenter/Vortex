@@ -11,9 +11,9 @@ repositories {
 }
 
 dependencies {
-    implementation("mil.army.usace.hec:hec:6.0.0.51")
-    implementation("mil.army.usace.hec:heclib:6.0.0.51")
-    implementation("mil.army.usace.hec:hecData:6.0.0.51")
+    implementation("mil.army.usace.hec:hec:6.0.00.100")
+    implementation("mil.army.usace.hec:heclib:6.0.00.100")
+    implementation("mil.army.usace.hec:hecData:6.0.00.100")
     implementation("org.gdal:gdal:3.2.0")
     implementation("org.locationtech.jts:jts-core:1.16.1")
     implementation("tech.units:indriya:2.0.4")
