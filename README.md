@@ -11,9 +11,11 @@ The **sanitizer** utility screens and replaces values above or below a threshold
 
 The **clipper** utility clips grids to a shapefile or other geometry layer. 
 
-The **grid-to-point-converter** utility converts gridded data to basin-average time-series data.
+The **grid-to-point-converter** utility converts gridded data to time-series data for a polygon or a point.
 
 The **image-exporter** utility exports gridded data to GeoTIFF or ASC raster formats.
+
+The **calculator** utility performs multiplication, division, addition, or subtraction to a series of grids.
 
 The **transposer** utility rotates and shifts grids spatially. The utility has a scale parameter to scale grid values.
 
