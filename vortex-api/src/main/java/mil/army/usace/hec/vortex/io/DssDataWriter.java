@@ -604,8 +604,6 @@ public class DssDataWriter extends DataWriter {
             double standardParallel2 = srs.GetProjParm("standard_parallel_2");
             albersInfo.setStandardParallels((float) standardParallel1, (float) standardParallel2);
 
-            albersInfo.setProjectionUnits("Meters");
-
             gridInfo = albersInfo;
         } else {
             SpecifiedGridInfo specifiedGridInfo = new SpecifiedGridInfo();
