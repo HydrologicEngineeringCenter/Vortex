@@ -1,8 +1,6 @@
 package calculator;
 
-import javafx.beans.property.SimpleListProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 
 import java.time.LocalDateTime;
@@ -20,10 +18,18 @@ public class WizardData {
     private final StringProperty inFile = new SimpleStringProperty();
     private final SimpleListProperty<String> availableVariables = new SimpleListProperty<>();
     private final SimpleListProperty<String> selectedVariables = new SimpleListProperty<>();
+
+    private final BooleanProperty isConstantCompute = new SimpleBooleanProperty();
+
+    private final StringProperty operation = new SimpleStringProperty();
+    private final StringProperty pathToRaster = new SimpleStringProperty();
+    private final StringProperty resamplingMethod = new SimpleStringProperty();
+
     private final StringProperty multiplyValue = new SimpleStringProperty();
     private final StringProperty divideValue = new SimpleStringProperty();
     private final StringProperty addValue = new SimpleStringProperty();
     private final StringProperty subtractValue = new SimpleStringProperty();
+
     private final StringProperty destinationOut = new SimpleStringProperty();
 
     public StringProperty inFileProperty() {
@@ -88,8 +94,20 @@ public class WizardData {
         selectedVariables.removeAll(variables);
     }
 
-    public StringProperty lowerThresholdProperty() {
-        return multiplyValue;
+    public BooleanProperty isConstantCompute() {
+        return isConstantCompute;
+    }
+
+    public StringProperty operation() {
+        return operation;
+    }
+
+    public StringProperty pathToRaster() {
+        return pathToRaster;
+    }
+
+    public StringProperty resamplingMethod() {
+        return resamplingMethod;
     }
 
     public StringProperty multiplyValueProperty(){
@@ -100,10 +118,6 @@ public class WizardData {
         return multiplyValue.get();
     }
 
-    public StringProperty lowerReplacementProperty() {
-        return divideValue;
-    }
-
     public StringProperty divideValueProperty() {
         return divideValue;
     }
@@ -111,8 +125,6 @@ public class WizardData {
     public String getDivideValue(){
         return divideValue.get();
     }
-
-    //public StringProperty upperThresholdProperty() { return addValue; }
 
     public StringProperty addValueProperty() {
         return addValue;
@@ -122,8 +134,6 @@ public class WizardData {
         return addValue.get();
     }
 
-    public StringProperty upperThresholdProperty() { return subtractValue; }
-
     public StringProperty subtractValueProperty() {
         return subtractValue;
     }
@@ -131,7 +141,6 @@ public class WizardData {
     public String getSubtractValue() {
         return subtractValue.get();
     }
-
 
     public String getDestinationOut() {
         return destinationOut.get();

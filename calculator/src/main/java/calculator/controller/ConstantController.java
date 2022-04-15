@@ -9,9 +9,9 @@ import javafx.stage.StageStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Step2Controller {
+public class ConstantController {
 
-    private final Logger log = LoggerFactory.getLogger(Step2Controller.class);
+    private final Logger log = LoggerFactory.getLogger(ConstantController.class);
 
     @FXML
     private TextField multiplyTextField;

@@ -13,7 +13,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.StageStyle;
+import mil.army.usace.hec.vortex.geo.ResamplingMethod;
 import mil.army.usace.hec.vortex.math.BatchCalculator;
+import mil.army.usace.hec.vortex.math.BatchGridCalculator;
+import mil.army.usace.hec.vortex.math.Operation;
 import mil.army.usace.hec.vortex.ui.BrowseLocationPersister;
 import mil.army.usace.hec.vortex.util.DssUtil;
 import org.slf4j.Logger;
@@ -23,9 +26,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class Step3Controller implements BrowseLocationPersister {
+public class OutputController implements BrowseLocationPersister {
 
-    private final Logger logger = LoggerFactory.getLogger(Step3Controller.class);
+    private final Logger logger = LoggerFactory.getLogger(OutputController.class);
 
     @FXML
     private VBox content;
@@ -150,34 +153,6 @@ public class Step3Controller implements BrowseLocationPersister {
         List<String> sourceGrids = model.getSelectedVariables();
         String destinationOut = model.getDestinationOut();
 
-       float multiplyValue;
-        if (model.getMultiplyValue() != null && !model.getMultiplyValue().isEmpty()) {
-            multiplyValue = Float.parseFloat(model.getMultiplyValue());
-        } else {
-            multiplyValue = Float.NaN;
-        }
-
-        float divideValue;
-        if (model.getDivideValue() != null && !model.getDivideValue().isEmpty()) {
-            divideValue = Float.parseFloat(model.getDivideValue());
-        } else {
-            divideValue = Float.NaN;
-        }
-
-        float addValue;
-        if (model.getAddValue() != null && !model.getAddValue().isEmpty()) {
-            addValue = Float.parseFloat(model.getAddValue());
-        } else {
-            addValue = Float.NaN;
-        }
-
-        float subtractValue;
-        if (model.getSubtractValue() != null && !model.getSubtractValue().isEmpty()) {
-            subtractValue = Float.parseFloat(model.getSubtractValue());
-        } else {
-            subtractValue = Float.NaN;
-        }
-
         Map<String, String> options = new HashMap<>();
         if (destinationOut.toLowerCase().endsWith(".dss")) {
             options.put("partA", dssPathnamePartsController.getPartA());
@@ -196,18 +171,67 @@ public class Step3Controller implements BrowseLocationPersister {
                 options.put("dataType", dataType);
         }
 
-        BatchCalculator batchCalculator = BatchCalculator.builder()
-                .pathToInput(pathToSource)
-                .variables(sourceGrids)
-                .multiplyValue(multiplyValue)
-                .divideValue(divideValue)
-                .addValue(addValue)
-                .subtractValue(subtractValue)
-                .destination(destinationOut)
-                .writeOptions(options)
-                .build();
+        if (model.isConstantCompute().get()) {
+            float multiplyValue;
+            if (model.getMultiplyValue() != null && !model.getMultiplyValue().isEmpty()) {
+                multiplyValue = Float.parseFloat(model.getMultiplyValue());
+            } else {
+                multiplyValue = Float.NaN;
+            }
 
-        batchCalculator.process();
+            float divideValue;
+            if (model.getDivideValue() != null && !model.getDivideValue().isEmpty()) {
+                divideValue = Float.parseFloat(model.getDivideValue());
+            } else {
+                divideValue = Float.NaN;
+            }
+
+            float addValue;
+            if (model.getAddValue() != null && !model.getAddValue().isEmpty()) {
+                addValue = Float.parseFloat(model.getAddValue());
+            } else {
+                addValue = Float.NaN;
+            }
+
+            float subtractValue;
+            if (model.getSubtractValue() != null && !model.getSubtractValue().isEmpty()) {
+                subtractValue = Float.parseFloat(model.getSubtractValue());
+            } else {
+                subtractValue = Float.NaN;
+            }
+
+            BatchCalculator batchCalculator = BatchCalculator.builder()
+                    .pathToInput(pathToSource)
+                    .variables(sourceGrids)
+                    .multiplyValue(multiplyValue)
+                    .divideValue(divideValue)
+                    .addValue(addValue)
+                    .subtractValue(subtractValue)
+                    .destination(destinationOut)
+                    .writeOptions(options)
+                    .build();
+
+            batchCalculator.process();
+        } else {
+            String pathToRaster = model.pathToRaster().get();
+
+            ResamplingMethod resamplingMethod =
+                    ResamplingMethod.fromDisplayString(model.resamplingMethod().get());
+
+            Operation operation = Operation.fromDisplayString(model.operation().get());
+
+            BatchGridCalculator batchGridCalculator = BatchGridCalculator.builder()
+                    .pathToInput(pathToSource)
+                    .variables(sourceGrids)
+                    .setOperation(operation)
+                    .setPathToRaster(pathToRaster)
+                    .setResamplingMethod(resamplingMethod)
+                    .destination(destinationOut)
+                    .writeOptions(options)
+                    .build();
+
+            batchGridCalculator.process();
+        }
 
         if (logger.isDebugEnabled()) {
             logger.debug("[SUBMIT] the user has completed step 3");

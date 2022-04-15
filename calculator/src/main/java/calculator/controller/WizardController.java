@@ -108,27 +108,42 @@ public class WizardController {
 
         final Callback<Class<?>, Object> cb = clazz -> injector.getInstance(clazz);
 
-        FXMLLoader fxmlLoaderStep1 = new FXMLLoader( WizardController.class.getResource("/fxml/Step1.fxml"), null, bf, cb);
-        Parent step1 = fxmlLoaderStep1.load( );
-        step1.getProperties().put( CONTROLLER_KEY, fxmlLoaderStep1.getController() );
+        FXMLLoader fxmlLoaderInputStep = new FXMLLoader(
+                WizardController.class.getResource("/fxml/Input.fxml"), null, bf, cb);
+        Parent inputStep = fxmlLoaderInputStep.load( );
+        inputStep.getProperties().put( CONTROLLER_KEY, fxmlLoaderInputStep.getController() );
 
-        FXMLLoader fxmlLoaderStep2 = new FXMLLoader( WizardController.class.getResource("/fxml/Step2.fxml"), null, bf, cb );
-        Parent step2 = fxmlLoaderStep2.load();
-        step2.getProperties().put( CONTROLLER_KEY, fxmlLoaderStep2.getController() );
+        FXMLLoader fxmlLoaderComputeTypeStep = new FXMLLoader(
+                WizardController.class.getResource("/fxml/ComputeType.fxml"), null, bf, cb );
+        Parent computeTypeStep = fxmlLoaderComputeTypeStep.load();
+        computeTypeStep.getProperties().put( CONTROLLER_KEY, fxmlLoaderComputeTypeStep.getController() );
 
-        FXMLLoader fxmlLoaderStep3 = new FXMLLoader(WizardController.class.getResource("/fxml/Step3.fxml"), null, bf, cb );
-        Parent step3 = fxmlLoaderStep3.load( );
-        step3.getProperties().put( CONTROLLER_KEY, fxmlLoaderStep3.getController() );
+        FXMLLoader fxmlLoaderConstantStep = new FXMLLoader(
+                WizardController.class.getResource("/fxml/Constant.fxml"), null, bf, cb );
+        Parent constantStep = fxmlLoaderConstantStep.load();
+        constantStep.getProperties().put( CONTROLLER_KEY, fxmlLoaderConstantStep.getController() );
 
-        FXMLLoader fxmlLoaderProcessing = new FXMLLoader( WizardController.class.getResource("/fxml/Processing.fxml"), null, bf, cb);
+        FXMLLoader fxmlLoaderRasterStep = new FXMLLoader(
+                WizardController.class.getResource("/fxml/Raster.fxml"), null, bf, cb );
+        Parent rasterStep = fxmlLoaderRasterStep.load();
+        rasterStep.getProperties().put( CONTROLLER_KEY, fxmlLoaderRasterStep.getController() );
+
+        FXMLLoader fxmlLoaderOutputStep = new FXMLLoader(
+                WizardController.class.getResource("/fxml/Output.fxml"), null, bf, cb );
+        Parent outputStep = fxmlLoaderOutputStep.load( );
+        outputStep.getProperties().put( CONTROLLER_KEY, fxmlLoaderOutputStep.getController() );
+
+        FXMLLoader fxmlLoaderProcessing = new FXMLLoader(
+                WizardController.class.getResource("/fxml/Processing.fxml"), null, bf, cb);
         Parent processing = fxmlLoaderProcessing.load();
         processing.getProperties().put( CONTROLLER_KEY, fxmlLoaderProcessing.getController() );
 
-        FXMLLoader fxmlLoaderCompleted = new FXMLLoader( WizardController.class.getResource("/fxml/Completed.fxml"), null, bf, cb);
+        FXMLLoader fxmlLoaderCompleted = new FXMLLoader(
+                WizardController.class.getResource("/fxml/Completed.fxml"), null, bf, cb);
         Parent completed = fxmlLoaderCompleted.load();
         completed.getProperties().put( CONTROLLER_KEY, fxmlLoaderCompleted.getController() );
 
-        steps.addAll( Arrays.asList(step1, step2, step3, processing, completed));
+        steps.addAll( Arrays.asList(inputStep, computeTypeStep, constantStep, rasterStep, outputStep, processing, completed));
     }
 
     @FXML
@@ -168,6 +183,7 @@ public class WizardController {
                 return null ;
             }
         };
+
         task.setOnSucceeded(e -> scene.setCursor(Cursor.DEFAULT));
         if( currentStep.get() == (steps.size()-3) ) {
             task.setOnSucceeded(e -> this.next());
@@ -176,7 +192,14 @@ public class WizardController {
 
         if( currentStep.get() < (steps.size()-1) ) {
             contentPanel.getChildren().remove( steps.get(currentStep.get()) );
+
             currentStep.set( currentStep.get() + 1 );
+
+            if (currentStep.get() == 2 && !model.isConstantCompute().get()
+                    || currentStep.get() == 3 && model.isConstantCompute().get()) {
+                currentStep.set( currentStep.get() + 1 );
+            }
+
             if (currentStep.get() >= (steps.size()-2)){
                 contentPanel.setAlignment(Pos.CENTER);
             } else {
@@ -191,7 +214,13 @@ public class WizardController {
 
         if( currentStep.get() > 0 ) {
             contentPanel.getChildren().remove( steps.get(currentStep.get()) );
-            currentStep.set( currentStep.get() - 1 );
+
+            if (currentStep.get() == 3 || currentStep.get() == 4) {
+                currentStep.set(1);
+            } else {
+                currentStep.set(currentStep.get() - 1);
+            }
+
             if (currentStep.get() >= (steps.size()-2)){
                 contentPanel.setAlignment(Pos.CENTER);
             } else {

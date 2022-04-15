@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<VBox spacing="10.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.controller.Step1Controller">
+<VBox spacing="10.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="calculator.controller.InputController">
    <children>
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Select File:">
          <VBox.margin>

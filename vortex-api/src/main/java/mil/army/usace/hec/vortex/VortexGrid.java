@@ -6,22 +6,25 @@ import java.time.ZonedDateTime;
 
 public class VortexGrid implements VortexData, Serializable {
 
-    private double dx;
-    private double dy;
-    private int nx;
-    private int ny;
-    private double originX;
-    private double originY;
-    private String wkt;
-    private float [] data;
-    private String units;
-    private String fileName;
-    private String shortName;
-    private String fullName;
-    private String description;
-    private ZonedDateTime startTime;
-    private ZonedDateTime endTime;
-    private Duration interval;
+    private final double dx;
+    private final double dy;
+    private final int nx;
+    private final int ny;
+    private final double originX;
+    private final double originY;
+    private final String wkt;
+    private final float [] data;
+    private final String units;
+    private final String fileName;
+    private final String shortName;
+    private final String fullName;
+    private final String description;
+    private final ZonedDateTime startTime;
+    private final ZonedDateTime endTime;
+    private final Duration interval;
+
+    private final double terminusX;
+    private final double terminusY;
 
     private VortexGrid(VortexGridBuilder builder) {
 
@@ -42,6 +45,8 @@ public class VortexGrid implements VortexData, Serializable {
         this.endTime = builder.endTime;
         this.interval = builder.interval;
 
+        terminusX = originX + dx * nx;
+        terminusY = originY + dy * ny;
     }
 
     public static class VortexGridBuilder {
@@ -174,6 +179,14 @@ public class VortexGrid implements VortexData, Serializable {
 
     public double originY() {
         return originY;
+    }
+
+    public double getTerminusX() {
+        return terminusX;
+    }
+
+    public double terminusY() {
+        return terminusY;
     }
 
     public String wkt() {

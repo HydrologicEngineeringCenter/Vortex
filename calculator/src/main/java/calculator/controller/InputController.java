@@ -20,9 +20,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class Step1Controller implements BrowseLocationPersister {
+public class InputController implements BrowseLocationPersister {
 
-    private final Logger log = LoggerFactory.getLogger(Step1Controller.class);
+    private final Logger log = LoggerFactory.getLogger(InputController.class);
 
     @FXML
     TextField sourceFile;
