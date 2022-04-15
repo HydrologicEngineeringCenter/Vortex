@@ -2,13 +2,13 @@ package mil.army.usace.hec.vortex.math;
 
 public class GridCalculator {
 
-    private final float[] data1;
-    private final float[] data2;
+    private final float[] inputData;
+    private final float[] rasterData;
     private final Operation operation;
 
     private GridCalculator(Builder builder){
-        data1 = builder.data;
-        data2 = builder.rasterData;
+        inputData = builder.data;
+        rasterData = builder.rasterData;
         operation = builder.operation;
     }
 
@@ -49,28 +49,28 @@ public class GridCalculator {
 
     public float[] calculate(){
 
-        int size = data1.length;
+        int size = inputData.length;
         float[] result = new float[size];
 
         switch (operation) {
             case MULTIPLY:
                 for (int i = 0; i < size; i++) {
-                    result[i] = data1[i] * data2[i];
+                    result[i] = inputData[i] * rasterData[i];
                 }
                 break;
             case DIVIDE:
                 for (int i = 0; i < size; i++) {
-                    result[i] = data1[i] / data2[i];
+                    result[i] = inputData[i] / rasterData[i];
                 }
                 break;
             case ADD:
                 for (int i = 0; i < size; i++) {
-                    result[i] = data1[i] + data2[i];
+                    result[i] = inputData[i] + rasterData[i];
                 }
                 break;
             case SUBTRACT:
                 for (int i = 0; i < size; i++) {
-                    result[i] = data1[i] - data2[i];
+                    result[i] = inputData[i] - rasterData[i];
                 }
                 break;
         }
