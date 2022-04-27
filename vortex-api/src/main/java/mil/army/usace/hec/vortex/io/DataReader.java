@@ -83,7 +83,7 @@ public abstract class DataReader {
         if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
             return BilDataReader.getVariables(path);
         }
-        if (fileName.contains("snodas") || fileName.endsWith(".dat")){
+        if (fileName.matches(".*snodas.*\\.(dat|tar|tar.gz)")){
             return SnodasDataReader.getVariables(path);
         }
         if (fileName.endsWith(".dss")){
