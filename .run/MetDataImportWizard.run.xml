@@ -2,7 +2,6 @@
   <configuration default="false" name="MetDataImportWizard" type="Application" factoryName="Application" nameIsGenerated="true">
     <envs>
       <env name="PATH" value="$PROJECT_DIR$/../vortex\bin\gdal" />
-      <env name="GDAL_DRIVER_PATH" value="$PROJECT_DIR$/../vortex\bin\gdal\gdalplugins" />
       <env name="GDAL_DATA" value="$PROJECT_DIR$/../vortex\bin\gdal\gdal-data" />
       <env name="PROJ_LIB" value="$PROJECT_DIR$/../vortex\bin\gdal\projlib" />
     </envs>
