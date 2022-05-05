@@ -1,0 +1,21 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ClipperWizard" type="Application" factoryName="Application" nameIsGenerated="true">
+    <envs>
+      <env name="PATH" value="$PROJECT_DIR$/../vortex\bin\gdal" />
+      <env name="GDAL_DATA" value="$PROJECT_DIR$/../vortex\bin\gdal\gdal-data" />
+      <env name="PROJ_LIB" value="$PROJECT_DIR$/../vortex\bin\gdal\projlib" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="clipper.ClipperWizard" />
+    <module name="vortex.clipper.main" />
+    <option name="VM_PARAMETERS" value="-Djava.library.path=$PROJECT_DIR$/../vortex\bin;$PROJECT_DIR$/../vortex\bin\gdal --module-path &quot;C:\Programs\javafx-sdk-11.0.2\lib&quot; --add-modules javafx.controls,javafx.fxml" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="clipper.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
