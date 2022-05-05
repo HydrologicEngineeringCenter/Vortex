@@ -2,7 +2,10 @@ package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.dss.HecDSSFileDataManager;
 import org.gdal.gdal.gdal;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,51 +13,59 @@ import java.nio.file.*;
 import java.util.*;
 
 class SnodasDataReaderTest {
+    private static final String snodasReaderFolder = "src/test/resources/regression/io/snodas_reader/";
+    private static final Path tarPath = Paths.get(snodasReaderFolder + "SNODAS_20191031.tar");
+    private static final Path dssPath = Paths.get(snodasReaderFolder + "snodas_test.dss");
 
-    @Test
-    void gdalTest() {
-        String path = new File(getClass().getResource(
-                "/regression/io/snodas_reader/SNODAS_20191031.tar").getFile()).toString();
-        String virtualPath = "/vsizip/" + path;
+    @BeforeAll
+    static void setup() {
+        if(Files.notExists(tarPath)) {
+            System.out.println("File not found: " + tarPath);
+            Assertions.fail();
+        }
+
+        String virtualPath = "/vsizip/" + tarPath.toAbsolutePath();
         gdal.ReadDir(virtualPath);
-    } // gdalTest
+    }
 
     @Test
     void SnodasTest() {
-        String path = Paths.get("src/test/resources/regression/io/snodas_reader/SNODAS_20191101.tar").toAbsolutePath().toString();
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(Collections.singletonList(tarPath.toAbsolutePath().toString()))
+                .variables(snodasVariablesAll())
+                .destination(dssPath.toAbsolutePath().toString())
+                .build();
+        importer.process();
+        Assertions.assertTrue(true);
+    }
 
-        List<String> inFiles = new ArrayList<>();
-        inFiles.add(path);
-        String outFile = Paths.get("src/test/resources/regression/io/snodas_reader/snodas_test.dss").toAbsolutePath().toString();
-
-        List<String> availableVariables = Arrays.asList("SWE", "Snow Depth", "Snow Melt Runoff at the Base of the Snow Pack", "Sublimation from the Snow Pack",
-                "Sublimation of Blowing Snow", "Solid Precipitation", "Liquid Precipitation", "Snow Pack Average Temperature");
-
-        for(String variableName : availableVariables) {
-            List<String> variables = new ArrayList<>();
-            variables.add(variableName);
-
-            BatchImporter importer = BatchImporter.builder()
-                    .inFiles(inFiles)
-                    .variables(variables)
-                    .destination(outFile)
-                    .build();
-
-            importer.process();
-        } // Import all variables
-
+    @AfterAll
+    static void clean() {
         HecDSSFileDataManager fileManager = new HecDSSFileDataManager();
-        fileManager.closeFile(outFile);
+        fileManager.closeFile(dssPath.toAbsolutePath().toString());
 
         try {
-            Files.delete(Path.of(outFile));
-            Path folderPath = Paths.get("src/test/resources/regression/io/snodas_reader/SNODAS_20191101_unzip");
-            Files.walk(folderPath)
+            Files.deleteIfExists(dssPath);
+            String unzipFolder = snodasReaderFolder + tarPath.getFileName() + "_unzip";
+            Files.walk(Path.of(unzipFolder))
                     .sorted(Comparator.reverseOrder())
-                    .forEach(p -> {
-                        try { Files.delete(p); }
-                        catch(IOException exception) { exception.printStackTrace(); }
-                    });
-        } catch(IOException exception) { throw new IllegalArgumentException(); }
-    } // SnodasTest
-} // BilZipDataReaderTest
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch(IOException exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    private List<String> snodasVariablesAll() {
+        List<String> snodasVariables = new ArrayList<>();
+        snodasVariables.add("SWE");
+        snodasVariables.add("Snow Depth");
+        snodasVariables.add("Snow Melt Runoff at the Base of the Snow Pack");
+        snodasVariables.add("Sublimation from the Snow Pack");
+        snodasVariables.add("Sublimation of Blowing Snow");
+        snodasVariables.add("Solid Precipitation");
+        snodasVariables.add("Liquid Precipitation");
+        snodasVariables.add("Snow Pack Average Temperature");
+        return snodasVariables;
+    }
+}
