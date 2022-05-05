@@ -27,7 +27,7 @@ public class Step2Controller implements BrowseLocationPersister {
 
     @FXML TextField zonesShapefile;
     @FXML Button browse;
-    @FXML ComboBox<String> field;
+    @FXML ComboBox<String> fieldComboBox;
 
     @Inject
     WizardData model;
@@ -42,14 +42,21 @@ public class Step2Controller implements BrowseLocationPersister {
             Path pathToShp = Paths.get(model.getZonesShapefile());
             if (Files.exists(pathToShp) && !pathToShp.toString().isEmpty()) {
                 Set<String> fields = VectorUtils.getFields(pathToShp);
-                field.getItems().addAll(fields);
-                field.getSelectionModel().select(0);
+                fieldComboBox.getItems().addAll(fields);
+                fieldComboBox.getSelectionModel().select(0);
+
+                for (String field : fields) {
+                    if (field.equalsIgnoreCase("name")) {
+                        fieldComboBox.getSelectionModel().select(field);
+                        break;
+                    }
+                }
             } else {
-                field.getItems().clear();
+                fieldComboBox.getItems().clear();
             }
         });
 
-        model.fieldProperty().bind(field.getSelectionModel().selectedItemProperty());
+        model.fieldProperty().bind(fieldComboBox.getSelectionModel().selectedItemProperty());
 
         Image folderOpen = new Image(getClass().getResourceAsStream("/opened-folder-16.png"));
         browse.setGraphic(new ImageView(folderOpen));

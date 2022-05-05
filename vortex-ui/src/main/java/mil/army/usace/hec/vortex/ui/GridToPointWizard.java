@@ -32,7 +32,7 @@ public class GridToPointWizard extends JFrame {
     private JTextField zonesShapefile;
     private JTextField sourceFileTextField;
     private JList<String> chosenSourceGridsList;
-    private JComboBox<String> field;
+    private JComboBox<String> fieldComboBox;
     private String fieldValue;
     private JProgressBar progressBar;
 
@@ -273,10 +273,10 @@ public class GridToPointWizard extends JFrame {
         fieldLabelPanel.add(fieldLabel);
 
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-        field = new JComboBox<>(model);
-        field.setPreferredSize(new Dimension(150,22));
-        field.setMaximumRowCount(7);
-        field.setEditable(false);
+        fieldComboBox = new JComboBox<>(model);
+        fieldComboBox.setPreferredSize(new Dimension(150,22));
+        fieldComboBox.setMaximumRowCount(7);
+        fieldComboBox.setEditable(false);
 
         zonesShapefile.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) { shapefilePath(); }
@@ -287,23 +287,30 @@ public class GridToPointWizard extends JFrame {
                 if (Files.exists(pathToShp) && !pathToShp.toString().isEmpty()) {
                     Set<String> fields = VectorUtils.getFields(pathToShp);
                     model.addAll(fields);
-                    field.setSelectedIndex(0);
+                    fieldComboBox.setSelectedIndex(0);
+
+                    for (String field : fields) {
+                        if (field.equalsIgnoreCase("name")) {
+                            fieldComboBox.setSelectedItem(field);
+                            break;
+                        }
+                    }
                 } else {
-                    field.removeAllItems();
+                    fieldComboBox.removeAllItems();
                 }
             }
         });
 
-        field.addItemListener(e -> {
+        fieldComboBox.addItemListener(e -> {
             if(e.getStateChange() == ItemEvent.SELECTED) {
                 Path pathToShp = Paths.get(zonesShapefile.getText());
-                fieldValue = String.valueOf(VectorUtils.getValues(pathToShp, Objects.requireNonNull(field.getSelectedItem()).toString()));
+                fieldValue = String.valueOf(VectorUtils.getValues(pathToShp, Objects.requireNonNull(fieldComboBox.getSelectedItem()).toString()));
                 fieldValue = fieldValue.substring(1, fieldValue.length() - 1);
             }
         });
 
         JPanel fieldComboBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        fieldComboBoxPanel.add(field);
+        fieldComboBoxPanel.add(fieldComboBox);
 
         JPanel dataSourceSectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dataSourceSectionPanel.setLayout(new BoxLayout(dataSourceSectionPanel, BoxLayout.Y_AXIS));
@@ -361,7 +368,7 @@ public class GridToPointWizard extends JFrame {
         /* Shapefile */
         String shapefile = zonesShapefile.getText();
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
-        String selectedField = Objects.requireNonNull(field.getSelectedItem()).toString();
+        String selectedField = Objects.requireNonNull(fieldComboBox.getSelectedItem()).toString();
 
         /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
