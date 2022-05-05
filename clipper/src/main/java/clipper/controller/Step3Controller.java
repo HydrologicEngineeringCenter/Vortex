@@ -88,7 +88,7 @@ public class Step3Controller implements BrowseLocationPersister {
         fileChooser.getExtensionFilters().add(dssFilter);
 
         // Show save file dialog
-        File file = fileChooser.showOpenDialog(browse.getScene().getWindow());
+        File file = fileChooser.showSaveDialog(browse.getScene().getWindow());
 
         if (file != null) {
             destination.setText(file.getPath());

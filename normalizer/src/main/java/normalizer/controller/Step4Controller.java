@@ -13,7 +13,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.StageStyle;
-import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.math.Normalizer;
 import mil.army.usace.hec.vortex.ui.BrowseLocationPersister;
 import mil.army.usace.hec.vortex.util.DssUtil;
@@ -104,7 +103,7 @@ public class Step4Controller implements BrowseLocationPersister {
         fileChooser.getExtensionFilters().add(dssFilter);
 
         // Show save file dialog
-        File file = fileChooser.showOpenDialog(browse.getScene().getWindow());
+        File file = fileChooser.showSaveDialog(browse.getScene().getWindow());
 
         if (file != null) {
             destination.setText(file.getPath());
