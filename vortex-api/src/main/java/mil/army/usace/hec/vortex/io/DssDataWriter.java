@@ -80,8 +80,14 @@ public class DssDataWriter extends DataWriter {
             dssPathname.setCPart(cPart);
 
             if (cPart.equals("PRECIPITATION-FREQUENCY")
-                    && (!options.containsKey("partF") || options.get("partF").isEmpty())) {
+                    && options.getOrDefault("partF", "").isEmpty()) {
                 options.put("partF", grid.description());
+            }
+
+            if (cPart.matches("(SWE|SNOW DEPTH)")
+                    && options.getOrDefault("dataType", "").isEmpty()
+                    && !grid.interval().equals(Duration.ZERO)) {
+                options.put("dataType", "PER-AVER");
             }
 
             if (units.equals(MILLI(METRE).divide(SECOND))
@@ -212,7 +218,7 @@ public class DssDataWriter extends DataWriter {
                     .toArray();
 
             String units = filtered.get(0).units();
-            DssDataType type = getDssDataType(description);
+            DssDataType type = getDssDataType(description, diff);
 
             DSSPathname pathname = new DSSPathname();
             pathname.setBPart(id);
@@ -380,7 +386,7 @@ public class DssDataWriter extends DataWriter {
         }
     }
 
-    private static DssDataType getDssDataType(String description) {
+    private static DssDataType getDssDataType(String description, Duration interval) {
         String desc = description.toLowerCase();
         if (desc.contains("precipitation") && desc.contains("frequency")) {
             return DssDataType.INST_VAL;
@@ -397,8 +403,12 @@ public class DssDataWriter extends DataWriter {
             return DssDataType.PER_AVER;
         } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
             return DssDataType.INST_VAL;
-        } else if ((desc.contains("snow")) && (desc.contains("water")) && (desc.contains("equivalent"))) {
-            return DssDataType.INST_VAL;
+        } else if (desc.matches("(snow.*water.*equivalent|swe|snow.*depth)")) {
+            if (interval.equals(Duration.ZERO)) {
+                return DssDataType.INST_VAL;
+            } else {
+                return DssDataType.PER_AVER;
+            }
         } else if (desc.contains("albedo")) {
             return DssDataType.INST_VAL;
         } else {
@@ -449,6 +459,7 @@ public class DssDataWriter extends DataWriter {
             case "kg m-2":
             case "mm":
             case "millimeters h20":
+            case "millimeters snow thickness":
                 return MILLI(METRE);
             case "in":
             case "inch":
