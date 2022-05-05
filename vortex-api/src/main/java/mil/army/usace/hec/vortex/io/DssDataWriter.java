@@ -260,7 +260,6 @@ public class DssDataWriter extends DataWriter {
 
             HecTime time = new HecTime();
             time.set(tsc.startTime);
-            System.out.println(time);
 
             int status = dssTimeSeries.write(tsc);
 
