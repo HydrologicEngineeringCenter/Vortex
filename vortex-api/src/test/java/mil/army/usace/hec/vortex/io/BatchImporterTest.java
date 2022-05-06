@@ -1,20 +1,21 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.dss.DssDataType;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
+import hec.heclib.grid.GriddedData;
 import mil.army.usace.hec.vortex.geo.WktFactory;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.URL;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -175,11 +176,18 @@ class BatchImporterTest {
 
     @Test
     void bilZipReadTest() {
-        Path inFile = new File("C:/Users/q0hectab/Desktop/temp/Vortex/vortex-api/src/test/resources/PRISM_ppt_stable_4kmD2_20170101_20170131_bil.zip").toPath();
-        List<String> inFiles = new ArrayList<>();
-        inFiles.add(inFile.toString());
+        URL inUrl = Objects.requireNonNull(getClass().getResource(
+                "/bil_zip/PRISM_ppt_stable_4kmD2_20170101_bil.zip"));
 
-        String outFile = new File("C:/Temp/test_bil_zip.dss").toString();
+        String inFile = new File(inUrl.getFile()).toString();
+
+        List<String> inFiles = new ArrayList<>();
+        inFiles.add(inFile);
+
+        URL outURL = Objects.requireNonNull(getClass().getResource(
+                "/bil_zip/bil_zip.dss"));
+
+        String outFile = new File(outURL.getFile()).toString();
 
         String variableName = "ppt";
         List<String> variables = new ArrayList<>();
@@ -193,5 +201,25 @@ class BatchImporterTest {
 
         importer.process();
 
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(outFile);
+        griddedData.setPathname("///PRECIPITATION/31DEC2016:1200/01JAN2017:1200//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("31 December 2016, 12:00", gridInfo.getStartTime());
+        Assertions.assertEquals("1 January 2017, 12:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
+        Assertions.assertEquals(-4472.534, gridInfo.getMeanValue(), 1E-3);
+        Assertions.assertEquals(208.298, gridInfo.getMaxValue(), 1E-3);
+        Assertions.assertEquals(-9999.0, gridInfo.getMinValue(), 1E-3);
+
+        griddedData.done();
     }
 }
