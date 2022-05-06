@@ -1,7 +1,5 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.data.DataSetIllegalArgumentException;
-import hec.data.Interval;
 import hec.heclib.dss.DSSPathname;
 import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecTimeSeries;
@@ -25,7 +23,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -198,16 +195,16 @@ public class DssDataWriter extends DataWriter {
                     .sorted()
                     .collect(Collectors.toList());
 
-            AtomicBoolean isRegular = new AtomicBoolean(true);
+            boolean isRegular = true;
             Duration diff;
-            if (startTimes.size() == 1){
-                isRegular.set(false);
+            if (startTimes.size() == 1) {
+                isRegular = false;
                 diff = Duration.ZERO;
             } else {
                 diff = Duration.between(startTimes.get(0), startTimes.get(1));
                 for (int t = 1; t < startTimes.size(); t++) {
                     if (!Duration.between(startTimes.get(t - 1), startTimes.get(t)).equals(diff)) {
-                        isRegular.set(false);
+                        isRegular = false;
                         break;
                     }
                 }
@@ -229,21 +226,16 @@ public class DssDataWriter extends DataWriter {
             tsc.units = units;
             tsc.type = type.toString();
 
-            if (isRegular.get()){
-                Interval interval;
-                try {
-                    interval = new Interval((int) diff.abs().getSeconds() / SECONDS_PER_MINUTE);
-                } catch (DataSetIllegalArgumentException e) {
-                    logger.log(Level.SEVERE, "Uncaught exception", e);
-                    return;
-                }
-                pathname.setEPart(interval.getInterval());
+            if (isRegular) {
+                int seconds = (int) diff.abs().getSeconds();
+                String ePart = getEPart(seconds);
+                pathname.setEPart(ePart);
                 tsc.values = values;
                 tsc.numberValues = values.length;
 
                 HecTime startTime = getHecTime(startTimes.get(0));
                 if (type.equals(DssDataType.PER_CUM) || type.equals(DssDataType.PER_AVER)) {
-                    startTime.addSeconds(interval.getSeconds());
+                    startTime.addSeconds(seconds);
                 }
 
                 tsc.startTime = startTime.value();
@@ -572,6 +564,68 @@ public class DssDataWriter extends DataWriter {
             return "DEGC-D";
         }
         return "";
+    }
+
+    private static String getEPart(int seconds) {
+        int minutes = seconds / SECONDS_PER_MINUTE;
+        switch (minutes) {
+            case 1:
+                return "1Minute";
+            case 2:
+                return "2Minute";
+            case 3:
+                return "3Minute";
+            case 4:
+                return "4Minute";
+            case 5:
+                return "5Minute";
+            case 6:
+                return "6Minute";
+            case 8:
+                return "8Minute";
+            case 10:
+                return "10Minute";
+            case 12:
+                return "12Minute";
+            case 15:
+                return "15Minute";
+            case 20:
+                return "20Minute";
+            case 30:
+                return "30Minutes";
+            case 60:
+                return "1Hour";
+            case 120:
+                return "2Hours";
+            case 180:
+                return "3Hours";
+            case 240:
+                return "4Hours";
+            case 360:
+                return "6Hours";
+            case 480:
+                return "8Hours";
+            case 720:
+                return "12Hours";
+            case 1440:
+                return "1Day";
+            case 2880:
+                return "2Days";
+            case 5760:
+                return "3Days";
+            case 7200:
+                return "4Days";
+            case 8640:
+                return "6Days";
+            case 10080:
+                return "1Week";
+            case 43200:
+                return "1Month";
+            case 525600:
+                return "1Year";
+            default:
+                return "0";
+        }
     }
 
     private static GridInfo getGridInfo(VortexGrid grid){
