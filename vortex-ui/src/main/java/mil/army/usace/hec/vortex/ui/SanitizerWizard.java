@@ -39,8 +39,7 @@ public class SanitizerWizard extends JFrame {
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                SanitizerWizard.this.setVisible(false);
-                SanitizerWizard.this.dispose();
+                closeAction();
             }
         });
     }
@@ -98,10 +97,7 @@ public class SanitizerWizard extends JFrame {
         /* Cancel Button */
         cancelButton = new JButton(TextProperties.getInstance().getProperty("SanitizerWiz_Cancel"));
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Cancel_TT"));
-        cancelButton.addActionListener(evt -> {
-            this.setVisible(false);
-            this.dispose();
-        });
+        cancelButton.addActionListener(evt -> closeAction());
 
         /* Adding Buttons to NavigationPanel */
         buttonPanel.add(backButton);
@@ -550,6 +546,14 @@ public class SanitizerWizard extends JFrame {
         DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
         if(defaultRightModel == null) { return null; }
         return Collections.list(defaultRightModel.elements());
+    }
+
+    private void closeAction() {
+        SanitizerWizard.this.setVisible(false);
+        SanitizerWizard.this.dispose();
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSavedDialog fileSavedDialog = new FileSavedDialog(SanitizerWizard.this, savedFile);
+        fileSavedDialog.setVisible(true);
     }
 
     /* Add main for quick UI Testing */

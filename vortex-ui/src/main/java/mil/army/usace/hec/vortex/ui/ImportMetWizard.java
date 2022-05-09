@@ -47,8 +47,7 @@ public class ImportMetWizard extends JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                setVisible(false);
-                dispose();
+                closeAction();
             }
         });
     }
@@ -108,10 +107,7 @@ public class ImportMetWizard extends JFrame {
         /* Cancel Button */
         cancelButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizCancel"));
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizCancelTT"));
-        cancelButton.addActionListener(evt -> {
-            this.setVisible(false);
-            this.dispose();
-        });
+        cancelButton.addActionListener(evt -> closeAction());
 
         /* Adding Buttons to NavigationPanel */
         buttonPanel.add(backButton);
@@ -978,6 +974,14 @@ public class ImportMetWizard extends JFrame {
         } // If: listModel is not a DefaultListModel -- should not be happening
 
         return (DefaultListModel<String>) listModel;
+    }
+
+    private void closeAction() {
+        ImportMetWizard.this.setVisible(false);
+        ImportMetWizard.this.dispose();
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSavedDialog fileSavedDialog = new FileSavedDialog(ImportMetWizard.this, savedFile);
+        fileSavedDialog.setVisible(true);
     }
 
     /* Add main for quick UI Testing */
