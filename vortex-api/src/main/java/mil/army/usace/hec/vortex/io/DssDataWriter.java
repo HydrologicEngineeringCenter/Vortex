@@ -318,7 +318,7 @@ public class DssDataWriter extends DataWriter {
                 || desc.contains("qpe01h")
                 || desc.contains("var209-6")
                 || desc.contains("rainfall")
-                || desc.contains("pr")) {
+                || desc.equals("pr")) {
             return "PRECIPITATION";
         } else if (desc.contains("temperature")
                 || desc.equals("airtemp")
