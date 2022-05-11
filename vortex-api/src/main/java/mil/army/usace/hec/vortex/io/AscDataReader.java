@@ -230,6 +230,10 @@ class AscDataReader extends DataReader {
         float[] data = new float[nx * ny];
         band.ReadRaster(0, 0, nx, ny, gdalconst.GDT_Float32, data);
 
+        Double[] value = new Double[1];
+        band.GetNoDataValue(value);
+        double noDataValue = value[0];
+
         dataset.delete();
         band.delete();
 
@@ -240,6 +244,7 @@ class AscDataReader extends DataReader {
                 .originY(uly)
                 .wkt(wkt)
                 .data(data)
+                .noDataValue(noDataValue)
                 .units(units)
                 .fileName(path)
                 .shortName(shortName)

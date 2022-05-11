@@ -40,7 +40,7 @@ public class RasterUtils {
         Band band = raster.GetRasterBand(1);
         float[] data = dto.data();
         band.WriteRaster(0, 0, nx, ny, data);
-        band.SetNoDataValue(Float.NaN);
+        band.SetNoDataValue(dto.noDataValue());
         SpatialReference srs = new SpatialReference(dto.wkt());
         srs.MorphFromESRI();
         raster.SetProjection(srs.ExportToWkt());

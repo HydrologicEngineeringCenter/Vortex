@@ -5,6 +5,7 @@ import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecTimeSeries;
 import hec.heclib.grid.*;
 import hec.heclib.util.HecTime;
+import hec.heclib.util.Heclib;
 import hec.hecmath.HecMath;
 import hec.io.DataContainer;
 import hec.io.TimeSeriesContainer;
@@ -61,6 +62,13 @@ public class DssDataWriter extends DataWriter {
                 data = MatrixUtils.flipArray(grid.data(), grid.nx(), grid.ny());
             } else {
                 data = grid.data();
+            }
+
+            double noDataValue = grid.noDataValue();
+            for (int i = 0; i < data.length; i++) {
+                if (Double.compare(data[i], noDataValue) == 0) {
+                    data[i] = Heclib.UNDEFINED_FLOAT;
+                }
             }
 
             Unit<?> units = getUnits(grid.units());

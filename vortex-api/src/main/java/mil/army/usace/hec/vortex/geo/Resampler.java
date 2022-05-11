@@ -112,13 +112,24 @@ public class Resampler {
         resampled.delete();
         band.delete();
 
-        return  VortexGrid.builder()
-                .dx(dx).dy(dy).nx(nx).ny(ny)
-                .originX(originX).originY(originY)
-                .wkt(wkt).data(data).units(grid.units())
-                .fileName(grid.fileName()).shortName(grid.shortName())
-                .fullName(grid.fullName()).description(grid.description())
-                .startTime(grid.startTime()).endTime(grid.endTime()).interval(grid.interval())
+        return VortexGrid.builder()
+                .dx(dx)
+                .dy(dy)
+                .nx(nx)
+                .ny(ny)
+                .originX(originX)
+                .originY(originY)
+                .wkt(wkt)
+                .data(data)
+                .noDataValue(grid.noDataValue())
+                .units(grid.units())
+                .fileName(grid.fileName())
+                .shortName(grid.shortName())
+                .fullName(grid.fullName())
+                .description(grid.description())
+                .startTime(grid.startTime())
+                .endTime(grid.endTime())
+                .interval(grid.interval())
                 .build();
     }
 
@@ -151,6 +162,8 @@ public class Resampler {
             }
         }
 
+        double noDataValue = getNoDataValue(dataset);
+
         SpatialReference srData = new SpatialReference(dataset.GetProjection());
         srData.MorphFromESRI();
         ArrayList<String> options = new ArrayList<>();
@@ -160,6 +173,8 @@ public class Resampler {
         options.add(srData.ExportToWkt());
         options.add("-t_srs");
         options.add(destSrs.ExportToWkt());
+        options.add("-srcnodata");
+        options.add(Double.toString(noDataValue));
         if (env != null) {
             options.add("-te");
             options.add(Double.toString(envelope.get("minX")));
@@ -192,6 +207,16 @@ public class Resampler {
         warpOptions.delete();
 
         return warped;
+    }
+
+    private static double getNoDataValue(Dataset dataset) {
+        Band band = dataset.GetRasterBand(1);
+        Double[] value = new Double[1];
+        band.GetNoDataValue(value);
+
+        band.delete();
+
+        return value[0];
     }
 
 }

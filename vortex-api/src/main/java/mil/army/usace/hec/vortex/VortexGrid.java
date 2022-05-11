@@ -14,6 +14,7 @@ public class VortexGrid implements VortexData, Serializable {
     private final double originY;
     private final String wkt;
     private final float [] data;
+    private final double noDataValue;
     private final String units;
     private final String fileName;
     private final String shortName;
@@ -36,6 +37,7 @@ public class VortexGrid implements VortexData, Serializable {
         this.originY = builder.originY;
         this.wkt = builder.wkt;
         this.data = builder.data;
+        this.noDataValue = builder.noDataValue;
         this.units = builder.units;
         this.fileName = builder.fileName;
         this.shortName = builder.shortName;
@@ -58,6 +60,7 @@ public class VortexGrid implements VortexData, Serializable {
         private double originY;
         private String wkt;
         private float [] data;
+        private double noDataValue = Double.NaN;
         private String units;
         private String fileName;
         private String shortName;
@@ -104,6 +107,11 @@ public class VortexGrid implements VortexData, Serializable {
 
         public VortexGridBuilder data (final float[] data) {
             this.data = data;
+            return this;
+        }
+
+        public VortexGridBuilder noDataValue (final double noDataValue) {
+            this.noDataValue = noDataValue;
             return this;
         }
 
@@ -195,6 +203,10 @@ public class VortexGrid implements VortexData, Serializable {
 
     public float[] data() {
         return data;
+    }
+
+    public double noDataValue() {
+        return noDataValue;
     }
 
     public String units() {
