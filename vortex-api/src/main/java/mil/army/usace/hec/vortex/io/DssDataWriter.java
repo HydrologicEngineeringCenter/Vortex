@@ -335,7 +335,7 @@ public class DssDataWriter extends DataWriter {
                 || desc.equals("swe")) {
             return "SWE";
         } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
-            return "SNOWFALL ACCUMLATION";
+            return "SNOWFALL ACCUMULATION";
         } else if (desc.contains("albedo")) {
             return "ALBEDO";
         } else if (desc.contains("snow") && desc.contains("depth")) {
