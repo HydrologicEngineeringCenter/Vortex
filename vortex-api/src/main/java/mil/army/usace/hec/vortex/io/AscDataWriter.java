@@ -13,6 +13,7 @@ import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class AscDataWriter extends DataWriter {
+    private static final double NO_DATA_VALUE = -9999;
 
     AscDataWriter(Builder builder) {
         super(builder);
@@ -32,12 +33,15 @@ public class AscDataWriter extends DataWriter {
             } else {
                 float[] flipped = MatrixUtils.flipArray(grid.data(), grid.nx(), grid.ny());
                 gridOut = VortexGrid.builder()
-                        .dx(grid.dx()).dy(grid.dy())
-                        .nx(grid.nx()).ny(grid.ny())
+                        .dx(grid.dx())
+                        .dy(grid.dy())
+                        .nx(grid.nx())
+                        .ny(grid.ny())
                         .originX(grid.originX())
                         .originY(grid.originY() + grid.dy() * grid.ny())
                         .wkt(grid.wkt())
                         .data(flipped)
+                        .noDataValue(grid.noDataValue())
                         .units(grid.units())
                         .fileName(grid.fileName())
                         .shortName(grid.shortName())
@@ -49,7 +53,9 @@ public class AscDataWriter extends DataWriter {
                         .build();
             }
 
-            Dataset dataset = RasterUtils.getDatasetFromVortexGrid(gridOut);
+            Dataset dataset = RasterUtils.getDatasetFromVortexGrid(
+                    RasterUtils.resetNoDataValue(gridOut, NO_DATA_VALUE)
+            );
             ArrayList<String> gdalOptions = new ArrayList<>();
             gdalOptions.add("-of");
             gdalOptions.add("AAIGrid");

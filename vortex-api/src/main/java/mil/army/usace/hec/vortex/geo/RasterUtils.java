@@ -50,4 +50,34 @@ public class RasterUtils {
 
         return raster;
     }
+
+    public static VortexGrid resetNoDataValue(VortexGrid grid, double noDataValue) {
+        float[] data = grid.data();
+        double noDataValueIn = grid.noDataValue();
+        for (int i = 0; i < data.length; i++) {
+            if (Double.compare(data[i], noDataValueIn) == 0) {
+                data[i] = (float) noDataValue;
+            }
+        }
+
+        return VortexGrid.builder()
+                .dx(grid.dx())
+                .dy(grid.dy())
+                .nx(grid.nx())
+                .ny(grid.ny())
+                .originX(grid.originX())
+                .originY(grid.originY())
+                .wkt(grid.wkt())
+                .data(data)
+                .noDataValue(noDataValue)
+                .units(grid.units())
+                .fileName(grid.fileName())
+                .shortName(grid.shortName())
+                .fullName(grid.fullName())
+                .description(grid.description())
+                .startTime(grid.startTime())
+                .endTime(grid.endTime())
+                .interval(grid.interval())
+                .build();
+    }
 }

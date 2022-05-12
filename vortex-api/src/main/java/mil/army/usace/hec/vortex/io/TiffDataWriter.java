@@ -12,6 +12,7 @@ import java.util.Vector;
 import java.util.stream.Collectors;
 
 public class TiffDataWriter extends DataWriter {
+    private static final double NO_DATA_VALUE = -9999;
 
     TiffDataWriter(Builder builder) {
         super(builder);
@@ -25,7 +26,9 @@ public class TiffDataWriter extends DataWriter {
                 .collect(Collectors.toList());
 
         grids.forEach(grid -> {
-            Dataset dataset = RasterUtils.getDatasetFromVortexGrid(grid);
+            Dataset dataset = RasterUtils.getDatasetFromVortexGrid(
+                    RasterUtils.resetNoDataValue(grid, NO_DATA_VALUE)
+            );
             ArrayList<String> gdalOptions = new ArrayList<>();
             gdalOptions.add("-of");
             gdalOptions.add("Gtiff");
@@ -40,7 +43,7 @@ public class TiffDataWriter extends DataWriter {
             gdalOptions.add("-co");
             gdalOptions.add("BIGTIFF=YES");
             gdalOptions.add("-a_nodata");
-            gdalOptions.add("-9999");
+            gdalOptions.add(Double.toString(NO_DATA_VALUE));
             TranslateOptions translateOptions = new TranslateOptions(new Vector<>(gdalOptions));
             Dataset out = gdal.Translate(destination.toString(), dataset, translateOptions);
             out.FlushCache();
