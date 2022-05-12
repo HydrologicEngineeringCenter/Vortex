@@ -1,60 +1,70 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecDSSFileDataManager;
+import hec.heclib.grid.GridData;
+import hec.heclib.grid.GridInfo;
+import hec.heclib.grid.GriddedData;
+import mil.army.usace.hec.vortex.TestUtil;
 import org.gdal.gdal.gdal;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 class SnodasDataReaderTest {
+    private static final String folder = "/regression/io/snodas_reader/";
+    private static final File inFile = TestUtil.getResourceFile(folder + "SNODAS_20191031.tar");
+    private static final File outFile = TestUtil.getResourceFile(folder + "snodas_test.dss");
 
-    @Test
-    void gdalTest() {
-        String path = new File(getClass().getResource(
-                "/regression/io/snodas_reader/SNODAS_20191031.tar").getFile()).toString();
-        String virtualPath = "/vsizip/" + path;
+    @BeforeAll
+    static void setUp() {
+        if(inFile == null || outFile == null) Assertions.fail();
+        String virtualPath = "/vsizip/" + inFile;
         gdal.ReadDir(virtualPath);
-    } // gdalTest
 
-    @Test
-    void SnodasTest() {
-        String path = Paths.get("src/test/resources/regression/io/snodas_reader/SNODAS_20191101.tar").toAbsolutePath().toString();
+        List<String> inFiles = Collections.singletonList(inFile.getAbsolutePath());
+        List<String> variables = new ArrayList<>(DataReader.getVariables(inFile.getAbsolutePath()));
 
-        List<String> inFiles = new ArrayList<>();
-        inFiles.add(path);
-        String outFile = Paths.get("src/test/resources/regression/io/snodas_reader/snodas_test.dss").toAbsolutePath().toString();
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(variables)
+                .destination(outFile.getAbsolutePath())
+                .build();
 
-        List<String> availableVariables = Arrays.asList("SWE", "Snow Depth", "Snow Melt Runoff at the Base of the Snow Pack", "Sublimation from the Snow Pack",
-                "Sublimation of Blowing Snow", "Solid Precipitation", "Liquid Precipitation", "Snow Pack Average Temperature");
-
-        for(String variableName : availableVariables) {
-            List<String> variables = new ArrayList<>();
-            variables.add(variableName);
-
-            BatchImporter importer = BatchImporter.builder()
-                    .inFiles(inFiles)
-                    .variables(variables)
-                    .destination(outFile)
-                    .build();
-
-            importer.process();
-        } // Import all variables
+        importer.process();
 
         HecDSSFileDataManager fileManager = new HecDSSFileDataManager();
-        fileManager.closeFile(outFile);
+        fileManager.closeFile(outFile.getAbsolutePath());
+    }
 
-        try {
-            Files.delete(Path.of(outFile));
-            Path folderPath = Paths.get("src/test/resources/regression/io/snodas_reader/SNODAS_20191101_unzip");
-            Files.walk(folderPath)
-                    .sorted(Comparator.reverseOrder())
-                    .forEach(p -> {
-                        try { Files.delete(p); }
-                        catch(IOException exception) { exception.printStackTrace(); }
-                    });
-        } catch(IOException exception) { throw new IllegalArgumentException(); }
-    } // SnodasTest
-} // BilZipDataReaderTest
+    @Test
+    void swe() {
+        if(outFile == null) Assertions.fail();
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(outFile.getAbsolutePath());
+        griddedData.setPathname("///SWE/31OCT2019:0600///");
+
+        GridData gridData = new GridData();
+        int[] status = new int[1];
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridInfo.getDataType());
+        Assertions.assertEquals("31 October 2019, 06:00", gridInfo.getStartTime());
+        Assertions.assertEquals("31 October 2019, 06:00", gridInfo.getEndTime());
+        Assertions.assertEquals(-4257.471, gridInfo.getMeanValue(), 1E-3);
+        Assertions.assertEquals(30693.0, gridInfo.getMaxValue(), 1E-3);
+        Assertions.assertEquals(-9999.0, gridInfo.getMinValue(), 1E-3);
+
+        griddedData.done();
+    }
+}
