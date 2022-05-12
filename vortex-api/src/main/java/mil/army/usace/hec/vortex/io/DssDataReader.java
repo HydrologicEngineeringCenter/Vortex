@@ -7,6 +7,7 @@ import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
 import hec.heclib.grid.GriddedData;
+import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
@@ -92,14 +93,23 @@ class DssDataReader extends DataReader {
         float[] data = MatrixUtils.flipArray(gridData.getData(), nx, ny);
 
         return  VortexGrid.builder()
-                .dx(cellSize).dy(-cellSize).nx(nx).ny(ny)
-                .originX(ulx).originY(uly)
-                .wkt(wkt).data(data).units(info.getDataUnits())
-                .fileName(path).shortName(variable)
-                .description(variable).fullName(pathName)
+                .dx(cellSize)
+                .dy(-cellSize)
+                .nx(nx).ny(ny)
+                .originX(ulx)
+                .originY(uly)
+                .wkt(wkt)
+                .data(data)
+                .noDataValue(Heclib.UNDEFINED_FLOAT)
+                .units(info.getDataUnits())
+                .fileName(path)
+                .shortName(variable)
+                .description(variable)
+                .fullName(pathName)
                 .startTime(startTime)
                 .endTime(endTime)
-                .interval(interval).build();
+                .interval(interval)
+                .build();
     }
 
     public static Set<String> getVariables(String pathToDss){
