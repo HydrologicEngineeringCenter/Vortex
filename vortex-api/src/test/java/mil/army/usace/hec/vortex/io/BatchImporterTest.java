@@ -222,4 +222,53 @@ class BatchImporterTest {
 
         griddedData.done();
     }
+
+    @Test
+    void PrismTmeanBil() {
+        URL inUrl = Objects.requireNonNull(getClass().getResource(
+                "/prism_tmean_bil/PRISM_tmean_stable_4kmM3_196001_bil.bil"));
+
+        String inFile = new File(inUrl.getFile()).toString();
+
+        List<String> inFiles = new ArrayList<>();
+        inFiles.add(inFile);
+
+        URL outURL = Objects.requireNonNull(getClass().getResource(
+                "/prism_tmean_bil/prism_tmean_bil.dss"));
+
+        String outFile = new File(outURL.getFile()).toString();
+
+        String variableName = "tmean";
+        List<String> variables = new ArrayList<>();
+        variables.add(variableName);
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(variables)
+                .destination(outFile)
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(outFile);
+        griddedData.setPathname("///TEMPERATURE/01JAN1960:0000/01FEB1960:0000//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("1 January 1960, 00:00", gridInfo.getStartTime());
+        Assertions.assertEquals("31 January 1960, 24:00", gridInfo.getEndTime());
+        Assertions.assertEquals("DEG C", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_AVER.value(), gridInfo.getDataType());
+        Assertions.assertEquals(-1.326, gridInfo.getMeanValue(), 1E-3);
+        Assertions.assertEquals(21.233, gridInfo.getMaxValue(), 1E-3);
+        Assertions.assertEquals(-17.596, gridInfo.getMinValue(), 1E-3);
+
+        griddedData.done();
+    }
 }
