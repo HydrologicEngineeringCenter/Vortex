@@ -216,9 +216,9 @@ class BatchImporterTest {
         Assertions.assertEquals("1 January 2017, 12:00", gridInfo.getEndTime());
         Assertions.assertEquals("MM", gridInfo.getDataUnits());
         Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
-        Assertions.assertEquals(-4472.534, gridInfo.getMeanValue(), 1E-3);
+        Assertions.assertEquals(2.986, gridInfo.getMeanValue(), 1E-3);
         Assertions.assertEquals(208.298, gridInfo.getMaxValue(), 1E-3);
-        Assertions.assertEquals(-9999.0, gridInfo.getMinValue(), 1E-3);
+        Assertions.assertEquals(0.0, gridInfo.getMinValue(), 1E-3);
 
         griddedData.done();
     }
