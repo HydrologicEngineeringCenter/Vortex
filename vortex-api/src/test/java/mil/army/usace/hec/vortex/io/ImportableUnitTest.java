@@ -1,17 +1,15 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.dss.DssDataType;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
-import hec.heclib.grid.GridUtilities;
+import hec.heclib.grid.GriddedData;
 import mil.army.usace.hec.vortex.geo.WktFactory;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -72,28 +70,41 @@ class ImportableUnitTest {
         importableUnit.process();
 
         int[] status = new int[1];
-        String path = "///PRECIPITATION/02JAN2017:1100/02JAN2017:1200//";
-        GridData gridData = GridUtilities.retrieveGridFromDss(destination.toString(), path, status);
-
-        GridInfo info = gridData.getGridInfo();
-        assertEquals(996, info.getLowerLeftCellY());
-        assertEquals(-1036, info.getLowerLeftCellX());
-
-        File persisted = new File(getClass().getResource(
-                "/regression/mrms/mrms_data_serialized").getFile());
-        ArrayList arraylist = new ArrayList<>();
-        try {
-            FileInputStream fis = new FileInputStream(persisted.toString());
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            arraylist = (ArrayList) ois.readObject();
-            ois.close();
-            fis.close();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(destination.toString());
+        griddedData.setPathname("///PRECIPITATION/02JAN2017:1100/02JAN2017:1200//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
         }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("2 January 2017, 11:00", gridInfo.getStartTime());
+        Assertions.assertEquals("2 January 2017, 12:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
+        Assertions.assertEquals(0.065, gridInfo.getMeanValue(), 1E-3);
+        Assertions.assertEquals(1.204, gridInfo.getMaxValue(), 1E-3);
+        Assertions.assertEquals(0.0, gridInfo.getMinValue(), 1E-3);
+        assertEquals(996, gridInfo.getLowerLeftCellY());
+        assertEquals(-1036, gridInfo.getLowerLeftCellX());
+
         float[] data = gridData.getData();
-        for (int i = 0; i < arraylist.size(); i++) {
-            assertEquals(arraylist.get(i), data[i]);
+
+        griddedData.setPathname("///PRECIPITATION/02JAN2017:1100/02JAN2017:1200/PERSISTED/");
+        GridData persistedGridData = new GridData();
+        griddedData.retrieveGriddedData(true, persistedGridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
         }
+
+        float[] persistedData = persistedGridData.getData();
+
+        for (int i = 0; i < data.length; i++) {
+            assertEquals(data[i], persistedData[i], 1E-4);
+        }
+
+        griddedData.done();
     }
 }

@@ -54,46 +54,42 @@ class BatchImporterTest {
         importer.process();
 
         int[] status = new int[1];
-        String path = "///PRECIPITATION/02JAN2017:1100/02JAN2017:1200//";
-        GridData gridData = GridUtilities.retrieveGridFromDss(outFile.getPath(), path, status);
-
-        GridInfo info = gridData.getGridInfo();
-        assertEquals(996, info.getLowerLeftCellY());
-        assertEquals(-1036, info.getLowerLeftCellX());
-
-        File persisted = new File(getClass().getResource(
-                "/regression/mrms/mrms_data_serialized").getFile());
-        ArrayList arraylist = new ArrayList<>();
-        try {
-            FileInputStream fis = new FileInputStream(persisted.toString());
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            arraylist = (ArrayList) ois.readObject();
-            ois.close();
-            fis.close();
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(outFile.getPath());
+        griddedData.setPathname("///PRECIPITATION/02JAN2017:1100/02JAN2017:1200//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
         }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("2 January 2017, 11:00", gridInfo.getStartTime());
+        Assertions.assertEquals("2 January 2017, 12:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
+        Assertions.assertEquals(0.065, gridInfo.getMeanValue(), 1E-3);
+        Assertions.assertEquals(1.204, gridInfo.getMaxValue(), 1E-3);
+        Assertions.assertEquals(0.0, gridInfo.getMinValue(), 1E-3);
+        assertEquals(996, gridInfo.getLowerLeftCellY());
+        assertEquals(-1036, gridInfo.getLowerLeftCellX());
+
         float[] data = gridData.getData();
-        for (int i = 0; i < arraylist.size(); i++) {
-            assertEquals(arraylist.get(i), data[i]);
+
+        griddedData.setPathname("///PRECIPITATION/02JAN2017:1100/02JAN2017:1200/PERSISTED/");
+        GridData persistedGridData = new GridData();
+        griddedData.retrieveGriddedData(true, persistedGridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
         }
 
-//        float[] vortex = gridData.getData();
-//        List<Float> list = new ArrayList<>();
-//        for (int i = 0; i < vortex.length; i++){
-//            list.add(vortex[i]);
-//        }
-//
-//        try{
-//            FileOutputStream fos= new FileOutputStream("C:/Temp/mrms_data_serialized");
-//            ObjectOutputStream oos= new ObjectOutputStream(fos);
-//            oos.writeObject(list);
-//            oos.close();
-//            fos.close();
-//        }catch(IOException ioe){
-//            ioe.printStackTrace();
-//        }
+        float[] persistedData = persistedGridData.getData();
 
+        for (int i = 0; i < data.length; i++) {
+            assertEquals(data[i], persistedData[i], 1E-4);
+        }
+
+        griddedData.done();
     }
 
     @Test
