@@ -11,16 +11,25 @@ repositories {
 }
 
 dependencies {
-    implementation("mil.army.usace.hec:hec:6.0.00.100")
-    implementation("mil.army.usace.hec:heclib:6.0.00.100")
-    implementation("mil.army.usace.hec:hecData:6.0.00.100")
+    implementation ("mil.army.usace.hec:hec-monolith:2.+") {
+        isTransitive = false
+    }
+    implementation ("mil.army.usace.hec:hec-nucleus-data:1.+") {
+        isTransitive = false
+    }
+    implementation ("mil.army.usace.hec:hec-nucleus-metadata:1.+") {
+        isTransitive = false
+    }
     implementation("org.gdal:gdal:3.2.0")
     implementation("org.locationtech.jts:jts-core:1.16.1")
     implementation("tech.units:indriya:2.0.4")
     implementation("systems.uom:systems-common:2.0.2")
     implementation("edu.ucar:cdm-core:5.4.1")
     implementation("org.apache.commons:commons-compress:1.20")
-    runtimeOnly("com.rmanet:rma:6.0.0.51")
+    //start runtime-only deps required by HEC shared libraries
+    runtimeOnly("com.google.flogger:flogger:0.7.4")
+    runtimeOnly("com.google.flogger:flogger-system-backend:0.7.4")
+    //end runtime-only deps required by HEC shared libraries
     runtimeOnly("edu.ucar:grib:5.4.1")
     runtimeOnly("edu.ucar:netcdf4:5.4.1")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.25")
