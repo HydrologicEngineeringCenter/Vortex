@@ -56,28 +56,23 @@ class DssDataReader extends DataReader {
     }
 
     private VortexGrid dssToDto(GridData gridData){
-        GridInfo info = gridData.getGridInfo();
-        String wkt;
-        if (ReferenceUtils.isShg(info)){
-            wkt = WktFactory.getShg();
-        } else {
-            wkt = ReferenceUtils.enhanceWkt(info.getSpatialReferenceSystem());
-        }
-        float cellSize = info.getCellSize();
-        int nx = info.getNumberOfCellsX();
-        int ny = info.getNumberOfCellsY();
-        double ulx = info.getLowerLeftCellX() * cellSize;
-        double lly = info.getLowerLeftCellY() * cellSize;
+        GridInfo gridInfo = gridData.getGridInfo();
+        String wkt = WktFactory.fromGridInfo(gridInfo);
+        float cellSize = gridInfo.getCellSize();
+        int nx = gridInfo.getNumberOfCellsX();
+        int ny = gridInfo.getNumberOfCellsY();
+        double ulx = gridInfo.getLowerLeftCellX() * cellSize;
+        double lly = gridInfo.getLowerLeftCellY() * cellSize;
         int direction = ReferenceUtils.getUlyDirection(wkt, ulx, lly);
         double uly = lly + direction * ny * cellSize;
         ZonedDateTime startTime;
         ZonedDateTime endTime;
         Duration interval;
-        if (!info.getStartTime().isEmpty()) {
+        if (!gridInfo.getStartTime().isEmpty()) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-            startTime = ZonedDateTime.of(LocalDateTime.parse(info.getStartTime(), formatter), ZoneId.of("UTC"));
+            startTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getStartTime(), formatter), ZoneId.of("UTC"));
             try {
-                endTime = ZonedDateTime.of(LocalDateTime.parse(info.getEndTime(), formatter), ZoneId.of("UTC"));
+                endTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getEndTime(), formatter), ZoneId.of("UTC"));
             } catch (DateTimeParseException e) {
                 endTime = startTime;
             }
@@ -101,7 +96,7 @@ class DssDataReader extends DataReader {
                 .wkt(wkt)
                 .data(data)
                 .noDataValue(Heclib.UNDEFINED_FLOAT)
-                .units(info.getDataUnits())
+                .units(gridInfo.getDataUnits())
                 .fileName(path)
                 .shortName(variable)
                 .description(variable)

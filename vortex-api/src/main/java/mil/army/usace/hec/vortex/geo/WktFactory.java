@@ -270,4 +270,51 @@ public class WktFactory {
         srs.delete();
         return wkt;
     }
+
+    public static String fromGridInfo (GridInfo gridInfo) {
+        if (ReferenceUtils.isShg(gridInfo)) {
+            return getShg();
+        }
+        if (gridInfo instanceof AlbersInfo) {
+            AlbersInfo albersInfo = (AlbersInfo) gridInfo;
+            SpatialReference srs = new SpatialReference();
+
+            int datum = albersInfo.getProjectionDatum();
+            if (datum == GridInfo.getNad83()) {
+                srs.SetWellKnownGeogCS("NAD83");
+            } else if (datum == GridInfo.getNad27()) {
+                srs.SetWellKnownGeogCS("NAD27");
+            }
+
+            double parallel1 = albersInfo.getFirstStandardParallel();
+            double parallel2 = albersInfo.getSecondStandardParallel();
+            double originLat = albersInfo.getLatitudeOfProjectionOrigin();
+            double originLon = albersInfo.getCentralMeridian();
+            double falseEasting = albersInfo.getFalseEasting();
+            double falseNorthing = albersInfo.getFalseNorthing();
+            srs.SetACEA(parallel1, parallel2, originLat, originLon, falseEasting, falseNorthing);
+
+            String units = albersInfo.getProjectionUnits().toLowerCase();
+            if (units.contains("foot") || units.contains("us")) {
+                srs.SetLinearUnits(SRS_UL_US_FOOT, Double.parseDouble(SRS_UL_FOOT_CONV));
+            } else {
+                srs.SetLinearUnits(SRS_UL_METER, 1.0);
+            }
+
+            String wkt = srs.ExportToWkt();
+            srs.delete();
+            return wkt;
+        }
+        if (gridInfo instanceof SpecifiedGridInfo) {
+            SpecifiedGridInfo specifiedGridInfo = (SpecifiedGridInfo) gridInfo;
+            SpatialReference srs = new SpatialReference(specifiedGridInfo.getSpatialReferenceSystem());
+            String wkt = srs.ExportToWkt();
+            srs.delete();
+            return wkt;
+        }
+        SpatialReference srs = new SpatialReference(gridInfo.getSpatialReferenceSystem());
+        String wkt = srs.ExportToWkt();
+        srs.delete();
+        return wkt;
+    }
 }
