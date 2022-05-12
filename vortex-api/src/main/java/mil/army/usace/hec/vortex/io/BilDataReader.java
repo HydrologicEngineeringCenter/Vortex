@@ -201,16 +201,30 @@ class BilDataReader extends DataReader {
         float[] data = new float[nx * ny];
         band.ReadRaster(0, 0, nx, ny, gdalconst.GDT_Float32, data);
 
+        Double[] value = new Double[1];
+        band.GetNoDataValue(value);
+        double noDataValue = value[0];
+
         raster.delete();
         band.delete();
 
         VortexGrid dto = VortexGrid.builder()
-                .dx(dx).dy(dy).nx(nx).ny(ny)
-                .originX(ulx).originY(uly)
-                .wkt(wkt).data(data).units(units)
-                .fileName(path).shortName(shortName)
-                .fullName(fullName).description(description)
-                .startTime(startTime).endTime(endTime)
+                .dx(dx)
+                .dy(dy)
+                .nx(nx)
+                .ny(ny)
+                .originX(ulx)
+                .originY(uly)
+                .wkt(wkt)
+                .data(data)
+                .noDataValue(noDataValue)
+                .units(units)
+                .fileName(path)
+                .shortName(shortName)
+                .fullName(fullName)
+                .description(description)
+                .startTime(startTime)
+                .endTime(endTime)
                 .interval(interval)
                 .build();
 
