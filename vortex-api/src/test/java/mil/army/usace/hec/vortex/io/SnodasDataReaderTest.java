@@ -9,6 +9,7 @@ import mil.army.usace.hec.vortex.TestUtil;
 import org.gdal.gdal.gdal;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Disabled
 class SnodasDataReaderTest {
     private static final String folder = "/regression/io/snodas_reader/";
     private static final File inFile = TestUtil.getResourceFile(folder + "SNODAS_20191031.tar");
