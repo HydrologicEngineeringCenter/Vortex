@@ -19,7 +19,7 @@ class SubsetterTest {
                 .dy(-100)
                 .nx(4)
                 .ny(4)
-                .wkt(WktFactory.shg())
+                .wkt(WktFactory.getShg())
                 .data(new float[16])
                 .build();
 

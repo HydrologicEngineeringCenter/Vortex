@@ -1,5 +1,8 @@
 package mil.army.usace.hec.vortex.geo;
 
+import hec.heclib.grid.AlbersInfo;
+import hec.heclib.grid.GridInfo;
+import hec.heclib.grid.SpecifiedGridInfo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
 import ucar.unidata.geoloc.ProjectionImpl;
@@ -10,7 +13,7 @@ import ucar.unidata.util.Parameter;
 
 import java.util.*;
 
-import static org.gdal.osr.osrConstants.SRS_UL_METER;
+import static org.gdal.osr.osrConstants.*;
 
 public class WktFactory {
 
@@ -243,7 +246,7 @@ public class WktFactory {
         return null;
     }
 
-    public static String shg() {
+    public static String getShg() {
         return "PROJCS[\"USA_Contiguous_Albers_Equal_Area_Conic_USGS_version\"," +
                 "        GEOGCS[\"GCS_North_American_1983\"," +
                 "        DATUM[\"D_North_American_1983\"," +

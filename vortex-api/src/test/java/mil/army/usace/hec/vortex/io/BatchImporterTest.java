@@ -38,7 +38,7 @@ class BatchImporterTest {
         Map<String, String> options = new HashMap<>();
         options.put("pathToShp", shapefile.toString());
         options.put("targetCellSize", "2000");
-        options.put("targetWkt", WktFactory.shg());
+        options.put("targetWkt", WktFactory.getShg());
         options.put("resamplingMethod", "Bilinear");
 
         File outFile = new File(getClass().getResource(
@@ -113,7 +113,7 @@ class BatchImporterTest {
         Map<String, String> options = new HashMap<>();
         options.put("pathToShp", shapefile.toString());
         options.put("targetCellSize", "2000");
-        options.put("targetWkt", WktFactory.shg());
+        options.put("targetWkt", WktFactory.getShg());
         options.put("resamplingMethod", "Bilinear");
 
         Map<String, String> writeOptions = new HashMap<>();

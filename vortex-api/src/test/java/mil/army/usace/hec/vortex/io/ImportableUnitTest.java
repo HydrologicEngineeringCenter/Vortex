@@ -57,7 +57,7 @@ class ImportableUnitTest {
                 "    AXIS[\"Easting\",EAST],\n" +
                 "    AXIS[\"Northing\",NORTH]]");
         geoOptions.put("targetCellSize", "2000");
-        geoOptions.put("targetWkt", WktFactory.shg());
+        geoOptions.put("targetWkt", WktFactory.getShg());
         geoOptions.put("resamplingMethod", "Bilinear");
 
         Path destination = new File(getClass().getResource(

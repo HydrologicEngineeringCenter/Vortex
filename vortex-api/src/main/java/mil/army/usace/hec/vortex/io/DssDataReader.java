@@ -59,7 +59,7 @@ class DssDataReader extends DataReader {
         GridInfo info = gridData.getGridInfo();
         String wkt;
         if (ReferenceUtils.isShg(info)){
-            wkt = WktFactory.shg();
+            wkt = WktFactory.getShg();
         } else {
             wkt = ReferenceUtils.enhanceWkt(info.getSpatialReferenceSystem());
         }

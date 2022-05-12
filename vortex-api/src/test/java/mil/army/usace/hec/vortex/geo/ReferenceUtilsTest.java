@@ -66,7 +66,7 @@ class ReferenceUtilsTest {
 
     @Test
     void UlyDirectionReturnsPositiveForShg(){
-        String wkt = WktFactory.shg();
+        String wkt = WktFactory.getShg();
         double x = -1680000;
         double lly = 102000;
         int direction = ReferenceUtils.getUlyDirection(wkt, x, lly);
