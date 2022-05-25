@@ -340,6 +340,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[1] = convert(tAxis.getCalendarDate(time));
                 } else if (fileName.matches("[0-9]{2}.nc")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
+                } else if (fileName.matches(".*cmorph.*hly.*")) {
+                    zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
                 }

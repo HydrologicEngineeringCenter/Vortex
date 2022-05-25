@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.dss.DssDataType;
+import hec.heclib.dss.HecDataManager;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
@@ -14,8 +15,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -266,5 +271,56 @@ class BatchImporterTest {
         Assertions.assertEquals(-17.596, gridInfo.getMinValue(), 1E-3);
 
         griddedData.done();
+    }
+
+    @Test
+    void cmorph() {
+        URL inUrl = Objects.requireNonNull(getClass().getResource(
+                "/cmorph/CMORPH_V1.0_ADJ_0.25deg-HLY_2017010101.nc"));
+
+        String inFile = new File(inUrl.getFile()).toString();
+
+        List<String> inFiles = new ArrayList<>();
+        inFiles.add(inFile);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "cmorph.dss");
+
+        List<String> variables = new ArrayList<>();
+        variables.add("cmorph");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(variables)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        griddedData.setPathname("///PRECIPITATION/01JAN2017:0100/01JAN2017:0200//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("1 January 2017, 01:00", gridInfo.getStartTime());
+        Assertions.assertEquals("1 January 2017, 02:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
+        Assertions.assertEquals(36.17, gridInfo.getMaxValue(), 1E-2);
+
+        griddedData.done();
+
+        try {
+            //Not sure what the boolean is here
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
     }
 }
