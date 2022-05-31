@@ -1,12 +1,14 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.geo.BatchSubsetter;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
@@ -431,8 +433,7 @@ public class ClipperWizard extends JFrame {
         ClipperWizard.this.setVisible(false);
         ClipperWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSavedDialog fileSavedDialog = new FileSavedDialog(ClipperWizard.this, savedFile);
-        fileSavedDialog.setVisible(true);
+        FileSaveUtil.showFileLocation(ClipperWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

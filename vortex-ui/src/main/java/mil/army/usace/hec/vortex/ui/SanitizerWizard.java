@@ -1,11 +1,13 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.math.BatchSanitizer;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
@@ -552,8 +554,7 @@ public class SanitizerWizard extends JFrame {
         SanitizerWizard.this.setVisible(false);
         SanitizerWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSavedDialog fileSavedDialog = new FileSavedDialog(SanitizerWizard.this, savedFile);
-        fileSavedDialog.setVisible(true);
+        FileSaveUtil.showFileLocation(SanitizerWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

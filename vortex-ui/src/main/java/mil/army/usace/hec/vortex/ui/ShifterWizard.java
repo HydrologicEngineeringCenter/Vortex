@@ -1,10 +1,12 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.math.Shifter;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.*;
@@ -455,8 +457,7 @@ public class ShifterWizard extends JFrame {
         ShifterWizard.this.setVisible(false);
         ShifterWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSavedDialog fileSavedDialog = new FileSavedDialog(ShifterWizard.this, savedFile);
-        fileSavedDialog.setVisible(true);
+        FileSaveUtil.showFileLocation(ShifterWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

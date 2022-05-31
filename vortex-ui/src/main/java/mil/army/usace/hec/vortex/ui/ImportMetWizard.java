@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
@@ -13,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -980,8 +982,7 @@ public class ImportMetWizard extends JFrame {
         ImportMetWizard.this.setVisible(false);
         ImportMetWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSavedDialog fileSavedDialog = new FileSavedDialog(ImportMetWizard.this, savedFile);
-        fileSavedDialog.setVisible(true);
+        FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

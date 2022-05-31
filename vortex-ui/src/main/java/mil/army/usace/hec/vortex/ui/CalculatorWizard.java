@@ -1,10 +1,12 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.math.BatchCalculator;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
@@ -509,8 +511,7 @@ public class CalculatorWizard extends JFrame {
         CalculatorWizard.this.setVisible(false);
         CalculatorWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSavedDialog fileSavedDialog = new FileSavedDialog(CalculatorWizard.this, savedFile);
-        fileSavedDialog.setVisible(true);
+        FileSaveUtil.showFileLocation(CalculatorWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

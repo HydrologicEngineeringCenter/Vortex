@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.math.Normalizer;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -853,8 +855,7 @@ public class NormalizerWizard extends JFrame {
         NormalizerWizard.this.setVisible(false);
         NormalizerWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSavedDialog fileSavedDialog = new FileSavedDialog(NormalizerWizard.this, savedFile);
-        fileSavedDialog.setVisible(true);
+        FileSaveUtil.showFileLocation(NormalizerWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

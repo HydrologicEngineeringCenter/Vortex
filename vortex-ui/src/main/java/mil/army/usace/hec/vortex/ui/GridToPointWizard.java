@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.convert.GridToPointConverter;
 import mil.army.usace.hec.vortex.geo.VectorUtils;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
@@ -491,8 +492,7 @@ public class GridToPointWizard extends JFrame {
         GridToPointWizard.this.setVisible(false);
         GridToPointWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSavedDialog fileSavedDialog = new FileSavedDialog(GridToPointWizard.this, savedFile);
-        fileSavedDialog.setVisible(true);
+        FileSaveUtil.showFileLocation(GridToPointWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */
