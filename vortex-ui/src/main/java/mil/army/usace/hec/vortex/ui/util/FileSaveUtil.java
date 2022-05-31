@@ -136,8 +136,14 @@ public class FileSaveUtil {
     public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
         catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) { e.printStackTrace(); }
-        FileSaveUtil.showFileLocation(null, Path.of("."));
-        boolean override = FileSaveUtil.promptFileOverride(null, Path.of("."));
+
+        JFrame frame = new JFrame();
+        frame.setIconImage(IconResources.loadImage("images/vortex_black.png"));
+        Path filePath = Path.of(".");
+
+        FileSaveUtil.showFileLocation(frame, filePath);
+
+        boolean override = FileSaveUtil.promptFileOverride(frame, filePath);
         String logMessage = String.valueOf(override);
         logger.info(logMessage);
     }
