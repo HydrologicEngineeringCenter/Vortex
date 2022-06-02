@@ -246,6 +246,14 @@ public class WktFactory {
         return null;
     }
 
+    /**
+     * @deprecated since v0.10.28, replaced by {@link #getShg}
+     */
+    @Deprecated
+    public static String shg() {
+        return getShg();
+    }
+
     public static String getShg() {
         return "PROJCS[\"USA_Contiguous_Albers_Equal_Area_Conic_USGS_version\"," +
                 "        GEOGCS[\"GCS_North_American_1983\"," +
