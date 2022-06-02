@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
@@ -13,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,8 +49,7 @@ public class ImportMetWizard extends JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                setVisible(false);
-                dispose();
+                closeAction();
             }
         });
     }
@@ -108,10 +109,7 @@ public class ImportMetWizard extends JFrame {
         /* Cancel Button */
         cancelButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizCancel"));
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizCancelTT"));
-        cancelButton.addActionListener(evt -> {
-            this.setVisible(false);
-            this.dispose();
-        });
+        cancelButton.addActionListener(evt -> closeAction());
 
         /* Adding Buttons to NavigationPanel */
         buttonPanel.add(backButton);
@@ -978,6 +976,13 @@ public class ImportMetWizard extends JFrame {
         } // If: listModel is not a DefaultListModel -- should not be happening
 
         return (DefaultListModel<String>) listModel;
+    }
+
+    private void closeAction() {
+        ImportMetWizard.this.setVisible(false);
+        ImportMetWizard.this.dispose();
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

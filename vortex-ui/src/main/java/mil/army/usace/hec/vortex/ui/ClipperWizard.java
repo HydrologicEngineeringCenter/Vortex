@@ -1,12 +1,14 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.geo.BatchSubsetter;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
@@ -37,8 +39,7 @@ public class ClipperWizard extends JFrame {
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                ClipperWizard.this.setVisible(false);
-                ClipperWizard.this.dispose();
+                closeAction();
             }
         });
     }
@@ -96,10 +97,7 @@ public class ClipperWizard extends JFrame {
         /* Cancel Button */
         cancelButton = new JButton(TextProperties.getInstance().getProperty("ClipperWiz_Cancel"));
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ClipperWiz_Cancel_TT"));
-        cancelButton.addActionListener(evt -> {
-            this.setVisible(false);
-            this.dispose();
-        });
+        cancelButton.addActionListener(evt -> closeAction());
 
         /* Adding Buttons to NavigationPanel */
         buttonPanel.add(backButton);
@@ -429,6 +427,13 @@ public class ClipperWizard extends JFrame {
         DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
         if(defaultRightModel == null) { return null; }
         return Collections.list(defaultRightModel.elements());
+    }
+
+    private void closeAction() {
+        ClipperWizard.this.setVisible(false);
+        ClipperWizard.this.dispose();
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSaveUtil.showFileLocation(ClipperWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

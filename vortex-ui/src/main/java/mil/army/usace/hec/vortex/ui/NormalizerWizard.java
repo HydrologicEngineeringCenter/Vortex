@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.math.Normalizer;
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -46,8 +48,7 @@ public class NormalizerWizard extends JFrame {
         this.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                NormalizerWizard.this.setVisible(false);
-                NormalizerWizard.this.dispose();
+                closeAction();
             }
         });
     }
@@ -106,10 +107,7 @@ public class NormalizerWizard extends JFrame {
         /* Cancel Button */
         cancelButton = new JButton(TextProperties.getInstance().getProperty("NormalizerWiz_Cancel"));
         cancelButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Cancel_TT"));
-        cancelButton.addActionListener(evt -> {
-            this.setVisible(false);
-            this.dispose();
-        });
+        cancelButton.addActionListener(evt -> closeAction());
 
         /* Adding Buttons to NavigationPanel */
         buttonPanel.add(backButton);
@@ -851,6 +849,13 @@ public class NormalizerWizard extends JFrame {
         DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
         if(defaultRightModel == null) { return null; }
         return Collections.list(defaultRightModel.elements());
+    }
+
+    private void closeAction() {
+        NormalizerWizard.this.setVisible(false);
+        NormalizerWizard.this.dispose();
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSaveUtil.showFileLocation(NormalizerWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */
