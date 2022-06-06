@@ -96,8 +96,16 @@ public class FileSaveUtil {
         };
     }
 
+    private static Image getWindowIcon(Window window) {
+        return Optional.ofNullable(window)
+                .map(Window::getIconImages)
+                .filter(list -> !list.isEmpty())
+                .map(list -> list.get(0))
+                .orElse(null);
+    }
+
     /* Utility Methods */
-    public static boolean promptFileOverride(JFrame mainFrame, Path filePath) {
+    public static boolean promptFileOverride(Window window, Path filePath) {
         if(Files.notExists(filePath)) {
             logger.warning(FILE_NOT_FOUND);
             return true;
@@ -107,8 +115,8 @@ public class FileSaveUtil {
         String message = filePath + " " + TextProperties.getInstance().getProperty("FileOverrideDialogMessage");
         JOptionPane optionPane = new JOptionPane(message, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
 
-        JDialog dialog = optionPane.createDialog(mainFrame, title);
-        dialog.setIconImage(Optional.ofNullable(mainFrame).map(Frame::getIconImage).orElse(null));
+        JDialog dialog = optionPane.createDialog(window, title);
+        dialog.setIconImage(getWindowIcon(window));
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setVisible(true);
         Object choice = optionPane.getValue();
@@ -116,7 +124,7 @@ public class FileSaveUtil {
         return (int) choice == JOptionPane.OK_OPTION;
     }
 
-    public static void showFileLocation(JFrame mainFrame, Path filePath) {
+    public static void showFileLocation(Window window, Path filePath) {
         if(Files.notExists(filePath)) {
             logger.warning(FILE_NOT_FOUND);
             return;
@@ -125,8 +133,8 @@ public class FileSaveUtil {
         String title = TextProperties.getInstance().getProperty("FileSavedDialogTitle");
         JOptionPane optionPane = new JOptionPane(fileSavedPanel(filePath));
 
-        JDialog dialog = optionPane.createDialog(mainFrame, title);
-        dialog.setIconImage(Optional.ofNullable(mainFrame).map(Frame::getIconImage).orElse(null));
+        JDialog dialog = optionPane.createDialog(window, title);
+        dialog.setIconImage(getWindowIcon(window));
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setVisible(true);
         dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
