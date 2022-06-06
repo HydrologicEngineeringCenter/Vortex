@@ -1,5 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
+import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -245,6 +247,8 @@ public class DestinationSelectionPanel extends JPanel {
         // Deal with user's choice
         if(userChoice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
+            boolean override = FileSaveUtil.promptFileOverride(SwingUtilities.getWindowAncestor(this), selectedFile.toPath());
+            if(!override) return;
             String selectedPath = selectedFile.getAbsolutePath();
             if(!selectedFile.getName().contains(".")) { selectedPath = selectedPath + ".dss"; }
             selectDestinationTextField.setText(selectedPath);
