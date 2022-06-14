@@ -243,7 +243,7 @@ class NetcdfDataReaderTest {
 
         DataReader reader = DataReader.builder()
                 .path(inFile)
-                .variable("RadarOnlyQPE01H_altitude_above_msl")
+                .variable("RadarOnly_QPE_01H_altitude_above_msl")
                 .build();
 
         VortexData vortexData = reader.getDto(0);
@@ -258,7 +258,7 @@ class NetcdfDataReaderTest {
 
         DataReader reader = DataReader.builder()
                 .path(inFile)
-                .variable("VAR209-6-37_FROM_161-0--1_altitude_above_msl")
+                .variable("MultiSensor_QPE_01H_Pass2_altitude_above_msl")
                 .build();
 
         VortexData vortexData = reader.getDto(0);
