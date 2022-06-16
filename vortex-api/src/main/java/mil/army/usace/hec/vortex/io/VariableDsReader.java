@@ -204,9 +204,15 @@ public class VariableDsReader {
 
     private VortexGrid createDTO(float[] data, ZonedDateTime startTime, ZonedDateTime endTime, Duration interval) {
         return VortexGrid.builder()
-                .dx(dx).dy(dy).nx(nx).ny(ny)
-                .originX(ulx).originY(uly)
-                .wkt(wkt).data(data)
+                .dx(dx)
+                .dy(dy)
+                .nx(nx)
+                .ny(ny)
+                .originX(ulx)
+                .originY(uly)
+                .wkt(wkt)
+                .data(data)
+                .noDataValue(variableDS.getFillValue())
                 .units(variableDS.getUnitsString())
                 .fileName(ncd.getLocation())
                 .shortName(variableDS.getShortName())
@@ -214,7 +220,8 @@ public class VariableDsReader {
                 .description(variableDS.getDescription())
                 .startTime(startTime)
                 .endTime(endTime)
-                .interval(interval).build();
+                .interval(interval)
+                .build();
     }
 
     private float[] getFloatArray(ucar.ma2.Array array) {
@@ -244,48 +251,43 @@ public class VariableDsReader {
 
     private void processCellInfo() {
 
-        CoordinateAxis xAxis = null;
+        CoordinateAxis lonAxis = ncd.findCoordinateAxis(AxisType.Lon);
+        CoordinateAxis latAxis = ncd.findCoordinateAxis(AxisType.Lat);
+
+        CoordinateAxis geoXAxis = ncd.findCoordinateAxis(AxisType.GeoX);
+        CoordinateAxis geoYAxis = ncd.findCoordinateAxis(AxisType.GeoY);
+
+        CoordinateAxis xAxis;
         CoordinateAxis yAxis;
 
-        if (coordinateSystem.getXaxis() != null && coordinateSystem.getYaxis() != null) {
-            xAxis = coordinateSystem.getXaxis();
-            yAxis = coordinateSystem.getYaxis();
-
-            nx = (int) xAxis.getSize();
-            ny = (int) yAxis.getSize();
-
-            double[] edgesX = ((CoordinateAxis1D) xAxis).getCoordEdges();
-            ulx = edgesX[0];
-
-            double urx = edgesX[edgesX.length - 1];
-            dx = (urx - ulx) / nx;
-
-            double[] edgesY = ((CoordinateAxis1D) yAxis).getCoordEdges();
-            uly = edgesY[0];
-            double lly = edgesY[edgesY.length - 1];
-            dy = (lly - uly) / ny;
-
-        } else if (coordinateSystem.getLatAxis() != null && coordinateSystem.getLonAxis() != null) {
-            xAxis = coordinateSystem.getLonAxis();
-            yAxis = coordinateSystem.getLatAxis();
-
-            nx = (int) xAxis.getSize();
-            ny = (int) yAxis.getSize();
-
-            double[] edgesX = ((CoordinateAxis1D) xAxis).getCoordEdges();
-            ulx = edgesX[0];
-
-            double urx = edgesX[edgesX.length - 1];
-            dx = (urx - ulx) / nx;
-
-            double[] edgesY = ((CoordinateAxis1D) yAxis).getCoordEdges();
-            uly = edgesY[0];
-            double lly = edgesY[edgesY.length - 1];
-            dy = (lly - uly) / ny;
+        if (geoXAxis != null && geoYAxis != null) {
+            xAxis = geoXAxis;
+            yAxis = geoYAxis;
+        } else if (lonAxis != null && latAxis != null) {
+            xAxis = lonAxis;
+            yAxis = latAxis;
+        } else {
+            throw new IllegalStateException();
         }
 
-        if (wkt == null || wkt.isEmpty()) {
+        nx = (int) xAxis.getSize();
+        ny = (int) yAxis.getSize();
+
+        double[] edgesX = ((CoordinateAxis1D) xAxis).getCoordEdges();
+        ulx = edgesX[0];
+
+        double urx = edgesX[edgesX.length - 1];
+        dx = (urx - ulx) / nx;
+
+        double[] edgesY = ((CoordinateAxis1D) yAxis).getCoordEdges();
+        uly = edgesY[0];
+        double lly = edgesY[edgesY.length - 1];
+        dy = (lly - uly) / ny;
+
+        if (coordinateSystem != null) {
             wkt = WktFactory.createWkt(coordinateSystem.getProjection());
+        } else if (lonAxis != null && latAxis != null) {
+            wkt = WktFactory.fromEpsg(4326);
         }
 
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();

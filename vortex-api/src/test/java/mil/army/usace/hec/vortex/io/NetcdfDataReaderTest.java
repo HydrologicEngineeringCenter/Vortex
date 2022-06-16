@@ -1,17 +1,20 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.dss.DssDataType;
+import hec.heclib.grid.GridData;
+import hec.heclib.grid.GridInfo;
+import hec.heclib.grid.GriddedData;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -153,34 +156,6 @@ class NetcdfDataReaderTest {
         assertTrue(grid.endTime().isEqual(ZonedDateTime.of(1984, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))));
     }
 
-    @Disabled
-    @Test
-    void CmipPrecipImport(){
-        String inFile = new File("D:/data/CMIP/Extraction_pr.nc").toString();
-
-        DataReader reader = DataReader.builder()
-                .path(inFile)
-                .variable("pr")
-                .build();
-
-        VortexData vortexData = reader.getDto(0);
-        VortexGrid vortexGrid = (VortexGrid) vortexData;
-        float[] data = vortexGrid.data();
-
-        List<Double> values = new ArrayList<>();
-        for (int i = 1; i < data.length; i++) {
-            if (!Float.isNaN(data[i])) {
-                values.add((double) data[i]);
-            }
-        }
-
-        double max = Collections.max(values);
-        double min = Collections.min(values);
-
-        assertEquals(66.21134185791016, max, 1E-5);
-        assertEquals(0.04108993336558342, min, 1E-5);
-    }
-
     @Test
     void ArizonaSweDaily(){
         String inFile = new File(getClass().getResource("/01.nc").getFile()).toString();
@@ -282,5 +257,51 @@ class NetcdfDataReaderTest {
         VortexGrid vortexGrid = (VortexGrid) vortexData;
         assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 58, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
         assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+    }
+
+    @Test
+    void cmip() {
+        URL inUrl = Objects.requireNonNull(getClass().getResource(
+                "/cmip/Extraction_pr.nc"));
+
+        String inFile = new File(inUrl.getFile()).toString();
+
+        URL outURL = Objects.requireNonNull(getClass().getResource(
+                "/cmip/cmip.dss"));
+
+        String outFile = new File(outURL.getFile()).toString();
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("pr")
+                .build();
+
+        VortexData data = reader.getDto(0);
+
+        DataWriter writer = DataWriter.builder()
+                .destination(Paths.get(outFile))
+                .data(Collections.singletonList(data))
+                .build();
+
+        writer.write();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(outFile);
+        griddedData.setPathname("///PRECIPITATION/01JAN1950:0000/02JAN1950:0000//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("1 January 1950, 00:00", gridInfo.getStartTime());
+        Assertions.assertEquals("1 January 1950, 24:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
+        Assertions.assertEquals(0.3171827, gridInfo.getMaxValue(), 1E-2);
+
+        griddedData.done();
     }
 }

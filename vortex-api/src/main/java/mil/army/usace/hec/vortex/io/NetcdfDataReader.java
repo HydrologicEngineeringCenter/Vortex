@@ -8,6 +8,7 @@ import mil.army.usace.hec.vortex.geo.WktFactory;
 import ucar.ma2.Array;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
+import ucar.nc2.constants.AxisType;
 import ucar.nc2.constants.FeatureType;
 import ucar.nc2.dataset.*;
 import ucar.nc2.dt.GridCoordSystem;
@@ -101,7 +102,11 @@ public class NetcdfDataReader extends DataReader {
                     if (variable.getShortName().equals(variableName) && variable instanceof VariableDS) {
                         VariableDS variableDS = (VariableDS) variable;
                         List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
-                        if (!coordinateSystems.isEmpty()) {
+
+                        boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
+                                && ncd.findCoordinateAxis(AxisType.Lat) != null;
+
+                        if (!coordinateSystems.isEmpty() || isLatLon) {
                             VariableDsReader reader = VariableDsReader.builder()
                                     .setNetcdfFile(ncd)
                                     .setVariableName(variableName)
@@ -136,7 +141,11 @@ public class NetcdfDataReader extends DataReader {
                     if (variable.getShortName().equals(variableName) && variable instanceof VariableDS) {
                         VariableDS variableDS = (VariableDS) variable;
                         List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
-                        if (!coordinateSystems.isEmpty()) {
+
+                        boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
+                                && ncd.findCoordinateAxis(AxisType.Lat) != null;
+
+                        if (!coordinateSystems.isEmpty() || isLatLon) {
                             return getDtoCount(variableDS);
                         }
                     }
@@ -153,15 +162,19 @@ public class NetcdfDataReader extends DataReader {
         try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path)) {
             List<Variable> variables = ncd.getVariables();
             Set<String> variableNames = new HashSet<>();
-            variables.forEach(variable -> {
+            for (Variable variable : variables) {
                 if (variable instanceof VariableDS) {
                     VariableDS variableDS = (VariableDS) variable;
                     List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
-                    if (!coordinateSystems.isEmpty()) {
+
+                    boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
+                            && ncd.findCoordinateAxis(AxisType.Lat) != null;
+
+                    if (!coordinateSystems.isEmpty() || isLatLon) {
                         variableNames.add(variable.getFullName());
                     }
                 }
-            });
+            }
             return variableNames;
         } catch (Exception e) {
             logger.log(Level.SEVERE, e, e::getMessage);
@@ -180,6 +193,8 @@ public class NetcdfDataReader extends DataReader {
     private List<VortexData> getData(GridDataset dataset, String variable) {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
+
+        double noDataValue = gridDatatype.getVariable().getFillValue();
 
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
@@ -209,6 +224,7 @@ public class NetcdfDataReader extends DataReader {
                                             .originX(grid.getOriginX()).originY(grid.getOriginY())
                                             .wkt(wkt)
                                             .data(data)
+                                            .noDataValue(noDataValue)
                                             .units(gridDatatype.getUnitsString())
                                             .fileName(dataset.getLocation())
                                             .shortName(gridDatatype.getShortName())
@@ -236,6 +252,7 @@ public class NetcdfDataReader extends DataReader {
                             .originX(grid.getOriginX()).originY(grid.getOriginY())
                             .wkt(wkt)
                             .data(data)
+                            .noDataValue(noDataValue)
                             .units(gridDatatype.getUnitsString())
                             .fileName(dataset.getLocation())
                             .shortName(gridDatatype.getShortName())
@@ -279,6 +296,7 @@ public class NetcdfDataReader extends DataReader {
                         .originX(grid.getOriginX()).originY(grid.getOriginY())
                         .wkt(wkt)
                         .data(data)
+                        .noDataValue(noDataValue)
                         .units(gridDatatype.getUnitsString())
                         .fileName(dataset.getLocation())
                         .shortName(gridDatatype.getShortName())
@@ -531,6 +549,8 @@ public class NetcdfDataReader extends DataReader {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
 
+        double noDataValue = gridDatatype.getVariable().getFillValue();
+
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
 
@@ -572,11 +592,15 @@ public class NetcdfDataReader extends DataReader {
             units = gridDatatype.getUnitsString();
         }
         return VortexGrid.builder()
-                .dx(grid.getDx()).dy(grid.getDy())
-                .nx(grid.getNx()).ny(grid.getNy())
-                .originX(grid.getOriginX()).originY(grid.getOriginY())
+                .dx(grid.getDx())
+                .dy(grid.getDy())
+                .nx(grid.getNx())
+                .ny(grid.getNy())
+                .originX(grid.getOriginX())
+                .originY(grid.getOriginY())
                 .wkt(wkt)
                 .data(data)
+                .noDataValue(noDataValue)
                 .units(units)
                 .fileName(dataset.getLocation())
                 .shortName(gridDatatype.getShortName())
