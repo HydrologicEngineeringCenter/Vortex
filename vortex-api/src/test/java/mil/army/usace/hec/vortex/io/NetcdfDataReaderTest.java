@@ -14,7 +14,10 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -276,7 +279,7 @@ class NetcdfDataReaderTest {
                 .variable("pr")
                 .build();
 
-        VortexData data = reader.getDto(0);
+        VortexData data = reader.getDto(10);
 
         DataWriter writer = DataWriter.builder()
                 .destination(Paths.get(outFile))
@@ -288,7 +291,7 @@ class NetcdfDataReaderTest {
         int[] status = new int[1];
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(outFile);
-        griddedData.setPathname("///PRECIPITATION/01JAN1950:0000/02JAN1950:0000//");
+        griddedData.setPathname("///PRECIPITATION/11JAN2050:0000/11JAN2050:2400//");
         GridData gridData = new GridData();
         griddedData.retrieveGriddedData(true, gridData, status);
         if (status[0] < 0) {
@@ -296,11 +299,12 @@ class NetcdfDataReaderTest {
         }
 
         GridInfo gridInfo = gridData.getGridInfo();
-        Assertions.assertEquals("1 January 1950, 00:00", gridInfo.getStartTime());
-        Assertions.assertEquals("1 January 1950, 24:00", gridInfo.getEndTime());
+        Assertions.assertEquals("11 January 2050, 00:00", gridInfo.getStartTime());
+        Assertions.assertEquals("11 January 2050, 24:00", gridInfo.getEndTime());
         Assertions.assertEquals("MM", gridInfo.getDataUnits());
         Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
-        Assertions.assertEquals(0.3171827, gridInfo.getMaxValue(), 1E-2);
+        Assertions.assertEquals(17.903835, gridInfo.getMaxValue(), 1E-2);
+        Assertions.assertEquals(5.481848, gridInfo.getMinValue(), 1E-2);
 
         griddedData.done();
     }
