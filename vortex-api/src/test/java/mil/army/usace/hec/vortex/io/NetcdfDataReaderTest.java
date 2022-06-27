@@ -308,4 +308,49 @@ class NetcdfDataReaderTest {
 
         griddedData.done();
     }
+
+    @Test
+    void gefs() {
+        URL inUrl = Objects.requireNonNull(getClass().getResource(
+                "/gefs/gep01.t06z.pgrb2s.0p25.f000.grb2"));
+
+        String inFile = new File(inUrl.getFile()).toString();
+        List<String> inFiles = Collections.singletonList(inFile);
+
+        URL outURL = Objects.requireNonNull(getClass().getResource(
+                "/gefs/gefs.dss"));
+
+        String outFile = new File(outURL.getFile()).toString();
+
+        List<String> vars = Collections.singletonList("Precipitable_water_entire_atmosphere_single_layer_ens");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(outFile)
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(outFile);
+        griddedData.setPathname("///PRECIPITATION/27JUN2022:0600/27JUN2022:0900//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("27 June 2022, 06:00", gridInfo.getStartTime());
+        Assertions.assertEquals("27 June 2022, 09:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
+        Assertions.assertEquals(75.1, gridInfo.getMaxValue(), 1E-2);
+        Assertions.assertEquals(0.09999999, gridInfo.getMinValue(), 1E-2);
+        Assertions.assertEquals(20.607605, gridInfo.getMeanValue(), 1E-2);
+
+        griddedData.done();
+    }
 }

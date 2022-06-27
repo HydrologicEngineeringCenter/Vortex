@@ -360,6 +360,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
                 } else if (fileName.matches(".*cmorph.*h.*ly.*")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
+                } else if (fileName.matches("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*")) {
+                    zonedDateTimes[1] = zonedDateTimes[0].plusHours(3);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
                 }
