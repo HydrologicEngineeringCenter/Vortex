@@ -182,17 +182,19 @@ public class ZonalStatisticsCalculator {
 
     private ZonalStatistics computeZonalStatistics(String id, Integer[] mask, float[] data) {
 
-        List<Float> values = new ArrayList<>();
-        for (int i = 1; i < data.length; i++) {
-            if (mask[i] == 1) {
-                values.add(data[i]);
+        double noDataValue = grid.noDataValue();
+
+        int count = 0;
+        double sum = 0;
+        for (int i = 0; i < data.length; i++) {
+            double value = data[i];
+            if (mask[i] == 1 && Double.compare(value, noDataValue) != 0) {
+                sum += value;
+                count++;
             }
         }
 
-        double average = values.stream()
-                //filter out values less than -1E20, assume these are NaN
-                .filter(value -> value > -1E20)
-                .mapToDouble(Double::valueOf).sum() / values.size();
+        double average = sum / count;
 
         return ZonalStatistics.builder()
                 .id(id)
