@@ -143,11 +143,13 @@ public class Resampler {
             CoordinateTransformation transform = new CoordinateTransformation(envSrs, destSrs);
 
             double[] lowerLeft = transform.TransformPoint(env.getMinX(), env.getMinY());
-            double minX = lowerLeft[0];
-            double minY = lowerLeft[1];
             double[] upperRight = transform.TransformPoint(env.getMaxX(), env.getMaxY());
-            double maxX = upperRight[0];
-            double maxY = upperRight[1];
+            double minX = Math.min(lowerLeft[0], upperRight[0]);
+            double minY = Math.min(lowerLeft[1], upperRight[1]);
+            double maxX = Math.max(lowerLeft[0], upperRight[0]);
+            double maxY = Math.max(lowerLeft[1], upperRight[1]);
+
+            transform.delete();
 
             if (!Double.isNaN(cellSize)) {
                 envelope.put("maxX", Math.ceil(maxX / cellSize) * cellSize);
