@@ -391,7 +391,7 @@ public class DssDataWriter extends DataWriter {
         if (desc.contains("precipitation") && desc.contains("frequency")) {
             return DssDataType.INST_VAL;
         } else if (desc.contains("precipitation")
-                || desc.contains("precip") && desc.contains("rate")
+                || desc.contains("precip")
                 || desc.contains("qpe01h")
                 || desc.contains("var209-6")) {
             return DssDataType.PER_CUM;
