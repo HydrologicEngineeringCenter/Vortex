@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 class TravelLengthGridCellsWriterTest {
+    private final String tempDir = System.getProperty("java.io.tmpdir");
 
     @Test
     void WriteShpWritesShapefile(){
@@ -19,7 +20,7 @@ class TravelLengthGridCellsWriterTest {
                 .read();
 
         TravelLengthGridCellsWriter writer = TravelLengthGridCellsWriter.builder()
-                .pathToDestination(Paths.get("C:/Temp/punx.shp"))
+                .pathToDestination(Paths.get(tempDir,"punx.shp"))
                 .travelLengthGridCells(gridCells)
                 .cellSize(2000)
                 .projection(WktFactory.create("UTM17N"))
