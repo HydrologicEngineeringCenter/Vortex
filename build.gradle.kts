@@ -9,6 +9,7 @@ plugins {
 val windows_x64 by configurations.creating
 val linux_x64 by configurations.creating
 val macOS_x64 by configurations.creating
+val macOS_aarch64 by configurations.creating
 
 repositories {
     maven(url = "https://www.hec.usace.army.mil/nexus/repository/maven-public/")
@@ -28,9 +29,16 @@ dependencies {
     windows_x64 ("org.gdal:gdal:3.2.1-win-x64@zip")
     linux_x64("net.adoptopenjdk:jre:11.0.9_10-linux64@tar.gz")
     linux_x64("mil.army.usace.hec:javaHeclib:7-IG-linux-x86_64@zip")
-    macOS_x64("net.adoptopenjdk:jre:11.0.7-macOS@zip")
-    macOS_x64("mil.army.usace.hec:javaHeclib:7-HK-macOSx@zip")
-    macOS_x64("org.gdal:gdal:2.4.4-macOSx@zip")
+    macOS_x64("net.adoptium:jre:11.0.15_10:macOS-x64@zip")
+    macOS_x64("org.gdal:gdal:3.5.0_1:macOS-x64@zip")
+    macOS_x64("org.gdal:gdal-data:3.5.0_1@zip")
+    macOS_x64("org.proj:proj-db:9.0.1@zip")
+    macOS_x64("mil.army.usace.hec:javaHeclib:7-IP:macOS-x64@zip")
+    macOS_aarch64("net.adoptium:jre:11.0.15_10:macOS-aarch64@zip")
+    macOS_aarch64("org.gdal:gdal:3.5.0_1:macOS-aarch64@zip")
+    macOS_aarch64("mil.army.usace.hec:javaHeclib:7-IO-RC2:macOS-aarch64@zip")
+    macOS_aarch64("org.gdal:gdal-data:3.5.0_1@zip")
+    macOS_aarch64("org.proj:proj-db:9.0.1@zip")
 }
 
 javafx {
@@ -303,9 +311,17 @@ tasks.register<Copy>("getNatives") {
         }
     }
     else if(OperatingSystem.current().isMacOsX()) {
-        configurations.getByName("macOS_x64").asFileTree.forEach() {
-            from(zipTree(it))
-            into("$projectDir/bin")
+        if(System.getProperty("os.arch") == "aarch64") {
+            configurations.getByName("macOS_aarch64").asFileTree.forEach() {
+                from(zipTree(it))
+                into("$projectDir/bin")
+            }
+        }
+        else {
+            configurations.getByName("macOS_x64").asFileTree.forEach() {
+                from(zipTree(it))
+                into("$projectDir/bin")
+            }
         }
     }
 
