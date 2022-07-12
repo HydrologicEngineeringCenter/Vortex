@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class TiffDataWriterTest {
+    private final String tempDir = System.getProperty("java.io.tmpdir");
 
     @Test
     void TiffDataWriterWritesGribFile(){
@@ -24,7 +25,7 @@ class TiffDataWriterTest {
 
         List<VortexData> dtos = new ArrayList<>(reader.getDtos());
 
-        Path destination = Paths.get("C:/Temp/.tiff");
+        Path destination = Paths.get(tempDir, "data.tiff");
 
         DataWriter writer = DataWriter.builder()
                 .destination(destination)
@@ -47,7 +48,7 @@ class TiffDataWriterTest {
 
         List<VortexData> dtos = new ArrayList<>(reader.getDtos());
 
-        Path destination = Paths.get("C:/Temp/.tiff");
+        Path destination = Paths.get(tempDir,"data.tiff");
 
         DataWriter writer = DataWriter.builder()
                 .destination(destination)
@@ -67,7 +68,7 @@ class TiffDataWriterTest {
 
         List<VortexData> dtos = new ArrayList<>(reader.getDtos());
 
-        Path destination = Paths.get("C:/Temp/.tiff");
+        Path destination = Paths.get(tempDir,"data.tiff");
 
         DataWriter writer = DataWriter.builder()
                 .destination(destination)

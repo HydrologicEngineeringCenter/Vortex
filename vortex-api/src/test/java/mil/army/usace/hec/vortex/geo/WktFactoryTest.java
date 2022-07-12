@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WktFactoryTest {
+    private final String tempDir = System.getProperty("java.io.tmpdir");
+
     static {
         GdalRegister.getInstance();
     }
@@ -45,7 +47,7 @@ class WktFactoryTest {
 
         DataWriter.builder()
                 .data(grids)
-                .destination(Paths.get("C:/Temp/test.dss"))
+                .destination(Paths.get(tempDir, "test.dss"))
                 .build()
                 .write();
     }
@@ -80,7 +82,7 @@ class WktFactoryTest {
 
         DataWriter.builder()
                 .data(grids)
-                .destination(Paths.get("C:/Temp/test.dss"))
+                .destination(Paths.get(tempDir, "test.dss"))
                 .build()
                 .write();
     }

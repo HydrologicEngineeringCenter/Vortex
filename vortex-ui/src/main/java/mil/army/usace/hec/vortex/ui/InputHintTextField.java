@@ -16,7 +16,7 @@ public class InputHintTextField extends JTextField implements FocusListener {
     }
 
     private void setHintText() {
-        Color hintTextColor = ((LineBorder) this.getBorder()).getLineColor().darker();
+        Color hintTextColor = Color.GRAY;
         this.setForeground(hintTextColor);
         this.setText(hintText);
     }

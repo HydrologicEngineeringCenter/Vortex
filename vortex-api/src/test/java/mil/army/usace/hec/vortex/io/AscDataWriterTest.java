@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class AscDataWriterTest {
+    private final String tempDir = System.getProperty("java.io.tmpdir");
+
     @Test
     void AscDataWriterWritesDssFile(){
         String inFile = new File(getClass().getResource(
@@ -27,7 +29,7 @@ class AscDataWriterTest {
 
         String fileName = ImageUtils.generateFileName("qpe", (VortexGrid) dtos.get(0), ImageFileType.ASC);
 
-        Path destination = Paths.get("C:/Temp",fileName);
+        Path destination = Paths.get(tempDir,fileName);
 
         DataWriter writer = DataWriter.builder()
                 .destination(destination)
