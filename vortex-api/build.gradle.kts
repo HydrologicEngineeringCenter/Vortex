@@ -60,8 +60,13 @@ tasks.test {
                 "-Djava.io.tmpdir=/var/tmp")
     }
     else if(org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal@2.4.4/2.4.4_1/lib",
-                "-Djava.io.tmpdir=/var/tmp")
+        jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/javaHeclib",
+                "-Djava.io.tmpdir=${System.getenv("TMPDIR")}")
+        environment = mapOf(
+            "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/proj-db"
+        )
     }
 }
 

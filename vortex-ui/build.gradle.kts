@@ -1,5 +1,6 @@
 plugins {
     java
+    application
     id("maven-publish")
 }
 
@@ -22,111 +23,109 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
 }
 
-base.archivesBaseName = "vortex"
+base.archivesBaseName = "vortex-ui"
 project.version = project.version.toString()
 
-task("calculator", JavaExec::class) {
-    group = "application"
-    main = "mil.army.usace.hec.vortex.ui.CalculatorWizard"
-    classpath = sourceSets["main"].runtimeClasspath
-    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
-    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
+fun isWindows(): Boolean { return org.gradle.internal.os.OperatingSystem.current().isWindows }
+fun isMacOsX(): Boolean { return org.gradle.internal.os.OperatingSystem.current().isMacOsX }
+fun isLinux(): Boolean { return org.gradle.internal.os.OperatingSystem.current().isLinux }
+
+fun uiJvmArgs(): List<String> {
+    val binDir = "${rootProject.projectDir}/bin"
+    var javaLibPath = ""
+    var tempDirPath = ""
+
+    if(isWindows()) {
+        javaLibPath = "${binDir};${binDir}/gdal"
+        tempDirPath = "C:/Temp"
+    }
+
+    if(isMacOsX()) {
+        javaLibPath = "${binDir}/gdal:${binDir}/javaHeclib"
+        tempDirPath = System.getenv("TMPDIR")
+    }
+
+    if(isLinux()) {
+        javaLibPath = "/usr/lib/jni"
+        tempDirPath = "/var/tmp"
+    }
+
+    return listOf("-Djava.library.path=${javaLibPath}", "-Djava.io.tmpdir=${tempDirPath}")
 }
 
-task("clipper", JavaExec::class) {
-    group = "application"
-    main = "mil.army.usace.hec.vortex.ui.ClipperWizard"
-    classpath = sourceSets["main"].runtimeClasspath
-    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
-    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
+fun uiEnvironment(): Map<String,String> {
+    if(isWindows()) {
+        return mapOf(
+                "PATH" to "${rootProject.projectDir}/bin/gdal",
+                "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+                "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
+        )
+    }
+
+    if(isMacOsX()) {
+        return mapOf(
+                "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
+                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal"
+        )
+    }
+
+    if(isLinux()) {
+        return mapOf(
+                "PATH" to "${rootProject.projectDir}/bin/gdal",
+                "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+                "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
+        )
+    }
+
+    return mapOf()
 }
 
-task("importer", JavaExec::class) {
-    group = "application"
-    main = "mil.army.usace.hec.vortex.ui.ImportMetWizard"
-    classpath = sourceSets["main"].runtimeClasspath
-    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
-    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
+fun applicationTasks(): Map<String,String> {
+    return mapOf(
+        "calculator" to "CalculatorWizard",
+        "clipper" to "ClipperWizard",
+        "importer" to "ImportMetWizard",
+        "normalizer" to "NormalizerWizard",
+        "grid-to-point" to "GridToPointWizard",
+        "sanitizer" to "SanitizerWizard",
+        "shifter" to "ShifterWizard"
+    )
 }
 
-task("normalizer", JavaExec::class) {
-    group = "application"
-    main = "mil.army.usace.hec.vortex.ui.NormalizerWizard"
-    classpath = sourceSets["main"].runtimeClasspath
-    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
-    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-        "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-        "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-        "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
-}
-
-task("grid-to-point", JavaExec::class) {
-    group = "application"
-    main = "mil.army.usace.hec.vortex.ui.GridToPointWizard"
-    classpath = sourceSets["main"].runtimeClasspath
-    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
-    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
-}
-
-task("sanitizer", JavaExec::class) {
-    group = "application"
-    main = "mil.army.usace.hec.vortex.ui.SanitizerWizard"
-    classpath = sourceSets["main"].runtimeClasspath
-    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
-    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
-}
-
-task("shifter", JavaExec::class) {
-    group = "application"
-    main = "mil.army.usace.hec.vortex.ui.ShifterWizard"
-    classpath = sourceSets["main"].runtimeClasspath
-    jvmArgs = listOf("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal")
-    environment(mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"))
+applicationTasks().forEach { (taskName, className) ->
+    task(taskName, JavaExec::class) {
+        group = "application"
+        main = "mil.army.usace.hec.vortex.ui.$className"
+        classpath = sourceSets["main"].runtimeClasspath
+        jvmArgs = uiJvmArgs()
+        environment = uiEnvironment()
+    }
 }
 
 tasks.test {
     useJUnit()
-
-    if(org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-        environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-                "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
-                "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
-
-        jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
-                "-Djava.io.tmpdir=C:/Temp")
-    }
-    else if(org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        jvmArgs("-Djava.library.path=/usr/lib/jni",
-                "-Djava.io.tmpdir=/var/tmp")
-    }
-    else if(org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal@2.4.4/2.4.4_1/lib",
-                "-Djava.io.tmpdir=/var/tmp")
-    }
+    jvmArgs = uiJvmArgs()
+    environment = uiEnvironment()
 }
 
 tasks.named<Test>("test") {
     ignoreFailures = true
     useJUnitPlatform()
+}
+
+distributions.main {
+    contents {
+        from("package") {
+            include("*.sh")
+            into("scripts")
+        }
+
+        from(tasks.getByPath(":refreshNatives")) {
+            into("bin")
+        }
+    }
 }
 
 val mavenUser: String by project
@@ -155,3 +154,5 @@ publishing {
 }
 
 tasks.getByName("publish").dependsOn("jar")
+tasks.getByName("startScripts").enabled = false
+tasks.getByName("distTar").enabled = false
