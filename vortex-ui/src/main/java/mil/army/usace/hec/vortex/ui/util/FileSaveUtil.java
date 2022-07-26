@@ -104,9 +104,13 @@ public class FileSaveUtil {
                 .orElse(null);
     }
 
+    private static boolean isFileExists(Path filePath) {
+        return Files.isRegularFile(filePath) && Files.exists(filePath);
+    }
+
     /* Utility Methods */
     public static boolean promptFileOverride(Window window, Path filePath) {
-        if(Files.notExists(filePath)) {
+        if(!isFileExists(filePath)) {
             logger.warning(FILE_NOT_FOUND);
             return true;
         }
@@ -125,7 +129,7 @@ public class FileSaveUtil {
     }
 
     public static void showFileLocation(Window window, Path filePath) {
-        if(Files.notExists(filePath)) {
+        if(!isFileExists(filePath)) {
             logger.warning(FILE_NOT_FOUND);
             return;
         }
