@@ -6,9 +6,12 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GriddedData;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.geo.Resampler;
+import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -350,6 +353,76 @@ class NetcdfDataReaderTest {
         Assertions.assertEquals(75.1, gridInfo.getMaxValue(), 1E-2);
         Assertions.assertEquals(0.09999999, gridInfo.getMinValue(), 1E-2);
         Assertions.assertEquals(20.607605, gridInfo.getMeanValue(), 1E-2);
+
+        griddedData.done();
+    }
+
+    @Test
+    void cordex() {
+        URL inUrl = Objects.requireNonNull(getClass().getResource(
+                "/cordex/precip.nc"));
+
+        String inFile = new File(inUrl.getFile()).toString();
+
+        URL outUrl = Objects.requireNonNull(getClass().getResource(
+                "/cordex/cordex.dss"));
+
+        String outFile = new File(outUrl.getFile()).toString();
+
+        String variable = "pr";
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable(variable)
+                .build();
+
+        VortexGrid grid = (VortexGrid) reader.getDto(0);
+
+        Rectangle2D.Double env = new Rectangle2D.Double(
+                273985.492595975,
+                1066866.62606159,
+                649723.495217674,
+                -270478.472055896
+        );
+
+        String wkt = WktFactory.create("UTM17N");
+
+        VortexGrid resampled = Resampler.builder()
+                .grid(grid)
+                .envelope(env)
+                .envelopeWkt(wkt)
+                .targetWkt(WktFactory.create("UTM17N"))
+                .cellSize(2000.0)
+                .method("Bilinear")
+                .build()
+                .resample();
+
+
+        DataWriter writer = DataWriter.builder()
+                .destination(outFile)
+                .data(Collections.singletonList(resampled))
+                .build();
+
+        writer.write();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(outFile);
+        griddedData.setPathname("///PRECIPITATION/01JAN2001:0000/01JAN2001:2400//");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("1 January 2001, 00:00", gridInfo.getStartTime());
+        Assertions.assertEquals("1 January 2001, 24:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
+        Assertions.assertEquals(0.6857273578643799, gridInfo.getMaxValue(), 1E-5);
+        Assertions.assertEquals(0.0, gridInfo.getMinValue(), 1E-5);
+        Assertions.assertEquals(0.015706462785601616, gridInfo.getMeanValue(), 1E-5);
 
         griddedData.done();
     }

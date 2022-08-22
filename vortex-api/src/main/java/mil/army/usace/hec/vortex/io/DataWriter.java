@@ -6,6 +6,7 @@ import mil.army.usace.hec.vortex.VortexData;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,11 @@ public abstract class DataWriter {
 
         public Builder destination (final Path destination){
             this.destination = destination;
+            return this;
+        }
+
+        public Builder destination (final String destination){
+            this.destination = Paths.get(destination);
             return this;
         }
 

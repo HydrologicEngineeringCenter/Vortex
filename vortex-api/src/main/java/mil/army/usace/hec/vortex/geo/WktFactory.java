@@ -5,6 +5,7 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.SpecifiedGridInfo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
+import ucar.unidata.geoloc.Projection;
 import ucar.unidata.geoloc.ProjectionImpl;
 import ucar.unidata.geoloc.projection.*;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
@@ -134,6 +135,11 @@ public class WktFactory {
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
             return srs.ExportToPrettyWkt();
 
+        } else if (projection instanceof RotatedPole) {
+            SpatialReference srs = new SpatialReference();
+            srs.SetWellKnownGeogCS(WGS84);
+            return srs.ExportToPrettyWkt();
+
         } else if (projection instanceof TransverseMercatorProjection) {
             TransverseMercatorProjection in = (TransverseMercatorProjection) projection;
             SpatialReference srs = new SpatialReference();
@@ -176,6 +182,22 @@ public class WktFactory {
             return "";
         }
 
+    }
+
+    public static double[] getShift(Projection projection) {
+        if (projection instanceof RotatedPole) {
+            List<Parameter> parameters = projection.getProjectionParameters();
+            Map<String, Double> numericParameters = new HashMap<>();
+            parameters.forEach(parameter -> {
+                if (!parameter.isString()) {
+                    numericParameters.put(parameter.getName(), parameter.getNumericValue());
+                }
+            });
+            double x = 180 + numericParameters.get("grid_north_pole_longitude");
+            double y = 90 - numericParameters.get("grid_north_pole_latitude");
+            return new double[]{x, y};
+        }
+        return new double[]{0, 0};
     }
 
     private static void setGcsParameters(ProjectionImpl projection, SpatialReference srs) {

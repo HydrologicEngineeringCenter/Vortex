@@ -444,6 +444,7 @@ public class DssDataWriter extends DataWriter {
     private static Unit<?> getUnits(String units){
         switch (units.toLowerCase()){
             case "kg.m-2.s-1":
+            case "kg m-2 s-1":
             case "kg/m2s":
             case "mm/s":
                 return MILLI(METRE).divide(SECOND);
