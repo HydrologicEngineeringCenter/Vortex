@@ -3,16 +3,11 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.geo.Resampler;
-import mil.army.usace.hec.vortex.geo.VectorUtils;
-import mil.army.usace.hec.vortex.geo.WktFactory;
+import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -94,63 +89,13 @@ public class ImportableUnit {
 
     public static Builder builder() {return new Builder();}
 
-    public void process(){
-
-        Rectangle2D env;
-        String envWkt;
-
-        if (geoOptions.containsKey("pathToShp") && new File(geoOptions.get("pathToShp")).exists()) {
-            env = VectorUtils.getEnvelope(Paths.get(geoOptions.get("pathToShp")));
-            envWkt = VectorUtils.getWkt(Paths.get(geoOptions.get("pathToShp")));
-        } else if (geoOptions.containsKey("minX") && geoOptions.containsKey("maxX")
-                && geoOptions.containsKey("minY") && geoOptions.containsKey("maxY")
-                && geoOptions.containsKey("envWkt")) {
-            double minX = Double.parseDouble(geoOptions.get("minX"));
-            double maxX = Double.parseDouble(geoOptions.get("maxX"));
-            double minY = Double.parseDouble(geoOptions.get("minY"));
-            double maxY = Double.parseDouble(geoOptions.get("maxY"));
-            env = new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
-            envWkt = geoOptions.get("envWkt");
-        } else {
-            env = null;
-            envWkt = null;
-        }
-
-        String method = geoOptions.getOrDefault("resamplingMethod", "near");
+    public void process() {
+        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
 
         int count = reader.getDtoCount();
-
         IntStream.range(0, count).parallel().forEach(i -> {
-
             VortexGrid grid = (VortexGrid) reader.getDto(i);
-
-            String wktValue = geoOptions.getOrDefault("targetWkt", grid.wkt());
-            String epsgValue = geoOptions.get("targetEpsg");
-
-            String destWkt;
-            if (epsgValue != null) {
-                int epsg = Integer.parseInt(epsgValue);
-                destWkt = WktFactory.fromEpsg(epsg);
-            } else {
-                destWkt = wktValue;
-            }
-
-            double cellSize;
-            if (geoOptions.containsKey("targetCellSize")) {
-                cellSize = Double.parseDouble(geoOptions.get("targetCellSize"));
-            } else {
-                cellSize = Double.NaN;
-            }
-
-            VortexGrid processed = Resampler.builder()
-                    .grid(grid)
-                    .envelope(env)
-                    .envelopeWkt(envWkt)
-                    .targetWkt(destWkt)
-                    .cellSize(cellSize)
-                    .method(method)
-                    .build()
-                    .resample();
+            VortexGrid processed = geoProcessor.process(grid);
 
             List<VortexData> data = new ArrayList<>();
             data.add(processed);
