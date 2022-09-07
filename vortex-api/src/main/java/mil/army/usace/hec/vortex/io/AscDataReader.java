@@ -232,7 +232,7 @@ class AscDataReader extends DataReader {
 
         Double[] value = new Double[1];
         band.GetNoDataValue(value);
-        double noDataValue = value[0];
+        double noDataValue = value[0] != null ? value[0] : -9999.0;
 
         dataset.delete();
         band.delete();
