@@ -10,16 +10,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Float32;
 
 public class Resampler {
-    private VortexGrid grid;
-    private Rectangle2D env;
-    private String envWkt;
-    private String targetWkt;
-    private Double cellSize;
-    private String method;
+    private static final Logger logger = Logger.getLogger(Resampler.class.getName());
+    private final VortexGrid grid;
+    private final Rectangle2D env;
+    private final String envWkt;
+    private final String targetWkt;
+    private final Double cellSize;
+    private final String method;
 
     private Resampler(ResamplerBuilder builder){
         this.grid = builder.grid;
@@ -171,10 +173,16 @@ public class Resampler {
         ArrayList<String> options = new ArrayList<>();
         options.add("-of");
         options.add("MEM");
-        options.add("-s_srs");
-        options.add(srData.ExportToWkt());
-        options.add("-t_srs");
-        options.add(destSrs.ExportToWkt());
+        try {
+            srData.Validate();
+            destSrs.Validate();
+            options.add("-s_srs");
+            options.add(srData.ExportToWkt());
+            options.add("-t_srs");
+            options.add(destSrs.ExportToWkt());
+        } catch (RuntimeException e) {
+            logger.warning("Invalid Coordinate Referencing System");
+        }
         options.add("-srcnodata");
         options.add(Double.toString(noDataValue));
         if (env != null) {
