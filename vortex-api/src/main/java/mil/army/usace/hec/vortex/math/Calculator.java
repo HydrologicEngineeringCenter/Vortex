@@ -2,6 +2,8 @@ package mil.army.usace.hec.vortex.math;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 
+import java.util.Arrays;
+
 public class Calculator {
 
     private final VortexGrid inputGrid;
@@ -75,27 +77,31 @@ public class Calculator {
         int size = data.length;
         float[] resultantData = new float[size];
 
+        float noDataValue = (float) inputGrid.noDataValue();
+
+        Arrays.fill(resultantData, noDataValue);
+
         if (!Double.isNaN(multiplyValue)) {
             for (int i = 0; i < size; i++) {
-                resultantData[i] = data[i] * multiplyValue;
+                resultantData[i] = data[i] != noDataValue ? data[i] * multiplyValue : noDataValue;
             }
         }
 
         if (!Double.isNaN(divideValue)) {
             for (int i = 0; i < size; i++) {
-                resultantData[i] = data[i] / divideValue;
+                resultantData[i] = data[i] != noDataValue ? data[i] / divideValue : noDataValue;
             }
         }
 
         if (!Double.isNaN(addValue)) {
             for (int i = 0; i < size; i++) {
-                resultantData[i] = data[i] + addValue;
+                resultantData[i] = data[i] != noDataValue ? data[i] + addValue : noDataValue;
             }
         }
 
         if (!Double.isNaN(subtractValue)) {
             for (int i = 0; i < size; i++) {
-                resultantData[i] = data[i] - subtractValue;
+                resultantData[i] = data[i] != noDataValue ? data[i] - subtractValue : noDataValue;
             }
         }
 
