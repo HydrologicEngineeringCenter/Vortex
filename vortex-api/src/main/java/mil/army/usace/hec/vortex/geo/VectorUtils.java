@@ -79,18 +79,6 @@ public class VectorUtils {
         return new Rectangle2D.Double(minx, miny, maxx-minx, maxy-miny);
     }
 
-    public static Set<String> getValues(Path pathToFeatures, String field){
-        DataSource dataSource = ogr.Open(pathToFeatures.toString());
-        Layer layer = dataSource.GetLayer(0);
-        long count = layer.GetFeatureCount();
-        Set<String> values = new HashSet<>();
-        for (int i = 0; i < count; i++) {
-            Feature feature = layer.GetFeature(i);
-            values.add(feature.GetFieldAsString(field));
-        }
-        return values;
-    }
-
     public static Set<String> getFields(Path pathToFeatures){
         DataSource dataSource = ogr.Open(pathToFeatures.toString());
         Layer layer = dataSource.GetLayer(0);

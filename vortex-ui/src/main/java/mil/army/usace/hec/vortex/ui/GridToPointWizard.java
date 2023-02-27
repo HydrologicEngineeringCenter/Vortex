@@ -10,7 +10,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ItemEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +33,6 @@ public class GridToPointWizard extends JFrame {
     private JTextField sourceFileTextField;
     private JList<String> chosenSourceGridsList;
     private JComboBox<String> fieldComboBox;
-    private String fieldValue;
     private JProgressBar progressBar;
 
     private static final Logger logger = Logger.getLogger(GridToPointWizard.class.getName());
@@ -281,7 +279,7 @@ public class GridToPointWizard extends JFrame {
             public void insertUpdate(DocumentEvent e) { shapefilePath(); }
             public void shapefilePath() {
                 Path pathToShp = Paths.get(zonesShapefile.getText());
-                if (Files.exists(pathToShp) && !pathToShp.toString().isEmpty()) {
+                if (Files.exists(pathToShp) && Files.isRegularFile(pathToShp)) {
                     Set<String> fields = VectorUtils.getFields(pathToShp);
                     model.addAll(fields);
                     fieldComboBox.setSelectedIndex(0);
@@ -298,14 +296,6 @@ public class GridToPointWizard extends JFrame {
             }
         });
 
-        fieldComboBox.addItemListener(e -> {
-            if(e.getStateChange() == ItemEvent.SELECTED) {
-                Path pathToShp = Paths.get(zonesShapefile.getText());
-                fieldValue = String.valueOf(VectorUtils.getValues(pathToShp, Objects.requireNonNull(fieldComboBox.getSelectedItem()).toString()));
-                fieldValue = fieldValue.substring(1, fieldValue.length() - 1);
-            }
-        });
-
         JPanel fieldComboBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         fieldComboBoxPanel.add(fieldComboBox);
 
@@ -319,7 +309,23 @@ public class GridToPointWizard extends JFrame {
         return dataSourceSectionPanel;
     }
 
-    private boolean validateStepTwo() { return true; }
+    private boolean validateStepTwo() {
+        Path pathToShp = Path.of(zonesShapefile.getText());
+        if (!Files.isRegularFile(pathToShp) || Files.notExists(pathToShp)) {
+            JOptionPane.showMessageDialog(this, "Zones shapefile is required.",
+                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        String fieldSelection = String.valueOf(fieldComboBox.getSelectedItem());
+        if (fieldSelection.equals("null") || fieldSelection.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Shapefile field selection is required.",
+                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        return true;
+    }
 
     private void submitStepTwo() {}
 
@@ -364,8 +370,7 @@ public class GridToPointWizard extends JFrame {
 
         /* Shapefile */
         String shapefile = zonesShapefile.getText();
-        String destination = destinationSelectionPanel.getDestinationTextField().getText();
-        String selectedField = Objects.requireNonNull(fieldComboBox.getSelectedItem()).toString();
+        String fieldSelection = String.valueOf(fieldComboBox.getSelectedItem());
 
         /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
@@ -375,23 +380,19 @@ public class GridToPointWizard extends JFrame {
         List<String> partAList = new ArrayList<>(pathnameParts.get("aParts"));
         List<String> partCList = new ArrayList<>(pathnameParts.get("cParts"));
         List<String> partFList = new ArrayList<>(pathnameParts.get("fParts"));
+
         String partA = (partAList.size() == 1) ? partAList.get(0) : "*";
         String partC = (partCList.size() == 1) ? partCList.get(0) : "PRECIPITATION";
         String partF = (partFList.size() == 1) ? partFList.get(0) : "*";
 
         Map<String, String> writeOptions = new HashMap<>();
         String dssFieldA = destinationSelectionPanel.getFieldA().getText();
-        String dssFieldB = destinationSelectionPanel.getFieldB().getText();
         String dssFieldC = destinationSelectionPanel.getFieldC().getText();
         String dssFieldF = destinationSelectionPanel.getFieldF().getText();
 
+        String destination = destinationSelectionPanel.getDestinationTextField().getText();
         if (destination.toLowerCase().endsWith(".dss")) {
             writeOptions.put("partA", (dssFieldA.isEmpty()) ? partA : dssFieldA);
-            if (!dssFieldB.isEmpty()) {
-                writeOptions.put("partB", dssFieldB);
-            } else {
-                writeOptions.put("partB", fieldValue);
-            }
             writeOptions.put("partC", (dssFieldC.isEmpty()) ? partC : dssFieldC);
             writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
         }
@@ -410,7 +411,7 @@ public class GridToPointWizard extends JFrame {
                 .pathToGrids(pathToSource)
                 .variables(sourceGrids)
                 .pathToFeatures(shapefile)
-                .field(selectedField)
+                .field(fieldSelection)
                 .destination(destination)
                 .writeOptions(writeOptions)
                 .build();
