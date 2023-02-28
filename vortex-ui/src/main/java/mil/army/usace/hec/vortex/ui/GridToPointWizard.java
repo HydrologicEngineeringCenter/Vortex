@@ -167,7 +167,6 @@ public class GridToPointWizard extends JFrame {
         /* Clearing Step Three Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
         destinationSelectionPanel.getFieldA().setText("");
-        destinationSelectionPanel.getFieldB().setText("");
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Four Panel */
@@ -331,6 +330,11 @@ public class GridToPointWizard extends JFrame {
 
     private JPanel stepThreePanel() {
         destinationSelectionPanel = new DestinationSelectionPanel(this);
+
+        JTextField fieldB = destinationSelectionPanel.getFieldB();
+        fieldB.setText("*");
+        fieldB.setEnabled(false);
+
         return destinationSelectionPanel;
     }
 
