@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
     implementation(project(":vortex-api"))
+    implementation(project(":vortex-ui"))
     implementation("com.google.inject:guice:5.0.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")

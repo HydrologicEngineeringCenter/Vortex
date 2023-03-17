@@ -4,13 +4,9 @@ import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
+import mil.army.usace.hec.vortex.ui.Util;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class WizardData {
@@ -44,15 +40,7 @@ public class WizardData {
 
     public void setAvailableVariables(ObservableList<String> grids) {
         if(getInFile().endsWith("dss")) {
-            try {
-                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                        .parseCaseInsensitive()
-                        .appendPattern("ddMMMuuuu:HHmm")
-                        .toFormatter();
-                grids.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, e, e::getMessage);
-            }
+            Util.sortDssVariables(grids);
         }
         availableVariables.set(grids);
     }
@@ -63,15 +51,7 @@ public class WizardData {
 
     public void setSelectedVariables(ObservableList<String> grids) {
         if(getInFile().endsWith("dss")) {
-            try {
-                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                        .parseCaseInsensitive()
-                        .appendPattern("ddMMMuuuu:HHmm")
-                        .toFormatter();
-                grids.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, e, e::getMessage);
-            }
+            Util.sortDssVariables(grids);
         }
         selectedVariables.set(grids);
     }

@@ -5,11 +5,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import mil.army.usace.hec.vortex.ui.Util;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,24 +59,7 @@ public class WizardData {
                 .collect(Collectors.toSet());
 
         if(extensions.size() == 1 && extensions.iterator().next().equals("dss")) {
-            try {
-                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                        .parseCaseInsensitive()
-                        .appendPattern("ddMMMuuuu:HHmm")
-                        .toFormatter();
-                //Sort based on D part
-                variables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/", 7)[4], formatter)));
-                //Sort based on A part
-                variables.sort(Comparator.comparing(s -> s.split("/", 7)[1]));
-                //Sort based on B part
-                variables.sort(Comparator.comparing(s -> s.split("/", 7)[2]));
-                //Sort based on C part
-                variables.sort(Comparator.comparing(s -> s.split("/", 7)[3]));
-                //Sort based on F part
-                variables.sort(Comparator.comparing(s -> s.split("/", 7)[6]));
-            } catch (DateTimeParseException e) {
-                e.printStackTrace();
-            }
+            Util.sortDssVariables(variables);
         }
         availableVariables.set(variables);
     }

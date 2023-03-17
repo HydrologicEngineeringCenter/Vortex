@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
@@ -66,13 +67,29 @@ public class Util {
     public static List<String> sortDssVariables(List<String> dssVariables) {
         if(dssVariables == null || dssVariables.isEmpty()) { return null; }
 
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .parseCaseInsensitive()
-                .appendPattern("ddMMMuuuu:HHmm")
-                .toFormatter();
+        try {
+            // Remove records that don't match the E part date format for a gridded record
+            dssVariables.removeIf(s -> !s.split("/")[4].matches("[0-9]{2}[A-Za-z]{3}[0-9]{4}:[0-9]{4}"));
 
-        /* Sort based on D part */
-        dssVariables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+            DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                    .parseCaseInsensitive()
+                    .appendPattern("ddMMMuuuu:HHmm")
+                    .toFormatter();
+
+            // Sort based on D part
+            dssVariables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+            // Sort based on A part
+            dssVariables.sort(Comparator.comparing(s -> s.split("/")[1]));
+            // Sort based on B part
+            dssVariables.sort(Comparator.comparing(s -> s.split("/")[2]));
+            // Sort based on C part
+            dssVariables.sort(Comparator.comparing(s -> s.split("/")[3]));
+            // Sort based on F part
+            dssVariables.sort(Comparator.comparing(s -> s.split("/")[6]));
+
+        } catch (DateTimeParseException e) {
+            logger.log(Level.SEVERE, e, e::getMessage);
+        }
 
         return dssVariables;
     }

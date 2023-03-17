@@ -16,10 +16,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
@@ -425,24 +421,7 @@ public class ImportMetWizard extends JFrame {
                 .collect(Collectors.toSet());
 
         if(extensions.size() == 1 && extensions.iterator().next().equals("dss")) {
-            try {
-                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                        .parseCaseInsensitive()
-                        .appendPattern("ddMMMuuuu:HHmm")
-                        .toFormatter();
-                // Sort based on D part
-                variableList.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
-                // Sort based on A part
-                variableList.sort(Comparator.comparing(s -> s.split("/")[1]));
-                // Sort based on B part
-                variableList.sort(Comparator.comparing(s -> s.split("/")[2]));
-                // Sort based on C part
-                variableList.sort(Comparator.comparing(s -> s.split("/")[3]));
-                // Sort based on F part
-                variableList.sort(Comparator.comparing(s -> s.split("/")[6]));
-            } catch (DateTimeParseException e) {
-                Collections.sort(variableList);
-            }
+            Util.sortDssVariables(variableList);
         } // If: Only one DSS file. Then sort variables by part
     }
 
