@@ -65,8 +65,10 @@ fun uiEnvironment(): Map<String,String> {
 
     if(isMacOsX()) {
         return mapOf(
+            "DYLD_LIBRARY_PATH" to "${rootProject.projectDir}/bin/gdal",
                 "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
-                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal"
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-data",
+                "PROJ_LIB" to "${rootProject.projectDir}/bin/proj-db"
         )
     }
 

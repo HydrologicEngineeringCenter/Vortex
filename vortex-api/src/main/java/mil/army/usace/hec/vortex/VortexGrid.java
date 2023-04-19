@@ -249,5 +249,24 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
+    public double[] xCoordinates() {
+        double[] xCoordinates = new double[nx];
+        xCoordinates[0] = terminusX;
+        for (int i = 1; i < nx; i++) xCoordinates[i] = xCoordinates[i - 1] + dx;
+        return xCoordinates;
+    }
+
+    public double[] yCoordinates() {
+        double[] yCoordinates = new double[ny];
+        yCoordinates[0] = terminusY;
+        for (int i = 1; i < ny; i++) yCoordinates[i] = yCoordinates[i - 1] + dy;
+        return yCoordinates;
+    }
+
+    public float[][] data2D() {
+        float[][] data2D = new float[ny][nx];
+        for (int y = 0; y < ny; y++) System.arraycopy(data, y * nx, data2D[y], 0, nx);
+        return data2D;
+    }
 }
 

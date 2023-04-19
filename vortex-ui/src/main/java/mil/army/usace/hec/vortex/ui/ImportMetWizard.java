@@ -255,11 +255,11 @@ public class ImportMetWizard extends JFrame {
             return false;
         } // If: Missing Destination File
 
-        if(!destinationPath.endsWith(".dss")) {
-            JOptionPane.showMessageDialog(this, "DSS file is required.",
+        if(!destinationPath.matches(".*(dss|nc[34]?)")) {
+            JOptionPane.showMessageDialog(this, "Invalid file extension.",
                     "Error: Unsupported File Type", JOptionPane.ERROR_MESSAGE);
             return false;
-        } // If: Path doesn't end with .dss
+        } // If: Path doesn't end with .dss or .nc
 
         if(destinationPath.endsWith(".dss")) {
             /* Checks if that DSS file exists */

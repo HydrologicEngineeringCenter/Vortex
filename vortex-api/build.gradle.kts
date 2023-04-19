@@ -20,18 +20,24 @@ dependencies {
     implementation ("mil.army.usace.hec:hec-nucleus-metadata:1.+") {
         isTransitive = false
     }
+
+    implementation("edu.ucar:netcdf4")
+    constraints {
+        implementation("edu.ucar:netcdf4:5.5.3")
+        implementation("net.java.dev.jna:jna:5.13.0")
+    }
+
     implementation("org.gdal:gdal:3.2.0")
     implementation("org.locationtech.jts:jts-core:1.16.1")
     implementation("tech.units:indriya:2.0.4")
     implementation("systems.uom:systems-common:2.0.2")
-    implementation("edu.ucar:cdm-core:5.5.2")
+    implementation("edu.ucar:cdm-core:5.5.3")
     implementation("org.apache.commons:commons-compress:1.20")
     //start runtime-only deps required by HEC shared libraries
     runtimeOnly("com.google.flogger:flogger:0.7.4")
     runtimeOnly("com.google.flogger:flogger-system-backend:0.7.4")
     //end runtime-only deps required by HEC shared libraries
-    runtimeOnly("edu.ucar:grib:5.5.2")
-    runtimeOnly("edu.ucar:netcdf4:5.5.2")
+    runtimeOnly("edu.ucar:grib:5.5.3")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.25")
     testImplementation ("org.mockito:mockito-core:2.27.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
@@ -47,7 +53,7 @@ tasks.test {
     useJUnit()
 
     if(org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-        environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
+        environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal;${rootProject.projectDir}/bin/netcdf",
                 "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
                 "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
                 "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
@@ -63,6 +69,7 @@ tasks.test {
         jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/javaHeclib",
                 "-Djava.io.tmpdir=${System.getenv("TMPDIR")}")
         environment = mapOf(
+            "DYLD_LIBRARY_PATH" to "${rootProject.projectDir}/bin/gdal",
             "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
             "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-data",
             "PROJ_LIB" to "${rootProject.projectDir}/bin/proj-db"

@@ -83,6 +83,11 @@ public abstract class DataWriter {
                 return new AscDataWriter(this);
             }
 
+            PathMatcher ncMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.nc*");
+            if (ncMatcher.matches(destination)) {
+                return new NetcdfDataWriter(this);
+            }
+
             throw new IllegalStateException("Invalid destination: " + destination);
         }
     }

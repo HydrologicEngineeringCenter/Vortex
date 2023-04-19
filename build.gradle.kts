@@ -28,6 +28,7 @@ dependencies {
     windows_x64 ("net.adoptopenjdk:jre:11.0.6_10@zip")
     windows_x64 ("mil.army.usace.hec:javaHeclib:7-IP-win-x86_64@zip")
     windows_x64 ("org.gdal:gdal:3.2.1-win-x64@zip")
+    windows_x64 ("edu.ucar:netcdf:4.9.2:win-x64@zip")
     linux_x64("net.adoptopenjdk:jre:11.0.9_10-linux64@tar.gz")
     linux_x64("mil.army.usace.hec:javaHeclib:7-IP-linux-x86_64@zip")
     macOS_x64("net.adoptium:jre:11.0.15_10:macOS-x64@zip")
@@ -312,17 +313,9 @@ tasks.register<Copy>("getNatives") {
         }
     }
     else if(OperatingSystem.current().isMacOsX()) {
-        if(System.getProperty("os.arch") == "aarch64") {
-            configurations.getByName("macOS_aarch64").asFileTree.forEach() {
-                from(zipTree(it))
-                into("$projectDir/bin")
-            }
-        }
-        else {
-            configurations.getByName("macOS_x64").asFileTree.forEach() {
-                from(zipTree(it))
-                into("$projectDir/bin")
-            }
+        configurations.getByName("macOS_x64").asFileTree.forEach() {
+            from(zipTree(it))
+            into("$projectDir/bin")
         }
     }
 

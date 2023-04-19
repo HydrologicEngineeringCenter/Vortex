@@ -48,14 +48,14 @@ class DssDataReader extends DataReader {
             GridData gridData = new GridData();
             griddedData.retrieveGriddedData(true, gridData, status);
             if (status[0] == 0) {
-                dtos.add(dssToDto(gridData));
+                dtos.add(dssToDto(gridData, path));
             }
 
         });
         return dtos;
     }
 
-    private VortexGrid dssToDto(GridData gridData){
+    private VortexGrid dssToDto(GridData gridData, String pathname){
         GridInfo gridInfo = gridData.getGridInfo();
         String wkt = WktFactory.fromGridInfo(gridInfo);
         float cellSize = gridInfo.getCellSize();
@@ -82,7 +82,7 @@ class DssDataReader extends DataReader {
             endTime = null;
             interval = null;
         }
-        DSSPathname dssPathname = new DSSPathname(variableName);
+        DSSPathname dssPathname = new DSSPathname(pathname);
         String pathName = dssPathname.getPathname();
         String variable = dssPathname.cPart();
         float[] data = MatrixUtils.flipArray(gridData.getData(), nx, ny);
@@ -143,7 +143,7 @@ class DssDataReader extends DataReader {
         int[] status = new int[1];
         GridData gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
         if (gridData != null) {
-            return dssToDto(gridData);
+            return dssToDto(gridData, dssPath);
         }
         return null;
     }
