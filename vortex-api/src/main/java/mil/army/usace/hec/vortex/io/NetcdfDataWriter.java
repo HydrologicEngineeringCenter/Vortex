@@ -10,6 +10,7 @@ import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
 import ucar.nc2.constants.CF;
 import ucar.nc2.constants._Coordinate;
+import ucar.nc2.time.Calendar;
 import ucar.nc2.write.Nc4Chunking;
 import ucar.nc2.write.Nc4ChunkingStrategy;
 import ucar.nc2.write.NetcdfFileFormat;
@@ -110,7 +111,7 @@ public class NetcdfDataWriter extends DataWriter {
     private void addVariableTime(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addVariable("time", DataType.FLOAT, "time")
                 .addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME))
-                .addAttribute(new Attribute(CF.CALENDAR, "standard"))
+                .addAttribute(new Attribute(CF.CALENDAR, Calendar.getDefault().name()))
                 .addAttribute(new Attribute(CF.UNITS, collection.getTimeUnits()))
 //                .addAttribute(new Attribute(CF.BOUNDS, TIME_BOUNDS))
                 .addAttribute(new Attribute(CF.LONG_NAME, ""));

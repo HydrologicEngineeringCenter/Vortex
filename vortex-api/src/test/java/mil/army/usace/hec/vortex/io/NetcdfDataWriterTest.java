@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.TestUtil;
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexGrid;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,31 +13,52 @@ import java.util.List;
 
 class NetcdfDataWriterTest {
     @Test
-    void dayMetPrecipitation() {
-        String inFile = TestUtil.getResourceFile("/netcdf/daily_prcp_2022.nc").getAbsolutePath();
-        Assertions.assertNotNull(inFile);
-        DataReader dataReader = DataReader.builder()
-                .path(inFile)
-                .variable("prcp")
-                .build();
-        List<VortexData> vortexDataList = dataReader.getDtos();
+    void DayMetPrecipitation() {
+        String ncPath = TestUtil.getResourceFile("/netcdf/daily_prcp_2022.nc").getAbsolutePath();
+        runFullCycleTest(ncPath, "prcp");
+    }
 
-        String outFile = TestUtil.createTempFile("daymet_precip.nc");
+    @Test
+    void MRMS() {
+        String ncPath = TestUtil.getResourceFile("/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getAbsolutePath();
+        runFullCycleTest(ncPath, "GaugeCorrQPE01H_altitude_above_msl");
+    }
+
+    @Test
+    void AORC() {
+        String ncPath = TestUtil.getResourceFile("/AORC_APCP_MARFC_1984010100.nc4").getAbsolutePath();
+        runFullCycleTest(ncPath, "APCP_surface");
+    }
+
+    void runFullCycleTest(String ncPath, String variableName) {
+        DataReader dataReader = DataReader.builder()
+                .path(ncPath)
+                .variable(variableName)
+                .build();
+        List<VortexData> originalList = dataReader.getDtos();
+
+        String outFile = TestUtil.createTempFile(variableName + ".nc");
         Assertions.assertNotNull(outFile);
         DataWriter dataWriter = DataWriter.builder()
-                .data(vortexDataList)
+                .data(originalList)
                 .destination(outFile)
                 .build();
         dataWriter.write();
         Assertions.assertTrue(Files.exists(Path.of(outFile)));
-        System.out.println(outFile);
+        System.out.println("Output Path: " + outFile);
 
         DataReader dataReaderEnd = DataReader.builder()
                 .path(outFile)
-                .variable("prcp")
+                .variable(variableName)
                 .build();
-        List<VortexData> vortexDataListEnd = dataReaderEnd.getDtos();
-        System.out.println("Hi");
+        List<VortexData> generatedList = dataReaderEnd.getDtos();
+
+        for (int i = 0; i < originalList.size(); i++) {
+            VortexGrid original = (VortexGrid) originalList.get(i);
+            VortexGrid generated = (VortexGrid) generatedList.get(i);
+            boolean equals = original.equals(generated);
+            Assertions.assertEquals(original, generated);
+        }
     }
 
     @Test

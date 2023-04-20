@@ -116,9 +116,12 @@ public class VortexGridCollection {
     }
 
 
-    private long getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
+    private float getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
         Duration durationBetween = Duration.between(baseTime, dateTime);
-        return durationBetween.dividedBy(interval);
+        float numDurations = durationBetween.dividedBy(interval);
+        // NOTE: Make Dynamic
+        if (getDurationUnit(interval).equals("days")) numDurations += 0.5;
+        return numDurations;
     }
 
     private String getDurationUnit(Duration duration) {
@@ -210,7 +213,6 @@ public class VortexGridCollection {
         List<Float> dataList = vortexGridList.stream()
                 .map(VortexGrid::startTime)
                 .map(this::getNumDurationsFromBaseTime)
-                .map(t -> (float) t)
                 .collect(Collectors.toList());
         float[] timeData = new float[dataList.size()];
         for (int i = 0; i < timeData.length; i++) timeData[i] = dataList.get(i);
@@ -234,8 +236,8 @@ public class VortexGridCollection {
 
         for (int i = 0; i < vortexGridList.size(); i++) {
             VortexGrid grid = vortexGridList.get(i);
-            long startTime = getNumDurationsFromBaseTime(grid.startTime());
-            long endTime = getNumDurationsFromBaseTime(grid.endTime());
+            float startTime = getNumDurationsFromBaseTime(grid.startTime());
+            float endTime = getNumDurationsFromBaseTime(grid.endTime());
             timeBoundArray[i][0] = startTime;
             timeBoundArray[i][1] = endTime;
         }

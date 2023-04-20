@@ -3,6 +3,8 @@ package mil.army.usace.hec.vortex;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class VortexGrid implements VortexData, Serializable {
 
@@ -251,15 +253,15 @@ public class VortexGrid implements VortexData, Serializable {
 
     public double[] xCoordinates() {
         double[] xCoordinates = new double[nx];
-        xCoordinates[0] = terminusX;
-        for (int i = 1; i < nx; i++) xCoordinates[i] = xCoordinates[i - 1] + dx;
+        // xCoordinates[i] = midpoint of xEdges[i] and xEdges[i + 1]
+        for (int i = 0; i < nx; i++) xCoordinates[i] = originX + (i + 1) * dx - (dx / 2);
         return xCoordinates;
     }
 
     public double[] yCoordinates() {
         double[] yCoordinates = new double[ny];
-        yCoordinates[0] = terminusY;
-        for (int i = 1; i < ny; i++) yCoordinates[i] = yCoordinates[i - 1] + dy;
+        // yCoordinates[i] = midpoint of yEdges[i] and yEdges[i + 1]
+        for (int i = 0; i < ny; i++) yCoordinates[i] = originY + (i + 1) * dy - (dy / 2);
         return yCoordinates;
     }
 
@@ -267,6 +269,84 @@ public class VortexGrid implements VortexData, Serializable {
         float[][] data2D = new float[ny][nx];
         for (int y = 0; y < ny; y++) System.arraycopy(data, y * nx, data2D[y], 0, nx);
         return data2D;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        /* Temporary */
+        if (this == o) return true;
+        if (!(o instanceof VortexGrid)) return false;
+
+        VortexGrid that = (VortexGrid) o;
+
+        if (Double.compare(that.dx, dx) != 0)
+            return false;
+        if (Double.compare(that.dy, dy) != 0)
+            return false;
+        if (nx != that.nx)
+            return false;
+        if (ny != that.ny)
+            return false;
+        if (Double.compare(that.originX, originX) != 0)
+            return false;
+        if (Double.compare(that.originY, originY) != 0)
+            return false;
+        if (Double.compare(that.noDataValue, noDataValue) != 0)
+            return false;
+        if (Double.compare(that.terminusX, terminusX) != 0)
+            return false;
+        if (Double.compare(that.terminusY, terminusY) != 0)
+            return false;
+        if (!Objects.equals(wkt, that.wkt))
+            return false;
+        if (!Arrays.equals(data, that.data))
+            return false;
+        if (!Objects.equals(units, that.units))
+            return false;
+        if (!Objects.equals(shortName, that.shortName))
+            return false;
+        if (!Objects.equals(fullName, that.fullName))
+            return false;
+        if (!Objects.equals(description, that.description))
+            return false;
+        if (!Objects.equals(startTime, that.startTime))
+            return false;
+        if (!Objects.equals(endTime, that.endTime))
+            return false;
+        return Objects.equals(interval, that.interval);
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        temp = Double.doubleToLongBits(dx);
+        result = (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(dy);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + nx;
+        result = 31 * result + ny;
+        temp = Double.doubleToLongBits(originX);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(originY);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (wkt != null ? wkt.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(data);
+        temp = Double.doubleToLongBits(noDataValue);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (units != null ? units.hashCode() : 0);
+        result = 31 * result + (fileName != null ? fileName.hashCode() : 0);
+        result = 31 * result + (shortName != null ? shortName.hashCode() : 0);
+        result = 31 * result + (fullName != null ? fullName.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
+        result = 31 * result + (endTime != null ? endTime.hashCode() : 0);
+        result = 31 * result + (interval != null ? interval.hashCode() : 0);
+        temp = Double.doubleToLongBits(terminusX);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(terminusY);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 }
 
