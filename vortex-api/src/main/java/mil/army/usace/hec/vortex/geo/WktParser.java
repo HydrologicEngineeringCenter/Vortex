@@ -40,7 +40,13 @@ public class WktParser {
 
     public static String getProjectionUnit(String wkt) {
         SpatialReference srs = new SpatialReference(wkt);
-        return srs.GetLinearUnitsName();
+        String unitName = srs.GetLinearUnitsName();
+        switch (unitName) {
+            case "Meter":
+                return "m";
+            default:
+                return unitName;
+        }
     }
 
     private static Projection parseLatLong(SpatialReference srs) {

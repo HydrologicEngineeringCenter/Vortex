@@ -51,6 +51,7 @@ public class NetcdfDataReader extends DataReader {
         try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path);  Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
             if (dataset != null) {
+                System.out.println("Recognized as Grid");
                 FeatureType ftype = dataset.getFeatureType();
                 if (ftype == FeatureType.GRID) {
                     assert (dataset instanceof GridDataset);
@@ -58,6 +59,7 @@ public class NetcdfDataReader extends DataReader {
                     return getData(gridDataset, variableName);
                 }
             } else {
+                System.out.println("Not Recognized as Grid");
                 List<Variable> variables = ncd.getVariables();
                 for (Variable variable : variables) {
                     if (variable.getShortName().equals(variableName) && variable instanceof VariableDS) {

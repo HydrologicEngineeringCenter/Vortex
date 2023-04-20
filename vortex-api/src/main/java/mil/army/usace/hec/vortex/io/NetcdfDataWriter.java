@@ -75,7 +75,7 @@ public class NetcdfDataWriter extends DataWriter {
             writer.write("x", Array.makeFromJavaArray(collection.getXCoordinates()));
             writer.write("lat", Array.makeFromJavaArray(collection.getLatCoordinates()));
             writer.write("lon", Array.makeFromJavaArray(collection.getLonCoordinates()));
-            writer.write(TIME_BOUNDS, Array.makeFromJavaArray(collection.getTimeBoundsArray()));
+//            writer.write(TIME_BOUNDS, Array.makeFromJavaArray(collection.getTimeBoundsArray()));
             writer.write(collection.getShortName(), Array.makeFromJavaArray(collection.getData3D()));
         } catch (IOException | InvalidRangeException e) {
             logger.severe(e.getMessage());
@@ -98,7 +98,7 @@ public class NetcdfDataWriter extends DataWriter {
     /* Add Variables */
     private void addVariables(NetcdfFormatWriter.Builder writerBuilder) {
         addVariableTime(writerBuilder);
-        addVariableTimeBounds(writerBuilder);
+//        addVariableTimeBounds(writerBuilder);
         addVariableX(writerBuilder);
         addVariableY(writerBuilder);
         addVariableLat(writerBuilder);
@@ -112,7 +112,7 @@ public class NetcdfDataWriter extends DataWriter {
                 .addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME))
                 .addAttribute(new Attribute(CF.CALENDAR, "standard"))
                 .addAttribute(new Attribute(CF.UNITS, collection.getTimeUnits()))
-                .addAttribute(new Attribute(CF.BOUNDS, TIME_BOUNDS))
+//                .addAttribute(new Attribute(CF.BOUNDS, TIME_BOUNDS))
                 .addAttribute(new Attribute(CF.LONG_NAME, ""));
     }
 
@@ -164,17 +164,25 @@ public class NetcdfDataWriter extends DataWriter {
             String name = parameter.getName();
             if (parameter.getLength() == 0)
                 variableBuilder.addAttribute(new Attribute(name, String.valueOf(parameter.getStringValue())));
-            else if (parameter.getLength() == 1)
-                variableBuilder.addAttribute(new Attribute(name, parameter.getNumericValue()));
-            else if (parameter.getLength() > 1)
-                for (int i = 0; i < parameter.getLength(); i++)
-                    variableBuilder.addAttribute(new Attribute(name + (i + 1), parameter.getNumericValue(i)));
+            else {
+                double[] values = parameter.getNumericValues();
+                if (values == null) {
+                    logger.severe("Values is null");
+                    values = new double[0];
+                }
+                variableBuilder.addAttribute(Attribute.builder().setName(name).setValues(Array.makeFromJavaArray(values)).build());
+            }
         }
     }
 
     private void addVariableGridCollection(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addVariable(collection.getShortName(), DataType.FLOAT, "time y x")
                 .addAttribute(new Attribute(CF.LONG_NAME, collection.getDescription()))
-                .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()));
+                .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()))
+                .addAttribute(new Attribute(CF.GRID_MAPPING, collection.getProjectionName()))
+                .addAttribute(new Attribute(CF.COORDINATES, "lat lon"))
+//                .addAttribute(new Attribute(CF.CELL_METHODS, "area: mean time: sum"))
+                .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
+                .addAttribute(new Attribute(CF._FILLVALUE, collection.getNoDataValue()));
     }
 }

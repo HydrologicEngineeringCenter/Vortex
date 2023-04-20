@@ -1,9 +1,11 @@
 package mil.army.usace.hec.vortex;
 
 import mil.army.usace.hec.vortex.geo.WktParser;
+import ucar.nc2.constants.CF;
 import ucar.unidata.geoloc.LatLonPoint;
 import ucar.unidata.geoloc.Projection;
 import ucar.unidata.geoloc.ProjectionPoint;
+import ucar.unidata.util.Parameter;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -239,5 +241,18 @@ public class VortexGridCollection {
         }
 
         return timeBoundArray;
+    }
+
+    public float getNoDataValue() {
+        return (float) vortexGridList.get(0).noDataValue();
+    }
+
+    public String getProjectionName() {
+        for (Parameter parameter : projection.getProjectionParameters()) {
+            if (parameter.getName().equals(CF.GRID_MAPPING_NAME)) {
+                return parameter.getStringValue();
+            }
+        }
+        return null;
     }
 }
