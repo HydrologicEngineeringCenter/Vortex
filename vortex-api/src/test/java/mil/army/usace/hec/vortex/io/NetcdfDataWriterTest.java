@@ -13,7 +13,7 @@ import java.util.List;
 class NetcdfDataWriterTest {
     @Test
     void dayMetPrecipitation() {
-        String inFile = "/Users/work/Downloads/daymet_v4_daily_pr_prcp_2022.nc";
+        String inFile = TestUtil.getResourceFile("/netcdf/daily_prcp_2022.nc").getAbsolutePath();
         Assertions.assertNotNull(inFile);
         DataReader dataReader = DataReader.builder()
                 .path(inFile)
