@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
+import mil.army.usace.hec.vortex.convert.NetcdfGridWriter;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
@@ -16,6 +17,7 @@ import ucar.nc2.write.Nc4ChunkingStrategy;
 import ucar.nc2.write.NetcdfFileFormat;
 import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.geoloc.Projection;
+import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.util.Parameter;
 
 import java.io.IOException;
@@ -52,8 +54,16 @@ public class NetcdfDataWriter extends DataWriter {
     /* Write */
     @Override
     public void write() {
-        NetcdfFormatWriter.Builder writerBuilder = writerBuilder();
-        writeData(writerBuilder);
+        Nc4Chunking chunker = Nc4ChunkingStrategy.factory(CHUNKING_STRATEGY, DEFLATE_LEVEL, SHUFFLE);
+        NetcdfFormatWriter.Builder writerBuilder = NetcdfFormatWriter.builder()
+                .setNewFile(true)
+                .setFormat(NETCDF_FORMAT)
+                .setLocation(destination.toString())
+                .setChunker(chunker);
+        addGlobalAttributes(writerBuilder);
+
+        NetcdfGridWriter gridWriter = new NetcdfGridWriter(collection);
+        gridWriter.write(writerBuilder);
     }
 
     private NetcdfFormatWriter.Builder writerBuilder() {
@@ -83,6 +93,30 @@ public class NetcdfDataWriter extends DataWriter {
         }
     }
 
+    private NetcdfFormatWriter.Builder writerBuilderGeographic() {
+        Nc4Chunking chunker = Nc4ChunkingStrategy.factory(CHUNKING_STRATEGY, DEFLATE_LEVEL, SHUFFLE);
+        NetcdfFormatWriter.Builder writerBuilder = NetcdfFormatWriter.builder()
+                .setNewFile(true)
+                .setFormat(NETCDF_FORMAT)
+                .setLocation(destination.toString())
+                .setChunker(chunker);
+        addGlobalAttributes(writerBuilder);
+        addDimensionsGeographic(writerBuilder);
+        addVariablesGeographic(writerBuilder);
+        return writerBuilder;
+    }
+
+    private void writeDataGeographic(NetcdfFormatWriter.Builder writerBuilder) {
+        try (NetcdfFormatWriter writer = writerBuilder.build()) {
+            writer.write(CF.TIME, Array.makeFromJavaArray(collection.getTimeData()));
+            writer.write(CF.LATITUDE, Array.makeFromJavaArray(collection.getYCoordinates()));
+            writer.write(CF.LONGITUDE, Array.makeFromJavaArray(collection.getXCoordinates()));
+            writer.write(collection.getShortName(), Array.makeFromJavaArray(collection.getData3D()));
+        } catch (IOException | InvalidRangeException e) {
+            logger.severe(e.getMessage());
+        }
+    }
+
     /* Add Global Attributes */
     private void addGlobalAttributes(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addAttribute(new Attribute("Conventions", "CF-1.10"));
@@ -96,6 +130,12 @@ public class NetcdfDataWriter extends DataWriter {
         writerBuilder.addDimension("x", collection.getNx());
     }
 
+    private void addDimensionsGeographic(NetcdfFormatWriter.Builder writerBuilder) {
+        writerBuilder.addDimension(CF.LATITUDE, collection.getNy());
+        writerBuilder.addDimension(CF.LONGITUDE, collection.getNx());
+        writerBuilder.addUnlimitedDimension(CF.TIME);
+    }
+
     /* Add Variables */
     private void addVariables(NetcdfFormatWriter.Builder writerBuilder) {
         addVariableTime(writerBuilder);
@@ -106,6 +146,13 @@ public class NetcdfDataWriter extends DataWriter {
         addVariableLon(writerBuilder);
         addVariableProjection(writerBuilder);
         addVariableGridCollection(writerBuilder);
+    }
+
+    private void addVariablesGeographic(NetcdfFormatWriter.Builder writerBuilder) {
+        addVariableTime(writerBuilder);
+        addVariableLatGeographic(writerBuilder);
+        addVariableLonGeographic(writerBuilder);
+        addVariableGridCollectionGeographic(writerBuilder);
     }
 
     private void addVariableTime(NetcdfFormatWriter.Builder writerBuilder) {
@@ -149,6 +196,22 @@ public class NetcdfDataWriter extends DataWriter {
                 .addAttribute(new Attribute(_Coordinate.AxisType, AxisType.Lon.toString()));
     }
 
+    private void addVariableLatGeographic(NetcdfFormatWriter.Builder writerBuilder) {
+        writerBuilder.addVariable(CF.LATITUDE, DataType.DOUBLE, CF.LATITUDE)
+                .addAttribute(new Attribute(CF.UNITS, "degrees_north"))
+                .addAttribute(new Attribute(CF.LONG_NAME, "latitude coordinate"))
+                .addAttribute(new Attribute(CF.STANDARD_NAME, CF.LATITUDE));
+//                .addAttribute(new Attribute(_Coordinate.AxisType, AxisType.Lat.toString()));
+    }
+
+    private void addVariableLonGeographic(NetcdfFormatWriter.Builder writerBuilder) {
+        writerBuilder.addVariable(CF.LONGITUDE, DataType.DOUBLE, CF.LONGITUDE)
+                .addAttribute(new Attribute(CF.UNITS, "degrees_east"))
+                .addAttribute(new Attribute(CF.LONG_NAME, "longitude coordinate"))
+                .addAttribute(new Attribute(CF.STANDARD_NAME, CF.LONGITUDE));
+//                .addAttribute(new Attribute(_Coordinate.AxisType, AxisType.Lon.toString()));
+    }
+
     private void addVariableProjection(NetcdfFormatWriter.Builder writerBuilder) {
         Projection projection = collection.getProjection();
 
@@ -182,6 +245,17 @@ public class NetcdfDataWriter extends DataWriter {
                 .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()))
                 .addAttribute(new Attribute(CF.GRID_MAPPING, collection.getProjectionName()))
                 .addAttribute(new Attribute(CF.COORDINATES, "lat lon"))
+//                .addAttribute(new Attribute(CF.CELL_METHODS, "area: mean time: sum"))
+                .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
+                .addAttribute(new Attribute(CF._FILLVALUE, collection.getNoDataValue()));
+    }
+
+    private void addVariableGridCollectionGeographic(NetcdfFormatWriter.Builder writerBuilder) {
+        writerBuilder.addVariable(collection.getShortName(), DataType.FLOAT, "time latitude longitude")
+                .addAttribute(new Attribute(CF.LONG_NAME, collection.getDescription()))
+                .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()))
+                .addAttribute(new Attribute(CF.GRID_MAPPING, collection.getProjectionName()))
+                .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
 //                .addAttribute(new Attribute(CF.CELL_METHODS, "area: mean time: sum"))
                 .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
                 .addAttribute(new Attribute(CF._FILLVALUE, collection.getNoDataValue()));

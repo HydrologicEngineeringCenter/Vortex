@@ -37,7 +37,7 @@ class NetcdfDataWriterTest {
                 .build();
         List<VortexData> originalList = dataReader.getDtos();
 
-        String outFile = TestUtil.createTempFile(variableName + ".nc");
+        String outFile = TestUtil.createTempFile(ncPath.substring(ncPath.lastIndexOf(System.getProperty("file.separator")) + 1));
         Assertions.assertNotNull(outFile);
         DataWriter dataWriter = DataWriter.builder()
                 .data(originalList)
