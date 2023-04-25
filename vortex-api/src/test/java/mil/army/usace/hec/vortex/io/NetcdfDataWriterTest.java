@@ -25,9 +25,27 @@ class NetcdfDataWriterTest {
     }
 
     @Test
-    void AORC() {
+    void AorcPrecip() {
         String ncPath = TestUtil.getResourceFile("/AORC_APCP_MARFC_1984010100.nc4").getAbsolutePath();
         runFullCycleTest(ncPath, "APCP_surface");
+    }
+
+    @Test
+    void AorcTemperature() {
+        String ncPath = TestUtil.getResourceFile("/AORC_TMP_MARFC_1984010100.nc4").getAbsolutePath();
+        runFullCycleTest(ncPath, "TMP_2maboveground");
+    }
+
+    @Test
+    void CpcPrecip() {
+        String ncPath = TestUtil.getResourceFile("/precip.2017.nc").getAbsolutePath();
+        runFullCycleTest(ncPath, "precip");
+    }
+
+    @Test
+    void CpcTemperature() {
+        String ncPath = TestUtil.getResourceFile("/tmax.2017.nc").getAbsolutePath();
+        runFullCycleTest(ncPath, "tmax");
     }
 
     void runFullCycleTest(String ncPath, String variableName) {

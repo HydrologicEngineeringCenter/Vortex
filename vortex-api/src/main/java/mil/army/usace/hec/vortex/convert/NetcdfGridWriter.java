@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.convert;
 
+import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
@@ -67,11 +68,33 @@ public class NetcdfGridWriter {
                 writer.write(CF.LONGITUDE, Array.makeFromJavaArray(collection.getLonCoordinates()));
             }
 
-            writer.write(collection.getShortName(), Array.makeFromJavaArray(collection.getData3D()));
+            writeGridData(writer);
         } catch (IOException | InvalidRangeException e) {
             logger.severe(e.getMessage());
         }
     }
+    private void writeGridData(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
+        float[] timeData = collection.getTimeData();
+        List<VortexGrid> gridList = collection.getVortexGridList();
+        for (int timeIndex = 0; timeIndex < timeData.length; timeIndex++) {
+            VortexGrid grid = gridList.get(timeIndex);
+            float[][] data2D = grid.data2D();
+            float[][][] data3D = new float[1][grid.ny()][grid.nx()];
+            for (int i = 0; i < data2D.length; i++) {
+                for (int j = 0; j < data2D[i].length; j++) {
+                    data3D[0][i][j] = data2D[i][j]; // assign each element of the 2D array to the 3D array
+                }
+            }
+
+            // Define the index range for the current time step
+            int[] origin = {timeIndex, 0, 0};
+
+            // Write the data for the current time step
+            Variable variable = writer.findVariable(collection.getShortName());
+            writer.write(variable, origin, Array.makeFromJavaArray(data3D));
+        }
+    }
+
 
     /* Add Dimensions */
     private void addDimensions(NetcdfFormatWriter.Builder writerBuilder) {

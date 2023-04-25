@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -53,7 +54,7 @@ public class VortexGridCollection {
         Map<String, double[][]> latLonMap = getLatLonCoordinatesNew();
         lonCoordinates = latLonMap.get("lon");
         latCoordinates = latLonMap.get("lat");
-        interval = mode(VortexGrid::interval, Duration.ZERO);
+        interval = initInterval();
         zoneId = mode(g -> g.startTime().getZone(), ZoneId.systemDefault());
         baseTime = ZonedDateTime.of(1900,1,1,0,0,0,0, zoneId);
         cleanCollection();
@@ -69,6 +70,11 @@ public class VortexGridCollection {
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse(defaultReturn);
+    }
+
+    private Duration initInterval() {
+        Duration modeInterval = mode(VortexGrid::interval, Duration.ZERO);
+        return (modeInterval.isZero()) ? Duration.ofDays(1) : modeInterval;
     }
 
     private Map<String, double[]> getLatLonCoordinates() {
@@ -121,15 +127,11 @@ public class VortexGridCollection {
         return durationBetween.dividedBy(interval);
     }
 
-    private String getDurationUnit(Duration duration) {
-        long seconds = duration.getSeconds();
-        if (seconds % 31536000 == 0) return "years";
-        if (seconds % 2592000 == 0) return "months";
-        if (seconds % 604800 == 0) return "weeks";
-        if (seconds % 86400 == 0) return "days";
-        if (seconds % 3600 == 0) return "hours";
-        if (seconds % 60 == 0) return "minutes";
-        return "seconds";
+    private ChronoUnit getDurationUnit(Duration duration) {
+        if (duration.toDays() > 0) return ChronoUnit.DAYS;
+        if (duration.toHours() > 0) return ChronoUnit.HOURS;
+        if (duration.toMinutes() > 0) return ChronoUnit.MINUTES;
+        return ChronoUnit.SECONDS;
     }
 
     private void cleanCollection() {
@@ -139,7 +141,7 @@ public class VortexGridCollection {
 
         vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
         vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
-        vortexGridList.removeIf(g -> !Objects.equals(interval, g.interval()));
+//        vortexGridList.removeIf(g -> !Objects.equals(interval, g.interval()));
         vortexGridList.removeIf(g -> !Objects.equals(zoneId, g.startTime().getZone()));
         vortexGridList.removeIf(g -> !Objects.equals(zoneId, g.endTime().getZone()));
     }
@@ -203,7 +205,7 @@ public class VortexGridCollection {
 
     public String getTimeUnits() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
-        return getDurationUnit(interval) + " since " + baseTime.format(dateTimeFormatter);
+        return getDurationUnit(interval).toString() + " since " + baseTime.format(dateTimeFormatter);
     }
 
     public float[] getTimeData() {
@@ -261,5 +263,9 @@ public class VortexGridCollection {
             }
         }
         return null;
+    }
+
+    public List<VortexGrid> getVortexGridList() {
+        return List.copyOf(vortexGridList);
     }
 }
