@@ -438,10 +438,6 @@ public class NetcdfDataReader extends DataReader {
         double lly = edgesY[edgesY.length - 1];
         double dy = (lly - uly) / ny;
 
-        double[] shift = WktFactory.getShift(coordinateSystem.getProjection());
-        ulx = ulx + shift[0];
-        uly = uly + shift[1];
-
         grid.set(Grid.builder()
                 .nx(nx)
                 .ny(ny)

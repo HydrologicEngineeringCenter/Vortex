@@ -135,14 +135,14 @@ public class Resampler {
                 .build();
     }
 
-    private static Dataset resample(Dataset dataset, Rectangle2D env, SpatialReference envSrs, SpatialReference destSrs, double cellSize, String method){
+    private static Dataset resample(Dataset dataset, Rectangle2D env, SpatialReference envSrs, SpatialReference targetSrs, double cellSize, String method){
 
-        destSrs.MorphFromESRI();
+        targetSrs.MorphFromESRI();
 
         Map<String,Double> envelope = new HashMap<>();
 
         if (env != null) {
-            CoordinateTransformation transform = new CoordinateTransformation(envSrs, destSrs);
+            CoordinateTransformation transform = new CoordinateTransformation(envSrs, targetSrs);
 
             double[] lowerLeft = transform.TransformPoint(env.getMinX(), env.getMinY());
             double[] upperRight = transform.TransformPoint(env.getMaxX(), env.getMaxY());
@@ -168,21 +168,29 @@ public class Resampler {
 
         double noDataValue = getNoDataValue(dataset);
 
-        SpatialReference srData = new SpatialReference(dataset.GetProjection());
-        srData.MorphFromESRI();
+        SpatialReference sourceSrs = new SpatialReference(dataset.GetProjection());
+
         ArrayList<String> options = new ArrayList<>();
         options.add("-of");
         options.add("MEM");
+
         try {
-            srData.Validate();
-            destSrs.Validate();
-            options.add("-s_srs");
-            options.add(srData.ExportToWkt());
-            options.add("-t_srs");
-            options.add(destSrs.ExportToWkt());
+            sourceSrs.Validate();
         } catch (RuntimeException e) {
             logger.warning("Invalid Coordinate Referencing System");
         }
+
+        try {
+            targetSrs.Validate();
+        } catch (RuntimeException e) {
+            logger.warning("Invalid Coordinate Referencing System");
+        }
+
+        options.add("-s_srs");
+        options.add(sourceSrs.ExportToWkt());
+        options.add("-t_srs");
+        options.add(targetSrs.ExportToWkt());
+
         options.add("-srcnodata");
         options.add(Double.toString(noDataValue));
         if (env != null) {

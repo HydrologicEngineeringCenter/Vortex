@@ -5,7 +5,6 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.SpecifiedGridInfo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
-import ucar.unidata.geoloc.Projection;
 import ucar.unidata.geoloc.ProjectionImpl;
 import ucar.unidata.geoloc.projection.*;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
@@ -32,7 +31,12 @@ public class WktFactory {
             LatLonProjection in = (LatLonProjection) projection;
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
-            return srs.ExportToWkt();
+
+            String wkt = srs.ExportToWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof AlbersEqualArea) {
             AlbersEqualArea in = (AlbersEqualArea) projection;
@@ -48,7 +52,12 @@ public class WktFactory {
                     in.getFalseNorthing()
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof LambertConformal) {
             LambertConformal in = (LambertConformal) projection;
@@ -64,7 +73,12 @@ public class WktFactory {
                     in.getFalseNorthing()
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof LambertConformalConicEllipse) {
             LambertConformalConicEllipse in = (LambertConformalConicEllipse) projection;
@@ -80,7 +94,12 @@ public class WktFactory {
                     in.getFalseNorthing()
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof Mercator) {
             Mercator in = (Mercator) projection;
@@ -94,7 +113,12 @@ public class WktFactory {
                     in.getFalseNorthing()
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof Orthographic) {
             Orthographic in = (Orthographic) projection;
@@ -107,7 +131,12 @@ public class WktFactory {
                     0
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof Sinusoidal) {
             Sinusoidal in = (Sinusoidal) projection;
@@ -119,7 +148,12 @@ public class WktFactory {
                     in.getFalseNorthing()
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof Stereographic) {
             Stereographic in = (Stereographic) projection;
@@ -133,12 +167,41 @@ public class WktFactory {
                     in.getFalseNorthing()
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof RotatedPole) {
+            List<Parameter> parameters = projection.getProjectionParameters();
+
+            Map<String, Double> numericParameters = new HashMap<>();
+            parameters.forEach(parameter -> {
+                if (!parameter.isString()) {
+                    numericParameters.put(parameter.getName(), parameter.getNumericValue());
+                }
+            });
+
+            double gridNorthPoleLon = numericParameters.get("grid_north_pole_longitude");
+            double gridNorthPoleLat = numericParameters.get("grid_north_pole_latitude");
+
             SpatialReference srs = new SpatialReference();
-            srs.SetWellKnownGeogCS(WGS84);
-            return srs.ExportToPrettyWkt();
+
+            String proj4 = String.format("+proj=ob_tran +o_proj=longlat +lon_0=%.18g +o_lon_p=%.18g " +
+                    "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
+                    180.0 + gridNorthPoleLon, 0.0,
+                    gridNorthPoleLat, srs.GetSemiMajor(),
+                    srs.GetSemiMinor());
+
+            srs.ImportFromProj4(proj4);
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else if (projection instanceof TransverseMercatorProjection) {
             TransverseMercatorProjection in = (TransverseMercatorProjection) projection;
@@ -176,28 +239,17 @@ public class WktFactory {
                     falseNorthing
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
 
         } else {
             return "";
         }
 
-    }
-
-    public static double[] getShift(Projection projection) {
-        if (projection instanceof RotatedPole) {
-            List<Parameter> parameters = projection.getProjectionParameters();
-            Map<String, Double> numericParameters = new HashMap<>();
-            parameters.forEach(parameter -> {
-                if (!parameter.isString()) {
-                    numericParameters.put(parameter.getName(), parameter.getNumericValue());
-                }
-            });
-            double x = 180 + numericParameters.get("grid_north_pole_longitude");
-            double y = 90 - numericParameters.get("grid_north_pole_latitude");
-            return new double[]{x, y};
-        }
-        return new double[]{0, 0};
     }
 
     private static void setGcsParameters(ProjectionImpl projection, SpatialReference srs) {
@@ -243,12 +295,7 @@ public class WktFactory {
 
     public static String create(String name) {
         if (name.contains("SHG")) {
-            SpatialReference srs = new SpatialReference();
-            srs.SetProjCS("USA_Contiguous_Albers_Equal_Area_Conic_USGS_version");
-            srs.SetWellKnownGeogCS("NAD83");
-            srs.SetACEA(29.5, 45.5, 23.0, -96.0, 0, 0);
-            srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+            return getShg();
         }
         if (name.startsWith("UTM")) {
             int zone = Integer.parseInt(name.substring(3, name.length() - 1));
@@ -263,7 +310,12 @@ public class WktFactory {
             srs.SetWellKnownGeogCS(WGS84);
             srs.SetUTM(zone, hemisphere);
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
-            return srs.ExportToPrettyWkt();
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
         }
         return null;
     }

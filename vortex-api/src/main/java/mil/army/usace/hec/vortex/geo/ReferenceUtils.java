@@ -15,16 +15,17 @@ public class ReferenceUtils {
 
     private ReferenceUtils(){}
 
-    public static String enhanceWkt(String wkt){
-        SpatialReference srs = new SpatialReference(wkt);
-        srs.MorphFromESRI();
-        return srs.ExportToPrettyWkt();
-    }
+    public static String getMapUnits(String crs) {
+        SpatialReference srs = new SpatialReference();
 
-    public static String getMapUnits(String wkt){
-        SpatialReference srs = new SpatialReference(wkt);
+        srs.ImportFromWkt(crs);
         srs.MorphFromESRI();
-        return srs.GetLinearUnitsName();
+
+        String linearUnitsName = srs.GetLinearUnitsName();
+
+        srs.delete();
+
+        return linearUnitsName;
     }
 
     public static int getUlyDirection(String wkt, double llx, double lly){

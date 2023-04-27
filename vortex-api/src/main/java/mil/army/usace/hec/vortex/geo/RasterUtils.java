@@ -34,21 +34,23 @@ public class RasterUtils {
         double x = dto.originX();
         double y = dto.originY();
 
-        Dataset raster = driver.Create("", nx, ny, 1, gdalconst.GDT_Float32);
+        Dataset dataset = driver.Create("", nx, ny, 1, gdalconst.GDT_Float32);
         double[] geoTransform = new double[]{x, dx, 0, y, 0, dy};
-        raster.SetGeoTransform(geoTransform);
-        Band band = raster.GetRasterBand(1);
+        dataset.SetGeoTransform(geoTransform);
+        Band band = dataset.GetRasterBand(1);
         float[] data = dto.data();
         band.WriteRaster(0, 0, nx, ny, data);
         band.SetNoDataValue(dto.noDataValue());
-        SpatialReference srs = new SpatialReference(dto.wkt());
+
+        SpatialReference srs = new SpatialReference();
+        srs.ImportFromWkt(dto.wkt());
         srs.MorphFromESRI();
-        raster.SetProjection(srs.ExportToWkt());
+        dataset.SetProjection(srs.ExportToWkt());
+        srs.delete();
+
         band.FlushCache();
 
-        driver.delete();
-
-        return raster;
+        return dataset;
     }
 
     public static VortexGrid resetNoDataValue(VortexGrid grid, double noDataValue) {
