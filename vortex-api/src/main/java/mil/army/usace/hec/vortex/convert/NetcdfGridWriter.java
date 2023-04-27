@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 
 public class NetcdfGridWriter {
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
+    public static final int BOUNDS_LEN = 2;
 
     private final VortexGridCollection collection;
     private final boolean isGeographic;
@@ -44,7 +45,7 @@ public class NetcdfGridWriter {
         lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(collection.getNx()).build();
         yDim = Dimension.builder().setName("y").setLength(collection.getNy()).build();
         xDim = Dimension.builder().setName("x").setLength(collection.getNx()).build();
-        boundsDim = Dimension.builder().setName("nv").setLength(2).build();
+        boundsDim = Dimension.builder().setName("nv").setLength(BOUNDS_LEN).build();
     }
 
     /* Write Methods */
@@ -53,48 +54,45 @@ public class NetcdfGridWriter {
         addVariables(writerBuilder);
 
         try (NetcdfFormatWriter writer = writerBuilder.build()) {
-            writer.write(timeDim.getShortName(), Array.makeFromJavaArray(collection.getTimeData()));
-            if (hasTimeBounds) {
-                writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(collection.getTimeBoundsArray()));
-            }
-
-            if (isGeographic) {
-                writer.write(CF.LATITUDE, Array.makeFromJavaArray(collection.getYCoordinates()));
-                writer.write(CF.LONGITUDE, Array.makeFromJavaArray(collection.getXCoordinates()));
-            } else {
-                writer.write("y", Array.makeFromJavaArray(collection.getYCoordinates()));
-                writer.write("x", Array.makeFromJavaArray(collection.getXCoordinates()));
-                writer.write(CF.LATITUDE, Array.makeFromJavaArray(collection.getLatCoordinates()));
-                writer.write(CF.LONGITUDE, Array.makeFromJavaArray(collection.getLonCoordinates()));
-            }
-
-            writeGridData(writer);
+            writeDimensions(writer);
+            writeVariableGrid(writer);
         } catch (IOException | InvalidRangeException e) {
             logger.severe(e.getMessage());
         }
     }
-    private void writeGridData(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        float[] timeData = collection.getTimeData();
-        List<VortexGrid> gridList = collection.getVortexGridList();
-        for (int timeIndex = 0; timeIndex < timeData.length; timeIndex++) {
-            VortexGrid grid = gridList.get(timeIndex);
-            float[][] data2D = grid.data2D();
-            float[][][] data3D = new float[1][grid.ny()][grid.nx()];
-            for (int i = 0; i < data2D.length; i++) {
-                for (int j = 0; j < data2D[i].length; j++) {
-                    data3D[0][i][j] = data2D[i][j]; // assign each element of the 2D array to the 3D array
-                }
-            }
 
-            // Define the index range for the current time step
-            int[] origin = {timeIndex, 0, 0};
-
-            // Write the data for the current time step
-            Variable variable = writer.findVariable(collection.getShortName());
-            writer.write(variable, origin, Array.makeFromJavaArray(data3D));
-        }
+    private void writeDimensions(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
+        writer.write(timeDim.getShortName(), Array.makeFromJavaArray(collection.getTimeData()));
+        if (hasTimeBounds) writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(collection.getTimeBoundsArray()));
+        if (isGeographic) writeDimensionsGeographic(writer);
+        else writeDimensionsProjected(writer);
     }
 
+    private void writeDimensionsGeographic(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
+        writer.write(latDim.getShortName(), Array.makeFromJavaArray(collection.getYCoordinates()));
+        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(collection.getXCoordinates()));
+    }
+
+    private void writeDimensionsProjected(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
+        writer.write(yDim.getShortName(), Array.makeFromJavaArray(collection.getYCoordinates()));
+        writer.write(xDim.getShortName(), Array.makeFromJavaArray(collection.getXCoordinates()));
+        writer.write(latDim.getShortName(), Array.makeFromJavaArray(collection.getLatCoordinates()));
+        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(collection.getLonCoordinates()));
+    }
+
+    private void writeVariableGrid(NetcdfFormatWriter writer) {
+        Variable variable = writer.findVariable(collection.getShortName());
+        collection.getCollectionDataStream().forEach(entry -> {
+            try {
+                int index = entry.getKey();
+                VortexGrid grid = entry.getValue();
+                int[] origin = {index, 0, 0};
+                writer.write(variable, origin, Array.makeFromJavaArray(grid.data3D()));
+            } catch (IOException | InvalidRangeException e) {
+                logger.warning(e.getMessage());
+            }
+        });
+    }
 
     /* Add Dimensions */
     private void addDimensions(NetcdfFormatWriter.Builder writerBuilder) {

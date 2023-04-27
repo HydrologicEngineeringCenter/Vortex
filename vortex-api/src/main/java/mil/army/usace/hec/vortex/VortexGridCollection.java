@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex;
 
+import mil.army.usace.hec.vortex.convert.NetcdfGridWriter;
 import mil.army.usace.hec.vortex.geo.WktParser;
 import ucar.nc2.constants.CF;
 import ucar.unidata.geoloc.LatLonPoint;
@@ -16,10 +17,11 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class VortexGridCollection {
     private static final Logger logger = Logger.getLogger(VortexGridCollection.class.getName());
-    public static final int NV_LENGTH = 2;
 
     private final List<VortexGrid> vortexGridList;
     private final String shortName;
@@ -51,7 +53,7 @@ public class VortexGridCollection {
         wkt = mode(VortexGrid::wkt, "");
         projection = WktParser.getProjection(wkt);
         projectionUnit = WktParser.getProjectionUnit(wkt);
-        Map<String, double[][]> latLonMap = getLatLonCoordinatesNew();
+        Map<String, double[][]> latLonMap = getLatLonCoordinates();
         lonCoordinates = latLonMap.get("lon");
         latCoordinates = latLonMap.get("lat");
         interval = initInterval();
@@ -77,31 +79,7 @@ public class VortexGridCollection {
         return (modeInterval.isZero()) ? Duration.ofDays(1) : modeInterval;
     }
 
-    private Map<String, double[]> getLatLonCoordinates() {
-        Map<String, double[]> latLonMap = new HashMap<>();
-
-        int yLength = yCoordinates.length;
-        int xLength = xCoordinates.length;
-
-        double[] latCoords = new double[yLength * xLength];
-        double[] lonCoords = new double[yLength * xLength];
-
-        for (int y = 0; y < yLength; y++) {
-            for (int x = 0; x < xLength; x++) {
-                ProjectionPoint projPoint = ProjectionPoint.create(xCoordinates[x], yCoordinates[y]);
-                LatLonPoint latlonPoint = projection.projToLatLon(projPoint);
-                latCoords[y * xLength + x] = latlonPoint.getLatitude();
-                lonCoords[y * xLength + x] = latlonPoint.getLongitude();
-            }
-        }
-
-        latLonMap.put("lat", latCoords);
-        latLonMap.put("lon", lonCoords);
-
-        return latLonMap;
-    }
-
-    private Map<String, double[][]> getLatLonCoordinatesNew() {
+    private Map<String, double[][]> getLatLonCoordinates() {
         Map<String, double[][]> latLonMap = new HashMap<>();
         double[][] latData = new double[ny][nx];
         double[][] lonData = new double[ny][nx];
@@ -141,7 +119,6 @@ public class VortexGridCollection {
 
         vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
         vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
-//        vortexGridList.removeIf(g -> !Objects.equals(interval, g.interval()));
         vortexGridList.removeIf(g -> !Objects.equals(zoneId, g.startTime().getZone()));
         vortexGridList.removeIf(g -> !Objects.equals(zoneId, g.endTime().getZone()));
     }
@@ -226,20 +203,8 @@ public class VortexGridCollection {
         return timeData;
     }
 
-    public float[][][] getData3D() {
-        float[] timeData = getTimeData();
-        float[][][] data3D = new float[timeData.length][ny][nx];
-
-        for (int timeIndex = 0; timeIndex < timeData.length; timeIndex++) {
-            VortexGrid grid = vortexGridList.get(timeIndex);
-            data3D[timeIndex] = grid.data2D();
-        }
-
-        return data3D;
-    }
-
     public float[][] getTimeBoundsArray() {
-        float[][] timeBoundArray = new float[getTimeLength()][NV_LENGTH];
+        float[][] timeBoundArray = new float[getTimeLength()][NetcdfGridWriter.BOUNDS_LEN];
 
         for (int i = 0; i < vortexGridList.size(); i++) {
             VortexGrid grid = vortexGridList.get(i);
@@ -265,7 +230,7 @@ public class VortexGridCollection {
         return null;
     }
 
-    public List<VortexGrid> getVortexGridList() {
-        return List.copyOf(vortexGridList);
+    public Stream<Map.Entry<Integer, VortexGrid>> getCollectionDataStream() {
+        return IntStream.range(0, vortexGridList.size()).mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
     }
 }

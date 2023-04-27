@@ -40,9 +40,10 @@ public class WktParser {
 
     public static String getProjectionUnit(String wkt) {
         SpatialReference srs = new SpatialReference(wkt);
-        String unitName = srs.GetLinearUnitsName();
+        String unitName = srs.GetLinearUnitsName().toLowerCase();
         switch (unitName) {
-            case "Meter":
+            case "meter":
+            case "metre":
                 return "m";
             default:
                 return unitName;

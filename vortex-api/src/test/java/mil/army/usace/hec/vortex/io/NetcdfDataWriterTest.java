@@ -13,6 +13,26 @@ import java.util.List;
 
 class NetcdfDataWriterTest {
     @Test
+    void DssToNetcdf() {
+        String dssPath = TestUtil.getResourceFile("/precip.dss").getAbsolutePath();
+        DataReader dataReader = DataReader.builder()
+                .path(dssPath)
+                .variable("*")
+                .build();
+        List<VortexData> originalList = dataReader.getDtos();
+
+        String outFile = TestUtil.createTempFile("precip.nc");
+        Assertions.assertNotNull(outFile);
+        DataWriter dataWriter = DataWriter.builder()
+                .data(originalList)
+                .destination(outFile)
+                .build();
+        dataWriter.write();
+        Assertions.assertTrue(Files.exists(Path.of(outFile)));
+        System.out.println("Output Path: " + outFile);
+    }
+
+    @Test
     void DayMetPrecipitation() {
         String ncPath = TestUtil.getResourceFile("/netcdf/daily_prcp_2022.nc").getAbsolutePath();
         runFullCycleTest(ncPath, "prcp");

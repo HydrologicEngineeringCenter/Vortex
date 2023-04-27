@@ -5,10 +5,12 @@ import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 
+import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ImportableUnit {
@@ -90,8 +92,16 @@ public class ImportableUnit {
     public static Builder builder() {return new Builder();}
 
     public void process() {
-        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
+        String fileName = destination.getFileName().toString();
+        if (fileName.endsWith(".dss"))
+            processDssWrite();
+        if (fileName.endsWith(".nc"))
+            processNetcdfWrite();
+        support.firePropertyChange("complete", null, null);
+    }
 
+    private void processDssWrite() {
+        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
         int count = reader.getDtoCount();
         IntStream.range(0, count).parallel().forEach(i -> {
             VortexGrid grid = (VortexGrid) reader.getDto(i);
@@ -108,8 +118,22 @@ public class ImportableUnit {
 
             writer.write();
         });
+    }
 
-        support.firePropertyChange("complete", null, null);
+    private void processNetcdfWrite() {
+        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
+        List<VortexData> processedGrids = reader.getDtos().stream().parallel()
+                .filter(VortexGrid.class::isInstance)
+                .map(grid -> geoProcessor.process((VortexGrid) grid))
+                .collect(Collectors.toList());
+
+        DataWriter writer = DataWriter.builder()
+                .data(processedGrids)
+                .destination(destination)
+                .options(writeOptions)
+                .build();
+
+        writer.write();
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

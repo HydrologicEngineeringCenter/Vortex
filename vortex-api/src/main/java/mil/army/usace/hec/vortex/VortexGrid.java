@@ -265,10 +265,10 @@ public class VortexGrid implements VortexData, Serializable {
         return yCoordinates;
     }
 
-    public float[][] data2D() {
-        float[][] data2D = new float[ny][nx];
-        for (int y = 0; y < ny; y++) System.arraycopy(data, y * nx, data2D[y], 0, nx);
-        return data2D;
+    public float[][][] data3D() {
+        float[][][] data3D = new float[1][ny][nx];
+        for (int y = 0; y < ny; y++) System.arraycopy(data, y * nx, data3D[0][y], 0, nx);
+        return data3D;
     }
 
     @Override
