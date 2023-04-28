@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.VortexData;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -11,6 +12,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class BatchImporter {
     private static final Logger logger = Logger.getLogger(BatchImporter.class.getName());
@@ -96,14 +98,62 @@ public class BatchImporter {
 
     public void process() {
         Instant start = Instant.now();
-        List<ImportableUnit> importableUnits = new ArrayList<>();
+
+        if (DataWriter.canSupportConcurrentWrite(destination)) {
+            processWithConcurrentWrite();
+        } else {
+            processWithoutConcurrentWrite();
+        }
+
+        Duration duration = Duration.between(start, Instant.now());
+        long seconds = duration.toSeconds();
+
+        String timeMessage = String.format("Batch import time: %d:%02d:%02d%n", seconds / 3600, (seconds % 3600) / 60, (seconds % 60));
+        logger.info(timeMessage);
+    }
+
+    private void processWithConcurrentWrite() {
+        List<ImportableUnit> importableUnits = getDataReaders().stream()
+                .map(reader -> ImportableUnit.builder()
+                        .reader(reader)
+                        .geoOptions(geoOptions)
+                        .destination(destination)
+                        .writeOptions(writeOptions)
+                        .build())
+                .collect(Collectors.toList());
+
+        int totalCount = importableUnits.size();
+
+        importableUnits.parallelStream().forEach(importableUnit -> {
+            importableUnit.addPropertyChangeListener(writeProgressListener(totalCount));
+            importableUnit.process();
+        });
+    }
+
+    private void processWithoutConcurrentWrite() {
+        List<VortexData> vortexDataList = getDataReaders().parallelStream()
+                .map(DataReader::getDtos)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        DataWriter writer = DataWriter.builder()
+                .data(vortexDataList)
+                .destination(destination)
+                .options(writeOptions)
+                .build();
+
+        int totalCount = vortexDataList.size();
+        writer.addListener(writeProgressListener(totalCount));
+        writer.write();
+    }
+
+    private List<DataReader> getDataReaders() {
+        List<DataReader> readers = new ArrayList<>();
 
         inFiles.forEach(file -> {
-            List<DataReader> readers = new ArrayList<>();
             if (DataReader.isVariableRequired(file)) {
                 variables.forEach(variable -> {
                     if (DataReader.getVariables(file).contains(variable)) {
-
                         DataReader reader = DataReader.builder()
                                 .path(file)
                                 .variable(variable)
@@ -119,35 +169,18 @@ public class BatchImporter {
 
                 readers.add(reader);
             }
-
-            readers.forEach(reader -> {
-                ImportableUnit importableUnit = ImportableUnit.builder()
-                        .reader(reader)
-                        .geoOptions(geoOptions)
-                        .destination(destination)
-                        .writeOptions(writeOptions)
-                        .build();
-
-                importableUnits.add(importableUnit);
-            });
         });
 
-        int totalCount = importableUnits.size();
+        return readers;
+    }
 
-        importableUnits.parallelStream().forEach(importableUnit -> {
-            importableUnit.addPropertyChangeListener(evt -> {
-                if(evt.getPropertyName().equals("complete")) {
-                    int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
-                    support.firePropertyChange("progress", null, newValue);
-                }
-            });
-
-            importableUnit.process();
-        });
-        Duration duration = Duration.between(start, Instant.now());
-        long seconds = duration.toSeconds();
-
-        logger.info(String.format("Batch import time: %d:%02d:%02d%n", seconds / 3600, (seconds % 3600) / 60, (seconds % 60)));
+    private PropertyChangeListener writeProgressListener(int totalCount) {
+        return evt -> {
+            if(evt.getPropertyName().equals("complete")) {
+                int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
+                support.firePropertyChange("progress", null, newValue);
+            }
+        };
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

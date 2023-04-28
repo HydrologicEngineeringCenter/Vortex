@@ -165,7 +165,7 @@ public class NetcdfDataReader extends DataReader {
             List<Variable> variables = ncd.getVariables();
             Set<String> variableNames = new HashSet<>();
             for (Variable variable : variables) {
-                if (variable instanceof VariableDS) {
+                if (isVisibleVariable(variable)) {
                     VariableDS variableDS = (VariableDS) variable;
                     List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
 
@@ -182,6 +182,12 @@ public class NetcdfDataReader extends DataReader {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
         return Collections.emptySet();
+    }
+
+    private static boolean isVisibleVariable(Variable variable) {
+        boolean isVariableDS = variable instanceof VariableDS;
+        boolean isNotAxis = !(variable instanceof CoordinateAxis);
+        return isVariableDS && isNotAxis;
     }
 
     private float[] getFloatArray(Array array) {

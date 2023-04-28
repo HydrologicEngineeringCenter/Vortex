@@ -44,7 +44,13 @@ public class NetcdfDataWriter extends DataWriter {
         addGlobalAttributes(writerBuilder);
 
         NetcdfGridWriter gridWriter = new NetcdfGridWriter(collection);
+        gridWriter.addListener(e -> fireWriteCompleted());
         gridWriter.write(writerBuilder);
+    }
+
+    @Override
+    public boolean canSupportConcurrentWrite() {
+        return false;
     }
 
     /* Add Global Attributes */

@@ -14,6 +14,8 @@ import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.util.Parameter;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.logging.Logger;
 
 public class NetcdfGridWriter {
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
     public static final int BOUNDS_LEN = 2;
 
     private final VortexGridCollection collection;
@@ -88,6 +91,7 @@ public class NetcdfGridWriter {
                 VortexGrid grid = entry.getValue();
                 int[] origin = {index, 0, 0};
                 writer.write(variable, origin, Array.makeFromJavaArray(grid.data3D()));
+                support.firePropertyChange("complete", null, null);
             } catch (IOException | InvalidRangeException e) {
                 logger.warning(e.getMessage());
             }
@@ -198,5 +202,14 @@ public class NetcdfGridWriter {
     /* Helpers */
     private String getBoundsName(Dimension dimension) {
         return dimension.getShortName() + "_bnds";
+    }
+
+    /* Property Change */
+    public void addListener(PropertyChangeListener pcl) {
+        this.support.addPropertyChangeListener(pcl);
+    }
+
+    public void removeListener(PropertyChangeListener pcl) {
+        this.support.removePropertyChangeListener(pcl);
     }
 }

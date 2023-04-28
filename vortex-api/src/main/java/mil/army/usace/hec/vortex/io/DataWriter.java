@@ -3,16 +3,16 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class DataWriter {
+    final PropertyChangeSupport support = new PropertyChangeSupport(this);
     final Path destination;
     final List<VortexData> data;
     final Map<String, String> options = new HashMap<>();
@@ -96,5 +96,27 @@ public abstract class DataWriter {
 
     public abstract void write();
 
+    public abstract boolean canSupportConcurrentWrite();
+
+    public static boolean canSupportConcurrentWrite(Path destination) {
+        DataWriter dataWriter = DataWriter.builder()
+                .destination(destination)
+                .data(Collections.emptyList())
+                .build();
+        return dataWriter.canSupportConcurrentWrite();
+    }
+
+    /* Property Change */
+    void fireWriteCompleted() {
+        support.firePropertyChange("complete", null, null);
+    }
+
+    public void addListener(PropertyChangeListener pcl) {
+        support.addPropertyChangeListener(pcl);
+    }
+
+    public void removeListener(PropertyChangeListener pcl) {
+        support.removePropertyChangeListener(pcl);
+    }
 }
 

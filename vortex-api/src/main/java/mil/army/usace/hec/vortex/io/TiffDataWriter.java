@@ -50,4 +50,9 @@ public class TiffDataWriter extends DataWriter {
             out.delete();
         });
     }
+
+    @Override
+    public boolean canSupportConcurrentWrite() {
+        return true;
+    }
 }

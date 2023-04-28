@@ -237,7 +237,7 @@ public class DestinationSelectionPanel extends JPanel {
         JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
 
         // Configuring fileChooser dialog
-        fileChooser.setAcceptAllFileFilterUsed(true);
+        fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilter dssFilter = new FileNameExtensionFilter("DSS Files (*.dss)", "dss");
         FileNameExtensionFilter ncFilter = new FileNameExtensionFilter("NetCDF Files (*.nc, *.nc3, *.nc4)", "nc", "nc3", "nc4");
         fileChooser.addChoosableFileFilter(dssFilter);

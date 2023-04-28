@@ -8,6 +8,8 @@ import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
 
 public class WktParser {
     public static Projection getProjection(String wkt) {
+        Projection defaultProjection = new LatLonProjection();
+        if (wkt == null || wkt.isEmpty()) return defaultProjection;
         SpatialReference srs = new SpatialReference(wkt);
 
         try {
@@ -35,7 +37,7 @@ public class WktParser {
             srs.delete();
         }
 
-        return new LatLonProjection();
+        return defaultProjection;
     }
 
     public static String getProjectionUnit(String wkt) {
