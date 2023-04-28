@@ -2,6 +2,8 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -131,9 +133,14 @@ public class BatchImporter {
     }
 
     private void processWithoutConcurrentWrite() {
+        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
+
         List<VortexData> vortexDataList = getDataReaders().parallelStream()
                 .map(DataReader::getDtos)
                 .flatMap(Collection::stream)
+                .filter(VortexGrid.class::isInstance)
+                .map(VortexGrid.class::cast)
+                .map(geoProcessor::process)
                 .collect(Collectors.toList());
 
         DataWriter writer = DataWriter.builder()

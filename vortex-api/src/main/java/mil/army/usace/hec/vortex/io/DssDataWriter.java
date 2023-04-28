@@ -12,6 +12,7 @@ import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
+import mil.army.usace.hec.vortex.util.UnitUtil;
 import org.gdal.osr.SpatialReference;
 
 import javax.measure.Unit;
@@ -71,7 +72,7 @@ public class DssDataWriter extends DataWriter {
                 }
             }
 
-            Unit<?> units = getUnits(grid.units());
+            Unit<?> units = UnitUtil.getUnits(grid.units());
 
             DSSPathname dssPathname = new DSSPathname();
             String cPart = getCPartForGrid(grid.shortName());
@@ -476,6 +477,7 @@ public class DssDataWriter extends DataWriter {
             case "celsius":
             case "degrees c":
             case "deg c":
+            case "degc":
             case "c":
                 return CELSIUS;
             case "degc-d":
@@ -704,7 +706,7 @@ public class DssDataWriter extends DataWriter {
 
         gridInfo.setCellInfo(minX, minY, grid.nx(), grid.ny(), cellSize);
 
-        Unit<?> units = getUnits(grid.units());
+        Unit<?> units = UnitUtil.getUnits(grid.units());
         String unitsString = getUnitsString(units);
         gridInfo.setDataUnits(unitsString);
 

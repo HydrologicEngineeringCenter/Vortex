@@ -13,13 +13,23 @@ import ucar.nc2.constants.CF;
 import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.util.Parameter;
+import ucar.units.StandardUnitDB;
 
+import javax.measure.Unit;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static javax.measure.MetricPrefix.KILO;
+import static javax.measure.MetricPrefix.MILLI;
+import static systems.uom.common.USCustomary.*;
+import static systems.uom.common.USCustomary.TON;
+import static tech.units.indriya.AbstractUnit.ONE;
+import static tech.units.indriya.unit.Units.*;
+import static tech.units.indriya.unit.Units.DAY;
 
 public class NetcdfGridWriter {
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
@@ -84,7 +94,8 @@ public class NetcdfGridWriter {
     }
 
     private void writeVariableGrid(NetcdfFormatWriter writer) {
-        Variable variable = writer.findVariable(collection.getShortName());
+        String shortName = formatShortName(collection.getShortName());
+        Variable variable = writer.findVariable(shortName);
         collection.getCollectionDataStream().forEach(entry -> {
             try {
                 int index = entry.getKey();
@@ -190,8 +201,9 @@ public class NetcdfGridWriter {
 
     private void addVariableGridCollection(NetcdfFormatWriter.Builder writerBuilder) {
         List<Dimension> dimensions = isGeographic ? List.of(timeDim, latDim, lonDim) : List.of(timeDim, yDim, xDim);
-        writerBuilder.addVariable(collection.getShortName(), DataType.FLOAT, dimensions)
-                .addAttribute(new Attribute(CF.LONG_NAME, collection.getDescription()))
+        String shortName = formatShortName(collection.getShortName());
+        writerBuilder.addVariable(shortName, DataType.FLOAT, dimensions)
+                .addAttribute(new Attribute(CF.LONG_NAME, formatLongName(collection.getShortName())))
                 .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()))
                 .addAttribute(new Attribute(CF.GRID_MAPPING, collection.getProjectionName()))
                 .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
@@ -202,6 +214,204 @@ public class NetcdfGridWriter {
     /* Helpers */
     private String getBoundsName(Dimension dimension) {
         return dimension.getShortName() + "_bnds";
+    }
+
+    private static String formatLongName(String description) {
+        String desc;
+        if (description != null) {
+            desc = description.toLowerCase();
+        } else {
+            return "";
+        }
+
+        if (desc.contains("precipitation") && desc.contains("frequency")) {
+            return "PRECIPITATION-FREQUENCY";
+        } else if (desc.contains("pressure") && desc.contains("surface")) {
+            return "PRESSURE";
+        } else if (desc.contains("precipitation")
+                || desc.contains("precip")
+                || desc.contains("precip") && desc.contains("rate")
+                || desc.contains("qpe01h")
+                || desc.contains("var209-6")
+                || desc.contains("rainfall")
+                || desc.equals("pr")) {
+            return "lwe_thickness_of_precipitation_amount";
+        } else if (desc.contains("temperature")
+                || desc.equals("airtemp")
+                || desc.equals("tasmin")
+                || desc.equals("tasmax")
+                || desc.equals("temp-air")) {
+            return "air_temperature";
+        } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
+                && desc.contains("radiation")){
+            return "SOLAR RADIATION";
+        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
+            return "WINDSPEED";
+        } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
+                || desc.equals("swe")) {
+            return "SWE";
+        } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
+            return "SNOWFALL ACCUMULATION";
+        } else if (desc.contains("albedo")) {
+            return "ALBEDO";
+        } else if (desc.contains("snow") && desc.contains("depth")) {
+            return "SNOW DEPTH";
+        } else if (desc.contains("snow") && desc.contains("melt") && desc.contains("runoff")) {
+            return "LIQUID WATER";
+        } else if (desc.contains("snow") && desc.contains("sublimation")) {
+            return "SNOW SUBLIMATION";
+        } else if (desc.equals("cold content")){
+            return "COLD CONTENT";
+        } else if (desc.equals("cold content ati")){
+            return "COLD CONTENT ATI";
+        } else if (desc.equals("liquid water")){
+            return "LIQUID WATER";
+        } else if (desc.equals("meltrate ati")){
+            return "MELTRATE ATI";
+        } else if (desc.equals("snow depth")){
+            return "SNOW DEPTH";
+        } else if (desc.equals("snow melt")){
+            return "SNOW MELT";
+        } else {
+            return "";
+        }
+    }
+
+    private static String formatShortName(String description) {
+        String desc;
+        if (description != null) {
+            desc = description.toLowerCase();
+        } else {
+            return "";
+        }
+
+        if (desc.contains("precipitation") && desc.contains("frequency")) {
+            return "PRECIPITATION-FREQUENCY";
+        } else if (desc.contains("pressure") && desc.contains("surface")) {
+            return "PRESSURE";
+        } else if (desc.contains("precipitation")
+                || desc.contains("precip")
+                || desc.contains("precip") && desc.contains("rate")
+                || desc.contains("qpe01h")
+                || desc.contains("var209-6")
+                || desc.contains("rainfall")
+                || desc.equals("pr")) {
+            return "precipitation";
+        } else if (desc.contains("temperature")
+                || desc.equals("airtemp")
+                || desc.equals("tasmin")
+                || desc.equals("tasmax")
+                || desc.equals("temp-air")) {
+            return "air_temperature";
+        } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
+                && desc.contains("radiation")){
+            return "SOLAR RADIATION";
+        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
+            return "WINDSPEED";
+        } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
+                || desc.equals("swe")) {
+            return "SWE";
+        } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
+            return "SNOWFALL ACCUMULATION";
+        } else if (desc.contains("albedo")) {
+            return "ALBEDO";
+        } else if (desc.contains("snow") && desc.contains("depth")) {
+            return "SNOW DEPTH";
+        } else if (desc.contains("snow") && desc.contains("melt") && desc.contains("runoff")) {
+            return "LIQUID WATER";
+        } else if (desc.contains("snow") && desc.contains("sublimation")) {
+            return "SNOW SUBLIMATION";
+        } else if (desc.equals("cold content")){
+            return "COLD CONTENT";
+        } else if (desc.equals("cold content ati")){
+            return "COLD CONTENT ATI";
+        } else if (desc.equals("liquid water")){
+            return "LIQUID WATER";
+        } else if (desc.equals("meltrate ati")){
+            return "MELTRATE ATI";
+        } else if (desc.equals("snow depth")){
+            return "SNOW DEPTH";
+        } else if (desc.equals("snow melt")){
+            return "SNOW MELT";
+        } else {
+            return "";
+        }
+
+        // TODO: Go through everything in the DSS version, and add shortName
+    }
+
+    private static String getUnitsString(Unit<?> unit){
+        if (unit.equals(MILLI(METRE))){
+            return "MM";
+        }
+        if (unit.equals(INCH)){
+            return "IN";
+        }
+        if (unit.equals(MILLI(METRE).divide(SECOND))){
+            return "MM/S";
+        }
+        if (unit.equals(CUBIC_METRE.divide(SECOND))){
+            return "M3/S";
+        }
+        if (unit.equals(CUBIC_FOOT.divide(SECOND))){
+            return "CFS";
+        }
+        if (unit.equals(METRE)){
+            return "M";
+        }
+        if (unit.equals(FOOT)){
+            return "FT";
+        }
+        if (unit.equals(CELSIUS)){
+            return "degC";
+            // TODO: Do it for all
+        }
+        if (unit.equals(FAHRENHEIT)){
+            return "DEG F";
+        }
+        if (unit.equals(WATT.divide(SQUARE_METRE))){
+            return "WATT/M2";
+        }
+        if (unit.equals(KILOMETRE_PER_HOUR)){
+            return "KPH";
+        }
+        if (unit.equals(METRE_PER_SECOND)){
+            return "M/S";
+        }
+        if (unit.equals(MILE_PER_HOUR)){
+            return "MPH";
+        }
+        if (unit.equals(FOOT_PER_SECOND)){
+            return "FT/S";
+        }
+        if (unit.equals(KILO(PASCAL))){
+            return "KPA";
+        }
+        if (unit.equals(PASCAL)) {
+            return "PA";
+        }
+        if (unit.equals(PERCENT)){
+            return "%";
+        }
+        if (unit.equals(KILO(METRE))){
+            return "KM";
+        }
+        if (unit.equals(MILE)){
+            return "MILE";
+        }
+        if (unit.equals(ONE)){
+            return "UNSPECIF";
+        }
+        if (unit.equals(TON)){
+            return "TONS";
+        }
+        if (unit.equals(MILLI(GRAM).divide(LITRE))){
+            return "MG/L";
+        }
+        if (unit.equals(CELSIUS.multiply(DAY))){
+            return "DEGC-D";
+        }
+        return "";
     }
 
     /* Property Change */
