@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.ui;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
@@ -966,9 +967,7 @@ public class ImportMetWizard extends JFrame {
 
     /* Add main for quick UI Testing */
     static public void main(String[] args) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) { e.printStackTrace(); }
-
+        FlatLightLaf.setup();
         ImportMetWizard metWizard = new ImportMetWizard(null);
         metWizard.buildAndShowUI();
     }
