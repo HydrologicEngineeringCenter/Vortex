@@ -1,7 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.VortexGridCollection;
 import mil.army.usace.hec.vortex.convert.NetcdfGridWriter;
 import ucar.nc2.Attribute;
 import ucar.nc2.write.Nc4Chunking;
@@ -13,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class NetcdfDataWriter extends DataWriter {
-    private final VortexGridCollection collection;
+    private final List<VortexGrid> vortexGridList;
 
     // NetCDF4 Settings
     private static final Nc4Chunking.Strategy CHUNKING_STRATEGY = Nc4Chunking.Strategy.standard;
@@ -25,11 +24,10 @@ public class NetcdfDataWriter extends DataWriter {
     NetcdfDataWriter(Builder builder) {
         super(builder);
 
-        List<VortexGrid> grids = data.stream()
+        vortexGridList = data.stream()
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .collect(Collectors.toList());
-        collection = new VortexGridCollection(grids);
     }
 
     /* Write */
@@ -43,7 +41,7 @@ public class NetcdfDataWriter extends DataWriter {
                 .setChunker(chunker);
         addGlobalAttributes(writerBuilder);
 
-        NetcdfGridWriter gridWriter = new NetcdfGridWriter(collection);
+        NetcdfGridWriter gridWriter = new NetcdfGridWriter(vortexGridList);
         gridWriter.addListener(e -> fireWriteCompleted());
         gridWriter.write(writerBuilder);
     }

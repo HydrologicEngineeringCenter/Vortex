@@ -1,7 +1,9 @@
 package mil.army.usace.hec.vortex.convert;
 
+import mil.army.usace.hec.vortex.MeteorologicalVariable;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
+import mil.army.usace.hec.vortex.util.UnitUtil;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
@@ -13,33 +15,34 @@ import ucar.nc2.constants.CF;
 import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.util.Parameter;
-import ucar.units.StandardUnitDB;
 
 import javax.measure.Unit;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-import static javax.measure.MetricPrefix.KILO;
-import static javax.measure.MetricPrefix.MILLI;
+import static javax.measure.MetricPrefix.*;
 import static systems.uom.common.USCustomary.*;
-import static systems.uom.common.USCustomary.TON;
-import static tech.units.indriya.AbstractUnit.ONE;
+import static tech.units.indriya.unit.Units.HOUR;
 import static tech.units.indriya.unit.Units.*;
-import static tech.units.indriya.unit.Units.DAY;
 
 public class NetcdfGridWriter {
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
     public static final int BOUNDS_LEN = 2;
 
-    private final VortexGridCollection collection;
+    private final Map<String, VortexGridCollection> gridCollectionMap;
+    private final VortexGridCollection defaultCollection;
+    // Conditionals
     private final boolean isGeographic;
     private final boolean hasTimeBounds;
-
     // Dimensions
     private final Dimension timeDim;
     private final Dimension latDim;
@@ -48,17 +51,53 @@ public class NetcdfGridWriter {
     private final Dimension xDim;
     private final Dimension boundsDim;
 
-    public NetcdfGridWriter(VortexGridCollection collection) {
-        this.collection = collection;
-        isGeographic = collection.getProjection() instanceof LatLonProjection;
-        hasTimeBounds = collection.getTimeLength() > 1;
+    public NetcdfGridWriter(List<VortexGrid> vortexGridList) {
+        gridCollectionMap = initGridCollectionMap(vortexGridList);
+        defaultCollection = getAnyCollection();
+
+        isGeographic = defaultCollection.getProjection() instanceof LatLonProjection;
+        hasTimeBounds = defaultCollection.getTimeLength() > 1;
+
         // Dimensions
         timeDim = Dimension.builder().setName(CF.TIME).setIsUnlimited(true).build();
-        latDim = Dimension.builder().setName(CF.LATITUDE).setLength(collection.getNy()).build();
-        lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(collection.getNx()).build();
-        yDim = Dimension.builder().setName("y").setLength(collection.getNy()).build();
-        xDim = Dimension.builder().setName("x").setLength(collection.getNx()).build();
+        latDim = Dimension.builder().setName(CF.LATITUDE).setLength(defaultCollection.getNy()).build();
+        lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(defaultCollection.getNx()).build();
+        yDim = Dimension.builder().setName("y").setLength(defaultCollection.getNy()).build();
+        xDim = Dimension.builder().setName("x").setLength(defaultCollection.getNx()).build();
         boundsDim = Dimension.builder().setName("nv").setLength(BOUNDS_LEN).build();
+    }
+
+    private Map<String, VortexGridCollection> initGridCollectionMap(List<VortexGrid> vortexGridList) {
+        Map<String, VortexGridCollection> map = vortexGridList.stream()
+                .collect(Collectors.groupingBy(
+                        VortexGrid::shortName,
+                        Collectors.collectingAndThen(Collectors.toList(), VortexGridCollection::new))
+                );
+        boolean isValidMap = verifyGridCollectionMap(map);
+        return isValidMap ? map : Collections.emptyMap();
+    }
+
+    private boolean verifyGridCollectionMap(Map<String, VortexGridCollection> map) {
+        boolean projectionMatched = isUnique(VortexGridCollection::getProjection, map);
+        // No need to check lat & lon since they are generated from (x & y & projection)
+        boolean yMatched = isUnique(VortexGridCollection::getYCoordinates, map);
+        boolean xMatched = isUnique(VortexGridCollection::getXCoordinates, map);
+        boolean timeMatched = isUnique(VortexGridCollection::getTimeData, map);
+        return projectionMatched && yMatched && xMatched && timeMatched;
+    }
+
+    private boolean isUnique(Function<VortexGridCollection, ?> propertyGetter, Map<String, VortexGridCollection> map) {
+        boolean isUnique = map.values().stream()
+                .map(propertyGetter)
+                .map(o -> (o instanceof double[] || o instanceof float[]) ? Arrays.deepToString(new Object[] {o}) : o)
+                .distinct()
+                .count() == 1;
+        if (!isUnique) logger.severe("Data is not the same for all grids");
+        return isUnique;
+    }
+
+    private VortexGridCollection getAnyCollection() {
+        return gridCollectionMap.values().stream().findAny().orElse(new VortexGridCollection(Collections.emptyList()));
     }
 
     /* Write Methods */
@@ -75,38 +114,41 @@ public class NetcdfGridWriter {
     }
 
     private void writeDimensions(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        writer.write(timeDim.getShortName(), Array.makeFromJavaArray(collection.getTimeData()));
-        if (hasTimeBounds) writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(collection.getTimeBoundsArray()));
+        writer.write(timeDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getTimeData()));
+        if (hasTimeBounds) writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
         if (isGeographic) writeDimensionsGeographic(writer);
         else writeDimensionsProjected(writer);
     }
 
     private void writeDimensionsGeographic(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        writer.write(latDim.getShortName(), Array.makeFromJavaArray(collection.getYCoordinates()));
-        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(collection.getXCoordinates()));
+        writer.write(latDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getYCoordinates()));
+        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getXCoordinates()));
     }
 
     private void writeDimensionsProjected(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        writer.write(yDim.getShortName(), Array.makeFromJavaArray(collection.getYCoordinates()));
-        writer.write(xDim.getShortName(), Array.makeFromJavaArray(collection.getXCoordinates()));
-        writer.write(latDim.getShortName(), Array.makeFromJavaArray(collection.getLatCoordinates()));
-        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(collection.getLonCoordinates()));
+        writer.write(yDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getYCoordinates()));
+        writer.write(xDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getXCoordinates()));
+        writer.write(latDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getLatCoordinates()));
+        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getLonCoordinates()));
     }
 
     private void writeVariableGrid(NetcdfFormatWriter writer) {
-        String shortName = formatShortName(collection.getShortName());
-        Variable variable = writer.findVariable(shortName);
-        collection.getCollectionDataStream().forEach(entry -> {
-            try {
-                int index = entry.getKey();
-                VortexGrid grid = entry.getValue();
-                int[] origin = {index, 0, 0};
-                writer.write(variable, origin, Array.makeFromJavaArray(grid.data3D()));
-                support.firePropertyChange("complete", null, null);
-            } catch (IOException | InvalidRangeException e) {
-                logger.warning(e.getMessage());
-            }
-        });
+        for (VortexGridCollection collection : gridCollectionMap.values()) {
+            MeteorologicalVariable meteorologicalVariable = getMeteorologicalVariable(collection);
+            Variable variable = writer.findVariable(meteorologicalVariable.getShortName());
+
+            collection.getCollectionDataStream().forEach(entry -> {
+                try {
+                    int index = entry.getKey();
+                    VortexGrid grid = entry.getValue();
+                    int[] origin = {index, 0, 0};
+                    writer.write(variable, origin, Array.makeFromJavaArray(grid.data3D()));
+                    support.firePropertyChange("complete", null, null);
+                } catch (IOException | InvalidRangeException e) {
+                    logger.warning(e.getMessage());
+                }
+            });
+        }
     }
 
     /* Add Dimensions */
@@ -142,7 +184,7 @@ public class NetcdfGridWriter {
         Variable.Builder<?> v = writerBuilder.addVariable(timeDim.getShortName(), DataType.FLOAT, List.of(timeDim));
         v.addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME));
         v.addAttribute(new Attribute(CF.CALENDAR, "standard"));
-        v.addAttribute(new Attribute(CF.UNITS, collection.getTimeUnits()));
+        v.addAttribute(new Attribute(CF.UNITS, defaultCollection.getTimeUnits()));
         v.addAttribute(new Attribute(CF.LONG_NAME, ""));
         if (hasTimeBounds) v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
     }
@@ -169,19 +211,19 @@ public class NetcdfGridWriter {
 
     private void addVariableY(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addVariable(yDim.getShortName(), DataType.DOUBLE, List.of(yDim))
-                .addAttribute(new Attribute(CF.UNITS, collection.getProjectionUnit()))
+                .addAttribute(new Attribute(CF.UNITS, defaultCollection.getProjectionUnit()))
                 .addAttribute(new Attribute(CF.STANDARD_NAME, CF.PROJECTION_Y_COORDINATE));
     }
 
     private void addVariableX(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addVariable(xDim.getShortName(), DataType.DOUBLE, List.of(xDim))
-                .addAttribute(new Attribute(CF.UNITS, collection.getProjectionUnit()))
+                .addAttribute(new Attribute(CF.UNITS, defaultCollection.getProjectionUnit()))
                 .addAttribute(new Attribute(CF.STANDARD_NAME, CF.PROJECTION_X_COORDINATE));
     }
 
     private void addVariableProjection(NetcdfFormatWriter.Builder writerBuilder) {
-        Variable.Builder<?> variableBuilder = writerBuilder.addVariable(collection.getProjectionName(), DataType.SHORT, Collections.emptyList());
-        for (Parameter parameter : collection.getProjection().getProjectionParameters()) {
+        Variable.Builder<?> variableBuilder = writerBuilder.addVariable(defaultCollection.getProjectionName(), DataType.SHORT, Collections.emptyList());
+        for (Parameter parameter : defaultCollection.getProjection().getProjectionParameters()) {
             String name = parameter.getName();
             String stringValue = parameter.getStringValue();
             double[] numericValues = parameter.getNumericValues();
@@ -201,14 +243,17 @@ public class NetcdfGridWriter {
 
     private void addVariableGridCollection(NetcdfFormatWriter.Builder writerBuilder) {
         List<Dimension> dimensions = isGeographic ? List.of(timeDim, latDim, lonDim) : List.of(timeDim, yDim, xDim);
-        String shortName = formatShortName(collection.getShortName());
-        writerBuilder.addVariable(shortName, DataType.FLOAT, dimensions)
-                .addAttribute(new Attribute(CF.LONG_NAME, formatLongName(collection.getShortName())))
-                .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()))
-                .addAttribute(new Attribute(CF.GRID_MAPPING, collection.getProjectionName()))
-                .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
-                .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
-                .addAttribute(new Attribute(CF._FILLVALUE, collection.getNoDataValue()));
+        for (VortexGridCollection collection : gridCollectionMap.values()) {
+            MeteorologicalVariable meteorologicalVariable = getMeteorologicalVariable(collection);
+            Unit<?> dataUnit = UnitUtil.getUnits(collection.getDataUnit());
+            writerBuilder.addVariable(meteorologicalVariable.getShortName(), DataType.FLOAT, dimensions)
+                    .addAttribute(new Attribute(CF.LONG_NAME, meteorologicalVariable.getLongName()))
+                    .addAttribute(new Attribute(CF.UNITS, getUnitsString(dataUnit)))
+                    .addAttribute(new Attribute(CF.GRID_MAPPING, defaultCollection.getProjectionName()))
+                    .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
+                    .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
+                    .addAttribute(new Attribute(CF._FILLVALUE, collection.getNoDataValue()));
+        }
     }
 
     /* Helpers */
@@ -216,202 +261,41 @@ public class NetcdfGridWriter {
         return dimension.getShortName() + "_bnds";
     }
 
-    private static String formatLongName(String description) {
-        String desc;
-        if (description != null) {
-            desc = description.toLowerCase();
-        } else {
-            return "";
-        }
-
-        if (desc.contains("precipitation") && desc.contains("frequency")) {
-            return "PRECIPITATION-FREQUENCY";
-        } else if (desc.contains("pressure") && desc.contains("surface")) {
-            return "PRESSURE";
-        } else if (desc.contains("precipitation")
-                || desc.contains("precip")
-                || desc.contains("precip") && desc.contains("rate")
-                || desc.contains("qpe01h")
-                || desc.contains("var209-6")
-                || desc.contains("rainfall")
-                || desc.equals("pr")) {
-            return "lwe_thickness_of_precipitation_amount";
-        } else if (desc.contains("temperature")
-                || desc.equals("airtemp")
-                || desc.equals("tasmin")
-                || desc.equals("tasmax")
-                || desc.equals("temp-air")) {
-            return "air_temperature";
-        } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
-                && desc.contains("radiation")){
-            return "SOLAR RADIATION";
-        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
-            return "WINDSPEED";
-        } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
-                || desc.equals("swe")) {
-            return "SWE";
-        } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
-            return "SNOWFALL ACCUMULATION";
-        } else if (desc.contains("albedo")) {
-            return "ALBEDO";
-        } else if (desc.contains("snow") && desc.contains("depth")) {
-            return "SNOW DEPTH";
-        } else if (desc.contains("snow") && desc.contains("melt") && desc.contains("runoff")) {
-            return "LIQUID WATER";
-        } else if (desc.contains("snow") && desc.contains("sublimation")) {
-            return "SNOW SUBLIMATION";
-        } else if (desc.equals("cold content")){
-            return "COLD CONTENT";
-        } else if (desc.equals("cold content ati")){
-            return "COLD CONTENT ATI";
-        } else if (desc.equals("liquid water")){
-            return "LIQUID WATER";
-        } else if (desc.equals("meltrate ati")){
-            return "MELTRATE ATI";
-        } else if (desc.equals("snow depth")){
-            return "SNOW DEPTH";
-        } else if (desc.equals("snow melt")){
-            return "SNOW MELT";
-        } else {
-            return "";
-        }
-    }
-
-    private static String formatShortName(String description) {
-        String desc;
-        if (description != null) {
-            desc = description.toLowerCase();
-        } else {
-            return "";
-        }
-
-        if (desc.contains("precipitation") && desc.contains("frequency")) {
-            return "PRECIPITATION-FREQUENCY";
-        } else if (desc.contains("pressure") && desc.contains("surface")) {
-            return "PRESSURE";
-        } else if (desc.contains("precipitation")
-                || desc.contains("precip")
-                || desc.contains("precip") && desc.contains("rate")
-                || desc.contains("qpe01h")
-                || desc.contains("var209-6")
-                || desc.contains("rainfall")
-                || desc.equals("pr")) {
-            return "precipitation";
-        } else if (desc.contains("temperature")
-                || desc.equals("airtemp")
-                || desc.equals("tasmin")
-                || desc.equals("tasmax")
-                || desc.equals("temp-air")) {
-            return "air_temperature";
-        } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
-                && desc.contains("radiation")){
-            return "SOLAR RADIATION";
-        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
-            return "WINDSPEED";
-        } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
-                || desc.equals("swe")) {
-            return "SWE";
-        } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
-            return "SNOWFALL ACCUMULATION";
-        } else if (desc.contains("albedo")) {
-            return "ALBEDO";
-        } else if (desc.contains("snow") && desc.contains("depth")) {
-            return "SNOW DEPTH";
-        } else if (desc.contains("snow") && desc.contains("melt") && desc.contains("runoff")) {
-            return "LIQUID WATER";
-        } else if (desc.contains("snow") && desc.contains("sublimation")) {
-            return "SNOW SUBLIMATION";
-        } else if (desc.equals("cold content")){
-            return "COLD CONTENT";
-        } else if (desc.equals("cold content ati")){
-            return "COLD CONTENT ATI";
-        } else if (desc.equals("liquid water")){
-            return "LIQUID WATER";
-        } else if (desc.equals("meltrate ati")){
-            return "MELTRATE ATI";
-        } else if (desc.equals("snow depth")){
-            return "SNOW DEPTH";
-        } else if (desc.equals("snow melt")){
-            return "SNOW MELT";
-        } else {
-            return "";
-        }
-
-        // TODO: Go through everything in the DSS version, and add shortName
+    private static MeteorologicalVariable getMeteorologicalVariable(VortexGridCollection collection) {
+        MeteorologicalVariable name = MeteorologicalVariable.fromName(collection.getShortName());
+        return name.equals(MeteorologicalVariable.UNKNOWN) ? MeteorologicalVariable.fromName(collection.getDescription()) : name;
     }
 
     private static String getUnitsString(Unit<?> unit){
-        if (unit.equals(MILLI(METRE))){
-            return "MM";
-        }
-        if (unit.equals(INCH)){
-            return "IN";
-        }
-        if (unit.equals(MILLI(METRE).divide(SECOND))){
-            return "MM/S";
-        }
-        if (unit.equals(CUBIC_METRE.divide(SECOND))){
-            return "M3/S";
-        }
-        if (unit.equals(CUBIC_FOOT.divide(SECOND))){
-            return "CFS";
-        }
-        if (unit.equals(METRE)){
-            return "M";
-        }
-        if (unit.equals(FOOT)){
-            return "FT";
-        }
-        if (unit.equals(CELSIUS)){
-            return "degC";
-            // TODO: Do it for all
-        }
-        if (unit.equals(FAHRENHEIT)){
-            return "DEG F";
-        }
-        if (unit.equals(WATT.divide(SQUARE_METRE))){
-            return "WATT/M2";
-        }
-        if (unit.equals(KILOMETRE_PER_HOUR)){
-            return "KPH";
-        }
-        if (unit.equals(METRE_PER_SECOND)){
-            return "M/S";
-        }
-        if (unit.equals(MILE_PER_HOUR)){
-            return "MPH";
-        }
-        if (unit.equals(FOOT_PER_SECOND)){
-            return "FT/S";
-        }
-        if (unit.equals(KILO(PASCAL))){
-            return "KPA";
-        }
-        if (unit.equals(PASCAL)) {
-            return "PA";
-        }
-        if (unit.equals(PERCENT)){
-            return "%";
-        }
-        if (unit.equals(KILO(METRE))){
-            return "KM";
-        }
-        if (unit.equals(MILE)){
-            return "MILE";
-        }
-        if (unit.equals(ONE)){
-            return "UNSPECIF";
-        }
-        if (unit.equals(TON)){
-            return "TONS";
-        }
-        if (unit.equals(MILLI(GRAM).divide(LITRE))){
-            return "MG/L";
-        }
-        if (unit.equals(CELSIUS.multiply(DAY))){
-            return "DEGC-D";
-        }
-        return "";
+        if (unit.equals(MILLI(METRE).divide(SECOND))) return "mm/s";
+        if (unit.equals(MILLI(METRE).divide(HOUR))) return "mm/hr";
+        if (unit.equals(MILLI(METRE).divide(DAY))) return "mm/day";
+        if (unit.equals(MILLI(METRE))) return "mm";
+        if (unit.equals(INCH)) return "in";
+        if (unit.equals(CELSIUS)) return "degC";
+        if (unit.equals(CELSIUS.multiply(DAY))) return "degC-d";
+        if (unit.equals(FAHRENHEIT)) return "degF";
+        if (unit.equals(KELVIN)) return "K";
+        if (unit.equals(WATT.divide(SQUARE_METRE))) return "W m-2";
+        if (unit.equals(JOULE.divide(SQUARE_METRE))) return "J m-2";
+        if (unit.equals(KILO(METRE).divide(HOUR))) return "kph"; // no sure
+        if (unit.equals(KILOMETRE_PER_HOUR)) return "km h-1";
+        if (unit.equals(PERCENT)) return "%";
+        if (unit.equals(HECTO(PASCAL))) return "hPa";
+        if (unit.equals(PASCAL)) return "Pa";
+        if (unit.equals(METRE)) return "m";
+        if (unit.equals(CUBIC_METRE.divide(SECOND))) return "m3 s-1";
+        if (unit.equals(CUBIC_FOOT.divide(SECOND))) return "cfs"; // not sure
+        if (unit.equals(FOOT)) return "ft";
+        if (unit.equals(METRE_PER_SECOND)) return "m/s";
+        if (unit.equals(MILE_PER_HOUR)) return "mph"; // not sure
+        if (unit.equals(FOOT_PER_SECOND)) return "ft/s";
+        if (unit.equals(KILO(PASCAL))) return "kPa";
+        if (unit.equals(KILO(METRE))) return "km";
+        if (unit.equals(MILE)) return "mi";
+        if (unit.equals(TON)) return "t"; // not sure
+        if (unit.equals(MILLI(GRAM).divide(LITRE))) return "mg L-1";
+        return "Unspecified";
     }
 
     /* Property Change */
