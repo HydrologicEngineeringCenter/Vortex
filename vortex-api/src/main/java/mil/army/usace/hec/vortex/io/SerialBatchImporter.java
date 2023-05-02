@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class SerialBatchImporter extends BatchImporter {
+class SerialBatchImporter extends BatchImporter {
     private static final Logger logger = Logger.getLogger(SerialBatchImporter.class.getName());
 
-    public SerialBatchImporter(Builder builder) {
+    SerialBatchImporter(Builder builder) {
         super(builder);
     }
 
