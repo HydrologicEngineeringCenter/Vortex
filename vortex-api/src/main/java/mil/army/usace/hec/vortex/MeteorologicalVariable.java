@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex;
 
 import java.util.Arrays;
 
+// long names taken from https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
 public enum MeteorologicalVariable {
     PRECIPITATION("precipitation", "lwe_thickness_of_precipitation_amount","PRECIPITATION"),
     PRESSURE("pressure", "air_pressure", "PRESSURE"),
@@ -11,13 +12,13 @@ public enum MeteorologicalVariable {
     SWE("swe", "lwe_thickness_of_surface_snow_amount", "SWE"),
     SNOWFALL_ACCUMULATION("snowfall accumulation", "lwe_thickness_of_snowfall_amount", "SNOWFALL ACCUMULATION"),
     ALBEDO("albedo", "surface_albedo", "ALBEDO"),
-    SNOW_DEPTH("snow depth", "", "SNOW DEPTH"), // Not sure
-    LIQUID_WATER("liquid water", "", "LIQUID WATER"), // Not sure
-    SNOW_SUBLIMATION("snow sublimation", "", "SNOW SUBLIMATION"), // Not sure
-    COLD_CONTENT("cold content", "", "COLD CONTENT"), // Not sure
-    COLD_CONTENT_ATI("cold content ati", "", "COLD CONTENT ATI"), // Not sure
-    MELTRATE_ATI("meltrate ati", "", "MELTRATE ATI"), // Not sure
-    SNOW_MELT("snow melt", "", "SNOW MELT"), // Not sure
+    SNOW_DEPTH("snow depth", "surface_snow_thickness", "SNOW DEPTH"),
+    LIQUID_WATER("liquid water", "lwe_thickness_of_snowfall_amount", "LIQUID WATER"),
+    SNOW_SUBLIMATION("snow sublimation", "surface_snow_sublimation_amount", "SNOW SUBLIMATION"),
+    COLD_CONTENT("cold content", "cold_content", "COLD CONTENT"),
+    COLD_CONTENT_ATI("cold content ati", "cold_content_ati", "COLD CONTENT ATI"),
+    MELTRATE_ATI("meltrate ati", "meltrate_ati", "MELTRATE ATI"),
+    SNOW_MELT("snow melt", "surface_snow_melt_amount", "SNOW MELT"),
     UNKNOWN("", "", "");
 
     private final String shortName;
