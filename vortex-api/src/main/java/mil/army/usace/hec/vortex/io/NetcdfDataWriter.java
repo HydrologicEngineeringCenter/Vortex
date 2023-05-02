@@ -46,11 +46,6 @@ public class NetcdfDataWriter extends DataWriter {
         gridWriter.write(writerBuilder);
     }
 
-    @Override
-    public boolean canSupportConcurrentWrite() {
-        return false;
-    }
-
     /* Add Global Attributes */
     private void addGlobalAttributes(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addAttribute(new Attribute("Conventions", "CF-1.10"));

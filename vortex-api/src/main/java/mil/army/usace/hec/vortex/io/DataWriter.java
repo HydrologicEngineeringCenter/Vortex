@@ -96,16 +96,6 @@ public abstract class DataWriter {
 
     public abstract void write();
 
-    public abstract boolean canSupportConcurrentWrite();
-
-    public static boolean canSupportConcurrentWrite(Path destination) {
-        DataWriter dataWriter = DataWriter.builder()
-                .destination(destination)
-                .data(Collections.emptyList())
-                .build();
-        return dataWriter.canSupportConcurrentWrite();
-    }
-
     /* Property Change */
     void fireWriteCompleted() {
         support.firePropertyChange("complete", null, null);

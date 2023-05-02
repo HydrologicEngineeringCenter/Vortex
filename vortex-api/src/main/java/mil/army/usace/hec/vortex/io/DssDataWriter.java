@@ -301,11 +301,6 @@ public class DssDataWriter extends DataWriter {
         }));
     }
 
-    @Override
-    public boolean canSupportConcurrentWrite() {
-        return true;
-    }
-
     private static String getCPartForGrid(String shortName){
         String desc;
         if (shortName != null) {

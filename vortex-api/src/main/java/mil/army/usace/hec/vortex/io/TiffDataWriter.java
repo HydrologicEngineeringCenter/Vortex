@@ -51,8 +51,4 @@ public class TiffDataWriter extends DataWriter {
         });
     }
 
-    @Override
-    public boolean canSupportConcurrentWrite() {
-        return true;
-    }
 }

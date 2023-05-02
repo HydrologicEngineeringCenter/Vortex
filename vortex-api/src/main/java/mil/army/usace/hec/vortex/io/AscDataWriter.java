@@ -68,8 +68,4 @@ public class AscDataWriter extends DataWriter {
         });
     }
 
-    @Override
-    public boolean canSupportConcurrentWrite() {
-        return true;
-    }
 }
