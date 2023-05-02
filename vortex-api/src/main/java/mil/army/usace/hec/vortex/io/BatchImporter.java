@@ -1,33 +1,31 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.Options;
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-public class BatchImporter {
+public abstract class BatchImporter {
     private static final Logger logger = Logger.getLogger(BatchImporter.class.getName());
     private final List<String> inFiles;
     private final List<String> variables;
-    private final Path destination;
-    private final Map<String, String> geoOptions;
-    private final Map<String, String> writeOptions;
+    final Path destination;
+    final Map<String, String> geoOptions;
+    final Map<String, String> writeOptions;
 
     private final PropertyChangeSupport support;
     private final AtomicInteger doneCount;
 
-    private BatchImporter(Builder builder){
+    BatchImporter(Builder builder){
         this.inFiles = builder.inFiles;
         this.variables = builder.variables;
         this.destination = builder.destination;
@@ -92,7 +90,21 @@ public class BatchImporter {
         }
 
         public BatchImporter build(){
-            return new BatchImporter(this);
+            if (destination == null){
+                throw new IllegalStateException("Invalid destination.");
+            }
+
+            PathMatcher dssMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.dss");
+            if (dssMatcher.matches(destination)) {
+                return new ConcurrentBatchImporter(this);
+            }
+
+            PathMatcher ncMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.nc");
+            if (ncMatcher.matches(destination)) {
+                return new SerialBatchImporter(this);
+            }
+
+            throw new IllegalStateException("Invalid destination: " + destination);
         }
     }
 
@@ -101,60 +113,16 @@ public class BatchImporter {
     public void process() {
         Instant start = Instant.now();
 
-        if (DataWriter.canSupportConcurrentWrite(destination)) {
-            processWithConcurrentWrite();
-        } else {
-            processWithoutConcurrentWrite();
-        }
+        processWrite();
 
-        Duration duration = Duration.between(start, Instant.now());
-        long seconds = duration.toSeconds();
-
+        long seconds = Duration.between(start, Instant.now()).toSeconds();
         String timeMessage = String.format("Batch import time: %d:%02d:%02d%n", seconds / 3600, (seconds % 3600) / 60, (seconds % 60));
         logger.info(timeMessage);
     }
 
-    private void processWithConcurrentWrite() {
-        List<ImportableUnit> importableUnits = getDataReaders().stream()
-                .map(reader -> ImportableUnit.builder()
-                        .reader(reader)
-                        .geoOptions(geoOptions)
-                        .destination(destination)
-                        .writeOptions(writeOptions)
-                        .build())
-                .collect(Collectors.toList());
+    abstract void processWrite();
 
-        int totalCount = importableUnits.size();
-
-        importableUnits.parallelStream().forEach(importableUnit -> {
-            importableUnit.addPropertyChangeListener(writeProgressListener(totalCount));
-            importableUnit.process();
-        });
-    }
-
-    private void processWithoutConcurrentWrite() {
-        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
-
-        List<VortexData> vortexDataList = getDataReaders().parallelStream()
-                .map(DataReader::getDtos)
-                .flatMap(Collection::stream)
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
-                .map(geoProcessor::process)
-                .collect(Collectors.toList());
-
-        DataWriter writer = DataWriter.builder()
-                .data(vortexDataList)
-                .destination(destination)
-                .options(writeOptions)
-                .build();
-
-        int totalCount = vortexDataList.size();
-        writer.addListener(writeProgressListener(totalCount));
-        writer.write();
-    }
-
-    private List<DataReader> getDataReaders() {
+    List<DataReader> getDataReaders() {
         List<DataReader> readers = new ArrayList<>();
 
         inFiles.forEach(file -> {
@@ -181,7 +149,7 @@ public class BatchImporter {
         return readers;
     }
 
-    private PropertyChangeListener writeProgressListener(int totalCount) {
+    PropertyChangeListener writeProgressListener(int totalCount) {
         return evt -> {
             if(evt.getPropertyName().equals("complete")) {
                 int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
