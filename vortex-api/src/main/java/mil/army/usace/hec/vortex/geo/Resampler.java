@@ -84,18 +84,21 @@ public class Resampler {
     public static ResamplerBuilder builder(){return new ResamplerBuilder();}
 
     public VortexGrid resample(){
-        SpatialReference envSrs;
+        SpatialReference envSrs = new SpatialReference();
         if (envWkt != null) {
-            envSrs = new SpatialReference(envWkt);
+            envSrs.ImportFromWkt(envWkt);
             envSrs.MorphFromESRI();
-        } else {
-            envSrs = new SpatialReference();
         }
 
         Dataset dataset = RasterUtils.getDatasetFromVortexGrid(grid);
 
-        SpatialReference destSrs = new SpatialReference(targetWkt == null ? dataset.GetProjection() : targetWkt);
-        destSrs.MorphFromESRI();
+        SpatialReference destSrs = new SpatialReference();
+        if (targetWkt != null) {
+            destSrs.ImportFromWkt(targetWkt);
+            destSrs.MorphFromESRI();
+        } else {
+            destSrs.ImportFromWkt(dataset.GetProjection());
+        }
 
         Dataset resampled = resample(dataset, env, envSrs, destSrs, cellSize, method);
 
