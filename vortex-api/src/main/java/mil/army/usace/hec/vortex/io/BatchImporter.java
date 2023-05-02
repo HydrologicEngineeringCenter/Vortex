@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 public abstract class BatchImporter {
-    private static final Logger logger = Logger.getLogger(BatchImporter.class.getName());
     private final List<String> inFiles;
     private final List<String> variables;
     final Path destination;
@@ -110,17 +109,7 @@ public abstract class BatchImporter {
 
     public static Builder builder() {return new Builder();}
 
-    public void process() {
-        Instant start = Instant.now();
-
-        processWrite();
-
-        long seconds = Duration.between(start, Instant.now()).toSeconds();
-        String timeMessage = String.format("Batch import time: %d:%02d:%02d%n", seconds / 3600, (seconds % 3600) / 60, (seconds % 60));
-        logger.info(timeMessage);
-    }
-
-    abstract void processWrite();
+    public abstract void process();
 
     List<DataReader> getDataReaders() {
         List<DataReader> readers = new ArrayList<>();
