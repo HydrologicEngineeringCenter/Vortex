@@ -24,7 +24,7 @@ dependencies {
     implementation("edu.ucar:netcdf4")
     constraints {
         implementation("edu.ucar:netcdf4:5.5.3")
-        implementation("net.java.dev.jna:jna:5.13.0")
+        runtimeOnly("net.java.dev.jna:jna:5.13.0")
     }
 
     implementation("org.gdal:gdal:3.2.0")
