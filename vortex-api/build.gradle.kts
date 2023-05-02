@@ -50,8 +50,6 @@ base.archivesBaseName = "vortex"
 project.version = project.version.toString()
 
 tasks.test {
-    maxHeapSize = "4g"
-
     useJUnit()
 
     if(org.gradle.internal.os.OperatingSystem.current().isWindows()) {
