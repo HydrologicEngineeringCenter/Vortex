@@ -86,7 +86,7 @@ public abstract class BatchImporter {
         }
 
         private boolean isConcurrentWritable() {
-            PathMatcher concurrentMatcher = FileSystems.getDefault().getPathMatcher("glob:*.{dss,asc,tiff}");
+            PathMatcher concurrentMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.{dss,asc,tiff}");
             return concurrentMatcher.matches(destination);
         }
 
