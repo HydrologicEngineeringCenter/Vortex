@@ -13,9 +13,6 @@ repositories {
 
 dependencies {
     implementation(project(":vortex-api"))
-    implementation("mil.army.usace.hec:hec:6.0.0.51")
-    implementation("mil.army.usace.hec:heclib:6.0.0.51")
-    implementation("mil.army.usace.hec:hecData:6.0.0.51")
     implementation("org.gdal:gdal:3.2.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")

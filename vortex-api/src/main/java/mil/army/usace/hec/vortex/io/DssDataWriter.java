@@ -5,6 +5,7 @@ import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecTimeSeries;
 import hec.heclib.grid.*;
 import hec.heclib.util.HecTime;
+import hec.heclib.util.HecTimeArray;
 import hec.heclib.util.Heclib;
 import hec.hecmath.HecMath;
 import hec.io.DataContainer;
@@ -231,41 +232,40 @@ public class DssDataWriter extends DataWriter {
             pathname.setCPart(cPart);
 
             TimeSeriesContainer tsc = new TimeSeriesContainer();
-            tsc.units = units;
-            tsc.type = type.toString();
+            tsc.setUnits(units);
+            tsc.setType(type.toString());
+            tsc.setValues(values);
 
             if (isRegular) {
                 int seconds = (int) diff.abs().getSeconds();
                 String ePart = getEPart(seconds);
                 pathname.setEPart(ePart);
-                tsc.values = values;
-                tsc.numberValues = values.length;
 
                 HecTime startTime = getHecTime(startTimes.get(0));
                 if (type.equals(DssDataType.PER_CUM) || type.equals(DssDataType.PER_AVER)) {
                     startTime.addSeconds(seconds);
                 }
 
-                tsc.startTime = startTime.value();
+                tsc.setStartTime(startTime);
             } else {
                 logger.info(() -> "Inconsistent time-interval in record. Data will be stored as irregular interval.");
                 pathname.setEPart("Ir-Day");
 
                 int[] times = new int[endTimes.size()];
-                IntStream.range(0, endTimes.size()).forEach(time ->
-                        times[time] = getHecTime(endTimes.get(time)).value());
-                tsc.times = times;
-                tsc.values = values;
-                tsc.numberValues = values.length;
+                for (int i = 0; i < endTimes.size(); i++) {
+                    ZonedDateTime zdtEndTime = endTimes.get(i);
+                    HecTime endTime = getHecTime(zdtEndTime);
+                    times[i] = endTime.value();
+                }
+
+                HecTimeArray hecTimeArray = new HecTimeArray(times);
+                tsc.setTimes(hecTimeArray);
             }
 
-            tsc.fullName = updatePathname(pathname, options).getPathname();
+            tsc.setName(updatePathname(pathname, options).toString());
 
             HecTimeSeries dssTimeSeries = new HecTimeSeries();
             dssTimeSeries.setDSSFileName(destination.toString());
-
-            HecTime time = new HecTime();
-            time.set(tsc.startTime);
 
             int status = dssTimeSeries.write(tsc);
 
@@ -274,9 +274,14 @@ public class DssDataWriter extends DataWriter {
                 try {
                     if (tsc.getTimes() == null) {
                         int[] times = new int[endTimes.size()];
-                        IntStream.range(0, endTimes.size()).forEach(t ->
-                                times[t] = getHecTime(endTimes.get(t)).value());
-                        tsc.times = times;
+                        for (int i = 0; i < endTimes.size(); i++) {
+                            ZonedDateTime zdtEndTime = endTimes.get(i);
+                            HecTime endTime = getHecTime(zdtEndTime);
+                            times[i] = endTime.value();
+                        }
+
+                        HecTimeArray hecTimeArray = new HecTimeArray(times);
+                        tsc.setTimes(hecTimeArray);
                     }
                     HecMath math = HecMath.createInstance(tsc).accumulation();
                     DataContainer container = math.getData();
@@ -284,7 +289,7 @@ public class DssDataWriter extends DataWriter {
                     DSSPathname dssPathname = new DSSPathname(tscAccum.getFullName());
 
                     dssPathname.setCPart("PRECIP-CUM");
-                    tscAccum.dataType = DssDataType.INST_CUM.value();
+                    tscAccum.setType(DssDataType.INST_CUM.toString());
 
                     tscAccum.setFullName(dssPathname.getPathname());
                     if (dssTimeSeries.write(tscAccum) != 0) {

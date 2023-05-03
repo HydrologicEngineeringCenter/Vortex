@@ -11,15 +11,11 @@ repositories {
 }
 
 dependencies {
-    implementation ("mil.army.usace.hec:hec-monolith:2.+") {
+    implementation("mil.army.usace.hec:hec-monolith:3.+") {
         isTransitive = false
     }
-    implementation ("mil.army.usace.hec:hec-nucleus-data:1.+") {
-        isTransitive = false
-    }
-    implementation ("mil.army.usace.hec:hec-nucleus-metadata:1.+") {
-        isTransitive = false
-    }
+    implementation("mil.army.usace.hec:hec-nucleus-data:2.+")
+    implementation("mil.army.usace.hec:hec-nucleus-metadata:2.+")
     implementation("org.gdal:gdal:3.2.0")
     implementation("org.locationtech.jts:jts-core:1.16.1")
     implementation("tech.units:indriya:2.0.4")
@@ -33,7 +29,7 @@ dependencies {
     runtimeOnly("edu.ucar:grib:5.5.2")
     runtimeOnly("edu.ucar:netcdf4:5.5.2")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.25")
-    testImplementation ("org.mockito:mockito-core:2.27.0")
+    testImplementation("org.mockito:mockito-core:2.27.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
@@ -46,22 +42,28 @@ project.version = project.version.toString()
 tasks.test {
     useJUnit()
 
-    if(org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-        environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal",
-                "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
-                "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
+    if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+        environment = mapOf(
+            "PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
+        )
 
-        jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
-                "-Djava.io.tmpdir=C:/Temp")
-    }
-    else if(org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        jvmArgs("-Djava.library.path=/usr/lib/jni",
-                "-Djava.io.tmpdir=/var/tmp")
-    }
-    else if(org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/javaHeclib",
-                "-Djava.io.tmpdir=${System.getenv("TMPDIR")}")
+        jvmArgs(
+            "-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
+            "-Djava.io.tmpdir=C:/Temp"
+        )
+    } else if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+        jvmArgs(
+            "-Djava.library.path=/usr/lib/jni",
+            "-Djava.io.tmpdir=/var/tmp"
+        )
+    } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+        jvmArgs(
+            "-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/javaHeclib",
+            "-Djava.io.tmpdir=${System.getenv("TMPDIR")}"
+        )
         environment = mapOf(
             "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
             "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-data",
