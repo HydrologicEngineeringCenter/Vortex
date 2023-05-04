@@ -273,46 +273,27 @@ public class VortexGrid implements VortexData, Serializable {
 
     @Override
     public boolean equals(Object o) {
-        /* Temporary */
         if (this == o) return true;
         if (!(o instanceof VortexGrid)) return false;
-
         VortexGrid that = (VortexGrid) o;
 
-        if (Double.compare(that.dx, dx) != 0)
-            return false;
-        if (Double.compare(that.dy, dy) != 0)
-            return false;
-        if (nx != that.nx)
-            return false;
-        if (ny != that.ny)
-            return false;
-        if (Double.compare(that.originX, originX) != 0)
-            return false;
-        if (Double.compare(that.originY, originY) != 0)
-            return false;
-//        if (Double.compare(that.noDataValue, noDataValue) != 0)
-//            return false;
-        if (Double.compare(that.terminusX, terminusX) != 0)
-            return false;
-        if (Double.compare(that.terminusY, terminusY) != 0)
-            return false;
-        if (!Objects.equals(wkt, that.wkt))
-            return false;
-        if (!Arrays.equals(data, that.data))
-            return false;
-        if (!Objects.equals(units, that.units))
-            return false;
-        if (!Objects.equals(shortName, that.shortName))
-            return false;
-        if (!Objects.equals(fullName, that.fullName))
-            return false;
-        if (!Objects.equals(description, that.description))
-            return false;
-        if (!Objects.equals(startTime, that.startTime))
-            return false;
-        if (!Objects.equals(endTime, that.endTime))
-            return false;
+        if (Double.compare(that.dx, dx) != 0) return false;
+        if (Double.compare(that.dy, dy) != 0) return false;
+        if (nx != that.nx) return false;
+        if (ny != that.ny) return false;
+        if (Double.compare(that.originX, originX) != 0) return false;
+        if (Double.compare(that.originY, originY) != 0) return false;
+        if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
+        if (Double.compare(that.terminusX, terminusX) != 0) return false;
+        if (Double.compare(that.terminusY, terminusY) != 0) return false;
+        if (!Objects.equals(wkt, that.wkt)) return false;
+        if (!Arrays.equals(data, that.data)) return false;
+        if (!Objects.equals(units, that.units)) return false;
+        if (!Objects.equals(shortName, that.shortName)) return false;
+        if (!Objects.equals(fullName, that.fullName)) return false;
+        if (!Objects.equals(description, that.description)) return false;
+        if (!Objects.equals(startTime, that.startTime)) return false;
+        if (!Objects.equals(endTime, that.endTime)) return false;
         return Objects.equals(interval, that.interval);
     }
 

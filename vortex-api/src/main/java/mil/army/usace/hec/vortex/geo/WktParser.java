@@ -120,8 +120,10 @@ public class WktParser {
     }
 
     private static Projection parseRotatedPole(SpatialReference srs) {
+        double[] northLatLon = getNorthLatLon(srs);
         return new RotatedPole(
-                // Ask Tom: North latitude and longitude
+                northLatLon[0],
+                northLatLon[1]
         );
     }
 
@@ -184,6 +186,22 @@ public class WktParser {
 
     private static double getScaleFactor(SpatialReference srs) {
         return srs.GetProjParm("scale_factor");
+    }
+
+    private static double[] getNorthLatLon(SpatialReference srs) {
+        String projString = "+proj=ob_tran +o_proj=longlat +o_lon_p=-162 +o_lat_p=39.25 +lon_0=180 +to_meter=0.01745329";
+        String originLatKey = "+o_lat_p=";
+        String originLonKey = "+o_lon_p=";
+
+        double[] latLon = new double[2];
+        for (String param : projString.split("\\s+")) {
+            if (param.startsWith(originLatKey))
+                latLon[0] = Double.parseDouble(param.substring(originLatKey.length()));
+            if (param.startsWith(originLonKey))
+                latLon[1] = Double.parseDouble(param.substring(originLonKey.length()));
+        }
+
+        return latLon;
     }
 
     private static Earth getEarth(SpatialReference srs) {

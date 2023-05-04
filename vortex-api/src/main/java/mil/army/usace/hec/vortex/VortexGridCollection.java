@@ -6,6 +6,7 @@ import ucar.nc2.constants.CF;
 import ucar.unidata.geoloc.LatLonPoint;
 import ucar.unidata.geoloc.Projection;
 import ucar.unidata.geoloc.ProjectionPoint;
+import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.util.Parameter;
 
 import java.time.Duration;
@@ -14,9 +15,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -24,63 +23,117 @@ public class VortexGridCollection {
     private static final Logger logger = Logger.getLogger(VortexGridCollection.class.getName());
 
     private final List<VortexGrid> vortexGridList;
-    private final String shortName;
-    private final String description;
-    private final String dataUnit;
-    private final int nx;
-    private final int ny;
-    private final double[] xCoordinates;
-    private final double[] yCoordinates;
-    private final double[][] lonCoordinates;
-    private final double[][] latCoordinates;
-    private final String wkt;
-    private final Projection projection;
-    private final String projectionUnit;
-    private final Duration interval;
-    private final ZoneId zoneId;
+    private final VortexGrid defaultGrid;
     private final ZonedDateTime baseTime;
 
     public VortexGridCollection(List<VortexGrid> vortexGrids) {
         vortexGridList = vortexGrids;
-
-        shortName = mode(VortexGrid::shortName, "");
-        description = mode(VortexGrid::description, "");
-        dataUnit = mode(VortexGrid::units, "");
-        nx = mode(VortexGrid::nx, 0);
-        ny = mode(VortexGrid::ny, 0);
-        xCoordinates = mode(VortexGrid::xCoordinates, new double[0]);
-        yCoordinates = mode(VortexGrid::yCoordinates, new double[0]);
-        wkt = mode(VortexGrid::wkt, "");
-        projection = WktParser.getProjection(wkt);
-        projectionUnit = WktParser.getProjectionUnit(wkt);
-        Map<String, double[][]> latLonMap = getLatLonCoordinates();
-        lonCoordinates = latLonMap.get("lon");
-        latCoordinates = latLonMap.get("lat");
-        interval = initInterval();
-        zoneId = mode(g -> g.startTime().getZone(), ZoneId.systemDefault());
-        baseTime = ZonedDateTime.of(1900,1,1,0,0,0,0, zoneId);
+        defaultGrid = !vortexGridList.isEmpty() ? vortexGrids.get(0) : null;
+        baseTime = initBaseTime();
         cleanCollection();
     }
 
-    /* Helpers */
-    private <T> T mode(Function<VortexGrid, T> gridFunction, T defaultReturn) {
-        return vortexGridList.stream()
-                .map(gridFunction)
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                .entrySet()
-                .stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(defaultReturn);
+    /* Init */
+    private ZonedDateTime initBaseTime() {
+        ZoneId zoneId = defaultGrid.startTime().getZone();
+        return ZonedDateTime.of(1900,1,1,0,0,0,0, zoneId);
     }
 
-    private Duration initInterval() {
-        Duration modeInterval = mode(VortexGrid::interval, Duration.ZERO);
-        return (modeInterval.isZero()) ? Duration.ofDays(1) : modeInterval;
+    private void cleanCollection() {
+        String shortName = defaultGrid.shortName();
+        String wkt = defaultGrid.wkt();
+        Duration interval = defaultGrid.interval();
+
+        if (shortName.isEmpty()) logger.warning("Short name not found");
+        if (wkt.isEmpty()) logger.warning("Wkt not found");
+        if (interval.equals(Duration.ZERO)) logger.warning("Interval not found");
+
+        vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
+        vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
+        vortexGridList.removeIf(g -> !Objects.equals(interval, g.interval()));
     }
 
-    private Map<String, double[][]> getLatLonCoordinates() {
+    /* Conditionals */
+    public boolean isGeographic() {
+        return getProjection() instanceof LatLonProjection;
+    }
+
+    public boolean hasTimeBounds() {
+        return !getInterval().isZero();
+    }
+
+    /* Data */
+    public Stream<Map.Entry<Integer, VortexGrid>> getCollectionDataStream() {
+        return IntStream.range(0, vortexGridList.size()).mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
+    }
+
+    public float getNoDataValue() {
+        return (float) defaultGrid.noDataValue();
+    }
+
+    public String getDataUnit() {
+        return defaultGrid.units();
+    }
+
+    /* Name & Description */
+    public String getShortName() {
+        return defaultGrid.shortName();
+    }
+
+    public String getDescription() {
+        return defaultGrid.description();
+    }
+
+    /* Projection */
+    public Projection getProjection() {
+        return WktParser.getProjection(getWkt());
+    }
+
+    public String getProjectionName() {
+        Projection projection = getProjection();
+        for (Parameter parameter : projection.getProjectionParameters()) {
+            if (parameter.getName().equals(CF.GRID_MAPPING_NAME)) {
+                return parameter.getStringValue();
+            }
+        }
+        return null;
+    }
+
+    public String getProjectionUnit() {
+        return WktParser.getProjectionUnit(getWkt());
+    }
+
+    public String getWkt() {
+        return defaultGrid.wkt();
+    }
+
+    /* Y and X */
+    public double[] getYCoordinates() {
+        return defaultGrid.yCoordinates();
+    }
+
+    public double[] getXCoordinates() {
+        return defaultGrid.xCoordinates();
+    }
+
+    public int getNy() {
+        return defaultGrid.ny();
+    }
+
+    public int getNx() {
+        return defaultGrid.nx();
+    }
+
+    /* Lat & Lon */
+    public Map<String, double[][]> getLatLonCoordinates() {
         Map<String, double[][]> latLonMap = new HashMap<>();
+
+        int ny = getNy();
+        int nx = getNx();
+        double[] yCoordinates = getYCoordinates();
+        double[] xCoordinates = getXCoordinates();
+        Projection projection = getProjection();
+
         double[][] latData = new double[ny][nx];
         double[][] lonData = new double[ny][nx];
 
@@ -99,90 +152,15 @@ public class VortexGridCollection {
         return latLonMap;
     }
 
-
-    private float getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
-        Duration durationBetween = Duration.between(baseTime, dateTime);
-        return durationBetween.dividedBy(interval);
-    }
-
-    private ChronoUnit getDurationUnit(Duration duration) {
-        if (duration.toDays() > 0) return ChronoUnit.DAYS;
-        if (duration.toHours() > 0) return ChronoUnit.HOURS;
-        if (duration.toMinutes() > 0) return ChronoUnit.MINUTES;
-        return ChronoUnit.SECONDS;
-    }
-
-    private void cleanCollection() {
-        if (shortName.isEmpty()) logger.warning("Short name not found");
-        if (wkt.isEmpty()) logger.warning("Wkt not found");
-        if (interval.equals(Duration.ZERO)) logger.warning("Interval not found");
-
-        vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
-        vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
-        vortexGridList.removeIf(g -> !Objects.equals(zoneId, g.startTime().getZone()));
-        vortexGridList.removeIf(g -> !Objects.equals(zoneId, g.endTime().getZone()));
-    }
-
-    /* Public API */
-    public String getShortName() {
-        return shortName;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getDataUnit() {
-        return dataUnit;
-    }
-
-    public String getWkt() {
-        return wkt;
-    }
-
-    public Projection getProjection() {
-        return projection;
-    }
-
-    public String getProjectionUnit() {
-        return projectionUnit;
-    }
-
-    public Duration getInterval() {
-        return interval;
-    }
-
-    public int getNx() {
-        return nx;
-    }
-
-    public int getNy() {
-        return ny;
-    }
-
-    public double[] getXCoordinates() {
-        return Arrays.copyOf(xCoordinates, xCoordinates.length);
-    }
-
-    public double[] getYCoordinates() {
-        return Arrays.copyOf(yCoordinates, yCoordinates.length);
-    }
-
-    public double[][] getLonCoordinates() {
-        return Arrays.copyOf(lonCoordinates, lonCoordinates.length);
-    }
-
-    public double[][] getLatCoordinates() {
-        return Arrays.copyOf(latCoordinates, latCoordinates.length);
-    }
-
+    /* Time */
     public int getTimeLength() {
         return vortexGridList.size();
     }
 
     public String getTimeUnits() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
-        return getDurationUnit(interval).toString() + " since " + baseTime.format(dateTimeFormatter);
+        String durationUnit = getDurationUnit(getBaseDuration()).toString();
+        return durationUnit + " since " + baseTime.format(dateTimeFormatter);
     }
 
     public float[] getTimeData() {
@@ -217,20 +195,26 @@ public class VortexGridCollection {
         return timeBoundArray;
     }
 
-    public float getNoDataValue() {
-        return (float) vortexGridList.get(0).noDataValue();
+    public Duration getInterval() {
+        return defaultGrid.interval();
     }
 
-    public String getProjectionName() {
-        for (Parameter parameter : projection.getProjectionParameters()) {
-            if (parameter.getName().equals(CF.GRID_MAPPING_NAME)) {
-                return parameter.getStringValue();
-            }
-        }
-        return null;
+    /* Helpers */
+    private float getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
+        Duration durationBetween = Duration.between(baseTime, dateTime);
+        Duration divisor = getBaseDuration();
+        return durationBetween.dividedBy(divisor);
     }
 
-    public Stream<Map.Entry<Integer, VortexGrid>> getCollectionDataStream() {
-        return IntStream.range(0, vortexGridList.size()).mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
+    private ChronoUnit getDurationUnit(Duration duration) {
+        if (duration.toDays() > 0) return ChronoUnit.DAYS;
+        if (duration.toHours() > 0) return ChronoUnit.HOURS;
+        if (duration.toMinutes() > 0) return ChronoUnit.MINUTES;
+        return ChronoUnit.SECONDS;
+    }
+
+    private Duration getBaseDuration() {
+        Duration interval = getInterval();
+        return interval.isZero() ? Duration.ofHours(1) : interval;
     }
 }

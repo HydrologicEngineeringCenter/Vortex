@@ -50,5 +50,4 @@ public class TiffDataWriter extends DataWriter {
             out.delete();
         });
     }
-
 }

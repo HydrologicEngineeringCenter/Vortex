@@ -13,7 +13,6 @@ import ucar.nc2.Variable;
 import ucar.nc2.constants.CDM;
 import ucar.nc2.constants.CF;
 import ucar.nc2.write.NetcdfFormatWriter;
-import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.util.Parameter;
 
 import javax.measure.Unit;
@@ -40,24 +39,17 @@ public class NetcdfGridWriter {
 
     private final Map<String, VortexGridCollection> gridCollectionMap;
     private final VortexGridCollection defaultCollection;
-    // Conditionals
-    private final boolean isGeographic;
-    private final boolean hasTimeBounds;
     // Dimensions
     private final Dimension timeDim;
     private final Dimension latDim;
     private final Dimension lonDim;
     private final Dimension yDim;
     private final Dimension xDim;
-    private final Dimension boundsDim;
+    private final Dimension boundsDim; // For all axis that has bounds (interval data)
 
     public NetcdfGridWriter(List<VortexGrid> vortexGridList) {
         gridCollectionMap = initGridCollectionMap(vortexGridList);
         defaultCollection = getAnyCollection();
-
-        isGeographic = defaultCollection.getProjection() instanceof LatLonProjection;
-        hasTimeBounds = defaultCollection.getTimeLength() > 1;
-
         // Dimensions
         timeDim = Dimension.builder().setName(CF.TIME).setIsUnlimited(true).build();
         latDim = Dimension.builder().setName(CF.LATITUDE).setLength(defaultCollection.getNy()).build();
@@ -97,7 +89,7 @@ public class NetcdfGridWriter {
     }
 
     private VortexGridCollection getAnyCollection() {
-        return gridCollectionMap.values().stream().findAny().orElse(new VortexGridCollection(Collections.emptyList()));
+        return gridCollectionMap.values().stream().findAny().orElse(null);
     }
 
     /* Write Methods */
@@ -115,8 +107,11 @@ public class NetcdfGridWriter {
 
     private void writeDimensions(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
         writer.write(timeDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getTimeData()));
-        if (hasTimeBounds) writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
-        if (isGeographic) writeDimensionsGeographic(writer);
+
+        if (defaultCollection.hasTimeBounds())
+            writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
+
+        if (defaultCollection.isGeographic()) writeDimensionsGeographic(writer);
         else writeDimensionsProjected(writer);
     }
 
@@ -126,10 +121,11 @@ public class NetcdfGridWriter {
     }
 
     private void writeDimensionsProjected(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
+        Map<String, double[][]> latLonMap = defaultCollection.getLatLonCoordinates();
         writer.write(yDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getYCoordinates()));
         writer.write(xDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getXCoordinates()));
-        writer.write(latDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getLatCoordinates()));
-        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getLonCoordinates()));
+        writer.write(latDim.getShortName(), Array.makeFromJavaArray(latLonMap.get("lat")));
+        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(latLonMap.get("lon")));
     }
 
     private void writeVariableGrid(NetcdfFormatWriter writer) {
@@ -154,9 +150,9 @@ public class NetcdfGridWriter {
     /* Add Dimensions */
     private void addDimensions(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addDimension(timeDim);
-        if (hasTimeBounds) writerBuilder.addDimension(boundsDim);
+        if (defaultCollection.hasTimeBounds()) writerBuilder.addDimension(boundsDim);
 
-        if (isGeographic) {
+        if (defaultCollection.isGeographic()) {
             writerBuilder.addDimension(latDim);
             writerBuilder.addDimension(lonDim);
         } else {
@@ -168,12 +164,12 @@ public class NetcdfGridWriter {
     /* Add Variables */
     private void addVariables(NetcdfFormatWriter.Builder writerBuilder) {
         addVariableTime(writerBuilder);
-        if (hasTimeBounds) addVariableTimeBounds(writerBuilder);
+        if (defaultCollection.hasTimeBounds()) addVariableTimeBounds(writerBuilder);
         addVariableLat(writerBuilder);
         addVariableLon(writerBuilder);
         addVariableGridCollection(writerBuilder);
 
-        if (!isGeographic) {
+        if (!defaultCollection.isGeographic()) {
             addVariableProjection(writerBuilder);
             addVariableX(writerBuilder);
             addVariableY(writerBuilder);
@@ -185,8 +181,7 @@ public class NetcdfGridWriter {
         v.addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME));
         v.addAttribute(new Attribute(CF.CALENDAR, "standard"));
         v.addAttribute(new Attribute(CF.UNITS, defaultCollection.getTimeUnits()));
-        v.addAttribute(new Attribute(CF.LONG_NAME, ""));
-        if (hasTimeBounds) v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
+        if (defaultCollection.hasTimeBounds()) v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
     }
 
     private void addVariableTimeBounds(NetcdfFormatWriter.Builder writerBuilder) {
@@ -194,6 +189,7 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableLat(NetcdfFormatWriter.Builder writerBuilder) {
+        boolean isGeographic = defaultCollection.isGeographic();
         List<Dimension> dimensions = isGeographic ? List.of(latDim) : List.of(yDim, xDim);
         writerBuilder.addVariable(latDim.getShortName(), DataType.DOUBLE, dimensions)
                 .addAttribute(new Attribute(CF.UNITS, CDM.LAT_UNITS))
@@ -202,6 +198,7 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableLon(NetcdfFormatWriter.Builder writerBuilder) {
+        boolean isGeographic = defaultCollection.isGeographic();
         List<Dimension> dimensions = isGeographic ? List.of(lonDim) : List.of(yDim, xDim);
         writerBuilder.addVariable(lonDim.getShortName(), DataType.DOUBLE, dimensions)
                 .addAttribute(new Attribute(CF.UNITS, CDM.LON_UNITS))
@@ -242,6 +239,7 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableGridCollection(NetcdfFormatWriter.Builder writerBuilder) {
+        boolean isGeographic = defaultCollection.isGeographic();
         List<Dimension> dimensions = isGeographic ? List.of(timeDim, latDim, lonDim) : List.of(timeDim, yDim, xDim);
         for (VortexGridCollection collection : gridCollectionMap.values()) {
             MeteorologicalVariable meteorologicalVariable = getMeteorologicalVariable(collection);
