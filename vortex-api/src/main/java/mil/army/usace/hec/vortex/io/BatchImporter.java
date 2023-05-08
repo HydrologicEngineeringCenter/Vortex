@@ -133,9 +133,15 @@ public abstract class BatchImporter {
 
     PropertyChangeListener writeProgressListener(int totalCount) {
         return evt -> {
-            if (evt.getPropertyName().equals("complete")) {
+            // Propagating Write Progress to UI
+            if (evt.getPropertyName().equals(DataWriter.WRITE_COMPLETED)) {
                 int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
                 support.firePropertyChange("progress", null, newValue);
+            }
+
+            // Propagating Write Error to UI
+            if (evt.getPropertyName().equals(DataWriter.WRITE_ERROR)) {
+                support.firePropertyChange(evt);
             }
         };
     }

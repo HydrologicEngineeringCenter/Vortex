@@ -13,9 +13,14 @@ import java.util.Arrays;
 public class DestinationSelectionPanel extends JPanel {
     private final JFrame parent;
     private final JPanel dssPartsSelectionPanel;
+    private final JPanel netcdfOverwriteSelectionPanel;
+
     private JTextField selectDestinationTextField;
     private JTextField unitsTextField;
     private JComboBox<String> dataTypeCombo;
+
+    private JRadioButton netcdfOverwriteButton;
+    private JRadioButton netcdfAppendButton;
 
     @SuppressWarnings("unused")
     private JTextField dssFieldA, dssFieldB, dssFieldC, dssFieldD, dssFieldE, dssFieldF;
@@ -47,6 +52,13 @@ public class DestinationSelectionPanel extends JPanel {
         dssPartsSelectionPanel = dssPartsSelectionPanel();
         dssPartsSelectionPanel.setVisible(false);
         this.add(dssPartsSelectionPanel, gridBagConstraints);
+
+        /* NetCDF Overwrite Panel (Only appears when the selected destination is a NetCDF file */
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.insets = new Insets(15,0,0,0);
+        netcdfOverwriteSelectionPanel = initNetcdfOverwritePanel();
+        netcdfOverwriteSelectionPanel.setVisible(false);
+        this.add(netcdfOverwriteSelectionPanel, gridBagConstraints);
     }
 
     private JPanel dssFileSelectionPanel() {
@@ -66,7 +78,10 @@ public class DestinationSelectionPanel extends JPanel {
             public void changedUpdate(DocumentEvent e) { textUpdated(); }
             public void removeUpdate(DocumentEvent e) { textUpdated(); }
             public void insertUpdate(DocumentEvent e) { textUpdated(); }
-            void textUpdated() { dssPartsSelectionPanel.setVisible(selectDestinationTextField.getText().endsWith(".dss")); }
+            void textUpdated() {
+                dssPartsSelectionPanel.setVisible(selectDestinationTextField.getText().endsWith(".dss"));
+                netcdfOverwriteSelectionPanel.setVisible(selectDestinationTextField.getText().endsWith(".nc"));
+            }
         });
         selectDestinationTextFieldPanel.add(selectDestinationTextField);
 
@@ -175,6 +190,35 @@ public class DestinationSelectionPanel extends JPanel {
         dssPartsPanel.add(overridePanel(), dssPartsConstraints);
 
         return dssPartsPanel;
+    }
+
+    private JPanel initNetcdfOverwritePanel() {
+        JPanel panel = new JPanel();
+        initNetcdfOverwriteRadio();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(netcdfOverwriteButton);
+        panel.add(netcdfAppendButton);
+        String title = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfWriteOption_Title");
+        panel.setBorder(BorderFactory.createTitledBorder(title));
+        return panel;
+    }
+
+    private void initNetcdfOverwriteRadio() {
+        ButtonGroup buttonGroup = new ButtonGroup();
+
+        String overwriteLabel = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfOverwrite_L");
+        String overwriteTooltip = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfOverwrite_TT");
+        netcdfOverwriteButton = new JRadioButton(overwriteLabel);
+        netcdfOverwriteButton.setToolTipText(overwriteTooltip);
+        netcdfOverwriteButton.setSelected(true);
+
+        String appendLabel = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfAppend_L");
+        String appendTooltip = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfAppend_TT");
+        netcdfAppendButton = new JRadioButton(appendLabel);
+        netcdfAppendButton.setToolTipText(appendTooltip);
+
+        buttonGroup.add(netcdfOverwriteButton);
+        buttonGroup.add(netcdfAppendButton);
     }
 
     private JPanel overridePanel() {
@@ -297,5 +341,9 @@ public class DestinationSelectionPanel extends JPanel {
     public String getDataType() {
         Object dataType = dataTypeCombo.getSelectedItem();
         return (dataType != null) ? dataType.toString() : "";
+    }
+
+    public boolean isOverwrite() {
+        return netcdfOverwriteButton.isSelected();
     }
 }

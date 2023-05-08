@@ -175,6 +175,8 @@ public class VortexGridCollection {
             float startTime = getNumDurationsFromBaseTime(grid.startTime());
             float endTime = getNumDurationsFromBaseTime(grid.endTime());
             float midTime = (startTime + endTime) / 2;
+            if (i > 1 && midTime == timeData[i - 1])
+                midTime = midTime + 1;
             timeData[i] = midTime;
         }
 

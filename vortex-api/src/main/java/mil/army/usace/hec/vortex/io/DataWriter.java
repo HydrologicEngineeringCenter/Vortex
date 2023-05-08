@@ -17,6 +17,9 @@ public abstract class DataWriter {
     final List<VortexData> data;
     final Map<String, String> options = new HashMap<>();
 
+    public static final String WRITE_ERROR = "WriteError";
+    public static final String WRITE_COMPLETED = "WriteCompleted";
+
     DataWriter(Builder builder){
         this.destination = builder.destination;
         this.data = builder.data;
@@ -98,7 +101,11 @@ public abstract class DataWriter {
 
     /* Property Change */
     void fireWriteCompleted() {
-        support.firePropertyChange("complete", null, null);
+        support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
+    }
+
+    void fireWriteError(String errorMessage) {
+        support.firePropertyChange(WRITE_ERROR, null, errorMessage);
     }
 
     public void addListener(PropertyChangeListener pcl) {

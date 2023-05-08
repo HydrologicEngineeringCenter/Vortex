@@ -3,15 +3,92 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.TestUtil;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.convert.NetcdfGridWriter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ucar.nc2.write.Nc4Chunking;
+import ucar.nc2.write.Nc4ChunkingStrategy;
+import ucar.nc2.write.NetcdfFormatWriter;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static mil.army.usace.hec.vortex.io.NetcdfDataWriter.*;
 
 class NetcdfDataWriterTest {
+    @Test
+    void AppendTestNew() {
+        List<String> inFiles = List.of("/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-Tom.dss");
+        String outputPath = TestUtil.createTempFile("tempAppend.nc");
+
+        List<String> variables = inFiles.stream()
+                .map(DataReader::getVariables)
+                .flatMap(Collection::stream).distinct().sorted().collect(Collectors.toList());
+        List<String> firstBatchVariables = variables.subList(0, 10);
+
+        BatchImporter firstBatchImporter = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(firstBatchVariables)
+                .destination(outputPath)
+                .build();
+        firstBatchImporter.process();
+
+        Map<String, String> writeOptions = new HashMap<>();
+        writeOptions.put("isOverride", "false");
+        List<String> secondBatchVariables = variables.subList(10, variables.size());
+        BatchImporter secondBatchImporter = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(secondBatchVariables)
+                .destination(outputPath)
+                .writeOptions(writeOptions)
+                .build();
+        secondBatchImporter.process();
+        System.out.println(outputPath);
+    }
+
+    @Test
+    void AppendTest() {
+        List<String> inFiles = List.of("/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-Tom.dss");
+        String outputPath = TestUtil.createTempFile("tempAppend.nc");
+
+        List<String> variables = inFiles.stream()
+                .map(DataReader::getVariables)
+                .flatMap(Collection::stream).distinct().sorted().collect(Collectors.toList());
+        List<String> firstBatchVariables = variables.subList(0, 10);
+        List<String> secondBatchVariables = variables.subList(10, variables.size());
+
+        BatchImporter firstBatchImporter = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(firstBatchVariables)
+                .destination(outputPath)
+                .build();
+        firstBatchImporter.process();
+
+        Nc4Chunking chunker = Nc4ChunkingStrategy.factory(CHUNKING_STRATEGY, DEFLATE_LEVEL, SHUFFLE);
+        NetcdfFormatWriter.Builder writerBuilder = NetcdfFormatWriter.builder()
+                .setNewFile(false)
+                .setFormat(NETCDF_FORMAT)
+                .setLocation(outputPath)
+                .setChunker(chunker);
+
+        List<VortexGrid> secondBatchGridList = secondBatchVariables.stream()
+                .map(var -> DataReader.builder().path(inFiles.get(0)).variable(var).build())
+                .map(DataReader::getDtos)
+                .flatMap(List::stream)
+                .map(VortexGrid.class::cast)
+                .collect(Collectors.toList());
+
+        NetcdfGridWriter gridWriter = new NetcdfGridWriter(secondBatchGridList);
+        gridWriter.appendData(writerBuilder);
+        System.out.println(outputPath);
+    }
+
     @Test
     void DssToNetcdf() {
         String dssPath = TestUtil.getResourceFile("/precip.dss").getAbsolutePath();

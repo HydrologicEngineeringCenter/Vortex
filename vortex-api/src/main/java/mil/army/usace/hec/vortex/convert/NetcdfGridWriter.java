@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.convert;
 import mil.army.usace.hec.vortex.MeteorologicalVariable;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
+import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.util.UnitUtil;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
@@ -23,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -99,7 +101,7 @@ public class NetcdfGridWriter {
 
         try (NetcdfFormatWriter writer = writerBuilder.build()) {
             writeDimensions(writer);
-            writeVariableGrid(writer);
+            writeVariableGrids(writer, 0);
         } catch (IOException | InvalidRangeException e) {
             logger.severe(e.getMessage());
         }
@@ -128,22 +130,38 @@ public class NetcdfGridWriter {
         writer.write(lonDim.getShortName(), Array.makeFromJavaArray(latLonMap.get("lon")));
     }
 
-    private void writeVariableGrid(NetcdfFormatWriter writer) {
+    private void writeVariableGrids(NetcdfFormatWriter writer, int startIndex) {
+        AtomicBoolean hasErrors = new AtomicBoolean(false);
+
         for (VortexGridCollection collection : gridCollectionMap.values()) {
             MeteorologicalVariable meteorologicalVariable = getMeteorologicalVariable(collection);
             Variable variable = writer.findVariable(meteorologicalVariable.getShortName());
+            if (variable == null) {
+                logger.severe("Failed to locate variable: " + meteorologicalVariable.getShortName());
+                hasErrors.set(true);
+                continue;
+            }
 
-            collection.getCollectionDataStream().forEach(entry -> {
+            collection.getCollectionDataStream().parallel().forEach(entry -> {
                 try {
-                    int index = entry.getKey();
+                    int index = entry.getKey() + startIndex;
                     VortexGrid grid = entry.getValue();
                     int[] origin = {index, 0, 0};
                     writer.write(variable, origin, Array.makeFromJavaArray(grid.data3D()));
-                    support.firePropertyChange("complete", null, null);
+                    support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
                 } catch (IOException | InvalidRangeException e) {
                     logger.warning(e.getMessage());
+                    hasErrors.set(true);
                 }
             });
+        }
+
+        if (hasErrors.get()) {
+            boolean isAppend = startIndex > 0;
+            String overwriteErrorMessage = "Failed to overwrite file.";
+            String appendErrorMessage = "Some reasons may be:\n* Attempted to append to non-existing variable\n* Attempted to append data with different projection\n* Attempted to append data with different location";
+            String message = isAppend ? appendErrorMessage : overwriteErrorMessage;
+            support.firePropertyChange(DataWriter.WRITE_ERROR, null, message);
         }
     }
 
@@ -303,5 +321,22 @@ public class NetcdfGridWriter {
 
     public void removeListener(PropertyChangeListener pcl) {
         this.support.removePropertyChangeListener(pcl);
+    }
+
+    /* Append Data */
+    public void appendData(NetcdfFormatWriter.Builder writerBuilder) {
+        try (NetcdfFormatWriter writer = writerBuilder.build()) {
+            Variable timeVar = writer.findVariable(CF.TIME);
+            if (timeVar == null) {
+                logger.severe("Time variable not found");
+                return;
+            }
+
+            int startIndex = timeVar.getShape(0);
+            writeVariableGrids(writer, startIndex);
+            writer.write(timeVar, new int[] {startIndex}, Array.makeFromJavaArray(defaultCollection.getTimeData()));
+        } catch (IOException | InvalidRangeException e) {
+            logger.severe(e.getMessage());
+        }
     }
 }
