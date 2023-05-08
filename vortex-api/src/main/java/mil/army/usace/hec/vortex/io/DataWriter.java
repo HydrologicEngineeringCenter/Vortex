@@ -73,7 +73,7 @@ public abstract class DataWriter {
                 return new DssDataWriter(this);
             }
 
-            PathMatcher tiffMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.tiff");
+            PathMatcher tiffMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.{tif,tiff}");
             if (tiffMatcher.matches(destination)) {
                 return new TiffDataWriter(this);
             }
