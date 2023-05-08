@@ -35,8 +35,7 @@ public class VortexGridCollection {
 
     /* Init */
     private ZonedDateTime initBaseTime() {
-        ZoneId zoneId = defaultGrid.startTime().getZone();
-        return ZonedDateTime.of(1900,1,1,0,0,0,0, zoneId);
+        return ZonedDateTime.of(1900,1,1,0,0,0,0, ZoneId.of("UTC"));
     }
 
     private void cleanCollection() {
@@ -64,7 +63,7 @@ public class VortexGridCollection {
 
     /* Data */
     public Stream<Map.Entry<Integer, VortexGrid>> getCollectionDataStream() {
-        return IntStream.range(0, vortexGridList.size()).mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
+        return IntStream.range(0, vortexGridList.size()).parallel().mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
     }
 
     public float getNoDataValue() {
@@ -203,7 +202,8 @@ public class VortexGridCollection {
 
     /* Helpers */
     private float getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
-        Duration durationBetween = Duration.between(baseTime, dateTime);
+        ZonedDateTime zDateTime = dateTime.withZoneSameInstant(ZoneId.of("Z"));
+        Duration durationBetween = Duration.between(baseTime, zDateTime);
         Duration divisor = getBaseDuration();
         return durationBetween.dividedBy(divisor);
     }

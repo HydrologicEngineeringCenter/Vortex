@@ -142,7 +142,7 @@ public class NetcdfGridWriter {
                 continue;
             }
 
-            collection.getCollectionDataStream().parallel().forEach(entry -> {
+            collection.getCollectionDataStream().forEach(entry -> {
                 try {
                     int index = entry.getKey() + startIndex;
                     VortexGrid grid = entry.getValue();

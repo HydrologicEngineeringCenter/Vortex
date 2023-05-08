@@ -292,8 +292,8 @@ public class VortexGrid implements VortexData, Serializable {
         if (!Objects.equals(shortName, that.shortName)) return false;
         if (!Objects.equals(fullName, that.fullName)) return false;
         if (!Objects.equals(description, that.description)) return false;
-        if (!Objects.equals(startTime, that.startTime)) return false;
-        if (!Objects.equals(endTime, that.endTime)) return false;
+        if (!startTime.isEqual(that.startTime)) return false;
+        if (!endTime.isEqual(that.endTime)) return false;
         return Objects.equals(interval, that.interval);
     }
 

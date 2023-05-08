@@ -4,24 +4,68 @@ import mil.army.usace.hec.vortex.TestUtil;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.convert.NetcdfGridWriter;
+import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ucar.nc2.write.Nc4Chunking;
 import ucar.nc2.write.Nc4ChunkingStrategy;
 import ucar.nc2.write.NetcdfFormatWriter;
+import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static mil.army.usace.hec.vortex.io.NetcdfDataWriter.*;
 
 class NetcdfDataWriterTest {
+    @Test
+    void SimpleCircleTest() {
+        ZonedDateTime startTime = ZonedDateTime.of(1900,2,2,0,0,0,0, ZoneId.systemDefault());
+        ZonedDateTime endTime = startTime.plusHours(1);
+        List<VortexData> originalGrids = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            VortexGrid grid = VortexGrid.builder()
+                    .dx(1).dy(1).nx(3).ny(3).originX(0).originY(0)
+                    .wkt(WktFactory.createWkt(new LambertConformalConicEllipse()))
+                    .data(generateRandomFloatArray(9, 10))
+                    .noDataValue(-9999)
+                    .units("m")
+                    .fileName("randomFile.txt")
+                    .shortName("precipitation")
+                    .fullName("lwe_thickness_of_precipitation_amount")
+                    .description("description")
+                    .startTime(startTime.plusHours(i))
+                    .endTime(endTime.plusHours(i))
+                    .interval(Duration.between(startTime, endTime))
+                    .build();
+            originalGrids.add(grid);
+        }
+
+        String outputPath = TestUtil.createTempFile("SimpleCircleTest.nc");
+        DataWriter writer = DataWriter.builder().data(originalGrids).destination(outputPath).build();
+        writer.write();
+
+        DataReader reader = DataReader.builder().variable("precipitation").path(outputPath).build();
+        List<VortexData> generatedGrids = reader.getDtos();
+
+        for (int i = 0; i < originalGrids.size(); i++) {
+            Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+        }
+    }
+
+    private float[] generateRandomFloatArray(int numElements, int multiplier) {
+        float[] dataArray = new float[numElements];
+        Random random = new Random();
+        for (int i = 0; i < dataArray.length; i++) dataArray[i] = random.nextFloat();
+        return dataArray;
+    }
+
     @Test
     void AppendTestNew() {
         List<String> inFiles = List.of("/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-Tom.dss");
