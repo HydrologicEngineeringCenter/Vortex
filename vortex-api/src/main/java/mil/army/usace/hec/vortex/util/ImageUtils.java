@@ -4,9 +4,7 @@ import hec.heclib.dss.DSSPathname;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.ImageFileType;
 
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -18,8 +16,8 @@ public class ImageUtils {
 
     public static String generateFileName(String prefix, VortexGrid grid, ImageFileType type){
         String fileNameBase;
-        PathMatcher dssMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.dss");
-        if (dssMatcher.matches(Paths.get(grid.fileName()))) {
+        String fileName = grid.fileName();
+        if (fileName != null && fileName.matches(".*\\.dss")) {
             DSSPathname pathname = new DSSPathname(grid.fullName());
             StringBuilder fileNameBuilder = new StringBuilder();
             fileNameBuilder.append(prefix);
