@@ -22,10 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Step2Controller implements BrowseLocationPersister {
 
@@ -105,7 +102,7 @@ public class Step2Controller implements BrowseLocationPersister {
                 String fileName = ImageUtils.generateFileName(baseName.getText(), (VortexGrid) grid, format.getValue());
                 Path destination = Paths.get(destinationDir.getText(), fileName);
                 DataWriter writer = DataWriter.builder()
-                        .data(grids)
+                        .data(Collections.singletonList(grid))
                         .destination(destination)
                         .build();
 

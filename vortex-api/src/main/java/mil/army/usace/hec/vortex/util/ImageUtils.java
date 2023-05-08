@@ -5,6 +5,7 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.ImageFileType;
 
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -79,5 +80,20 @@ public class ImageUtils {
         }
         String fileNameClean = fileNameBase.replaceAll("[^A-Za-z0-9]", "_");
         return (fileNameClean + "." + type.label.toLowerCase()).replaceAll("_\\.", ".");
+    }
+
+    public static String expandFileName(String pathToFile, VortexGrid grid, ImageFileType type) {
+        Path filePath = Path.of(pathToFile);
+        String directory = filePath.getParent().toString();
+        String fileName = filePath.getFileName().toString();
+        String fileNameSansExt = removeExtension(fileName);
+
+        String expandedFileName = generateFileName(fileNameSansExt, grid, type);
+
+        return Paths.get(directory, expandedFileName).toString();
+    }
+
+    private static String removeExtension(final String s) {
+        return s != null && s.lastIndexOf(".") > 0 ? s.substring(0, s.lastIndexOf(".")) : s;
     }
 }

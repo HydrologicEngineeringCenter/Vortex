@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
+import mil.army.usace.hec.vortex.util.ImageUtils;
 import mil.army.usace.hec.vortex.util.MatrixUtils;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.TranslateOptions;
@@ -27,6 +28,11 @@ public class AscDataWriter extends DataWriter {
                 .collect(Collectors.toList());
 
         grids.forEach(grid -> {
+            boolean isExpandFileName = Boolean.parseBoolean(options.getOrDefault("expandName", "false"));
+
+            String pathToDestination = isExpandFileName ?
+                        ImageUtils.expandFileName(destination.toString(), grid, ImageFileType.ASC) : destination.toString();
+
             VortexGrid gridOut;
             if (grid.dy() < 0){
                 gridOut = grid;
@@ -62,7 +68,7 @@ public class AscDataWriter extends DataWriter {
             gdalOptions.add("-co");
             gdalOptions.add("FORCE_CELLSIZE=TRUE");
             TranslateOptions translateOptions = new TranslateOptions(new Vector<>(gdalOptions));
-            Dataset out = gdal.Translate(destination.toString(), dataset, translateOptions);
+            Dataset out = gdal.Translate(pathToDestination, dataset, translateOptions);
             out.FlushCache();
             out.delete();
         });
