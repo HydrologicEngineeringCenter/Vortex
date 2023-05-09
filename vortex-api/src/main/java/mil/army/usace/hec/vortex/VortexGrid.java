@@ -290,7 +290,6 @@ public class VortexGrid implements VortexData, Serializable {
         if (!Arrays.equals(data, that.data)) return false;
         if (!Objects.equals(units, that.units)) return false;
         if (!Objects.equals(shortName, that.shortName)) return false;
-        if (!Objects.equals(fullName, that.fullName)) return false;
         if (!Objects.equals(description, that.description)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
@@ -316,9 +315,7 @@ public class VortexGrid implements VortexData, Serializable {
         temp = Double.doubleToLongBits(noDataValue);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (units != null ? units.hashCode() : 0);
-        result = 31 * result + (fileName != null ? fileName.hashCode() : 0);
         result = 31 * result + (shortName != null ? shortName.hashCode() : 0);
-        result = 31 * result + (fullName != null ? fullName.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
         result = 31 * result + (endTime != null ? endTime.hashCode() : 0);

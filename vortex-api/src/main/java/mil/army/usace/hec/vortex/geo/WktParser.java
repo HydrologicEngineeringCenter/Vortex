@@ -189,7 +189,8 @@ public class WktParser {
     }
 
     private static double[] getNorthLatLon(SpatialReference srs) {
-        String projString = "+proj=ob_tran +o_proj=longlat +o_lon_p=-162 +o_lat_p=39.25 +lon_0=180 +to_meter=0.01745329";
+//        String projString = "+proj=ob_tran +o_proj=longlat +o_lon_p=-162 +o_lat_p=39.25 +lon_0=180 +to_meter=0.01745329";
+        String projString = srs.ExportToProj4();
         String originLatKey = "+o_lat_p=";
         String originLonKey = "+o_lon_p=";
 
