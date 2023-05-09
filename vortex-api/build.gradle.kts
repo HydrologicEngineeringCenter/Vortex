@@ -56,7 +56,8 @@ tasks.test {
         environment = mapOf("PATH" to "${rootProject.projectDir}/bin/gdal;${rootProject.projectDir}/bin/netcdf",
                 "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
                 "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib")
+                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib",
+                "TEMP" to "C:/Temp")
 
         jvmArgs("-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
                 "-Djava.io.tmpdir=C:/Temp")
