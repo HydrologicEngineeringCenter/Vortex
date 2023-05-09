@@ -43,7 +43,6 @@ public class FileSaveUtil {
 
     private static JTextField outputLinkField(Path filePath) {
         JTextField outputLink = new JTextField(filePath.toAbsolutePath().toString());
-        outputLink.setBackground(Color.WHITE);
         outputLink.setEditable(false);
         outputLink.setBounds(0, 0, 400, 64);
         outputLink.setColumns(30);
