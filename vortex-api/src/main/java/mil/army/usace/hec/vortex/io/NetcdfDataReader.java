@@ -1,14 +1,18 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Grid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
+import mil.army.usace.hec.vortex.util.TimeConverter;
 import ucar.ma2.Array;
+import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
+import ucar.nc2.constants.CF;
 import ucar.nc2.constants.FeatureType;
 import ucar.nc2.dataset.*;
 import ucar.nc2.dt.GridCoordSystem;
@@ -31,6 +35,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static javax.measure.MetricPrefix.KILO;
@@ -202,12 +207,19 @@ public class NetcdfDataReader extends DataReader {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
 
-        double noDataValue = gridDatatype.getVariable().getFillValue();
+        VariableDS variableDs = gridDatatype.getVariable();
+        double noDataValue = variableDs.getFillValue();
 
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
 
         List<ZonedDateTime[]> times = getTimeBounds(gcs);
+        Attribute cellMethodsAttribute = variableDs.attributes().findAttribute(CF.CELL_METHODS);
+        if (cellMethodsAttribute != null && VortexDataType.INSTANTANEOUS.getNcString().equals(cellMethodsAttribute.getStringValue())) {
+            for (ZonedDateTime[] time : times) {
+                time[1] = time[0];
+            }
+        }
 
         Dimension timeDim = gridDatatype.getTimeDimension();
         Dimension endDim = gridDatatype.getEnsembleDimension();
@@ -329,6 +341,7 @@ public class NetcdfDataReader extends DataReader {
         List<ZonedDateTime[]> list = new ArrayList<>();
         if (gcs.hasTimeAxis1D()) {
             CoordinateAxis1DTime tAxis = gcs.getTimeAxis1D();
+            if (!tAxis.isInterval()) return getTimeInstants(tAxis);
             IntStream.range(0, (int) tAxis.getSize()).forEach(time -> {
                 ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
                 CalendarDate[] dates = tAxis.getCoordBoundsDate(time);
@@ -420,6 +433,13 @@ public class NetcdfDataReader extends DataReader {
             return list;
         }
         return Collections.emptyList();
+    }
+
+    private List<ZonedDateTime[]> getTimeInstants(CoordinateAxis1DTime timeAxis) {
+        return timeAxis.getCalendarDates().stream()
+                .map(TimeConverter::toZonedDateTime)
+                .map(t -> new ZonedDateTime[] {t, t})
+                .collect(Collectors.toList());
     }
 
     private static ZonedDateTime convert(CalendarDate date) {
@@ -560,12 +580,19 @@ public class NetcdfDataReader extends DataReader {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
 
-        double noDataValue = gridDatatype.getVariable().getFillValue();
+        VariableDS variableDS = gridDatatype.getVariable();
+        double noDataValue = variableDS.getFillValue();
 
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
 
         List<ZonedDateTime[]> times = getTimeBounds(gcs);
+        Attribute cellMethodsAttribute = variableDS.findAttribute(CF.CELL_METHODS);
+        if (cellMethodsAttribute != null && VortexDataType.INSTANTANEOUS.getNcString().equals(cellMethodsAttribute.getStringValue())) {
+            for (ZonedDateTime[] time : times) {
+                time[1] = time[0];
+            }
+        }
 
         Array array;
         try {

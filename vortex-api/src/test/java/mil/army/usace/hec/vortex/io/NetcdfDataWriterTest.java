@@ -25,6 +25,45 @@ import static mil.army.usace.hec.vortex.io.NetcdfDataWriter.*;
 
 class NetcdfDataWriterTest {
     @Test
+    void IntervalTimeTest() {
+        String inFile = "/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-overwrite.nc";
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("precipitation")
+                .build();
+        List<VortexData> grids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+
+    }
+
+    @Test
+    void InstantTimeTest() {
+        String inFile = "/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-Tom.dss";
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("*")
+                .build();
+        List<VortexData> originalGrids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+
+        String outFile = "/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-Tom.nc";
+        DataWriter writer = DataWriter.builder()
+                .data(originalGrids)
+                .destination(outFile)
+                .build();
+        writer.write();
+
+        DataReader readerCircle = DataReader.builder()
+                .path(outFile)
+                .variable("temperature")
+                .build();
+        List<VortexData> generatedGrids = readerCircle.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+
+        for (int i = 0; i < originalGrids.size(); i++) {
+            Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+        }
+        System.out.println("Hi");
+    }
+
+    @Test
     void SimpleCircleTest() {
         ZonedDateTime startTime = ZonedDateTime.of(1900,2,2,0,0,0,0, ZoneId.systemDefault());
         ZonedDateTime endTime = startTime.plusHours(1);

@@ -268,7 +268,8 @@ public class NetcdfGridWriter {
                     .addAttribute(new Attribute(CF.GRID_MAPPING, defaultCollection.getProjectionName()))
                     .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
                     .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
-                    .addAttribute(new Attribute(CF._FILLVALUE, collection.getNoDataValue()));
+                    .addAttribute(new Attribute(CF._FILLVALUE, collection.getNoDataValue()))
+                    .addAttribute(new Attribute(CF.CELL_METHODS, collection.getDataType().getNcString()));
         }
     }
 

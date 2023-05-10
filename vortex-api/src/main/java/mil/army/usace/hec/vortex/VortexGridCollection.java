@@ -74,6 +74,10 @@ public class VortexGridCollection {
         return defaultGrid.units();
     }
 
+    public VortexDataType getDataType() {
+        return defaultGrid.dataType();
+    }
+
     /* Name & Description */
     public String getShortName() {
         return defaultGrid.shortName();

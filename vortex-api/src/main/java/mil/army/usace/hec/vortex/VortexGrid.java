@@ -25,7 +25,7 @@ public class VortexGrid implements VortexData, Serializable {
     private final ZonedDateTime startTime;
     private final ZonedDateTime endTime;
     private final Duration interval;
-
+    private final VortexDataType dataType;
     private final double terminusX;
     private final double terminusY;
 
@@ -48,6 +48,7 @@ public class VortexGrid implements VortexData, Serializable {
         this.startTime = builder.startTime;
         this.endTime = builder.endTime;
         this.interval = builder.interval;
+        this.dataType = builder.dataType;
 
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
@@ -71,6 +72,7 @@ public class VortexGrid implements VortexData, Serializable {
         private ZonedDateTime startTime;
         private ZonedDateTime endTime;
         private Duration interval;
+        private VortexDataType dataType;
 
         public VortexGridBuilder dx (final double dx) {
             this.dx = dx;
@@ -157,7 +159,22 @@ public class VortexGrid implements VortexData, Serializable {
             return this;
         }
 
+        public VortexGridBuilder dataType (final VortexDataType dataType) {
+            this.dataType = dataType;
+            return this;
+        }
+
+        public VortexGridBuilder dataType (final String dataTypeString) {
+            VortexDataType type = VortexDataType.fromString(dataTypeString);
+            return dataType(type);
+        }
+
         public VortexGrid build() {
+            // Set data type if it has not been set by the builder arg
+            if (dataType == null) {
+                dataType = interval.isZero() ? VortexDataType.INSTANTANEOUS : VortexDataType.ACCUMULATION;
+            }
+
             return new VortexGrid(this);
         }
 
@@ -249,6 +266,10 @@ public class VortexGrid implements VortexData, Serializable {
 
     public Duration interval() {
         return interval;
+    }
+
+    public VortexDataType dataType() {
+        return dataType;
     }
 
     public double[] xCoordinates() {
