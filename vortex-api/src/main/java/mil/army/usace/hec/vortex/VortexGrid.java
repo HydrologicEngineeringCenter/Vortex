@@ -1,5 +1,7 @@
 package mil.army.usace.hec.vortex;
 
+import mil.army.usace.hec.vortex.geo.ReferenceUtils;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -25,6 +27,7 @@ public class VortexGrid implements VortexData, Serializable {
     private final ZonedDateTime startTime;
     private final ZonedDateTime endTime;
     private final Duration interval;
+    private final Variable variable;
     private final VortexDataType dataType;
     private final double terminusX;
     private final double terminusY;
@@ -49,6 +52,7 @@ public class VortexGrid implements VortexData, Serializable {
         this.endTime = builder.endTime;
         this.interval = builder.interval;
         this.dataType = builder.dataType;
+        this.variable = Variable.fromName(shortName);
 
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
@@ -172,7 +176,7 @@ public class VortexGrid implements VortexData, Serializable {
         public VortexGrid build() {
             // Set data type if it has not been set by the builder arg
             if (dataType == null) {
-                dataType = interval.isZero() ? VortexDataType.INSTANTANEOUS : VortexDataType.ACCUMULATION;
+                dataType = interval.isZero() ? VortexDataType.INSTANTANEOUS : VortexDataType.UNDEFINED;
             }
 
             return new VortexGrid(this);
@@ -296,6 +300,7 @@ public class VortexGrid implements VortexData, Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof VortexGrid)) return false;
+
         VortexGrid that = (VortexGrid) o;
 
         if (Double.compare(that.dx, dx) != 0) return false;
@@ -305,16 +310,14 @@ public class VortexGrid implements VortexData, Serializable {
         if (Double.compare(that.originX, originX) != 0) return false;
         if (Double.compare(that.originY, originY) != 0) return false;
         if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
-        if (Double.compare(that.terminusX, terminusX) != 0) return false;
-        if (Double.compare(that.terminusY, terminusY) != 0) return false;
-        if (!Objects.equals(wkt, that.wkt)) return false;
+        if (ReferenceUtils.equals(wkt, that.wkt)) return false;
         if (!Arrays.equals(data, that.data)) return false;
         if (!Objects.equals(units, that.units)) return false;
-        if (!Objects.equals(shortName, that.shortName)) return false;
-        if (!Objects.equals(description, that.description)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
-        return Objects.equals(interval, that.interval);
+        if (!Objects.equals(interval, that.interval)) return false;
+        if (variable != that.variable) return false;
+        return dataType == that.dataType;
     }
 
     @Override
@@ -336,15 +339,11 @@ public class VortexGrid implements VortexData, Serializable {
         temp = Double.doubleToLongBits(noDataValue);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (units != null ? units.hashCode() : 0);
-        result = 31 * result + (shortName != null ? shortName.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
         result = 31 * result + (endTime != null ? endTime.hashCode() : 0);
         result = 31 * result + (interval != null ? interval.hashCode() : 0);
-        temp = Double.doubleToLongBits(terminusX);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(terminusY);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (variable != null ? variable.hashCode() : 0);
+        result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         return result;
     }
 }
