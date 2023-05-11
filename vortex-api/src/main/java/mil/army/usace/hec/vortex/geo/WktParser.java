@@ -53,6 +53,10 @@ public class WktParser {
     }
 
     private static Projection parseLatLong(SpatialReference srs) {
+        String projString = srs.ExportToProj4();
+        if (projString.contains("+o_lon_p") && projString.contains("+o_lat_p"))
+            return parseRotatedPole(srs);
+
         Earth earth = getEarth(srs);
         return new LatLonProjection(earth);
     }
@@ -189,17 +193,20 @@ public class WktParser {
     }
 
     private static double[] getNorthLatLon(SpatialReference srs) {
-//        String projString = "+proj=ob_tran +o_proj=longlat +o_lon_p=-162 +o_lat_p=39.25 +lon_0=180 +to_meter=0.01745329";
         String projString = srs.ExportToProj4();
         String originLatKey = "+o_lat_p=";
-        String originLonKey = "+o_lon_p=";
+        String originLonKey = "+lon_0=";
 
         double[] latLon = new double[2];
         for (String param : projString.split("\\s+")) {
-            if (param.startsWith(originLatKey))
-                latLon[0] = Double.parseDouble(param.substring(originLatKey.length()));
-            if (param.startsWith(originLonKey))
-                latLon[1] = Double.parseDouble(param.substring(originLonKey.length()));
+            if (param.startsWith(originLatKey)) {
+                double oLatP = Double.parseDouble(param.substring(originLatKey.length()));
+                latLon[0] = oLatP;
+            }
+            if (param.startsWith(originLonKey)) {
+                double oLonP = Double.parseDouble(param.substring(originLonKey.length()));
+                latLon[1] = oLonP - 180;
+            }
         }
 
         return latLon;
