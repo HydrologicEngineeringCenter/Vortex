@@ -3,7 +3,8 @@ package mil.army.usace.hec.vortex;
 public enum VortexDataType {
     INSTANTANEOUS("INST-VAL", "point"),
     ACCUMULATION("PER-CUM", "sum"),
-    AVERAGE("PER-AVER", "mean");
+    AVERAGE("PER-AVER", "mean"),
+    UNDEFINED("", "");
 
     // https://www.hec.usace.army.mil/confluence/display/dssJavaprogrammer/Units+and+Type
     private final String dssString;
