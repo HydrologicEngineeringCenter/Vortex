@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.TestUtil;
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.convert.NetcdfGridWriter;
 import mil.army.usace.hec.vortex.geo.WktFactory;
@@ -13,6 +14,7 @@ import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -26,17 +28,35 @@ import static mil.army.usace.hec.vortex.io.NetcdfDataWriter.*;
 class NetcdfDataWriterTest {
     @Test
     void IntervalTimeTest() {
-        String inFile = "/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-overwrite.nc";
+        // TODO: Clean up dev tests
+        String inFile = TestUtil.getResourceFile("/cordex/precip.nc").getAbsolutePath().toString();
         DataReader reader = DataReader.builder()
                 .path(inFile)
+                .variable("pr")
+                .build();
+        List<VortexData> originalGrids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+
+        String outFile = TestUtil.createTempFile("precip-cordex.nc");
+        DataWriter writer = DataWriter.builder()
+                .data(originalGrids)
+                .destination(outFile)
+                .build();
+        writer.write();
+
+        DataReader readerCircle = DataReader.builder()
+                .path(outFile)
                 .variable("precipitation")
                 .build();
-        List<VortexData> grids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexData> generatedGrids = readerCircle.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
 
+        for (int i = 0; i < originalGrids.size(); i++) {
+            Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+        }
     }
 
     @Test
     void InstantTimeTest() {
+        // TODO: Get rid before final submission
         String inFile = "/Users/work/Documents-Local/HMS-Dataset/NetcdfWriterTest/temp-Tom.dss";
         DataReader reader = DataReader.builder()
                 .path(inFile)
@@ -64,44 +84,108 @@ class NetcdfDataWriterTest {
     }
 
     @Test
-    void SimpleCircleTest() {
-        ZonedDateTime startTime = ZonedDateTime.of(1900,2,2,0,0,0,0, ZoneId.systemDefault());
-        ZonedDateTime endTime = startTime.plusHours(1);
+    void InstantTimeCircleTest() throws IOException {
+        ZonedDateTime time = ZonedDateTime.of(1900,2,2,0,0,0,0, ZoneId.of("Z"));
         List<VortexData> originalGrids = new ArrayList<>();
+
         for (int i = 0; i < 5; i++) {
+            float[] data = new float[9];
+            Arrays.fill(data, i);
+
             VortexGrid grid = VortexGrid.builder()
-                    .dx(1).dy(1).nx(3).ny(3).originX(0).originY(0)
+                    .originX(0).originY(0)
+                    .nx(3).ny(3)
+                    .dx(1).dy(1)
                     .wkt(WktFactory.createWkt(new LambertConformalConicEllipse()))
-                    .data(generateRandomFloatArray(9, 10))
+                    .data(data)
                     .noDataValue(-9999)
-                    .units("m")
-                    .fileName("randomFile.txt")
-                    .shortName("precipitation")
-                    .description("lwe_thickness_of_precipitation_amount")
-                    .startTime(startTime.plusHours(i))
-                    .endTime(endTime.plusHours(i))
-                    .interval(Duration.between(startTime, endTime))
+                    .units("degC")
+                    .shortName("temperature")
+                    .description("air_temperature")
+                    .startTime(time.plusHours(i))
+                    .endTime(time.plusHours(i))
+                    .interval(Duration.between(time, time))
+                    .dataType(VortexDataType.INSTANTANEOUS)
                     .build();
+
             originalGrids.add(grid);
         }
 
-        String outputPath = TestUtil.createTempFile("SimpleCircleTest.nc");
-        DataWriter writer = DataWriter.builder().data(originalGrids).destination(outputPath).build();
+        String outputPath = TestUtil.createTempFile("InstantTimeCircleTest.nc");
+        Assertions.assertNotNull(outputPath);
+
+        DataWriter writer = DataWriter.builder()
+                .data(originalGrids)
+                .destination(outputPath)
+                .build();
+
         writer.write();
 
-        DataReader reader = DataReader.builder().variable("precipitation").path(outputPath).build();
+        DataReader reader = DataReader.builder()
+                .variable("temperature")
+                .path(outputPath)
+                .build();
+
         List<VortexData> generatedGrids = reader.getDtos();
 
         for (int i = 0; i < originalGrids.size(); i++) {
             Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
         }
+
+        Files.deleteIfExists(Path.of(outputPath));
     }
 
-    private float[] generateRandomFloatArray(int numElements, int multiplier) {
-        float[] dataArray = new float[numElements];
-        Random random = new Random();
-        for (int i = 0; i < dataArray.length; i++) dataArray[i] = random.nextFloat();
-        return dataArray;
+    @Test
+    void IntervalTimeCircleTest() throws IOException {
+        ZonedDateTime startTime = ZonedDateTime.of(1900,2,2,0,0,0,0, ZoneId.of("Z"));
+        ZonedDateTime endTime = startTime.plusHours(1);
+        List<VortexData> originalGrids = new ArrayList<>();
+
+        for (int i = 0; i < 5; i++) {
+            float[] data = new float[9];
+            Arrays.fill(data, i);
+
+            VortexGrid grid = VortexGrid.builder()
+                    .originX(0).originY(0)
+                    .nx(3).ny(3)
+                    .dx(1).dy(1)
+                    .wkt(WktFactory.createWkt(new LambertConformalConicEllipse()))
+                    .data(data)
+                    .noDataValue(-9999)
+                    .units("m")
+                    .shortName("precipitation")
+                    .description("lwe_thickness_of_precipitation_amount")
+                    .startTime(startTime.plusHours(i))
+                    .endTime(endTime.plusHours(i))
+                    .interval(Duration.between(startTime, endTime))
+                    .dataType(VortexDataType.ACCUMULATION)
+                    .build();
+
+            originalGrids.add(grid);
+        }
+
+        String outputPath = TestUtil.createTempFile("IntervalTimeCircleTest.nc");
+        Assertions.assertNotNull(outputPath);
+
+        DataWriter writer = DataWriter.builder()
+                .data(originalGrids)
+                .destination(outputPath)
+                .build();
+
+        writer.write();
+
+        DataReader reader = DataReader.builder()
+                .variable("precipitation")
+                .path(outputPath)
+                .build();
+
+        List<VortexData> generatedGrids = reader.getDtos();
+
+        for (int i = 0; i < originalGrids.size(); i++) {
+            Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+        }
+
+        Files.deleteIfExists(Path.of(outputPath));
     }
 
     @Test
