@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.convert;
 
-import mil.army.usace.hec.vortex.MeteorologicalVariable;
+import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
 import mil.army.usace.hec.vortex.io.DataWriter;
@@ -134,7 +134,7 @@ public class NetcdfGridWriter {
         AtomicBoolean hasErrors = new AtomicBoolean(false);
 
         for (VortexGridCollection collection : gridCollectionMap.values()) {
-            MeteorologicalVariable meteorologicalVariable = getMeteorologicalVariable(collection);
+            VortexVariable meteorologicalVariable = getVortexVariable(collection);
             Variable variable = writer.findVariable(meteorologicalVariable.getShortName());
             if (variable == null) {
                 logger.severe("Failed to locate variable: " + meteorologicalVariable.getShortName());
@@ -260,10 +260,10 @@ public class NetcdfGridWriter {
         boolean isGeographic = defaultCollection.isGeographic();
         List<Dimension> dimensions = isGeographic ? List.of(timeDim, latDim, lonDim) : List.of(timeDim, yDim, xDim);
         for (VortexGridCollection collection : gridCollectionMap.values()) {
-            MeteorologicalVariable meteorologicalVariable = getMeteorologicalVariable(collection);
+            VortexVariable variable = getVortexVariable(collection);
             Unit<?> dataUnit = UnitUtil.getUnits(collection.getDataUnit());
-            writerBuilder.addVariable(meteorologicalVariable.getShortName(), DataType.FLOAT, dimensions)
-                    .addAttribute(new Attribute(CF.LONG_NAME, meteorologicalVariable.getLongName()))
+            writerBuilder.addVariable(variable.getShortName(), DataType.FLOAT, dimensions)
+                    .addAttribute(new Attribute(CF.LONG_NAME, variable.getLongName()))
                     .addAttribute(new Attribute(CF.UNITS, getUnitsString(dataUnit)))
                     .addAttribute(new Attribute(CF.GRID_MAPPING, defaultCollection.getProjectionName()))
                     .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
@@ -278,9 +278,9 @@ public class NetcdfGridWriter {
         return dimension.getShortName() + "_bnds";
     }
 
-    private static MeteorologicalVariable getMeteorologicalVariable(VortexGridCollection collection) {
-        MeteorologicalVariable name = MeteorologicalVariable.fromName(collection.getShortName());
-        return name.equals(MeteorologicalVariable.UNKNOWN) ? MeteorologicalVariable.fromName(collection.getDescription()) : name;
+    private static VortexVariable getVortexVariable(VortexGridCollection collection) {
+        VortexVariable name = VortexVariable.fromName(collection.getShortName());
+        return name.equals(VortexVariable.UNDEFINED) ? VortexVariable.fromName(collection.getDescription()) : name;
     }
 
     private static String getUnitsString(Unit<?> unit){

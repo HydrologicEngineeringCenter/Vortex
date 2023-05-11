@@ -3,7 +3,7 @@ package mil.army.usace.hec.vortex;
 import java.util.Arrays;
 
 // long names taken from https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
-public enum MeteorologicalVariable {
+public enum VortexVariable {
     PRECIPITATION("precipitation", "lwe_thickness_of_precipitation_amount","PRECIPITATION"),
     PRESSURE("pressure", "air_pressure", "PRESSURE"),
     TEMPERATURE("temperature", "air_temperature", "TEMPERATURE"),
@@ -19,23 +19,23 @@ public enum MeteorologicalVariable {
     COLD_CONTENT_ATI("cold content ati", "cold_content_ati", "COLD CONTENT ATI"),
     MELTRATE_ATI("meltrate ati", "meltrate_ati", "MELTRATE ATI"),
     SNOW_MELT("snow melt", "surface_snow_melt_amount", "SNOW MELT"),
-    UNKNOWN("", "", "");
+    UNDEFINED("", "", "");
 
     private final String shortName;
     private final String longName;
     private final String dssName;
 
-    MeteorologicalVariable(String shortName, String longName, String dssName) {
+    VortexVariable(String shortName, String longName, String dssName) {
         this.shortName = shortName;
         this.longName = longName;
         this.dssName = dssName;
     }
 
-    public static MeteorologicalVariable fromDssName(String dssName) {
-        return Arrays.stream(MeteorologicalVariable.values())
+    public static VortexVariable fromDssName(String dssName) {
+        return Arrays.stream(VortexVariable.values())
                 .filter(n -> n.dssName.equals(dssName))
                 .findFirst()
-                .orElse(UNKNOWN);
+                .orElse(UNDEFINED);
     }
 
     public String getShortName() {
@@ -50,7 +50,7 @@ public enum MeteorologicalVariable {
         return dssName;
     }
 
-    public static MeteorologicalVariable fromName(String name) {
+    public static VortexVariable fromName(String name) {
         name = name.toLowerCase().replaceAll("\\s", "");
         if (isValidPrecipitationName(name)) return PRECIPITATION;
         if (isValidPressureName(name)) return PRESSURE;
@@ -67,7 +67,7 @@ public enum MeteorologicalVariable {
         if (isValidColdContentATIName(name)) return COLD_CONTENT_ATI;
         if (isValidMeltrateATIName(name)) return MELTRATE_ATI;
         if (isValidSnowMeltName(name)) return SNOW_MELT;
-        return UNKNOWN;
+        return UNDEFINED;
     }
 
     private static boolean isValidPrecipitationName(String shortName) {

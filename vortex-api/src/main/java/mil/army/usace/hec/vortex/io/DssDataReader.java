@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.dss.DSSPathname;
+import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecDSSFileAccess;
 import hec.heclib.dss.HecDssCatalog;
 import hec.heclib.grid.GridData;
@@ -87,6 +88,8 @@ class DssDataReader extends DataReader {
         String variable = dssPathname.cPart();
         float[] data = MatrixUtils.flipArray(gridData.getData(), nx, ny);
 
+        String dssTypeString = DssDataType.fromInt(gridInfo.getDataType()).toString();
+
         return  VortexGrid.builder()
                 .dx(cellSize)
                 .dy(-cellSize)
@@ -104,6 +107,7 @@ class DssDataReader extends DataReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .dataType(dssTypeString)
                 .build();
     }
 
