@@ -176,7 +176,8 @@ public class VortexGrid implements VortexData, Serializable {
         public VortexGrid build() {
             // Set data type if it has not been set by the builder arg
             if (dataType == null) {
-                dataType = interval.isZero() ? VortexDataType.INSTANTANEOUS : VortexDataType.UNDEFINED;
+                dataType = interval != null && interval.isZero() ?
+                        VortexDataType.INSTANTANEOUS : VortexDataType.UNDEFINED;
             }
 
             return new VortexGrid(this);
