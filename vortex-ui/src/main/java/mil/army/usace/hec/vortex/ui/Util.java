@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
@@ -67,29 +68,55 @@ public class Util {
     public static List<String> sortDssVariables(List<String> dssVariables) {
         if(dssVariables == null || dssVariables.isEmpty()) { return null; }
 
-        try {
-            // Remove records that don't match the E part date format for a gridded record
-            dssVariables.removeIf(s -> !s.split("/", -1)[4].matches("[0-9]{2}[A-Za-z]{3}[0-9]{4}:[0-9]{4}"));
+        List<String> datedRecords = new ArrayList<>();
+        List<String> nonDatedRecords = new ArrayList<>();
 
+        for (String dssPathname : dssVariables) {
+            String[] split = dssPathname.split("/", -1);
+            if (split[4].matches("[0-9]{2}[A-Za-z]{3}[0-9]{4}:[0-9]{4}")) {
+                datedRecords.add(dssPathname);
+            } else {
+                nonDatedRecords.add(dssPathname);
+            }
+        }
+
+        // Sort based on A part
+        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[1]));
+        // Sort based on B part
+        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[2]));
+        // Sort based on C part
+        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[3]));
+        // Sort based on D part
+        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[5]));
+        // Sort based on E part
+        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[5]));
+        // Sort based on F part
+        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[6]));
+
+        try {
             DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                     .parseCaseInsensitive()
                     .appendPattern("ddMMMuuuu:HHmm")
                     .toFormatter();
 
             // Sort based on D part
-            dssVariables.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
+            datedRecords.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
             // Sort based on A part
-            dssVariables.sort(Comparator.comparing(s -> s.split("/", -1)[1]));
+            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[1]));
             // Sort based on B part
-            dssVariables.sort(Comparator.comparing(s -> s.split("/", -1)[2]));
+            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[2]));
             // Sort based on C part
-            dssVariables.sort(Comparator.comparing(s -> s.split("/", -1)[3]));
+            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[3]));
             // Sort based on F part
-            dssVariables.sort(Comparator.comparing(s -> s.split("/", -1)[6]));
+            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[6]));
 
         } catch (DateTimeParseException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
+
+        dssVariables.clear();
+        dssVariables.addAll(datedRecords);
+        dssVariables.addAll(nonDatedRecords);
 
         return dssVariables;
     }
