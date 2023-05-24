@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.dss.DSSPathname;
+import hec.heclib.dss.HecDSSDataAttributes;
 import hec.heclib.dss.HecDSSFileAccess;
 import hec.heclib.dss.HecDssCatalog;
 import hec.heclib.grid.GridData;
@@ -21,6 +22,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+
+import static hec.heclib.dss.HecDSSDataAttributes.*;
 
 class DssDataReader extends DataReader {
 
@@ -108,10 +111,33 @@ class DssDataReader extends DataReader {
     }
 
     public static Set<String> getVariables(String pathToDss){
-        HecDSSFileAccess.setDefaultDSSFileName(pathToDss);
-        HecDssCatalog catalog = new HecDssCatalog();
-        String[] paths = catalog.getCatalog(false, null);
-        return new HashSet<>(Arrays.asList(paths));
+        HecDSSDataAttributes attributes = new HecDSSDataAttributes();
+        attributes.setDSSFileName(pathToDss);
+        String[] dssPathnames = attributes.getCatalog(false, null);
+
+        Set<Integer> gridRecordTypes = getGridRecordTypes();
+
+        List<String> griddedRecords = new ArrayList<>();
+        for(String dssPathname : dssPathnames) {
+            int recordType = attributes.recordType(dssPathname);
+            if (gridRecordTypes.contains(recordType))
+                griddedRecords.add(dssPathname);
+        }
+
+        return new HashSet<>(griddedRecords);
+    }
+
+    private static Set<Integer> getGridRecordTypes() {
+        Set<Integer> gridRecordTypes = new HashSet<>();
+        gridRecordTypes.add(UNDEFINED_GRID_WITH_TIME);
+        gridRecordTypes.add(UNDEFINED_GRID);
+        gridRecordTypes.add(HRAP_GRID_WITH_TIME);
+        gridRecordTypes.add(HRAP_GRID);
+        gridRecordTypes.add(ALBERS_GRID_WITH_TIME);
+        gridRecordTypes.add(ALBERS_GRID);
+        gridRecordTypes.add(SPECIFIED_GRID_WITH_TIME);
+        gridRecordTypes.add(SPECIFIED_GRID);
+        return gridRecordTypes;
     }
 
     @Override
