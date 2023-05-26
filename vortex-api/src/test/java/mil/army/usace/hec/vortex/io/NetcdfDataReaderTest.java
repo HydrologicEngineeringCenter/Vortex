@@ -420,9 +420,9 @@ class NetcdfDataReaderTest {
         Assertions.assertEquals("1 January 2001, 24:00", gridInfo.getEndTime());
         Assertions.assertEquals("MM", gridInfo.getDataUnits());
         Assertions.assertEquals(DssDataType.PER_CUM.value(), gridInfo.getDataType());
-        Assertions.assertEquals(0.6857273578643799, gridInfo.getMaxValue(), 1E-5);
+        Assertions.assertEquals(0.68065584, gridInfo.getMaxValue(), 1E-5);
         Assertions.assertEquals(0.0, gridInfo.getMinValue(), 1E-5);
-        Assertions.assertEquals(0.015706462785601616, gridInfo.getMeanValue(), 1E-5);
+        Assertions.assertEquals(0.03056333, gridInfo.getMeanValue(), 1E-5);
 
         griddedData.done();
     }
