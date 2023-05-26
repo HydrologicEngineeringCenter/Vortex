@@ -1,9 +1,12 @@
 package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexGrid;
-import org.gdal.gdal.*;
-import org.gdal.osr.CoordinateTransformation;
+import org.gdal.gdal.Band;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.WarpOptions;
+import org.gdal.gdal.gdal;
 import org.gdal.osr.SpatialReference;
+import org.locationtech.jts.geom.Envelope;
 
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -102,7 +105,9 @@ public class Resampler {
             destSrs.ImportFromWkt(dataset.GetProjection());
         }
 
-        Dataset resampled = resample(dataset, env, envSrs, destSrs, cellSize, method);
+        Envelope envelope = VectorUtils.toEnvelope(env);
+
+        Dataset resampled = resample(dataset, envelope, envSrs, destSrs, cellSize, method);
 
         double[] geoTransform = resampled.GetGeoTransform();
         double dx = geoTransform[1];
@@ -119,6 +124,8 @@ public class Resampler {
         dataset.delete();
         resampled.delete();
         band.delete();
+        envSrs.delete();
+        destSrs.delete();
 
         return VortexGrid.builder()
                 .dx(dx)
@@ -141,23 +148,24 @@ public class Resampler {
                 .build();
     }
 
-    private static Dataset resample(Dataset dataset, Rectangle2D env, SpatialReference envSrs, SpatialReference targetSrs, double cellSize, String method){
+    private static Dataset resample(Dataset dataset, Envelope env, SpatialReference envSrs, SpatialReference targetSrs, double cellSize, String method){
 
         targetSrs.MorphFromESRI();
 
         Map<String,Double> envelope = new HashMap<>();
 
         if (env != null) {
-            CoordinateTransformation transform = new CoordinateTransformation(envSrs, targetSrs);
+            Reprojector reprojector = Reprojector.builder()
+                    .from(envSrs.ExportToWkt())
+                    .to(targetSrs.ExportToWkt())
+                    .build();
 
-            double[] lowerLeft = transform.TransformPoint(env.getMinX(), env.getMinY());
-            double[] upperRight = transform.TransformPoint(env.getMaxX(), env.getMaxY());
-            double minX = Math.min(lowerLeft[0], upperRight[0]);
-            double minY = Math.min(lowerLeft[1], upperRight[1]);
-            double maxX = Math.max(lowerLeft[0], upperRight[0]);
-            double maxY = Math.max(lowerLeft[1], upperRight[1]);
+            Envelope reprojected = reprojector.reproject(env);
 
-            transform.delete();
+            double maxX = reprojected.getMaxX();
+            double minX = reprojected.getMinX();
+            double maxY = reprojected.getMaxY();
+            double minY = reprojected.getMinY();
 
             if (!Double.isNaN(cellSize)) {
                 envelope.put("maxX", Math.ceil(maxX / cellSize) * cellSize);
