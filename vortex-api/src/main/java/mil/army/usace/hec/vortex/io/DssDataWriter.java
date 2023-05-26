@@ -728,26 +728,26 @@ public class DssDataWriter extends DataWriter {
     }
 
     private static HecTime getStartTime(GridInfo gridInfo){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-        LocalDateTime date;
-        try {
-            date = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-        HecTime time = new HecTime();
-        time.setXML(date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        return time;
+        return getHecTime(gridInfo.getStartTime());
     }
     private static HecTime getEndTime(GridInfo gridInfo){
+        return getHecTime(gridInfo.getEndTime());
+    }
+
+    private static HecTime getHecTime(String dateTimeString) {
+        HecTime time = new HecTime();
+
+        if (dateTimeString.isEmpty())
+            return time;
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
         LocalDateTime date;
         try {
-            date = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
+            date = LocalDateTime.parse(dateTimeString, formatter);
         } catch (DateTimeParseException e) {
-            return null;
+            return time;
         }
-        HecTime time = new HecTime();
+
         time.setXML(date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return time;
     }
@@ -781,11 +781,11 @@ public class DssDataWriter extends DataWriter {
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(destination.toString());
 
-        griddedData.setPathname(updatePathname(pathname, options).getPathname());
+        griddedData.setPathname(updatePathname(pathname, options).toString());
         HecTime startTime = getStartTime(gridData.getGridInfo());
         HecTime endTime = getEndTime(gridData.getGridInfo());
 
-        if (endTime != null) {
+        if (endTime.isDefined()) {
             if (gridData.getGridInfo().getDataType() == DssDataType.INST_VAL.value()) {
                 griddedData.setGridTime(endTime);
             } else {

@@ -68,10 +68,20 @@ class DssDataReader extends DataReader {
         double lly = gridInfo.getLowerLeftCellY() * cellSize;
         int direction = ReferenceUtils.getUlyDirection(wkt, ulx, lly);
         double uly = lly + direction * ny * cellSize;
+
+        DSSPathname dssPathname = new DSSPathname(variableName);
+        String pathName = dssPathname.getPathname();
+        String variable = dssPathname.cPart();
+
         ZonedDateTime startTime;
         ZonedDateTime endTime;
         Duration interval;
-        if (!gridInfo.getStartTime().isEmpty()) {
+
+        if (dssPathname.getDPart().isEmpty() && gridInfo.getStartTime().equals("31 December 1899, 00:00")) {
+            startTime = null;
+            endTime = null;
+            interval = null;
+        } else {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
             startTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getStartTime(), formatter), ZoneId.of("UTC"));
             try {
@@ -80,14 +90,8 @@ class DssDataReader extends DataReader {
                 endTime = startTime;
             }
             interval = Duration.between(startTime, endTime);
-        } else {
-            startTime = null;
-            endTime = null;
-            interval = null;
         }
-        DSSPathname dssPathname = new DSSPathname(variableName);
-        String pathName = dssPathname.getPathname();
-        String variable = dssPathname.cPart();
+
         float[] data = MatrixUtils.flipArray(gridData.getData(), nx, ny);
 
         return  VortexGrid.builder()

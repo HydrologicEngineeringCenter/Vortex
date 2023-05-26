@@ -178,7 +178,7 @@ public class Step3Controller implements BrowseLocationPersister {
         if (fParts.size() == 1){
             dssPathnamePartsController.partF.textProperty().set(fParts.iterator().next());
         } else {
-            dssPathnamePartsController.partF.textProperty().set("");
+            dssPathnamePartsController.partF.textProperty().set("*");
         }
     }
 }
