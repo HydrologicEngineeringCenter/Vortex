@@ -47,8 +47,10 @@ public class Reprojector {
     public Geometry reproject(Geometry geometry) {
         SpatialReference fromSrs = new SpatialReference(from);
         fromSrs.MorphFromESRI();
+        fromSrs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER);
         SpatialReference toSrs = new SpatialReference(to);
         toSrs.MorphFromESRI();
+        toSrs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER);
         org.gdal.ogr.Geometry ogrGeometry = GeometryConverter.convertToOgrGeometry(geometry);
 
         if (fromSrs.IsSame(toSrs) != 1) {
