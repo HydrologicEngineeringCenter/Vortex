@@ -96,9 +96,9 @@ public class DssDataWriter extends DataWriter {
                 options.put("dataType", "PER-AVER");
             }
 
-            if (units.equals(MILLI(METRE).divide(SECOND))
+            if (cPart.equals("PRECIPITATION") && (units.equals(MILLI(METRE).divide(SECOND))
                     || units.equals(MILLI(METRE).divide(HOUR))
-                    || units.equals(MILLI(METRE).divide(DAY))) {
+                    || units.equals(MILLI(METRE).divide(DAY)))) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
                 LocalDateTime startTime = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
                 LocalDateTime endTime = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
@@ -361,6 +361,14 @@ public class DssDataWriter extends DataWriter {
             return "SNOW DEPTH";
         } else if (desc.equals("snow melt")){
             return "SNOW MELT";
+        } else if (desc.matches("moisture\\s?deficit")){
+            return "MOISTURE DEFICIT";
+        } else if (desc.matches("impervious\\s?area")){
+            return "IMPERVIOUS AREA";
+        } else if (desc.equals("percolation") || desc.matches("percolation\\s?rate")){
+            return "PERCOLATION";
+        } else if (desc.matches("curve\\s?number")){
+            return "CURVE NUMBER";
         } else {
             return "";
         }
@@ -514,8 +522,14 @@ public class DssDataWriter extends DataWriter {
         if (unit.equals(INCH)){
             return "IN";
         }
+        if (unit.equals(INCH.divide(HOUR))){
+            return "IN/HR";
+        }
         if (unit.equals(MILLI(METRE).divide(SECOND))){
             return "MM/S";
+        }
+        if (unit.equals(MILLI(METRE).divide(HOUR))){
+            return "MM/HR";
         }
         if (unit.equals(CUBIC_METRE.divide(SECOND))){
             return "M3/S";
