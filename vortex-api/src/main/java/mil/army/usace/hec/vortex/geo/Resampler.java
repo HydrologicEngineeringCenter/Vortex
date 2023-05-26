@@ -92,10 +92,16 @@ public class Resampler {
             envSrs = new SpatialReference();
         }
 
-        SpatialReference destSrs = new SpatialReference(targetWkt);
-        destSrs.MorphFromESRI();
-
         Dataset dataset = RasterUtils.getDatasetFromVortexGrid(grid);
+
+        SpatialReference destSrs = new SpatialReference();
+        if (targetWkt != null) {
+            destSrs.ImportFromWkt(targetWkt);
+            destSrs.MorphFromESRI();
+        } else {
+            destSrs.ImportFromWkt(dataset.GetProjection());
+        }
+
         Dataset resampled = resample(dataset, env, envSrs, destSrs, cellSize, method);
 
         double[] geoTransform = resampled.GetGeoTransform();
