@@ -102,22 +102,20 @@ public class SubsettableUnit {
                 return;
             }
 
-            Reprojector reprojector = Reprojector.builder()
-                    .from(envelopeWkt)
-                    .to(gridWkt)
+            String resamplingMethod = ResamplingMethod.NEAREST_NEIGHBOR.toString();
+
+            Resampler resampler = Resampler.builder()
+                    .grid(grid)
+                    .envelope(envelope)
+                    .envelopeWkt(envelopeWkt)
+                    .cellSize(Double.NaN)
+                    .method(resamplingMethod)
                     .build();
 
-            Envelope reprojected = reprojector.reproject(envelope);
-
-            Subsetter subsetter = Subsetter.builder()
-                    .setGrid(grid)
-                    .setEnvelope(reprojected)
-                    .build();
-
-            VortexGrid subset = subsetter.subset();
+            VortexGrid resampled = resampler.resample();
 
             List<VortexData> data = new ArrayList<>();
-            data.add(subset);
+            data.add(resampled);
 
             DataWriter writer = DataWriter.builder()
                     .data(data)

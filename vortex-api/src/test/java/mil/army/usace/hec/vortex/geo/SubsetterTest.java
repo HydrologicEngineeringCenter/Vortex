@@ -41,12 +41,12 @@ class SubsetterTest {
         Geometry geometry = factory.createPolygon(coordinates);
         Envelope envelope = geometry.getEnvelopeInternal();
 
-        Subsetter subsetter = Subsetter.builder()
-                .setGrid(in)
-                .setEnvelope(envelope)
+        Resampler resampler = Resampler.builder()
+                .grid(in)
+                .envelope(envelope)
                 .build();
 
-        VortexGrid subset = subsetter.subset();
+        VortexGrid subset = resampler.resample();
 
         Assertions.assertEquals(4, subset.data().length);
     }

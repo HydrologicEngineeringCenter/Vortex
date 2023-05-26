@@ -10,8 +10,8 @@ import mil.army.usace.hec.vortex.geo.Resampler;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Envelope;
 
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -378,18 +378,18 @@ class NetcdfDataReaderTest {
 
         VortexGrid grid = (VortexGrid) reader.getDto(0);
 
-        Rectangle2D.Double env = new Rectangle2D.Double(
+        Envelope envelope = new Envelope(
                 273985.492595975,
-                1066866.62606159,
-                649723.495217674,
-                -270478.472055896
+                923708.987813649,
+                796388.154005694,
+                1066866.62606159
         );
 
         String wkt = WktFactory.create("UTM17N");
 
         VortexGrid resampled = Resampler.builder()
                 .grid(grid)
-                .envelope(env)
+                .envelope(envelope)
                 .envelopeWkt(wkt)
                 .targetWkt(WktFactory.create("UTM17N"))
                 .cellSize(2000.0)

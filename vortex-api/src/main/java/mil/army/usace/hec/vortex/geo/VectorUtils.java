@@ -3,13 +3,12 @@ package mil.army.usace.hec.vortex.geo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.ogr.*;
 import org.gdal.osr.SpatialReference;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.GeometryFactory;
 
-import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 public class VectorUtils {
     static {
@@ -34,10 +33,10 @@ public class VectorUtils {
         return wkt;
     }
 
-    public static Rectangle2D getEnvelope(Path shapefile){
+    public static Envelope getEnvelope(Path shapefile){
         Driver driver = ogr.GetDriverByName("ESRI Shapefile");
         DataSource dataSource = driver.Open(shapefile.toString(), 0);
-        Rectangle2D envelope = getEnvelope(dataSource);
+        Envelope envelope = getEnvelope(dataSource);
 
         driver.delete();
         dataSource.delete();
@@ -45,16 +44,16 @@ public class VectorUtils {
         return envelope;
     }
 
-    private static Rectangle2D getEnvelope(DataSource dataSource){
+    private static Envelope getEnvelope(DataSource dataSource){
         Layer layer = dataSource.GetLayer(0);
-        Rectangle2D envelope =  getEnvelope(layer);
+        Envelope envelope =  getEnvelope(layer);
 
         layer.delete();
 
         return envelope;
     }
 
-    private static Rectangle2D getEnvelope(Layer layer){
+    private static Envelope getEnvelope(Layer layer){
         Geometry geometry = null;
         Feature feature = null;
         double minx = Double.POSITIVE_INFINITY;
@@ -76,7 +75,7 @@ public class VectorUtils {
         Optional.ofNullable(geometry).ifPresent(Geometry::delete);
         Optional.ofNullable(feature).ifPresent(Feature::delete);
 
-        return new Rectangle2D.Double(minx, miny, maxx-minx, maxy-miny);
+        return new Envelope(minx, maxx, miny, maxy);
     }
 
     public static Set<String> getFields(Path pathToFeatures){
@@ -97,20 +96,4 @@ public class VectorUtils {
         return fields;
     }
 
-    public static Envelope toEnvelope(Rectangle2D rectangle2D) {
-        double minX = rectangle2D.getMinX();
-        double minY = rectangle2D.getMinY();
-        double maxX = rectangle2D.getMaxX();
-        double maxY = rectangle2D.getMaxY();
-
-        Coordinate[] coordinates = new Coordinate[5];
-        coordinates[0] = new Coordinate(minX, minY);
-        coordinates[1] = new Coordinate(maxX, minY);
-        coordinates[2] = new Coordinate(maxX, maxY);
-        coordinates[3] = new Coordinate(minX, maxY);
-        coordinates[4] = new Coordinate(minX, minY);
-
-        GeometryFactory factory = new GeometryFactory();
-        return factory.createPolygon(coordinates).getEnvelopeInternal();
-    }
 }

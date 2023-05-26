@@ -5,8 +5,8 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Resampler;
 import mil.army.usace.hec.vortex.geo.ResamplingMethod;
 import mil.army.usace.hec.vortex.io.DataReader;
+import org.locationtech.jts.geom.Envelope;
 
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
@@ -170,7 +170,7 @@ public class BatchGridCalculator {
         double maxX = input.getTerminusX();
         double maxY = Math.max(input.originY(), input.terminusY());
 
-        Rectangle2D env = new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
+        Envelope envelope = new Envelope(minX, maxX, minY, maxY);
 
         DataReader rasterReader = DataReader.builder()
                 .path(pathToRaster)
@@ -180,7 +180,7 @@ public class BatchGridCalculator {
 
         return Resampler.builder()
                 .grid(raster)
-                .envelope(env)
+                .envelope(envelope)
                 .envelopeWkt(input.wkt())
                 .targetWkt(input.wkt())
                 .cellSize(input.dx())

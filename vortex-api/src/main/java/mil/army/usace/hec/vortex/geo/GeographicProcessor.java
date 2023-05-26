@@ -1,8 +1,8 @@
 package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexGrid;
+import org.locationtech.jts.geom.Envelope;
 
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class GeographicProcessor {
     private final boolean isEmpty;
-    private final Rectangle2D env;
+    private final Envelope env;
     private final String envWkt;
     private final String destWkt;
     private final double cellSize;
@@ -30,7 +30,7 @@ public class GeographicProcessor {
             double maxX = Double.parseDouble(geoOptions.get("maxX"));
             double minY = Double.parseDouble(geoOptions.get("minY"));
             double maxY = Double.parseDouble(geoOptions.get("maxY"));
-            env = new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
+            env =  new Envelope(minX, maxX, minY, maxY);
             envWkt = geoOptions.get("envWkt");
         } else {
             env = null;

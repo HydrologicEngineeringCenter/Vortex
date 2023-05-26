@@ -8,7 +8,6 @@ import org.gdal.gdal.gdal;
 import org.gdal.osr.SpatialReference;
 import org.locationtech.jts.geom.Envelope;
 
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +19,7 @@ import static org.gdal.gdalconst.gdalconstConstants.GDT_Float32;
 public class Resampler {
     private static final Logger logger = Logger.getLogger(Resampler.class.getName());
     private final VortexGrid grid;
-    private final Rectangle2D env;
+    private final Envelope env;
     private final String envWkt;
     private final String targetWkt;
     private final Double cellSize;
@@ -37,18 +36,18 @@ public class Resampler {
 
     public static class ResamplerBuilder{
         private VortexGrid grid;
-        private Rectangle2D env;
+        private Envelope env;
         private String envWkt;
         private String targetWkt;
-        private Double cellSize;
-        private String method;
+        private double cellSize = Double.NaN;
+        private String method = ResamplingMethod.BILINEAR.toString();
 
         public ResamplerBuilder grid(VortexGrid grid){
             this.grid = grid;
             return this;
         }
 
-        public ResamplerBuilder envelope(Rectangle2D envelope){
+        public ResamplerBuilder envelope(Envelope envelope){
             this.env = envelope;
             return this;
         }
@@ -77,8 +76,17 @@ public class Resampler {
             if(grid == null){
                 throw new IllegalArgumentException("Resampler requires input grid");
             }
-            if(cellSize == null){
-                throw new IllegalArgumentException("Resampler requires cell size");
+            if (Double.isNaN(cellSize)) {
+                // If cell size is the same between dx and dy, as is the case with DSS, set cell size
+                double dx = Math.abs(grid.dx());
+                double dy = Math.abs(grid.dy());
+                if (dx == dy) {
+                    cellSize = grid.dx();
+                }
+            }
+            if (envWkt == null) {
+                // If envelope WKT is not provided, assume it is the same as the grid WKT
+                envWkt = grid.wkt();
             }
             return new Resampler(this);
         }
@@ -105,9 +113,7 @@ public class Resampler {
             destSrs.ImportFromWkt(dataset.GetProjection());
         }
 
-        Envelope envelope = VectorUtils.toEnvelope(env);
-
-        Dataset resampled = resample(dataset, envelope, envSrs, destSrs, cellSize, method);
+        Dataset resampled = resample(dataset, env, envSrs, destSrs, cellSize, method);
 
         double[] geoTransform = resampled.GetGeoTransform();
         double dx = geoTransform[1];

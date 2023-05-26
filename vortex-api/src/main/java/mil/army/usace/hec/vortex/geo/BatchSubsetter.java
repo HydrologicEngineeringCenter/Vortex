@@ -4,11 +4,9 @@ import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.io.DataReader;
 import org.locationtech.jts.geom.Envelope;
 
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,10 +28,9 @@ public class BatchSubsetter {
         writeOptions = builder.writeOptions;
         this.support = new PropertyChangeSupport(this);
 
-        String envelopeDataSource = builder.envelopeDataSource;
-        Rectangle2D rectangle = VectorUtils.getEnvelope(Paths.get(envelopeDataSource));
-        envelope = VectorUtils.toEnvelope(rectangle);
-        envelopeWkt = VectorUtils.getWkt(Paths.get(envelopeDataSource));
+        Path envelopeDataSource = Path.of(builder.envelopeDataSource);
+        envelope = VectorUtils.getEnvelope(envelopeDataSource);
+        envelopeWkt = VectorUtils.getWkt(envelopeDataSource);
     }
 
     public static class Builder {
@@ -65,7 +62,7 @@ public class BatchSubsetter {
         }
 
         public Builder destination(String destination) {
-            this.destination = Paths.get(destination);
+            this.destination = Path.of(destination);
             return this;
         }
 
