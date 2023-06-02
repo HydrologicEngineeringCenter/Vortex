@@ -95,12 +95,10 @@ public class Resampler {
     public static ResamplerBuilder builder(){return new ResamplerBuilder();}
 
     public VortexGrid resample(){
-        SpatialReference envSrs;
+        SpatialReference envSrs = new SpatialReference();
         if (envWkt != null) {
-            envSrs = new SpatialReference(envWkt);
+            envSrs.ImportFromWkt(envWkt);
             envSrs.MorphFromESRI();
-        } else {
-            envSrs = new SpatialReference();
         }
 
         Dataset dataset = RasterUtils.getDatasetFromVortexGrid(grid);

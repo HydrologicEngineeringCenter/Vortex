@@ -1,8 +1,12 @@
 package mil.army.usace.hec.vortex;
 
+import mil.army.usace.hec.vortex.geo.ReferenceUtils;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class VortexGrid implements VortexData, Serializable {
 
@@ -23,7 +27,8 @@ public class VortexGrid implements VortexData, Serializable {
     private final ZonedDateTime startTime;
     private final ZonedDateTime endTime;
     private final Duration interval;
-
+    private final VortexVariable variable;
+    private final VortexDataType dataType;
     private final double terminusX;
     private final double terminusY;
 
@@ -46,6 +51,8 @@ public class VortexGrid implements VortexData, Serializable {
         this.startTime = builder.startTime;
         this.endTime = builder.endTime;
         this.interval = builder.interval;
+        this.dataType = builder.dataType;
+        this.variable = VortexVariable.fromName(shortName);
 
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
@@ -69,6 +76,7 @@ public class VortexGrid implements VortexData, Serializable {
         private ZonedDateTime startTime;
         private ZonedDateTime endTime;
         private Duration interval;
+        private VortexDataType dataType;
 
         public VortexGridBuilder dx (final double dx) {
             this.dx = dx;
@@ -155,7 +163,22 @@ public class VortexGrid implements VortexData, Serializable {
             return this;
         }
 
+        public VortexGridBuilder dataType (final VortexDataType dataType) {
+            this.dataType = dataType;
+            return this;
+        }
+
+        public VortexGridBuilder dataType (final String dataTypeString) {
+            VortexDataType type = VortexDataType.fromString(dataTypeString);
+            return dataType(type);
+        }
+
         public VortexGrid build() {
+            // Set data type if it has not been set by the builder arg
+            if (dataType == null) {
+                dataType = (interval == null || interval.isZero()) ? VortexDataType.INSTANTANEOUS : VortexDataType.UNDEFINED;
+            }
+
             return new VortexGrid(this);
         }
 
@@ -249,5 +272,79 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
+    public VortexDataType dataType() {
+        return dataType;
+    }
+
+    public double[] xCoordinates() {
+        double[] xCoordinates = new double[nx];
+        // xCoordinates[i] = midpoint of xEdges[i] and xEdges[i + 1]
+        for (int i = 0; i < nx; i++) xCoordinates[i] = originX + (i + 1) * dx - (dx / 2);
+        return xCoordinates;
+    }
+
+    public double[] yCoordinates() {
+        double[] yCoordinates = new double[ny];
+        // yCoordinates[i] = midpoint of yEdges[i] and yEdges[i + 1]
+        for (int i = 0; i < ny; i++) yCoordinates[i] = originY + (i + 1) * dy - (dy / 2);
+        return yCoordinates;
+    }
+
+    public float[][][] data3D() {
+        float[][][] data3D = new float[1][ny][nx];
+        for (int y = 0; y < ny; y++) System.arraycopy(data, y * nx, data3D[0][y], 0, nx);
+        return data3D;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof VortexGrid)) return false;
+
+        VortexGrid that = (VortexGrid) o;
+
+        if (Double.compare(that.dx, dx) != 0) return false;
+        if (Double.compare(that.dy, dy) != 0) return false;
+        if (nx != that.nx) return false;
+        if (ny != that.ny) return false;
+        if (Double.compare(that.originX, originX) != 0) return false;
+        if (Double.compare(that.originY, originY) != 0) return false;
+        if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
+        if (ReferenceUtils.equals(wkt, that.wkt)) return false;
+        if (!Arrays.equals(data, that.data)) return false;
+        if (!Objects.equals(units, that.units)) return false;
+        if (!startTime.isEqual(that.startTime)) return false;
+        if (!endTime.isEqual(that.endTime)) return false;
+        if (!Objects.equals(interval, that.interval)) return false;
+        if (variable != that.variable) return false;
+        return dataType == that.dataType;
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        temp = Double.doubleToLongBits(dx);
+        result = (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(dy);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + nx;
+        result = 31 * result + ny;
+        temp = Double.doubleToLongBits(originX);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(originY);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (wkt != null ? wkt.hashCode() : 0);
+        result = 31 * result + Arrays.hashCode(data);
+        temp = Double.doubleToLongBits(noDataValue);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + (units != null ? units.hashCode() : 0);
+        result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
+        result = 31 * result + (endTime != null ? endTime.hashCode() : 0);
+        result = 31 * result + (interval != null ? interval.hashCode() : 0);
+        result = 31 * result + (variable != null ? variable.hashCode() : 0);
+        result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
+        return result;
+    }
 }
 

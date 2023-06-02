@@ -109,7 +109,7 @@ public class ImportableUnit {
             writer.write();
         });
 
-        support.firePropertyChange("complete", null, null);
+        support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

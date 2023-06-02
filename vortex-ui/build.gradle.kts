@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation(project(":vortex-api"))
     implementation("org.gdal:gdal:3.2.0")
+    implementation("com.formdev:flatlaf:3.1.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
@@ -51,28 +52,30 @@ fun uiJvmArgs(): List<String> {
 }
 
 fun uiEnvironment(): Map<String,String> {
-    if(isWindows()) {
+    if (isWindows()) {
         return mapOf(
-                "PATH" to "${rootProject.projectDir}/bin/gdal",
-                "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-                "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
+            "PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
         )
     }
 
-    if(isMacOsX()) {
+    if (isMacOsX()) {
         return mapOf(
-                "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
-                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal"
+            "DYLD_LIBRARY_PATH" to "${rootProject.projectDir}/bin/gdal",
+            "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/proj-db"
         )
     }
 
-    if(isLinux()) {
+    if (isLinux()) {
         return mapOf(
-                "PATH" to "${rootProject.projectDir}/bin/gdal",
-                "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
-                "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
-                "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
+            "PATH" to "${rootProject.projectDir}/bin/gdal",
+            "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
+            "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
+            "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
         )
     }
 

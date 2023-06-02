@@ -3,19 +3,22 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class DataWriter {
+    final PropertyChangeSupport support = new PropertyChangeSupport(this);
     final Path destination;
     final List<VortexData> data;
     final Map<String, String> options = new HashMap<>();
+
+    public static final String WRITE_ERROR = "WriteError";
+    public static final String WRITE_COMPLETED = "WriteCompleted";
 
     DataWriter(Builder builder){
         this.destination = builder.destination;
@@ -83,6 +86,11 @@ public abstract class DataWriter {
                 return new AscDataWriter(this);
             }
 
+            PathMatcher ncMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.nc*");
+            if (ncMatcher.matches(destination)) {
+                return new NetcdfDataWriter(this);
+            }
+
             throw new IllegalStateException("Invalid destination: " + destination);
         }
     }
@@ -91,5 +99,21 @@ public abstract class DataWriter {
 
     public abstract void write();
 
+    /* Property Change */
+    void fireWriteCompleted() {
+        support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
+    }
+
+    void fireWriteError(String errorMessage) {
+        support.firePropertyChange(WRITE_ERROR, null, errorMessage);
+    }
+
+    public void addListener(PropertyChangeListener pcl) {
+        support.addPropertyChangeListener(pcl);
+    }
+
+    public void removeListener(PropertyChangeListener pcl) {
+        support.removePropertyChangeListener(pcl);
+    }
 }
 

@@ -1,7 +1,9 @@
 package mil.army.usace.hec.vortex.ui;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
@@ -36,6 +38,7 @@ public class ImportMetWizard extends JFrame {
     private JTextField dataSourceTextField, targetCellSizeTextField;
     private JTextArea targetWktTextArea;
     private JComboBox<String> resamplingComboBox;
+    private JLabel importStatusMessageLabel;
 
     private static final Logger logger = Logger.getLogger(ImportMetWizard.class.getName());
 
@@ -255,11 +258,11 @@ public class ImportMetWizard extends JFrame {
             return false;
         } // If: Missing Destination File
 
-        if(!destinationPath.endsWith(".dss")) {
-            JOptionPane.showMessageDialog(this, "DSS file is required.",
+        if(!destinationPath.matches(".*(dss|nc[34]?)")) {
+            JOptionPane.showMessageDialog(this, "Invalid file extension.",
                     "Error: Unsupported File Type", JOptionPane.ERROR_MESSAGE);
             return false;
-        } // If: Path doesn't end with .dss
+        } // If: Path doesn't end with .dss or .nc
 
         if(destinationPath.endsWith(".dss")) {
             /* Checks if that DSS file exists */
@@ -376,6 +379,10 @@ public class ImportMetWizard extends JFrame {
             writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
         }
 
+        if (destination.toLowerCase().endsWith(".nc")) {
+            writeOptions.put("isOverwrite", String.valueOf(destinationSelectionPanel.isOverwrite()));
+        }
+
         String unitsString = destinationSelectionPanel.getUnitsString();
         if (!unitsString.isEmpty())
             writeOptions.put("units", unitsString);
@@ -400,6 +407,14 @@ public class ImportMetWizard extends JFrame {
                 progressBar.setStringPainted(true);
                 progressBar.setValue(progressValue);
                 progressBar.setString(progressValue + "%");
+                if (progressValue == 100) setImportStatusMessageLabel(true);
+            }
+
+            if (evt.getPropertyName().equals(DataWriter.WRITE_ERROR)) {
+                String errorMessage = String.valueOf(evt.getNewValue());
+                JOptionPane.showMessageDialog(this, errorMessage,
+                        "Error: Failed to write", JOptionPane.ERROR_MESSAGE);
+                setImportStatusMessageLabel(false);
             }
         });
 
@@ -601,9 +616,15 @@ public class ImportMetWizard extends JFrame {
 
     private JPanel stepSixPanel() {
         JPanel stepSixPanel = new JPanel(new GridBagLayout());
-        JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizComplete_L"));
-        stepSixPanel.add(completeLabel);
+        importStatusMessageLabel = new JLabel();
+        stepSixPanel.add(importStatusMessageLabel);
         return stepSixPanel;
+    }
+
+    private void setImportStatusMessageLabel(boolean isImportSuccessful) {
+        String messageKey = isImportSuccessful ? "ImportMetWizComplete_L" : "ImportMetWizFailed_L";
+        String message = TextProperties.getInstance().getProperty(messageKey);
+        importStatusMessageLabel.setText(message);
     }
 
     private JPanel dataSourceSectionPanel() {
@@ -960,15 +981,16 @@ public class ImportMetWizard extends JFrame {
     private void closeAction() {
         ImportMetWizard.this.setVisible(false);
         ImportMetWizard.this.dispose();
-        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));
+        boolean isSuccessful = importStatusMessageLabel.getText().equals(TextProperties.getInstance().getProperty("ImportMetWizComplete_L"));
+        if (isSuccessful) {
+            String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+            FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));
+        }
     }
 
     /* Add main for quick UI Testing */
     static public void main(String[] args) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) { e.printStackTrace(); }
-
+        FlatLightLaf.setup();
         ImportMetWizard metWizard = new ImportMetWizard(null);
         metWizard.buildAndShowUI();
     }
