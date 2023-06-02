@@ -5,6 +5,7 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Grid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
+import mil.army.usace.hec.vortex.util.TimeConverter;
 import ucar.ma2.Array;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
@@ -31,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static javax.measure.MetricPrefix.KILO;
@@ -163,7 +165,7 @@ public class NetcdfDataReader extends DataReader {
             List<Variable> variables = ncd.getVariables();
             Set<String> variableNames = new HashSet<>();
             for (Variable variable : variables) {
-                if (variable instanceof VariableDS) {
+                if (isSelectableVariable(variable)) {
                     VariableDS variableDS = (VariableDS) variable;
                     List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
 
@@ -182,6 +184,12 @@ public class NetcdfDataReader extends DataReader {
         return Collections.emptySet();
     }
 
+    private static boolean isSelectableVariable(Variable variable) {
+        boolean isVariableDS = variable instanceof VariableDS;
+        boolean isNotAxis = !(variable instanceof CoordinateAxis);
+        return isVariableDS && isNotAxis;
+    }
+
     private float[] getFloatArray(Array array) {
         float[] data = new float[(int) array.getSize()];
         for (int i = 0; i < array.getSize(); i++) {
@@ -194,7 +202,8 @@ public class NetcdfDataReader extends DataReader {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
 
-        double noDataValue = gridDatatype.getVariable().getFillValue();
+        VariableDS variableDs = gridDatatype.getVariable();
+        double noDataValue = variableDs.getFillValue();
 
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
@@ -321,6 +330,10 @@ public class NetcdfDataReader extends DataReader {
         List<ZonedDateTime[]> list = new ArrayList<>();
         if (gcs.hasTimeAxis1D()) {
             CoordinateAxis1DTime tAxis = gcs.getTimeAxis1D();
+
+            if (!tAxis.isInterval() && !isSpecialTimeBounds())
+                return getTimeInstants(tAxis);
+
             IntStream.range(0, (int) tAxis.getSize()).forEach(time -> {
                 ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
                 CalendarDate[] dates = tAxis.getCoordBoundsDate(time);
@@ -412,6 +425,39 @@ public class NetcdfDataReader extends DataReader {
             return list;
         }
         return Collections.emptyList();
+    }
+
+    private boolean isSpecialTimeBounds() {
+        String fileName = new File(path).getName().toLowerCase();
+
+        String[] regexPatterns = {
+                ".*gaugecorr.*qpe.*01h.*grib2",
+                ".*radaronly.*qpe.*01h.*grib2",
+                ".*multisensor.*qpe.*01h.*grib2",
+                "mrms_preciprate.*",
+                "preciprate_.*\\.grib2",
+                ".*hhr\\.ms\\.mrg.*hdf.*",
+                ".*aorc.*apcp.*nc4.*",
+                ".*aorc.*tmp.*nc4.*",
+                "[0-9]{2}.nc",
+                "nldas_fora0125_h.a.*",
+                "hrrr.*wrfsfcf.*",
+                ".*cmorph.*h.*ly.*",
+                "ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*"
+        };
+
+        if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
+            return true;
+        }
+
+        return Arrays.stream(regexPatterns).anyMatch(fileName::matches);
+    }
+
+    private List<ZonedDateTime[]> getTimeInstants(CoordinateAxis1DTime timeAxis) {
+        return timeAxis.getCalendarDates().stream()
+                .map(TimeConverter::toZonedDateTime)
+                .map(t -> new ZonedDateTime[] {t, t})
+                .collect(Collectors.toList());
     }
 
     private static ZonedDateTime convert(CalendarDate date) {
@@ -552,7 +598,8 @@ public class NetcdfDataReader extends DataReader {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
 
-        double noDataValue = gridDatatype.getVariable().getFillValue();
+        VariableDS variableDS = gridDatatype.getVariable();
+        double noDataValue = variableDS.getFillValue();
 
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());

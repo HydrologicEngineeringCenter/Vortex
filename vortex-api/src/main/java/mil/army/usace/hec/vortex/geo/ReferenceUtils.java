@@ -64,14 +64,24 @@ public class ReferenceUtils {
         if (grid1.dy() != grid2.dy()){
             valid.set(false);
         }
-        SpatialReference sr1 = new SpatialReference(grid1.wkt());
-        SpatialReference sr2 = new SpatialReference(grid1.wkt());
 
-        if (sr1.IsSame(sr2) != 1){
+        if (!equals(grid1.wkt(), grid2.wkt())) {
             valid.set(false);
         }
 
         return valid.get();
+    }
+
+    public static boolean equals(String wkt1, String wkt2) {
+        SpatialReference sr1 = new SpatialReference(wkt1);
+        SpatialReference sr2 = new SpatialReference(wkt2);
+
+        boolean isSame = sr1.IsSame(sr2) != 1;
+
+        sr1.delete();
+        sr2.delete();
+
+        return isSame;
     }
 
     public static boolean isShg(GridInfo info){

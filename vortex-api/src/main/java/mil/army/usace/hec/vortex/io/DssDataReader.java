@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.dss.DSSPathname;
+import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecDSSDataAttributes;
 import hec.heclib.dss.HecDSSFileAccess;
 import hec.heclib.dss.HecDssCatalog;
@@ -51,14 +52,14 @@ class DssDataReader extends DataReader {
             GridData gridData = new GridData();
             griddedData.retrieveGriddedData(true, gridData, status);
             if (status[0] == 0) {
-                dtos.add(dssToDto(gridData));
+                dtos.add(dssToDto(gridData, path));
             }
 
         });
         return dtos;
     }
 
-    private VortexGrid dssToDto(GridData gridData){
+    private VortexGrid dssToDto(GridData gridData, String pathname){
         GridInfo gridInfo = gridData.getGridInfo();
         String wkt = WktFactory.fromGridInfo(gridInfo);
         float cellSize = gridInfo.getCellSize();
@@ -94,6 +95,8 @@ class DssDataReader extends DataReader {
 
         float[] data = MatrixUtils.flipArray(gridData.getData(), nx, ny);
 
+        String dssTypeString = DssDataType.fromInt(gridInfo.getDataType()).toString();
+
         return  VortexGrid.builder()
                 .dx(cellSize)
                 .dy(-cellSize)
@@ -111,6 +114,7 @@ class DssDataReader extends DataReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .dataType(dssTypeString)
                 .build();
     }
 
@@ -173,7 +177,7 @@ class DssDataReader extends DataReader {
         int[] status = new int[1];
         GridData gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
         if (gridData != null) {
-            return dssToDto(gridData);
+            return dssToDto(gridData, dssPath);
         }
         return null;
     }
