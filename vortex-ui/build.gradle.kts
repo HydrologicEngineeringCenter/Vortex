@@ -86,6 +86,7 @@ fun applicationTasks(): Map<String,String> {
     return mapOf(
         "calculator" to "CalculatorWizard",
         "clipper" to "ClipperWizard",
+        "image-exporter" to "ImageExporterWizard",
         "importer" to "ImportMetWizard",
         "normalizer" to "NormalizerWizard",
         "grid-to-point" to "GridToPointWizard",
