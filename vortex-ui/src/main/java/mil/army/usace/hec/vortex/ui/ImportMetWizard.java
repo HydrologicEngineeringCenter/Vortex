@@ -37,7 +37,7 @@ public class ImportMetWizard extends JFrame {
     private JList<String> addFilesList, leftVariablesList, rightVariablesList;
     private JTextField dataSourceTextField, targetCellSizeTextField;
     private JTextArea targetWktTextArea;
-    private JComboBox<String> resamplingComboBox;
+    private ResamplingMethodSelectionPanel resamplingPanel;
     private JLabel importStatusMessageLabel;
 
     private static final Logger logger = Logger.getLogger(ImportMetWizard.class.getName());
@@ -180,7 +180,7 @@ public class ImportMetWizard extends JFrame {
         dataSourceTextField.setText("");
         targetWktTextArea.setText("");
         targetCellSizeTextField.setText("");
-        resamplingComboBox.setSelectedItem(TextProperties.getInstance().getProperty("ImportMetWizBilinear"));
+        resamplingPanel.refresh();
 
         /* Clearing Step Four Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
@@ -350,7 +350,7 @@ public class ImportMetWizard extends JFrame {
         String targetCellSize = targetCellSizeTextField.getText();
         if(!targetCellSize.isEmpty()) { geoOptions.put("targetCellSize", targetCellSize); }
         // Resampling Method
-        geoOptions.put("resamplingMethod", String.valueOf(resamplingComboBox.getSelectedItem()));
+        geoOptions.put("resamplingMethod", resamplingPanel.getSelected().toString());
 
         /* Getting Destination */
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
@@ -581,7 +581,8 @@ public class ImportMetWizard extends JFrame {
 
         /* Resampling Method Section Panel */
         gridBagConstraints.gridy = 3;
-        stepThreePanel.add(resamplingMethodSectionPanel(), gridBagConstraints);
+        resamplingPanel = new ResamplingMethodSelectionPanel();
+        stepThreePanel.add(resamplingPanel, gridBagConstraints);
 
         return stepThreePanel;
     }
@@ -736,30 +737,6 @@ public class ImportMetWizard extends JFrame {
         targetCellSizeSectionPanel.add(targetCellSizeTextFieldPanel);
 
         return targetCellSizeSectionPanel;
-    }
-
-    private JPanel resamplingMethodSectionPanel() {
-        /* Resampling Method section (of stepThreePanel) */
-        JLabel resamplingMethodLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizResamplingMethodL"));
-        JPanel resamplingMethodLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        resamplingMethodLabelPanel.add(resamplingMethodLabel);
-
-        Vector<String> resamplingMethods = new Vector<>();
-        resamplingMethods.add(TextProperties.getInstance().getProperty("ImportMetWizNearestNeighbor"));
-        resamplingMethods.add(TextProperties.getInstance().getProperty("ImportMetWizAverage"));
-        resamplingMethods.add(TextProperties.getInstance().getProperty("ImportMetWizBilinear"));
-        resamplingComboBox = new JComboBox<>();
-        resamplingComboBox.setModel(new DefaultComboBoxModel<>(new Vector<>(resamplingMethods)));
-        resamplingComboBox.setSelectedItem(TextProperties.getInstance().getProperty("ImportMetWizBilinear"));
-        JPanel resamplingMethodComboBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        resamplingMethodComboBoxPanel.add(resamplingComboBox);
-
-        JPanel resamplingMethodSectionPanel = new JPanel();
-        resamplingMethodSectionPanel.setLayout(new BoxLayout(resamplingMethodSectionPanel, BoxLayout.Y_AXIS));
-        resamplingMethodSectionPanel.add(resamplingMethodLabelPanel);
-        resamplingMethodSectionPanel.add(resamplingMethodComboBoxPanel);
-
-        return resamplingMethodSectionPanel;
     }
 
     private void addSelectedVariables() {
