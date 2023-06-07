@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CalculatorWizard extends JFrame {
+public class CalculatorWizard extends VortexWizard {
     private static final Logger logger = Logger.getLogger(CalculatorWizard.class.getName());
     private static final String NEXT = TextProperties.getInstance().getProperty("CalculatorWiz_Next");
     private static final boolean IS_VALID = true;
@@ -53,6 +53,7 @@ public class CalculatorWizard extends JFrame {
     private JProgressBar progressBar;
 
     public CalculatorWizard(Frame frame) {
+        super();
         this.frame = frame;
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -67,7 +68,10 @@ public class CalculatorWizard extends JFrame {
         /* Setting Wizard's names and layout */
         this.setTitle(TextProperties.getInstance().getProperty("CalculatorWiz_Title"));
         this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        this.setSize(600, 400);
+        setMinimumSize(new Dimension(600, 400));
+        setLocation(getPersistedLocation());
+        if (frame != null) setLocationRelativeTo(frame);
+        setSize(getPersistedSize());
         this.setLayout(new BorderLayout());
 
         /* Initializing Card Container */
@@ -78,7 +82,6 @@ public class CalculatorWizard extends JFrame {
 
         /* Add contentCards to wizard, and then show wizard */
         this.add(contentCards, BorderLayout.CENTER);
-        this.setLocationRelativeTo(frame);
         this.setVisible(true);
     }
 

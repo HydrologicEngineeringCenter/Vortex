@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class ShifterWizard extends JFrame {
+public class ShifterWizard extends VortexWizard {
     private final Frame frame;
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
@@ -32,6 +32,7 @@ public class ShifterWizard extends JFrame {
     private static final Logger logger = Logger.getLogger(ShifterWizard.class.getName());
 
     public ShifterWizard(Frame frame) {
+        super();
         this.frame = frame;
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -46,7 +47,10 @@ public class ShifterWizard extends JFrame {
         /* Setting Wizard's names and layout */
         this.setTitle(TextProperties.getInstance().getProperty("Time-ShifterWiz_Title"));
         this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        this.setSize(600, 400);
+        setMinimumSize(new Dimension(600, 400));
+        setLocation(getPersistedLocation());
+        if (frame != null) setLocationRelativeTo(frame);
+        setSize(getPersistedSize());
         this.setLayout(new BorderLayout());
 
         /* Initializing Card Container */
@@ -57,7 +61,6 @@ public class ShifterWizard extends JFrame {
 
         /* Add contentCards to wizard, and then show wizard */
         this.add(contentCards, BorderLayout.CENTER);
-        this.setLocationRelativeTo(frame);
         this.setVisible(true);
     }
 

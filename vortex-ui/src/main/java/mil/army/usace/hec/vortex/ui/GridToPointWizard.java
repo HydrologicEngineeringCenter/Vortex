@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class GridToPointWizard extends JFrame {
+public class GridToPointWizard extends VortexWizard {
     private final Frame frame;
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
@@ -38,6 +38,7 @@ public class GridToPointWizard extends JFrame {
     private static final Logger logger = Logger.getLogger(GridToPointWizard.class.getName());
 
     public GridToPointWizard(Frame frame) {
+        super();
         this.frame = frame;
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         this.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -52,7 +53,10 @@ public class GridToPointWizard extends JFrame {
         /* Setting Wizard's names and layout */
         this.setTitle(TextProperties.getInstance().getProperty("GridToPointWiz_Title"));
         this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        this.setSize(600, 400);
+        setMinimumSize(new Dimension(600, 400));
+        setLocation(getPersistedLocation());
+        if (frame != null) setLocationRelativeTo(frame);
+        setSize(getPersistedSize());
         this.setLayout(new BorderLayout());
 
         /* Initializing Card Container */
@@ -63,7 +67,6 @@ public class GridToPointWizard extends JFrame {
 
         /* Add contentCards to wizard, and then show wizard */
         this.add(contentCards, BorderLayout.CENTER);
-        this.setLocationRelativeTo(frame);
         this.setVisible(true);
     }
 

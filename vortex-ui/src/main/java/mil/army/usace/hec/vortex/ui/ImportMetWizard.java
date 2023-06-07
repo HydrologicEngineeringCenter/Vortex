@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class ImportMetWizard extends JFrame {
+public class ImportMetWizard extends VortexWizard {
     private final Frame frame;
     DestinationSelectionPanel destinationSelectionPanel;
 
@@ -43,6 +43,7 @@ public class ImportMetWizard extends JFrame {
     private static final Logger logger = Logger.getLogger(ImportMetWizard.class.getName());
 
     public ImportMetWizard (Frame frame) {
+        super();
         this.frame = frame;
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -58,7 +59,10 @@ public class ImportMetWizard extends JFrame {
         /* Setting Wizard's names and layout */
         this.setTitle(TextProperties.getInstance().getProperty("ImportMetWizNameTitle"));
         this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        this.setMinimumSize(new Dimension(600, 400));
+        setMinimumSize(new Dimension(600, 400));
+        setLocation(getPersistedLocation());
+        if (frame != null) setLocationRelativeTo(frame);
+        setSize(getPersistedSize());
         this.setLayout(new BorderLayout());
 
         /* Initializing Card Container */
@@ -69,7 +73,6 @@ public class ImportMetWizard extends JFrame {
 
         /* Add contentCards to wizard, and then show wizard */
         this.add(contentCards, BorderLayout.CENTER);
-        this.setLocationRelativeTo(frame);
         this.setVisible(true);
     }
 

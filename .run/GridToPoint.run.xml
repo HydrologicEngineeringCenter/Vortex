@@ -1,0 +1,22 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GridToPoint" type="Application" factoryName="Application">
+    <envs>
+      <env name="PATH" value="$PROJECT_DIR$/../vortex\bin\gdal;$PROJECT_DIR$/vortex/bin/netcdf" />
+      <env name="GDAL_DATA" value="$PROJECT_DIR$/../vortex\bin\gdal\gdal-data" />
+      <env name="PROJ_LIB" value="$PROJECT_DIR$/../vortex\bin\gdal\projlib" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="mil.army.usace.hec.vortex.ui.VortexUi" />
+    <module name="vortex.vortex-ui.main" />
+    <option name="PROGRAM_PARAMETERS" value="-grid-to-point" />
+    <option name="VM_PARAMETERS" value="-Djava.library.path=$PROJECT_DIR$/../vortex\bin;$PROJECT_DIR$/../vortex\bin\gdal --add-opens=java.desktop/sun.awt.shell=ALL-UNNAMED" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="mil.army.usace.hec.vortex.ui.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
