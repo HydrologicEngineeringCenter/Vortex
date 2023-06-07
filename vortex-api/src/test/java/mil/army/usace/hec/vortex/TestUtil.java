@@ -11,7 +11,8 @@ public class TestUtil {
 
     public static File getResourceFile(String pathFromResource) {
         URL url = TestUtil.class.getResource(pathFromResource);
-        return (url != null) ? new File(url.getFile()) : null;
+        if (url == null) throw new NullPointerException("URL is null");
+        return new File(url.getFile());
     }
 
     public static String createTempFile(String fileName) {
