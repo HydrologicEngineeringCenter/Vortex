@@ -15,7 +15,7 @@ public class GeographicProcessor {
     private final String envWkt;
     private final String destWkt;
     private final double cellSize;
-    private final String method;
+    private final ResamplingMethod resamplingMethod;
 
     public GeographicProcessor(Map<String, String> geoOptions) {
         isEmpty = geoOptions.isEmpty();
@@ -37,7 +37,8 @@ public class GeographicProcessor {
             envWkt = null;
         }
 
-        method = geoOptions.getOrDefault("resamplingMethod", "near");
+        String methodString = geoOptions.getOrDefault("resamplingMethod", "near");
+        resamplingMethod = ResamplingMethod.fromString(methodString);
 
         String wktValue = geoOptions.get("targetWkt");
         String epsgValue = geoOptions.get("targetEpsg");
@@ -66,7 +67,7 @@ public class GeographicProcessor {
                 .envelopeWkt(envWkt)
                 .targetWkt(destWkt)
                 .cellSize(cellSize)
-                .method(method)
+                .method(resamplingMethod)
                 .build()
                 .resample();
     }

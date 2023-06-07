@@ -23,7 +23,7 @@ public class Resampler {
     private final String envWkt;
     private final String targetWkt;
     private final Double cellSize;
-    private final String method;
+    private final ResamplingMethod method;
 
     private Resampler(ResamplerBuilder builder){
         this.grid = builder.grid;
@@ -40,7 +40,7 @@ public class Resampler {
         private String envWkt;
         private String targetWkt;
         private double cellSize = Double.NaN;
-        private String method = ResamplingMethod.BILINEAR.toString();
+        private ResamplingMethod method = ResamplingMethod.BILINEAR;
 
         public ResamplerBuilder grid(VortexGrid grid){
             this.grid = grid;
@@ -68,6 +68,11 @@ public class Resampler {
         }
 
         public ResamplerBuilder method (String method){
+            this.method = ResamplingMethod.fromString(method);
+            return this;
+        }
+
+        public ResamplerBuilder method (ResamplingMethod method){
             this.method = method;
             return this;
         }
@@ -152,7 +157,7 @@ public class Resampler {
                 .build();
     }
 
-    private static Dataset resample(Dataset dataset, Envelope env, SpatialReference envSrs, SpatialReference targetSrs, double cellSize, String method){
+    private static Dataset resample(Dataset dataset, Envelope env, SpatialReference envSrs, SpatialReference targetSrs, double cellSize, ResamplingMethod method){
 
         targetSrs.MorphFromESRI();
 
@@ -223,18 +228,10 @@ public class Resampler {
             options.add(Double.toString(cellSize));
             options.add(Double.toString(cellSize));
         }
-        if (method.equals("Bilinear")) {
-            options.add("-r");
-            options.add("bilinear");
-        }
-        if (method.equals("Average")) {
-            options.add("-r");
-            options.add("average");
-        }
-        if (method.equals("Nearest Neighbor")){
-            options.add("-r");
-            options.add("near");
-        }
+
+        options.add("-r");
+        options.add(method.toString());
+
         WarpOptions warpOptions = new WarpOptions(new Vector<>(options));
         Dataset[] datasets = new Dataset[]{dataset};
         Dataset warped = gdal.Warp("warped", datasets, warpOptions);

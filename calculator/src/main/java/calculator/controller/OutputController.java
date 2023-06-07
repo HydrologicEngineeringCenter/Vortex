@@ -215,8 +215,7 @@ public class OutputController implements BrowseLocationPersister {
         } else {
             String pathToRaster = model.pathToRaster().get();
 
-            ResamplingMethod resamplingMethod =
-                    ResamplingMethod.fromDisplayString(model.resamplingMethod().get());
+            ResamplingMethod resamplingMethod = ResamplingMethod.fromString(model.resamplingMethod().get());
 
             Operation operation = Operation.fromDisplayString(model.operation().get());
 

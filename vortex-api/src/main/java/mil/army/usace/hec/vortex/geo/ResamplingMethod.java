@@ -21,9 +21,10 @@ public enum ResamplingMethod {
         return displayString;
     }
 
-    public static ResamplingMethod fromDisplayString(String displayString) {
+    public static ResamplingMethod fromString(String string) {
         for (ResamplingMethod method : values()) {
-            if (method.getDisplayString().equals(displayString)) {
+            if (method.getDisplayString().equalsIgnoreCase(string)
+                    || method.getKeyString().equalsIgnoreCase(string)) {
                 return method;
             }
         }

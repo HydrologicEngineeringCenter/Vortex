@@ -102,7 +102,7 @@ public class SubsettableUnit {
                 return;
             }
 
-            String resamplingMethod = ResamplingMethod.NEAREST_NEIGHBOR.toString();
+            ResamplingMethod resamplingMethod = ResamplingMethod.NEAREST_NEIGHBOR;
 
             Resampler resampler = Resampler.builder()
                     .grid(grid)
