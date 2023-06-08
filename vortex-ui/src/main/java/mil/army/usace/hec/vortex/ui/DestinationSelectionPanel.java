@@ -8,6 +8,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 public class DestinationSelectionPanel extends JPanel {
@@ -79,8 +81,13 @@ public class DestinationSelectionPanel extends JPanel {
             public void removeUpdate(DocumentEvent e) { textUpdated(); }
             public void insertUpdate(DocumentEvent e) { textUpdated(); }
             void textUpdated() {
-                dssPartsSelectionPanel.setVisible(selectDestinationTextField.getText().endsWith(".dss"));
-                netcdfOverwriteSelectionPanel.setVisible(selectDestinationTextField.getText().endsWith(".nc"));
+                String selectedPath = selectDestinationTextField.getText();
+                boolean fileExists = Files.exists(Path.of(selectedPath));
+                boolean isDss = selectedPath.endsWith(".dss");
+                boolean isNc = selectedPath.endsWith(".nc");
+
+                dssPartsSelectionPanel.setVisible(isDss);
+                netcdfOverwriteSelectionPanel.setVisible(isNc && fileExists);
             }
         });
         selectDestinationTextFieldPanel.add(selectDestinationTextField);
