@@ -167,11 +167,20 @@ tasks.register<Zip>("zipWin") {
     into("${rootProject.name}-${project.version}")
 }
 
+tasks.register<Zip>("zipMacOS") {
+    archiveFileName.set("${rootProject.name}-${project.version}-macOS-x64" + ".zip")
+    destinationDirectory.set(file("$buildDir/distributions"))
+    from(fileTree("$buildDir/distributions/${rootProject.name}-${project.version}"))
+    into("${rootProject.name}-${project.version}")
+}
+
 tasks.register("zip") {
     if (OperatingSystem.current().isWindows()) {
         dependsOn("zipWin")
     } else if (OperatingSystem.current().isLinux()) {
         dependsOn("zipLinux")
+    } else if (OperatingSystem.current().isMacOsX()) {
+        dependsOn("zipMacOS")
     }
 }
 
