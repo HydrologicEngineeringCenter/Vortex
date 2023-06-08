@@ -84,21 +84,22 @@ fun uiEnvironment(): Map<String,String> {
 
 fun applicationTasks(): Map<String,String> {
     return mapOf(
-        "calculator" to "CalculatorWizard",
-        "clipper" to "ClipperWizard",
-        "image-exporter" to "ImageExporterWizard",
-        "importer" to "ImportMetWizard",
-        "normalizer" to "NormalizerWizard",
-        "grid-to-point" to "GridToPointWizard",
-        "sanitizer" to "SanitizerWizard",
-        "shifter" to "ShifterWizard"
+        "calculator" to "-calculator",
+        "clipper" to "-clipper",
+        "grid-to-point" to "-grid-to-point",
+        "image-exporter" to "-image-exporter",
+        "importer" to "-importer",
+        "normalizer" to "-normalizer",
+        "sanitizer" to "-sanitizer",
+        "shifter" to "-shifter"
     )
 }
 
 applicationTasks().forEach { (taskName, className) ->
     task(taskName, JavaExec::class) {
         group = "application"
-        main = "mil.army.usace.hec.vortex.ui.$className"
+        main = "mil.army.usace.hec.vortex.ui.VortexUi"
+        args = listOf(className)
         classpath = sourceSets["main"].runtimeClasspath
         jvmArgs = uiJvmArgs()
         environment = uiEnvironment()
