@@ -1,4 +1,4 @@
-<img src="importer/src/main/resources/vortex_black.png" alt="[logo]" width="32"/> Vortex
+<img src="vortex-ui/src/main/resources/images/vortex_black.png" alt="[logo]" width="32"/> Vortex
 =======================
 
 [![DOI](https://zenodo.org/badge/193537999.svg)](https://zenodo.org/badge/latestdoi/193537999)
