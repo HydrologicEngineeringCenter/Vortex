@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.ui;
 
+import mil.army.usace.hec.vortex.math.TimeShiftMethod;
 import mil.army.usace.hec.vortex.math.Shifter;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
@@ -24,6 +25,8 @@ public class ShifterWizard extends VortexWizard {
     private int cardNumber;
 
     private JTextField sourceFileTextField;
+    private JCheckBox startTimeCheckBox;
+    private JCheckBox endTimeCheckBox;
     private JTextField intervalTextField;
     private JComboBox<String> intervalComboBox;
     private JList<String> chosenSourceGridsList;
@@ -245,9 +248,17 @@ public class ShifterWizard extends VortexWizard {
     private boolean validateStepTwo() {
         String intervalText = intervalTextField.getText();
 
+        /* Check that start time, end time, or both are selected */
+        if (!startTimeCheckBox.isSelected() && !endTimeCheckBox.isSelected()) {
+            String message = "Start time, end time, or both start time and end time must be selected.";
+            JOptionPane.showMessageDialog(this, message,
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
         /* Check for at least one entry */
         if (intervalText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Shift value required",
+            JOptionPane.showMessageDialog(this, "Shift value required.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -257,12 +268,25 @@ public class ShifterWizard extends VortexWizard {
     private void submitStepTwo() {}
 
     private JPanel stepTwoIntervalPanel() {
-        /* intervalLabel */
-        JLabel setIntervalLabel = new JLabel(TextProperties.getInstance().getProperty("Time-ShifterWiz_SetInterval_L"));
-        setIntervalLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
+        JLabel shiftMethodLabel = new JLabel(TextProperties.getInstance().getProperty("Time-ShifterWiz_ShiftMethod_L"));
+        JPanel shiftMethodPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        shiftMethodPanel.add(shiftMethodLabel);
+
+        startTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("ShifterWiz_ShiftStart_L"));
+        endTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("ShifterWiz_EndStart_L"));
+        JPanel startTimeCheckBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        startTimeCheckBoxPanel.add(startTimeCheckBox);
+
+        startTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        endTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JPanel endTimeCheckBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        endTimeCheckBoxPanel.add(endTimeCheckBox);
+
+        startTimeCheckBox.setSelected(true);
+        endTimeCheckBox.setSelected(true);
 
         /* Interval Panel */
-        JLabel shiftLabel = new JLabel(TextProperties.getInstance().getProperty("Time-ShifterWiz_Shift_L"));
+        JLabel shiftLabel = new JLabel(TextProperties.getInstance().getProperty("ShifterWiz_TimeShift_L"));
         intervalTextField = new JTextField(25);
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
         model.addAll(Arrays.asList("Days", "Hours", "Minutes", "Seconds"));
@@ -272,30 +296,20 @@ public class ShifterWizard extends VortexWizard {
 
         JPanel setIntervalPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         setIntervalPanel.add(shiftLabel);
-        setIntervalPanel.add(Box.createRigidArea(new Dimension(15,0)));
+        setIntervalPanel.add(Box.createRigidArea(new Dimension(2,0)));
         setIntervalPanel.add(intervalTextField);
-        setIntervalPanel.add(Box.createRigidArea(new Dimension(5,0)));
-        setIntervalPanel.add(intervalComboBox, overrideConstraints(3,1));
+        setIntervalPanel.add(Box.createRigidArea(new Dimension(2,0)));
+        setIntervalPanel.add(intervalComboBox);
 
         /* Adding everything together */
-        JPanel intervalPanel = new JPanel(new BorderLayout());
-        intervalPanel.add(setIntervalLabel, BorderLayout.NORTH);
-        intervalPanel.add(setIntervalPanel, BorderLayout.CENTER);
+        JPanel intervalPanel = new JPanel();
+        intervalPanel.setLayout(new BoxLayout(intervalPanel, BoxLayout.Y_AXIS));
+        intervalPanel.add(shiftMethodPanel);
+        intervalPanel.add(startTimeCheckBoxPanel);
+        intervalPanel.add(endTimeCheckBoxPanel);
+        intervalPanel.add(setIntervalPanel);
 
         return intervalPanel;
-    }
-
-    private GridBagConstraints overrideConstraints(int y, int x) {
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.gridy = y;
-        constraints.gridx = x;
-        constraints.weightx = (x == 3) ? 1 : 0;
-
-        if(y == 0 || y == 2)
-            constraints.insets = new Insets(10,0,0,0);
-
-        return constraints;
     }
 
     private JPanel stepThreePanel() {
@@ -336,6 +350,10 @@ public class ShifterWizard extends VortexWizard {
         List<String> chosenSourceGrids = getItemsInList(chosenSourceGridsList);
         if (chosenSourceGrids == null) return;
         Set<String> sourceGrids = new HashSet<>(chosenSourceGrids);
+
+        Set<TimeShiftMethod> methods = new HashSet<>();
+        if (startTimeCheckBox.isSelected()) methods.add(TimeShiftMethod.START);
+        if (endTimeCheckBox.isSelected()) methods.add(TimeShiftMethod.END);
 
         Object selectedTimeUnit = intervalComboBox.getSelectedItem();
         if(selectedTimeUnit == null) return;
@@ -397,6 +415,7 @@ public class ShifterWizard extends VortexWizard {
         Shifter shift = Shifter.builder()
                 .pathToFile(pathToSource)
                 .grids(sourceGrids)
+                .methods(methods)
                 .shift(interval)
                 .destination(destinationSelectionPanel.getDestinationTextField().getText())
                 .writeOptions(writeOptions)
