@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 
 import java.util.ArrayList;
@@ -12,6 +13,8 @@ public class BufferedDataReader {
 
     private final String pathToFile;
     private final String variableName;
+    private final int numGrids;
+    private final VortexDataType dataType;
 
     private final List<VortexGrid> buffer = new ArrayList<>();
     private int bufferStartIndex = -1;
@@ -20,6 +23,13 @@ public class BufferedDataReader {
     public BufferedDataReader(String pathToFile, String variableName) {
         this.pathToFile = pathToFile;
         this.variableName = variableName;
+
+        DataReader dataReader = DataReader.builder()
+                .path(pathToFile)
+                .variable(variableName)
+                .build();
+        this.numGrids = dataReader.getDtoCount();
+        this.dataType = get(0).dataType();
     }
 
     /* Public Methods */
@@ -36,11 +46,11 @@ public class BufferedDataReader {
     }
 
     public int getCount() {
-        DataReader dataReader = DataReader.builder()
-                .path(pathToFile)
-                .variable(variableName)
-                .build();
-        return dataReader.getDtoCount();
+        return numGrids;
+    }
+
+    public VortexDataType getType() {
+        return dataType;
     }
 
     /* Utility Methods */
