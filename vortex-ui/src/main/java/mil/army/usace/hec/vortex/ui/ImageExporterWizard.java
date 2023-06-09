@@ -468,7 +468,7 @@ public class ImageExporterWizard extends VortexWizard {
 		ImageExporterWizard.this.setVisible(false);
 		ImageExporterWizard.this.dispose();
 		String savedFile = destinationDirectoryTextField.getText();
-		FileSaveUtil.showFileLocation(ImageExporterWizard.this, Path.of(savedFile));
+		FileSaveUtil.showDirectoryLocation(ImageExporterWizard.this, Path.of(savedFile));
 	}
 	
 	/* Add main for quick UI Testing */

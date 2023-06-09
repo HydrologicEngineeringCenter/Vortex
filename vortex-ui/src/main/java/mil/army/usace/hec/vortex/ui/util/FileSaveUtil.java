@@ -143,6 +143,22 @@ public class FileSaveUtil {
         dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
     }
 
+    public static void showDirectoryLocation(Window window, Path directoryPath) {
+        if (Files.notExists(directoryPath)) {
+            logger.warning(FILE_NOT_FOUND);
+            return;
+        }
+
+        String title = TextProperties.getInstance().getProperty("FileSavedDialogTitle");
+        JOptionPane optionPane = new JOptionPane(fileSavedPanel(directoryPath));
+
+        JDialog dialog = optionPane.createDialog(window, title);
+        dialog.setIconImage(getWindowIcon(window));
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setVisible(true);
+        dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
+    }
+
     /* UI Testing */
     public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
