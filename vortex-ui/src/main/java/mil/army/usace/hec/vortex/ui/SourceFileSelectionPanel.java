@@ -155,7 +155,9 @@ public class SourceFileSelectionPanel extends JPanel {
         List<String> rightVariablesList = Collections.list(defaultRightModel.elements());
         rightVariablesList.addAll(selectedVariables);
         defaultRightModel.clear();
-        rightVariablesList = Util.sortDssVariables(rightVariablesList);
+        String fileName = sourceFileTextField.getText();
+        if (fileName.matches(".*\\.dss"))
+            Util.sortDssVariables(rightVariablesList);
         defaultRightModel.addAll(rightVariablesList);
 
         /* Removing from Left Variables List */
@@ -189,7 +191,7 @@ public class SourceFileSelectionPanel extends JPanel {
         // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("All recognized files",
-                "nc", "hdf", "grib", "gb2", "grb2", "grib2", "grb", "asc", "dss");
+                "nc", "nc4", "hdf", "h5", "grib", "gb2", "grb2", "grib2", "grb", "asc", "tif", "tiff", "dss");
         fileChooser.addChoosableFileFilter(acceptableExtension);
 
         // Pop up fileChooser dialog
@@ -208,8 +210,10 @@ public class SourceFileSelectionPanel extends JPanel {
 
             if(defaultListModel != null) {
                 defaultListModel.clear();
-                List<String> sortedDssVariables = Util.sortDssVariables(new ArrayList<>(variables));
-                defaultListModel.addAll(sortedDssVariables);
+                List<String> sorted = new ArrayList<>(variables);
+                if (selectedFile.toString().matches(".*\\.dss"))
+                    Util.sortDssVariables(sorted);
+                defaultListModel.addAll(sorted);
             }
         } // If: User selected OK -> Populate Available Source Grids
     }
