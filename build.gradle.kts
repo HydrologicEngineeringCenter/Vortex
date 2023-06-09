@@ -2,7 +2,6 @@ import org.gradle.internal.os.OperatingSystem
 
 plugins {
     java
-    id("org.openjfx.javafxplugin") version "0.0.8"
     id("nebula.release") version "13.1.1"
 }
 
@@ -20,7 +19,6 @@ repositories {
 dependencies {
     implementation(project(":vortex-api"))
     implementation(project(":vortex-ui"))
-    implementation("com.google.inject:guice:5.0.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
@@ -42,11 +40,6 @@ dependencies {
     macOS_aarch64("mil.army.usace.hec:javaHeclib:7-IO-RC2:macOS-aarch64@zip")
     macOS_aarch64("org.gdal:gdal-data:3.5.0_1@zip")
     macOS_aarch64("org.proj:proj-db:9.0.1@zip")
-}
-
-javafx {
-    version = "12"
-    modules = listOf("javafx.controls", "javafx.fxml")
 }
 
 tasks.register<Copy>("copyRuntimeLibs") {
