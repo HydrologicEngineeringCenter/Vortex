@@ -28,6 +28,7 @@ dependencies {
     implementation("systems.uom:systems-common:2.0.2")
     implementation("edu.ucar:cdm-core:5.5.3")
     implementation("org.apache.commons:commons-compress:1.20")
+    implementation("org.hdfgroup:jarhdf5:3.3.2")
     //start runtime-only deps required by HEC shared libraries
     runtimeOnly("com.google.flogger:flogger:0.7.4")
     runtimeOnly("com.google.flogger:flogger-system-backend:0.7.4")
@@ -49,14 +50,14 @@ tasks.test {
 
     if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
         environment = mapOf(
-            "PATH" to "${rootProject.projectDir}/bin/gdal;${rootProject.projectDir}/bin/netcdf",
+            "PATH" to "${rootProject.projectDir}/bin/gdal;${rootProject.projectDir}/bin/netcdf;${rootProject.projectDir}/bin/hdf",
             "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdal/gdalplugins",
             "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
             "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"
         )
 
         jvmArgs(
-            "-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal",
+            "-Djava.library.path=${rootProject.projectDir}/bin;${rootProject.projectDir}/bin/gdal;${rootProject.projectDir}/bin/hdf",
             "-Djava.io.tmpdir=C:/Temp"
         )
     } else if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
@@ -66,10 +67,11 @@ tasks.test {
         )
     } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
         jvmArgs(
-            "-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/javaHeclib",
+            "-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/hdf:${rootProject.projectDir}/bin/javaHeclib",
             "-Djava.io.tmpdir=${System.getenv("TMPDIR")}"
         )
         environment = mapOf(
+            "PATH" to "${rootProject.projectDir}/bin/hdf",
             "DYLD_FALLBACK_LIBRARY_PATH" to "@loader_path",
             "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal-data",
             "PROJ_LIB" to "${rootProject.projectDir}/bin/proj-db"

@@ -91,6 +91,12 @@ public abstract class DataWriter {
                 return new NetcdfDataWriter(this);
             }
 
+            //trying to match a RAS plan output e.g. MyModel.p01.hdf or MyModel.p12.tmp.hdf
+            PathMatcher hdf5Matcher = FileSystems.getDefault().getPathMatcher("glob:**/*.p[0-9][0-9].{hdf,tmp.hdf}");
+            if (hdf5Matcher.matches(destination)) {
+                return new Hdf5RasPrecipDataWriter(this);
+            }
+
             throw new IllegalStateException("Invalid destination: " + destination);
         }
     }
