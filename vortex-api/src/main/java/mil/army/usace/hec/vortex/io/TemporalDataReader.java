@@ -207,6 +207,7 @@ public class TemporalDataReader {
 
         for (int i = 0; i < reader.getCount(); i++) {
             VortexGrid grid = reader.get(i);
+            if (grid == null) continue;
             ZonedDateTime gridTime = grid.startTime();
 
             boolean isEqualToTargetTime = gridTime.isEqual(instantTime);
