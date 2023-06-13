@@ -34,7 +34,7 @@ public class BufferedDataReader {
 
     /* Public Methods */
     public VortexGrid get(int index) {
-        if (index < 0 || index > getCount()) {
+        if (index < 0 || index >= getCount()) {
             logger.warning("Out of range index");
             return null;
         }
