@@ -13,14 +13,28 @@ import java.util.stream.IntStream;
 
 public class TemporalDataReader {
     private static final Logger logger = Logger.getLogger(TemporalDataReader.class.getName());
-    private final BufferedDataReader reader;
 
-    public TemporalDataReader(String pathToFile, String variableName) {
-        reader = new BufferedDataReader(pathToFile, variableName);
+    private final BufferedDataReader reader;
+    private final String pathToFile;
+    private final String pathToData;
+
+    public TemporalDataReader(String pathToFile, String pathToData) {
+        this(new BufferedDataReader(pathToFile, pathToData));
     }
 
     public TemporalDataReader(BufferedDataReader reader) {
         this.reader = reader;
+        this.pathToFile = reader.getPathToFile();
+        this.pathToData = reader.getPathToData();
+    }
+
+    /* Getters for pathToFile and pathToData */
+    public String getPathToFile() {
+        return pathToFile;
+    }
+
+    public String getPathToData() {
+        return pathToData;
     }
 
     /**
@@ -44,7 +58,10 @@ public class TemporalDataReader {
      */
     public VortexGrid read(ZonedDateTime startTime, ZonedDateTime endTime) {
         VortexDataType dataType = reader.getType();
+        return read(dataType, startTime, endTime);
+    }
 
+    public VortexGrid read(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) {
         switch (dataType) {
             case ACCUMULATION:
                 return readAccumulationData(startTime, endTime);

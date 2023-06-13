@@ -12,7 +12,7 @@ public class BufferedDataReader {
     private static final Logger logger = Logger.getLogger(BufferedDataReader.class.getName());
 
     private final String pathToFile;
-    private final String variableName;
+    private final String pathToData;
     private final int numGrids;
     private final VortexDataType dataType;
 
@@ -20,13 +20,13 @@ public class BufferedDataReader {
     private int bufferStartIndex = -1;
     private static final int MAX_BUFFER_SIZE = 10;
 
-    public BufferedDataReader(String pathToFile, String variableName) {
+    public BufferedDataReader(String pathToFile, String pathToData) {
         this.pathToFile = pathToFile;
-        this.variableName = variableName;
+        this.pathToData = pathToData;
 
         DataReader dataReader = DataReader.builder()
                 .path(pathToFile)
-                .variable(variableName)
+                .variable(pathToData)
                 .build();
         this.numGrids = dataReader.getDtoCount();
         this.dataType = get(0).dataType();
@@ -53,6 +53,14 @@ public class BufferedDataReader {
         return dataType;
     }
 
+    public String getPathToFile() {
+        return pathToFile;
+    }
+
+    public String getPathToData() {
+        return pathToData;
+    }
+
     /* Utility Methods */
     private void loadBuffer(int index) {
         // Reset buffer
@@ -62,7 +70,7 @@ public class BufferedDataReader {
         // Load buffer
         DataReader dataReader = DataReader.builder()
                 .path(pathToFile)
-                .variable(variableName)
+                .variable(pathToData)
                 .build();
 
         int maxDataIndex = getCount();
