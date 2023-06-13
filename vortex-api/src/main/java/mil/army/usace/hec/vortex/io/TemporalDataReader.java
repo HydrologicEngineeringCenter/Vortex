@@ -187,6 +187,7 @@ public class TemporalDataReader {
 
         for (int i = 0; i < reader.getCount(); i++) {
             VortexGrid grid = reader.get(i);
+            if (grid == null) continue;
             // Finding grids with time range that overlaps with the specified time range
             boolean sameTime = grid.startTime().isEqual(startTime) && grid.endTime().isEqual(endTime);
             boolean startTimeLteEndTime = grid.startTime().isBefore(endTime);
