@@ -39,7 +39,7 @@ public class BufferedDataReader {
             return null;
         }
 
-        boolean isInBuffer = (index >= bufferStartIndex) && (index <= (bufferStartIndex + buffer.size()));
+        boolean isInBuffer = (index >= bufferStartIndex) && (index < (bufferStartIndex + buffer.size()));
         if (!isInBuffer) loadBuffer(index);
         int bufferIndex = index - bufferStartIndex;
         return buffer.get(bufferIndex);
