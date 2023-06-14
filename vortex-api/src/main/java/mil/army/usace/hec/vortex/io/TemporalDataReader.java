@@ -4,6 +4,7 @@ import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,7 +69,7 @@ public class TemporalDataReader {
             case AVERAGE:
                 return readAverageData(startTime, endTime);
             case INSTANTANEOUS:
-                return readInstantaneousData(startTime);
+                return readInstantaneousData(startTime, endTime);
             default:
                 return null;
         }
@@ -137,6 +138,15 @@ public class TemporalDataReader {
         IntStream.range(0, averageData.length).forEach(i -> averageData[i] /= overlappedGrids.size());
 
         return buildGrid(firstGrid, startTime, endTime, averageData);
+    }
+
+    private VortexGrid readInstantaneousData(ZonedDateTime startTime, ZonedDateTime endTime) {
+        if (startTime.isEqual(endTime))
+            return readInstantaneousData(startTime);
+        // Instantaneous Data for Period
+        ZonedDateTime midTime = calculateMidTime(startTime, endTime);
+        VortexGrid grid = readInstantaneousData(midTime);
+        return grid != null ? buildGrid(grid, startTime, endTime, grid.data()) : null;
     }
 
     /**
@@ -269,5 +279,12 @@ public class TemporalDataReader {
         double overlapStart = Math.max(startTime.toEpochSecond(), grid.startTime().toEpochSecond());
         double overlapEnd = Math.min(endTime.toEpochSecond(), grid.endTime().toEpochSecond());
         return (overlapEnd - overlapStart) / (grid.endTime().toEpochSecond() - grid.startTime().toEpochSecond());
+    }
+
+    private ZonedDateTime calculateMidTime(ZonedDateTime startTime, ZonedDateTime endTime) {
+        long startSeconds = startTime.toEpochSecond();
+        long endSeconds = endTime.toEpochSecond();
+        long midSeconds = (startSeconds + endSeconds) / 2;
+        return ZonedDateTime.ofInstant(Instant.ofEpochSecond(midSeconds), startTime.getZone());
     }
 }
