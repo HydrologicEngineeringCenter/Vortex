@@ -61,6 +61,16 @@ class TemporalDataReaderTest {
         assertArrayEquals(expectedData, actualGrid.data());
     }
 
+    @Test
+    void ReadAccumulationTime_singleData() {
+        List<VortexGrid> accumulationGrid = List.of(buildTestGrid(ACCUMULATION, 1, 2, 20));
+        TemporalDataReader reader = new TemporalDataReader(mockBufferedDataReader(accumulationGrid));
+
+        VortexGrid actualGrid = reader.read(buildTestTime(1,0), buildTestTime(2,0));
+        float[] expectedData = buildTestData(20f);
+        assertArrayEquals(expectedData, actualGrid.data());
+    }
+
     /* Average Time */
     @Test
     void ReadAverageTime_noOverlap() {

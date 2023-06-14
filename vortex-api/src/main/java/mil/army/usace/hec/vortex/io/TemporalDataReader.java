@@ -213,6 +213,7 @@ public class TemporalDataReader {
 
     private List<VortexGrid> getGridsForInstant(ZonedDateTime instantTime) {
         // Assumed that all grids are of type Instantaneous (where startTime equals endTime)
+        // Assumed that all grids are ordered from earliest to latest
         VortexGrid nearestBefore = null;
         VortexGrid nearestAfter = null;
 
@@ -230,15 +231,14 @@ public class TemporalDataReader {
             if (isEqualToTargetTime) return List.of(grid);
             if (isNearestBefore) nearestBefore = grid;
             if (isNearestAfter) nearestAfter = grid;
+
+            if (nearestBefore != null && nearestAfter != null)
+                return List.of(nearestBefore, nearestAfter);
         }
 
-        if (nearestBefore == null || nearestAfter == null) {
-            String message = "No overlapped grids found for time: " + instantTime.toString();
-            logger.warning(message);
-            return Collections.emptyList();
-        }
-
-        return List.of(nearestBefore, nearestAfter);
+        String message = "No overlapped grids found for time: " + instantTime.toString();
+        logger.warning(message);
+        return Collections.emptyList();
     }
 
     private VortexGrid buildGrid(VortexGrid grid, ZonedDateTime startTime, ZonedDateTime endTime, float[] data) {
