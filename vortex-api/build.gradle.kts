@@ -23,11 +23,11 @@ dependencies {
     implementation("mil.army.usace.hec:hec-nucleus-data:2.+")
     implementation("mil.army.usace.hec:hec-nucleus-metadata:2.+")
     implementation("org.gdal:gdal:3.2.0")
-    implementation("org.locationtech.jts:jts-core:1.16.1")
-    implementation("tech.units:indriya:2.0.4")
-    implementation("systems.uom:systems-common:2.0.2")
+    implementation("org.locationtech.jts:jts-core:1.19.0")
+    implementation("tech.units:indriya:2.1.4")
+    implementation("systems.uom:systems-common:2.1")
     implementation("edu.ucar:cdm-core:5.5.3")
-    implementation("org.apache.commons:commons-compress:1.20")
+    implementation("org.apache.commons:commons-compress:1.21")
     implementation("org.hdfgroup:jarhdf5:3.3.2")
     //start runtime-only deps required by HEC shared libraries
     runtimeOnly("com.google.flogger:flogger:0.7.4")
@@ -36,14 +36,17 @@ dependencies {
     runtimeOnly("edu.ucar:grib:5.5.3")
     runtimeOnly("org.slf4j:slf4j-simple:1.7.25")
     testImplementation("org.mockito:mockito-core:2.27.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
 }
 
-base.archivesBaseName = "vortex"
 project.version = project.version.toString()
+
+tasks.jar {
+    archiveBaseName.set("vortex")
+}
 
 tasks.test {
     useJUnit()
@@ -85,6 +88,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.register<Jar>("fatJar") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveBaseName.set(rootProject.name + "-all")
 
     from(sourceSets.main.get().output)
