@@ -2,9 +2,10 @@ package mil.army.usace.hec.vortex.ui;
 
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileNameExtensionFilterEnhanced extends FileFilter {
     private final String description;
@@ -15,14 +16,10 @@ public class FileNameExtensionFilterEnhanced extends FileFilter {
             throw new IllegalArgumentException("Extensions must be non-null and not empty");
 
         this.description = description;
-        this.extensions = new ArrayList<>();
-
-        Arrays.stream(extensions).forEach(e -> {
-            if(e == null)
-                throw new IllegalArgumentException("Each extension must be non-null");
-            else
-                this.extensions.add(e);
-        });
+        this.extensions = Stream.of(extensions)
+                .filter(Objects::nonNull)
+                .map(String::toLowerCase)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -31,10 +28,11 @@ public class FileNameExtensionFilterEnhanced extends FileFilter {
     }
 
     @Override
-    public boolean accept(File f) {
-        if(f.isDirectory())
+    public boolean accept(File file) {
+        if (file.isDirectory())
             return true;
 
-        return this.extensions.stream().anyMatch(e -> f.getName().endsWith(e));
+        return this.extensions.stream()
+                .anyMatch(e -> file.getName().toLowerCase().endsWith(e));
     }
 }

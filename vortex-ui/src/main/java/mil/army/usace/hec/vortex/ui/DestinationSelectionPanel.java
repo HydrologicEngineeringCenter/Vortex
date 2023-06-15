@@ -83,8 +83,8 @@ public class DestinationSelectionPanel extends JPanel {
             void textUpdated() {
                 String selectedPath = selectDestinationTextField.getText();
                 boolean fileExists = Files.exists(Path.of(selectedPath));
-                boolean isDss = selectedPath.endsWith(".dss");
-                boolean isNc = selectedPath.endsWith(".nc");
+                boolean isDss = selectedPath.toLowerCase().endsWith(".dss");
+                boolean isNc = selectedPath.toLowerCase().endsWith(".nc");
 
                 dssPartsSelectionPanel.setVisible(isDss);
                 netcdfOverwriteSelectionPanel.setVisible(isNc && fileExists);
