@@ -7,7 +7,6 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class BufferedDataReader {
     private static final Logger logger = Logger.getLogger(BufferedDataReader.class.getName());
@@ -39,7 +38,7 @@ public class BufferedDataReader {
                 .path(pathToFile)
                 .variable(pathToData)
                 .build();
-        return dataReader.getDtos().stream().map(VortexGrid.class::cast).collect(Collectors.toList());
+        return dataReader.getDtos().stream().map(VortexGrid.class::cast).toList();
     }
 
     public VortexGrid get(int index) {
@@ -60,14 +59,6 @@ public class BufferedDataReader {
 
     public VortexDataType getType() {
         return dataType;
-    }
-
-    public String getPathToFile() {
-        return pathToFile;
-    }
-
-    public String getPathToData() {
-        return pathToData;
     }
 
     /* Utility Methods */

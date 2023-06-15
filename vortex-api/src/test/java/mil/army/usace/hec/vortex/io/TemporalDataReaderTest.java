@@ -16,6 +16,12 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TemporalDataReaderTest {
+    @Test
+    void DssTest() {
+        TemporalDataReader reader = new TemporalDataReader("/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Precip.dss", "*");
+        reader.read(ZonedDateTime.parse("2004-10-01T06:00Z"), ZonedDateTime.parse("2004-10-01T07:00Z"));
+    }
+
     /* Accumulation Tests */
     @Test
     void ReadAccumulationTime_noOverlap() {
