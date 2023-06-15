@@ -198,6 +198,7 @@ class TemporalDataReaderTest {
         int numGrids = gridList.size();
         Mockito.when(bufferedReader.getCount()).thenReturn(numGrids);
         Mockito.when(bufferedReader.getType()).thenReturn(gridList.get(0).dataType());
+        Mockito.when(bufferedReader.getAll()).thenReturn(gridList);
 
         for (int i = 0; i < numGrids; i++) {
             VortexGrid grid = gridList.get(i);

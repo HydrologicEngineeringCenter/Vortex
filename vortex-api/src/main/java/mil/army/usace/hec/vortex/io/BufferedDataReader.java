@@ -7,6 +7,7 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class BufferedDataReader {
     private static final Logger logger = Logger.getLogger(BufferedDataReader.class.getName());
@@ -33,6 +34,14 @@ public class BufferedDataReader {
     }
 
     /* Public Methods */
+    public List<VortexGrid> getAll() {
+        DataReader dataReader = DataReader.builder()
+                .path(pathToFile)
+                .variable(pathToData)
+                .build();
+        return dataReader.getDtos().stream().map(VortexGrid.class::cast).collect(Collectors.toList());
+    }
+
     public VortexGrid get(int index) {
         if (index < 0 || index >= getCount()) {
             logger.warning("Out of range index");

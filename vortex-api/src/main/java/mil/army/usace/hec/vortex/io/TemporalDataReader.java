@@ -2,14 +2,15 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
+import org.locationtech.jts.index.bintree.Bintree;
+import org.locationtech.jts.index.bintree.Interval;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class TemporalDataReader {
@@ -18,6 +19,8 @@ public class TemporalDataReader {
     private final BufferedDataReader reader;
     private final String pathToFile;
     private final String pathToData;
+    private final Bintree intervalDataTree;
+    private final TreeMap<Double, Integer> instantDataTree;
 
     public TemporalDataReader(String pathToFile, String pathToData) {
         this(new BufferedDataReader(pathToFile, pathToData));
@@ -27,6 +30,99 @@ public class TemporalDataReader {
         this.reader = reader;
         this.pathToFile = reader.getPathToFile();
         this.pathToData = reader.getPathToData();
+        this.intervalDataTree = initIntervalDataTree();
+        this.instantDataTree = initInstantDataTree();
+    }
+
+    private Bintree initIntervalDataTree() {
+//        DataReader dataReader = DataReader.builder()
+//                .path(pathToFile)
+//                .variable(pathToData)
+//                .build();
+
+        Bintree binTree = new Bintree();
+
+//        List<VortexData> dtos = dataReader.getDtos();
+//        IntStream.range(0, dtos.size()).parallel().forEach(i -> {
+//            VortexGrid vortexGrid = (VortexGrid) dtos.get(i);
+//            Interval interval = getInterval(vortexGrid);
+//            binTree.insert(interval, i);
+//        });
+
+        List<VortexGrid> vortexGrids = reader.getAll();
+        IntStream.range(0, vortexGrids.size()).forEach(i -> {
+            VortexGrid vortexGrid = vortexGrids.get(i);
+            Interval interval = getInterval(vortexGrid);
+            binTree.insert(interval, i);
+        });
+
+        return binTree;
+    }
+
+    private TreeMap<Double, Integer> initInstantDataTree() {
+        TreeMap<Double, Integer> treeMap = new TreeMap<>();
+
+        List<VortexGrid> vortexGrids = reader.getAll();
+        IntStream.range(0, vortexGrids.size()).forEach(i -> {
+            VortexGrid vortexGrid = vortexGrids.get(i);
+            if (vortexGrid.startTime().isEqual(vortexGrid.endTime())) {
+                double time = vortexGrid.startTime().toEpochSecond();
+                treeMap.put(time, i);
+            }
+        });
+
+        return treeMap;
+    }
+
+    private List<VortexGrid> getOverlappedInstantGrids(ZonedDateTime time) {
+        double timeEpoch = time.toEpochSecond();
+
+        Map.Entry<Double, Integer> floorEntry = instantDataTree.floorEntry(timeEpoch);
+        Map.Entry<Double, Integer> ceilingEntry = instantDataTree.ceilingEntry(timeEpoch);
+
+        if (floorEntry == null || ceilingEntry == null) {
+            logger.warning("Unable to find overlapped instant grid(s)");
+            return Collections.emptyList();
+        }
+
+        Integer floorIndex = floorEntry.getValue();
+        Integer ceilingIndex = ceilingEntry.getValue();
+
+        if (floorEntry.equals(ceilingEntry))
+            return Collections.singletonList(reader.get(floorIndex));
+
+        return List.of(reader.get(floorIndex), reader.get(ceilingIndex));
+    }
+
+    private Interval getInterval(VortexGrid vortexGrid) {
+        double start = vortexGrid.startTime().toEpochSecond();
+        double end = vortexGrid.endTime().toEpochSecond();
+        return new Interval(Math.min(start, end), Math.max(start, end));
+    }
+
+    private List<Integer> getOverlappedGridIndices(ZonedDateTime startTime, ZonedDateTime endTime) {
+        double queryStart = startTime.toEpochSecond();
+        double queryEnd = endTime.toEpochSecond();
+
+        Interval queryInterval = new Interval(queryStart, queryEnd);
+
+        @SuppressWarnings("unchecked")
+        List<Integer> overlappedGridsIndices = intervalDataTree.query(queryInterval);
+        return overlappedGridsIndices;
+    }
+
+    private List<VortexGrid> getOverlappedGrids(ZonedDateTime startTime, ZonedDateTime endTime) {
+        return getOverlappedGridIndices(startTime, endTime).stream()
+                .map(reader::get)
+                .filter(grid -> isTrulyOverlapped(grid, startTime, endTime))
+                .collect(Collectors.toList());
+    }
+
+    private boolean isTrulyOverlapped(VortexGrid grid, ZonedDateTime startTime, ZonedDateTime endTime) {
+        boolean sameTime = grid.startTime().isEqual(startTime) && grid.endTime().isEqual(endTime);
+        boolean startTimeLteEndTime = grid.startTime().isBefore(endTime);
+        boolean endTimeGteStartTime = grid.endTime().isAfter(startTime);
+        return sameTime || (startTimeLteEndTime && endTimeGteStartTime);
     }
 
     /* Getters for pathToFile and pathToData */
@@ -92,7 +188,8 @@ public class TemporalDataReader {
      *         for the given time period, or null if no overlapped grids were found.
      */
     private VortexGrid readAccumulationData(ZonedDateTime startTime, ZonedDateTime endTime) {
-        List<VortexGrid> overlappedGrids = getGridsForTimePeriod(startTime, endTime);
+//        List<VortexGrid> overlappedGrids = getGridsForTimePeriod(startTime, endTime);
+        List<VortexGrid> overlappedGrids = getOverlappedGrids(startTime, endTime);
         if (overlappedGrids.isEmpty()) return null;
 
         VortexGrid firstGrid = overlappedGrids.get(0);
@@ -124,7 +221,8 @@ public class TemporalDataReader {
      * @return A VortexGrid object representing the average data for the specified time interval, or null if no overlapped grids are found.
      */
     private VortexGrid readAverageData(ZonedDateTime startTime, ZonedDateTime endTime) {
-        List<VortexGrid> overlappedGrids = getGridsForTimePeriod(startTime, endTime);
+//        List<VortexGrid> overlappedGrids = getGridsForTimePeriod(startTime, endTime);
+        List<VortexGrid> overlappedGrids = getOverlappedGrids(startTime, endTime);
         if (overlappedGrids.isEmpty()) return null;
 
         VortexGrid firstGrid = overlappedGrids.get(0);
@@ -165,7 +263,7 @@ public class TemporalDataReader {
      * @return A VortexGrid object representing the instantaneous data for the specified time, or null if no data is found.
      */
     private VortexGrid readInstantaneousData(ZonedDateTime time) {
-        List<VortexGrid> gridList = getGridsForInstant(time);
+        List<VortexGrid> gridList = getOverlappedInstantGrids(time);
 
         if (gridList.isEmpty()) return null;
         if (gridList.size() == 1) return gridList.get(0); // Found grid that matches the exact time
