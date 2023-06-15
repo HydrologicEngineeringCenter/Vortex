@@ -11,8 +11,7 @@ import java.util.logging.Logger;
 public class BufferedDataReader {
     private static final Logger logger = Logger.getLogger(BufferedDataReader.class.getName());
 
-    private final String pathToFile;
-    private final String pathToData;
+    private final DataReader dataReader;
     private final int numGrids;
     private final VortexDataType dataType;
 
@@ -21,10 +20,7 @@ public class BufferedDataReader {
     private static final int MAX_BUFFER_SIZE = 10;
 
     public BufferedDataReader(String pathToFile, String pathToData) {
-        this.pathToFile = pathToFile;
-        this.pathToData = pathToData;
-
-        DataReader dataReader = DataReader.builder()
+        dataReader = DataReader.builder()
                 .path(pathToFile)
                 .variable(pathToData)
                 .build();
@@ -33,14 +29,6 @@ public class BufferedDataReader {
     }
 
     /* Public Methods */
-    public List<VortexGrid> getAll() {
-        DataReader dataReader = DataReader.builder()
-                .path(pathToFile)
-                .variable(pathToData)
-                .build();
-        return dataReader.getDtos().stream().map(VortexGrid.class::cast).toList();
-    }
-
     public VortexGrid get(int index) {
         if (index < 0 || index >= getCount()) {
             logger.warning("Out of range index");
@@ -68,11 +56,6 @@ public class BufferedDataReader {
         bufferStartIndex = index;
 
         // Load buffer
-        DataReader dataReader = DataReader.builder()
-                .path(pathToFile)
-                .variable(pathToData)
-                .build();
-
         int maxDataIndex = getCount();
         int maxBufferIndex = index + MAX_BUFFER_SIZE;
         int endIndex = Math.min(maxBufferIndex, maxDataIndex);

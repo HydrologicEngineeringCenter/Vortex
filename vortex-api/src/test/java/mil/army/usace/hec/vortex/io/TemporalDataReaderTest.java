@@ -18,8 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class TemporalDataReaderTest {
     @Test
     void DssTest() {
+        long startTime = System.currentTimeMillis();
         TemporalDataReader reader = new TemporalDataReader("/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Precip.dss", "*");
+        long endTime = System.currentTimeMillis();
+        System.out.println("Setup Time (seconds): " + (endTime - startTime) / 1000);
+        startTime = System.currentTimeMillis();
         reader.read(ZonedDateTime.parse("2004-10-01T06:00Z"), ZonedDateTime.parse("2004-10-01T07:00Z"));
+        endTime = System.currentTimeMillis();
+        System.out.println("Read time (seconds): " + (endTime - startTime) / 1000);
     }
 
     /* Accumulation Tests */
@@ -204,7 +210,6 @@ class TemporalDataReaderTest {
         int numGrids = gridList.size();
         Mockito.when(bufferedReader.getCount()).thenReturn(numGrids);
         Mockito.when(bufferedReader.getType()).thenReturn(gridList.get(0).dataType());
-        Mockito.when(bufferedReader.getAll()).thenReturn(gridList);
 
         for (int i = 0; i < numGrids; i++) {
             VortexGrid grid = gridList.get(i);

@@ -18,7 +18,7 @@ public class TemporalDataReader {
 
     private final BufferedDataReader reader;
 
-    private final TreeRangeMap<Long, Integer> intervalDataTree  = TreeRangeMap.create();
+    private final TreeRangeMap<Long, Integer> intervalDataTree = TreeRangeMap.create();
     private final TreeMap<Long, Integer> instantDataTree = new TreeMap<>();
 
     public TemporalDataReader(String pathToFile, String pathToData) {
@@ -31,9 +31,9 @@ public class TemporalDataReader {
     }
 
     private void initDataTrees() {
-        List<VortexGrid> vortexGrids = reader.getAll();
-        IntStream.range(0, vortexGrids.size()).forEach(i -> {
-            VortexGrid vortexGrid = vortexGrids.get(i);
+        // Note: Making sure we never store the entire dtos in memory
+        IntStream.range(0, reader.getCount()).forEach(i -> {
+            VortexGrid vortexGrid = reader.get(i);
             long startTime = vortexGrid.startTime().toEpochSecond();
             long endTime = vortexGrid.endTime().toEpochSecond();
             // Interval Data Tree
