@@ -5,6 +5,7 @@ import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -49,6 +50,10 @@ public class BufferedDataReader {
         return dataType;
     }
 
+    public List<VortexGrid> getBuffer() {
+        return Collections.unmodifiableList(buffer);
+    }
+
     /* Utility Methods */
     private void loadBuffer(int index) {
         // Reset buffer
@@ -62,7 +67,8 @@ public class BufferedDataReader {
 
         for (int i = index; i < endIndex; i++) {
             VortexData data = dataReader.getDto(i);
-            buffer.add((VortexGrid) data);
+            if (data instanceof VortexGrid grid)
+                buffer.add(grid);
         }
     }
 }

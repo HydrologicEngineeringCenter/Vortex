@@ -21,11 +21,11 @@ class TemporalDataReaderTest {
         long startTime = System.currentTimeMillis();
         TemporalDataReader reader = new TemporalDataReader("/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Precip.dss", "*");
         long endTime = System.currentTimeMillis();
-        System.out.println("Setup Time (seconds): " + (endTime - startTime) / 1000);
+        System.out.println("Setup Time (ms): " + (endTime - startTime));
         startTime = System.currentTimeMillis();
-        reader.read(ZonedDateTime.parse("2004-10-01T06:00Z"), ZonedDateTime.parse("2004-10-01T07:00Z"));
+        VortexGrid s = reader.read(ZonedDateTime.parse("2004-10-01T06:00Z"), ZonedDateTime.parse("2004-10-01T07:00Z"));
         endTime = System.currentTimeMillis();
-        System.out.println("Read time (seconds): " + (endTime - startTime) / 1000);
+        System.out.println("Read time (ms): " + (endTime - startTime));
     }
 
     /* Accumulation Tests */

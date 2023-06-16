@@ -64,7 +64,7 @@ public class TemporalDataReader {
         Map.Entry<Long, Integer> ceilingEntry = instantDataTree.ceilingEntry(timeEpoch);
 
         if (floorEntry == null || ceilingEntry == null) {
-            logger.warning("Unable to find overlapped instant grid(s)");
+            logger.info("Unable to find overlapped instant grid(s)");
             return Collections.emptyList();
         }
 
@@ -102,6 +102,9 @@ public class TemporalDataReader {
     }
 
     public VortexGrid read(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) {
+        VortexGrid matchingGridInBuffer = findMatchingGridInBuffer(startTime, endTime);
+        if (matchingGridInBuffer != null) return matchingGridInBuffer;
+
         return switch (dataType) {
             case ACCUMULATION -> readAccumulationData(startTime, endTime);
             case AVERAGE -> readAverageData(startTime, endTime);
@@ -272,5 +275,15 @@ public class TemporalDataReader {
         long endSeconds = endTime.toEpochSecond();
         long midSeconds = (startSeconds + endSeconds) / 2;
         return ZonedDateTime.ofInstant(Instant.ofEpochSecond(midSeconds), startTime.getZone());
+    }
+
+    private VortexGrid findMatchingGridInBuffer(ZonedDateTime startTime, ZonedDateTime endTime) {
+        for (VortexGrid grid : reader.getBuffer()) {
+            boolean sameStartTime = grid.startTime().isEqual(startTime);
+            boolean sameEndTime = grid.endTime().isEqual(endTime);
+            if (sameStartTime && sameEndTime) return grid;
+        }
+
+        return null;
     }
 }
