@@ -71,4 +71,8 @@ public class BufferedDataReader {
                 buffer.add(grid);
         }
     }
+
+    public List<VortexData> getVortexDataList() {
+        return dataReader.getDtos();
+    }
 }

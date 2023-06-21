@@ -17,6 +17,99 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TemporalDataReaderTest {
     @Test
+    void DssPrecisionTest() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-01T08:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-01T09:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 52.7f);
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void DssAccuracyTest() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-11-30T11:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-11-30T12:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 45.5f);
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void DssAccuracyTestTwo() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-01T10:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-01T11:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 55.4f);
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void DssWeirdTest() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-01T00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-02T00:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 59.9f);
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void DssWeirdTestTwo() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-02T00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-03T00:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 64.2875f);
+
+//        assertArrayEquals(expectedData, actualData);
+
+        List<VortexGrid> dataList = DataReader.builder().path(pathToFile).variable("*").build()
+                .getDtos().subList(24, 48).stream().map(VortexGrid.class::cast).toList();
+
+        Object[] x = dataList.stream().map(g -> g.data()[0]).toArray();
+
+        double sum = 0;
+        for (Object obj : x) {
+            sum += ((Float) obj).doubleValue();
+        }
+
+        double average = sum / x.length;
+        System.out.println("Average is: " + average);
+    }
+
+    @Test
     void DssTest() {
         long startTime = System.currentTimeMillis();
         TemporalDataReader reader = new TemporalDataReader("/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Precip.dss", "*");

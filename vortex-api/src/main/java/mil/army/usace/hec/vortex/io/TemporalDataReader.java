@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.io;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 
@@ -18,8 +19,8 @@ public class TemporalDataReader {
 
     private final BufferedDataReader reader;
 
-    private final TreeRangeMap<Long, Integer> intervalDataTree = TreeRangeMap.create();
-    private final TreeMap<Long, Integer> instantDataTree = new TreeMap<>();
+    private final TreeRangeMap<Long, VortexGrid> intervalDataTree = TreeRangeMap.create();
+    private final TreeMap<Long, VortexGrid> instantDataTree = new TreeMap<>();
 
     public TemporalDataReader(String pathToFile, String pathToData) {
         this(new BufferedDataReader(pathToFile, pathToData));
@@ -31,50 +32,49 @@ public class TemporalDataReader {
     }
 
     private void initDataTrees() {
-        // Note: Making sure we never store the entire dtos in memory
-        IntStream.range(0, reader.getCount()).forEach(i -> {
-            VortexGrid vortexGrid = reader.get(i);
-            long startTime = vortexGrid.startTime().toEpochSecond();
-            long endTime = vortexGrid.endTime().toEpochSecond();
-            // Interval Data Tree
-            intervalDataTree.put(Range.closed(startTime, endTime), i);
-            // Instant Data Tree
-            if (vortexGrid.startTime().isEqual(vortexGrid.endTime())) {
-                long time = vortexGrid.startTime().toEpochSecond();
-                instantDataTree.put(time, i);
+        List<VortexData> dataList = reader.getVortexDataList();
+
+        for (VortexData x : dataList) {
+            if (x instanceof VortexGrid vortexGrid) {
+                long startTime = vortexGrid.startTime().toEpochSecond();
+                long endTime = vortexGrid.endTime().toEpochSecond();
+                // Interval Data Tree
+                intervalDataTree.put(Range.closed(startTime, endTime), vortexGrid);
+                // Instant Data Tree
+                if (vortexGrid.startTime().isEqual(vortexGrid.endTime())) {
+                    long time = vortexGrid.startTime().toEpochSecond();
+                    instantDataTree.put(time, vortexGrid);
+                }
             }
-        });
+        }
     }
 
     private List<VortexGrid> getOverlappedIntervalGrids(ZonedDateTime startTime, ZonedDateTime endTime) {
         long queryStart = startTime.toEpochSecond();
         long queryEnd = endTime.toEpochSecond();
 
-        RangeMap<Long, Integer> subRangeMap = intervalDataTree.subRangeMap(Range.closedOpen(queryStart, queryEnd));
-        Collection<Integer> overlappingGrids = subRangeMap.asMapOfRanges().values();
-        return overlappingGrids.stream()
-                .map(reader::get)
-                .toList();
+        RangeMap<Long, VortexGrid> subRangeMap = intervalDataTree.subRangeMap(Range.closedOpen(queryStart, queryEnd));
+        return subRangeMap.asMapOfRanges().values().stream().toList();
     }
 
     private List<VortexGrid> getOverlappedInstantGrids(ZonedDateTime time) {
         long timeEpoch = time.toEpochSecond();
 
-        Map.Entry<Long, Integer> floorEntry = instantDataTree.floorEntry(timeEpoch);
-        Map.Entry<Long, Integer> ceilingEntry = instantDataTree.ceilingEntry(timeEpoch);
+        Map.Entry<Long, VortexGrid> floorEntry = instantDataTree.floorEntry(timeEpoch);
+        Map.Entry<Long, VortexGrid> ceilingEntry = instantDataTree.ceilingEntry(timeEpoch);
 
         if (floorEntry == null || ceilingEntry == null) {
             logger.info("Unable to find overlapped instant grid(s)");
             return Collections.emptyList();
         }
 
-        Integer floorIndex = floorEntry.getValue();
-        Integer ceilingIndex = ceilingEntry.getValue();
+        VortexGrid floorIndex = floorEntry.getValue();
+        VortexGrid ceilingIndex = ceilingEntry.getValue();
 
         if (floorEntry.equals(ceilingEntry))
-            return Collections.singletonList(reader.get(floorIndex));
+            return Collections.singletonList(floorIndex);
 
-        return List.of(reader.get(floorIndex), reader.get(ceilingIndex));
+        return List.of(floorIndex, ceilingIndex);
     }
 
     /**
@@ -182,9 +182,38 @@ public class TemporalDataReader {
         if (startTime.isEqual(endTime))
             return readInstantaneousData(startTime);
         // Instantaneous Data for Period
-        ZonedDateTime midTime = calculateMidTime(startTime, endTime);
-        VortexGrid grid = readInstantaneousData(midTime);
-        return grid != null ? buildGrid(grid, startTime, endTime, grid.data()) : null;
+        return readPeriodInstantData(startTime, endTime);
+//        ZonedDateTime midTime = calculateMidTime(startTime, endTime);
+//        VortexGrid grid = readInstantaneousData(midTime);
+//        return grid != null ? buildGrid(grid, startTime, endTime, grid.data()) : null;
+    }
+
+    private VortexGrid readPeriodInstantData(ZonedDateTime startTime, ZonedDateTime endTime) {
+        long start = startTime.toEpochSecond();
+        long end = endTime.toEpochSecond();
+
+        Collection<VortexGrid> overlappedGrids = instantDataTree.subMap(start, end).values();
+
+        VortexGrid representativeGrid = null;
+        float[] averageData = null;
+
+        for (VortexGrid vortexGrid : overlappedGrids) {
+            float[] gridData = vortexGrid.data();
+
+            if (representativeGrid == null) {
+                representativeGrid = vortexGrid;
+                averageData = new float[gridData.length];
+            }
+
+            for (int i = 0; i < averageData.length; i++) averageData[i] += gridData[i];
+        }
+
+        if (representativeGrid == null) return null;
+
+        for(int i = 0; i < averageData.length; i++)
+            averageData[i] /= overlappedGrids.size();
+
+        return buildGrid(representativeGrid, startTime, endTime, averageData);
     }
 
     /**
@@ -223,6 +252,9 @@ public class TemporalDataReader {
         float[] resultData = new float[beforeData.length];
 
         for (int i = 0; i < beforeData.length; i++) {
+            float beforeValue = beforeData[i];
+            float afterValue = afterData[i];
+            float diff = afterValue - beforeValue;
             resultData[i] = (float) (beforeData[i] + (afterData[i] - beforeData[i]) * ratio);
         }
 
