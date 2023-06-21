@@ -192,7 +192,7 @@ public class TemporalDataReader {
         long start = startTime.toEpochSecond();
         long end = endTime.toEpochSecond();
 
-        Collection<VortexGrid> overlappedGrids = instantDataTree.subMap(start, end).values();
+        Collection<VortexGrid> overlappedGrids = instantDataTree.subMap(start, true, end, true).values();
 
         VortexGrid representativeGrid = null;
         float[] averageData = null;
