@@ -17,6 +17,26 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TemporalDataReaderTest {
     @Test
+    void RedwoodCreekSmallIntervalTest() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/RedwoodCreek/data/MRMS_adjusted.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2018-04-05T18:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2018-04-05T18:15Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        // Data (1800-1900) [0.33, 0.33, 0.23, 0.29, 0.33, 0.26, 0.19, 0.2, 0.15, 0.15, 0.14, 0.1, 0.0, 0.1, 0.07]
+        // Find (1800-1815)
+        // Expected [0.33/4, 0.33/4, etc.] = [0.0825, 0.0825, etc.] Our results seem right, ParameterGrid seems wrong
+
+        float[] actualData = actualGrid.data(); //
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 0f);
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
     void DssPrecisionTest() {
         String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
 
@@ -93,7 +113,7 @@ class TemporalDataReaderTest {
         float[] expectedData = new float[actualData.length];
         Arrays.fill(expectedData, 64.2875f);
 
-//        assertArrayEquals(expectedData, actualData);
+        assertArrayEquals(expectedData, actualData);
 
         List<VortexGrid> dataList = DataReader.builder().path(pathToFile).variable("*").build()
                 .getDtos().subList(24, 48).stream().map(VortexGrid.class::cast).toList();
