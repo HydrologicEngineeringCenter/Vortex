@@ -9,12 +9,10 @@ import mil.army.usace.hec.vortex.VortexGrid;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 
 public class TemporalDataReader {
     private static final Logger logger = Logger.getLogger(TemporalDataReader.class.getName());
@@ -75,15 +73,21 @@ public class TemporalDataReader {
     /* Read Methods */
     private VortexGrid readAccumulationData(ZonedDateTime startTime, ZonedDateTime endTime) {
         List<VortexGrid> overlappedGrids = getOverlappedIntervalGrids(startTime, endTime);
-        if (overlappedGrids.isEmpty()) return null;
 
-        VortexGrid firstGrid = overlappedGrids.get(0);
-        float[] accumulationData = new float[firstGrid.data().length];
+        if (overlappedGrids.isEmpty()) {
+            logger.info("Unable to find overlapped grid(s) for accumulation data");
+            return null;
+        }
+
+        float[] accumulationData = new float[baseGrid.data().length];
 
         for (VortexGrid grid : overlappedGrids) {
-            double fraction = calculateFraction(grid, startTime, endTime);
+            double overlapStart = Math.max(startTime.toEpochSecond(), grid.startTime().toEpochSecond());
+            double overlapEnd = Math.min(endTime.toEpochSecond(), grid.endTime().toEpochSecond());
+            double fraction = (overlapEnd - overlapStart) / (grid.endTime().toEpochSecond() - grid.startTime().toEpochSecond());
+
             float[] gridData = grid.data();
-            IntStream.range(0, accumulationData.length).forEach(i -> accumulationData[i] += fraction * gridData[i]);
+            for (int i = 0; i < accumulationData.length; i++) accumulationData[i] += fraction * gridData[i];
         }
 
         return buildGrid(startTime, endTime, accumulationData);
@@ -91,50 +95,58 @@ public class TemporalDataReader {
 
     private VortexGrid readAverageData(ZonedDateTime startTime, ZonedDateTime endTime) {
         List<VortexGrid> overlappedGrids = getOverlappedIntervalGrids(startTime, endTime);
-        if (overlappedGrids.isEmpty()) return null;
 
-        VortexGrid firstGrid = overlappedGrids.get(0);
-        float[] averageData = new float[firstGrid.data().length];
+        if (overlappedGrids.isEmpty()) {
+            logger.info("Unable to find overlapped grid(s) for average data");
+            return null;
+        }
+
+        float[] averageData = new float[baseGrid.data().length];
 
         for (VortexGrid grid : overlappedGrids) {
             float[] gridData = grid.data();
-            IntStream.range(0, averageData.length).forEach(i -> averageData[i] += gridData[i]);
+            for (int i = 0; i < averageData.length; i++) averageData[i] += gridData[i];
         }
 
-        IntStream.range(0, averageData.length).forEach(i -> averageData[i] /= overlappedGrids.size());
+        for (int i = 0; i < averageData.length; i++) averageData[i] /= overlappedGrids.size();
 
         return buildGrid(startTime, endTime, averageData);
     }
 
     private VortexGrid readInstantaneousData(ZonedDateTime startTime, ZonedDateTime endTime) {
-        if (startTime.isEqual(endTime))
-            return readInstantaneousData(startTime);
-        // Instantaneous Data for Period
-        return readPeriodInstantData(startTime, endTime);
+        return startTime.isEqual(endTime)
+                ? readPointInstantData(startTime)
+                : readPeriodInstantData(startTime, endTime);
     }
 
-    private VortexGrid readInstantaneousData(ZonedDateTime time) {
-        List<VortexGrid> gridList = getOverlappedInstantGrids(time);
+    private VortexGrid readPointInstantData(ZonedDateTime time) {
+        long timeEpoch = time.toEpochSecond();
 
-        if (gridList.isEmpty()) return null;
-        if (gridList.size() == 1) return gridList.get(0); // Found grid that matches the exact time
+        Map.Entry<Long, VortexGrid> floorEntry = instantDataTree.floorEntry(timeEpoch);
+        Map.Entry<Long, VortexGrid> ceilingEntry = instantDataTree.ceilingEntry(timeEpoch);
 
-        // Calculating instantaneous data using dataLeft and dataRight
-        VortexGrid nearestBefore = gridList.get(0);
-        VortexGrid nearestAfter = gridList.get(1);
+        if (floorEntry == null || ceilingEntry == null) {
+            logger.info("Unable to find overlapped instant grid(s)");
+            return null;
+        }
 
-        long nearestBeforeEpoch = nearestBefore.startTime().toEpochSecond();
-        long nearestAfterEpoch = nearestAfter.startTime().toEpochSecond();
-        long targetTimeEpoch = time.toEpochSecond();
+        VortexGrid floorGrid = floorEntry.getValue();
+        VortexGrid ceilingGrid = ceilingEntry.getValue();
 
-        double ratio = (double) (targetTimeEpoch - nearestBeforeEpoch) / (nearestAfterEpoch - nearestBeforeEpoch);
+        if (floorEntry.equals(ceilingEntry))
+            return floorGrid;
 
-        float[] beforeData = nearestBefore.data();
-        float[] afterData = nearestAfter.data();
-        float[] resultData = new float[beforeData.length];
+        long floorTime = floorGrid.startTime().toEpochSecond();
+        long ceilingTime = ceilingGrid.startTime().toEpochSecond();
 
-        for (int i = 0; i < beforeData.length; i++) {
-            resultData[i] = (float) (beforeData[i] + (afterData[i] - beforeData[i]) * ratio);
+        double ratio = (double) (timeEpoch - floorTime) / (ceilingTime - floorTime);
+
+        float[] floorData = floorGrid.data();
+        float[] ceilingData = ceilingGrid.data();
+        float[] resultData = new float[floorData.length];
+
+        for (int i = 0; i < floorData.length; i++) {
+            resultData[i] = (float) (floorData[i] + (ceilingData[i] - floorData[i]) * ratio);
         }
 
         return buildGrid(time, time, resultData);
@@ -148,7 +160,11 @@ public class TemporalDataReader {
                 .values()
                 .stream()
                 .toList();
-        if (overlappedGrids.isEmpty()) return null;
+
+        if (overlappedGrids.isEmpty()) {
+            logger.info("Unable to find overlapped grid(s) for period instant data");
+            return null;
+        }
 
         float[][] dataArrays = overlappedGrids.stream()
                 .map(VortexGrid::data)
@@ -166,26 +182,6 @@ public class TemporalDataReader {
 
         RangeMap<Long, VortexGrid> subRangeMap = intervalDataTree.subRangeMap(Range.closedOpen(queryStart, queryEnd));
         return subRangeMap.asMapOfRanges().values().stream().toList();
-    }
-
-    private List<VortexGrid> getOverlappedInstantGrids(ZonedDateTime time) {
-        long timeEpoch = time.toEpochSecond();
-
-        Map.Entry<Long, VortexGrid> floorEntry = instantDataTree.floorEntry(timeEpoch);
-        Map.Entry<Long, VortexGrid> ceilingEntry = instantDataTree.ceilingEntry(timeEpoch);
-
-        if (floorEntry == null || ceilingEntry == null) {
-            logger.info("Unable to find overlapped instant grid(s)");
-            return Collections.emptyList();
-        }
-
-        VortexGrid floorIndex = floorEntry.getValue();
-        VortexGrid ceilingIndex = ceilingEntry.getValue();
-
-        if (floorEntry.equals(ceilingEntry))
-            return Collections.singletonList(floorIndex);
-
-        return List.of(floorIndex, ceilingIndex);
     }
 
     private float[] calculateWeightedAverage(float[]... dataArrays) {
@@ -215,7 +211,7 @@ public class TemporalDataReader {
                 .nx(baseGrid.nx())
                 .ny(baseGrid.ny())
                 .originX(baseGrid.originX())
-                .originY(baseGrid.originY() + baseGrid.dy() * baseGrid.ny())
+                .originY(baseGrid.originY())
                 .wkt(baseGrid.wkt())
                 .data(data)
                 .noDataValue(baseGrid.noDataValue())
@@ -229,11 +225,5 @@ public class TemporalDataReader {
                 .interval(Duration.between(startTime, endTime))
                 .dataType(baseGrid.dataType())
                 .build();
-    }
-
-    private double calculateFraction(VortexGrid grid, ZonedDateTime startTime, ZonedDateTime endTime) {
-        double overlapStart = Math.max(startTime.toEpochSecond(), grid.startTime().toEpochSecond());
-        double overlapEnd = Math.min(endTime.toEpochSecond(), grid.endTime().toEpochSecond());
-        return (overlapEnd - overlapStart) / (grid.endTime().toEpochSecond() - grid.startTime().toEpochSecond());
     }
 }
