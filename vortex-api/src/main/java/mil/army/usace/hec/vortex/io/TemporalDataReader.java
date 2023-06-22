@@ -195,29 +195,41 @@ public class TemporalDataReader {
         long start = startTime.toEpochSecond();
         long end = endTime.toEpochSecond();
 
-        Collection<VortexGrid> overlappedGrids = instantDataTree.subMap(start, true, end, true).values();
+        List<VortexGrid> overlappedGrids = instantDataTree.subMap(start, true, end, true)
+                .values()
+                .stream()
+                .toList();
+        if (overlappedGrids.isEmpty()) return null;
         printGrids(overlappedGrids, startTime, endTime);
 
-        VortexGrid representativeGrid = null;
-        float[] averageData = null;
+        float[][] dataArrays = overlappedGrids.stream()
+                .map(VortexGrid::data)
+                .toArray(float[][]::new);
 
-        for (VortexGrid vortexGrid : overlappedGrids) {
-            float[] gridData = vortexGrid.data();
+        VortexGrid representativeGrid = overlappedGrids.get(0);
+        float[] weightedAverageData = calculateWeightedAverage(dataArrays);
 
-            if (representativeGrid == null) {
-                representativeGrid = vortexGrid;
-                averageData = new float[gridData.length];
-            }
+        return buildGrid(representativeGrid, startTime, endTime, weightedAverageData);
+    }
 
-            for (int i = 0; i < averageData.length; i++) averageData[i] += gridData[i];
+    private float[] calculateWeightedAverage(float[]... dataArrays) {
+        int numDataArrays = dataArrays.length;
+        if (numDataArrays == 0) return null;
+
+        // NOTE: Weighted Average: first and last data weight is 0.5
+        int numData = dataArrays[0].length;
+        float[] weightedAverage = new float[numData];
+
+        for (int i = 0; i < numDataArrays; i++) {
+            float[] data = dataArrays[i];
+            float weight = (i == 0 || i == numDataArrays - 1) ? 0.5f : 1f;
+            for (int j = 0; j < numData; j++) data[j] *= weight;
+            for (int j = 0; j < numData; j++) weightedAverage[j] += data[j];
         }
 
-        if (representativeGrid == null) return null;
+        for (int i = 0; i < numData; i++) weightedAverage[i] /= (numDataArrays - 1);
 
-        for(int i = 0; i < averageData.length; i++)
-            averageData[i] /= overlappedGrids.size();
-
-        return buildGrid(representativeGrid, startTime, endTime, averageData);
+        return weightedAverage;
     }
 
     /**

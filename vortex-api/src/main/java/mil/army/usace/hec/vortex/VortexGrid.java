@@ -225,7 +225,7 @@ public class VortexGrid implements VortexData, Serializable {
     }
 
     public float[] data() {
-        return data;
+        return data.clone();
     }
 
     public double noDataValue() {
