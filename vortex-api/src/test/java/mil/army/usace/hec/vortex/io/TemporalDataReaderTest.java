@@ -17,6 +17,22 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TemporalDataReaderTest {
     @Test
+    void PerformanceTest() {
+        long startTimer = System.currentTimeMillis();
+
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-02T00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-03T00:00Z");
+
+        VortexGrid actualGrid = reader.read(start, end);
+
+        long endTimer = System.currentTimeMillis();
+        System.out.println("Time (ms): " + (endTimer - startTimer));
+    }
+
+    @Test
     void GriddedEtNeedHelpTest() {
         String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
 
