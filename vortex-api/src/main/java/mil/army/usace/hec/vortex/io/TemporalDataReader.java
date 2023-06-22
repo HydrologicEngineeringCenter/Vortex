@@ -19,29 +19,33 @@ import java.util.stream.IntStream;
 public class TemporalDataReader {
     private static final Logger logger = Logger.getLogger(TemporalDataReader.class.getName());
 
-    private final BufferedDataReader reader;
-
     private final TreeRangeMap<Long, VortexGrid> intervalDataTree = TreeRangeMap.create();
     private final TreeMap<Long, VortexGrid> instantDataTree = new TreeMap<>();
+    private final VortexGrid baseGrid;
 
+    /* Constructors */
     public TemporalDataReader(String pathToFile, String pathToData) {
-        this(new BufferedDataReader(pathToFile, pathToData));
+        this(DataReader.builder()
+                .path(pathToFile)
+                .variable(pathToData)
+                .build()
+        );
     }
 
-    public TemporalDataReader(BufferedDataReader reader) {
-        this.reader = reader;
-        initDataTrees();
-    }
+    public TemporalDataReader(DataReader dataReader) {
 
-    private void initDataTrees() {
-        List<VortexData> dataList = reader.getVortexDataList();
+        // Initialize Data Tree
+        VortexGrid firstGrid = null;
+        for (VortexData vortexData : dataReader.getDtos()) {
+            if (vortexData instanceof VortexGrid vortexGrid) {
+                if (firstGrid == null) firstGrid = vortexGrid;
 
-        for (VortexData x : dataList) {
-            if (x instanceof VortexGrid vortexGrid) {
                 long startTime = vortexGrid.startTime().toEpochSecond();
                 long endTime = vortexGrid.endTime().toEpochSecond();
+
                 // Interval Data Tree
                 intervalDataTree.put(Range.closed(startTime, endTime), vortexGrid);
+
                 // Instant Data Tree
                 if (vortexGrid.startTime().isEqual(vortexGrid.endTime())) {
                     long time = vortexGrid.startTime().toEpochSecond();
@@ -49,10 +53,13 @@ public class TemporalDataReader {
                 }
             }
         }
+
+        this.baseGrid = firstGrid;
     }
 
+    /* Public API */
     public VortexGrid read(ZonedDateTime startTime, ZonedDateTime endTime) {
-        VortexDataType dataType = reader.getType();
+        VortexDataType dataType = baseGrid.dataType();
         return read(dataType, startTime, endTime);
     }
 
@@ -65,6 +72,7 @@ public class TemporalDataReader {
         };
     }
 
+    /* Read Methods */
     private VortexGrid readAccumulationData(ZonedDateTime startTime, ZonedDateTime endTime) {
         List<VortexGrid> overlappedGrids = getOverlappedIntervalGrids(startTime, endTime);
         if (overlappedGrids.isEmpty()) return null;
@@ -78,7 +86,7 @@ public class TemporalDataReader {
             IntStream.range(0, accumulationData.length).forEach(i -> accumulationData[i] += fraction * gridData[i]);
         }
 
-        return buildGrid(firstGrid, startTime, endTime, accumulationData);
+        return buildGrid(startTime, endTime, accumulationData);
     }
 
     private VortexGrid readAverageData(ZonedDateTime startTime, ZonedDateTime endTime) {
@@ -95,7 +103,7 @@ public class TemporalDataReader {
 
         IntStream.range(0, averageData.length).forEach(i -> averageData[i] /= overlappedGrids.size());
 
-        return buildGrid(firstGrid, startTime, endTime, averageData);
+        return buildGrid(startTime, endTime, averageData);
     }
 
     private VortexGrid readInstantaneousData(ZonedDateTime startTime, ZonedDateTime endTime) {
@@ -103,26 +111,6 @@ public class TemporalDataReader {
             return readInstantaneousData(startTime);
         // Instantaneous Data for Period
         return readPeriodInstantData(startTime, endTime);
-    }
-
-    private VortexGrid readPeriodInstantData(ZonedDateTime startTime, ZonedDateTime endTime) {
-        long start = startTime.toEpochSecond();
-        long end = endTime.toEpochSecond();
-
-        List<VortexGrid> overlappedGrids = instantDataTree.subMap(start, true, end, true)
-                .values()
-                .stream()
-                .toList();
-        if (overlappedGrids.isEmpty()) return null;
-
-        float[][] dataArrays = overlappedGrids.stream()
-                .map(VortexGrid::data)
-                .toArray(float[][]::new);
-
-        VortexGrid representativeGrid = overlappedGrids.get(0);
-        float[] weightedAverageData = calculateWeightedAverage(dataArrays);
-
-        return buildGrid(representativeGrid, startTime, endTime, weightedAverageData);
     }
 
     private VortexGrid readInstantaneousData(ZonedDateTime time) {
@@ -149,7 +137,26 @@ public class TemporalDataReader {
             resultData[i] = (float) (beforeData[i] + (afterData[i] - beforeData[i]) * ratio);
         }
 
-        return buildGrid(nearestBefore, time, time, resultData);
+        return buildGrid(time, time, resultData);
+    }
+
+    private VortexGrid readPeriodInstantData(ZonedDateTime startTime, ZonedDateTime endTime) {
+        long start = startTime.toEpochSecond();
+        long end = endTime.toEpochSecond();
+
+        List<VortexGrid> overlappedGrids = instantDataTree.subMap(start, true, end, true)
+                .values()
+                .stream()
+                .toList();
+        if (overlappedGrids.isEmpty()) return null;
+
+        float[][] dataArrays = overlappedGrids.stream()
+                .map(VortexGrid::data)
+                .toArray(float[][]::new);
+
+        float[] weightedAverageData = calculateWeightedAverage(dataArrays);
+
+        return buildGrid(startTime, endTime, weightedAverageData);
     }
 
     /* Helpers */
@@ -201,26 +208,26 @@ public class TemporalDataReader {
         return weightedAverage;
     }
 
-    private VortexGrid buildGrid(VortexGrid grid, ZonedDateTime startTime, ZonedDateTime endTime, float[] data) {
+    private VortexGrid buildGrid(ZonedDateTime startTime, ZonedDateTime endTime, float[] data) {
         return VortexGrid.builder()
-                .dx(grid.dx())
-                .dy(grid.dy())
-                .nx(grid.nx())
-                .ny(grid.ny())
-                .originX(grid.originX())
-                .originY(grid.originY() + grid.dy() * grid.ny())
-                .wkt(grid.wkt())
+                .dx(baseGrid.dx())
+                .dy(baseGrid.dy())
+                .nx(baseGrid.nx())
+                .ny(baseGrid.ny())
+                .originX(baseGrid.originX())
+                .originY(baseGrid.originY() + baseGrid.dy() * baseGrid.ny())
+                .wkt(baseGrid.wkt())
                 .data(data)
-                .noDataValue(grid.noDataValue())
-                .units(grid.units())
-                .fileName(grid.fileName()) // Check
-                .shortName(grid.shortName())
-                .fullName(grid.fullName())
-                .description(grid.description())
+                .noDataValue(baseGrid.noDataValue())
+                .units(baseGrid.units())
+                .fileName(baseGrid.fileName())
+                .shortName(baseGrid.shortName())
+                .fullName(baseGrid.fullName())
+                .description(baseGrid.description())
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(Duration.between(startTime, endTime))
-                .dataType(grid.dataType())
+                .dataType(baseGrid.dataType())
                 .build();
     }
 

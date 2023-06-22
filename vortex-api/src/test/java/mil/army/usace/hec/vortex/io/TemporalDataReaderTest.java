@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.junit.jupiter.api.Test;
@@ -252,8 +253,8 @@ class TemporalDataReaderTest {
 
     @Test
     void ReadAccumulationTime_singleData() {
-        List<VortexGrid> accumulationGrid = List.of(buildTestGrid(ACCUMULATION, 1, 2, 20));
-        TemporalDataReader reader = new TemporalDataReader(mockBufferedDataReader(accumulationGrid));
+        List<VortexData> accumulationGrid = List.of(buildTestGrid(ACCUMULATION, 1, 2, 20));
+        TemporalDataReader reader = new TemporalDataReader(mockDataReader(accumulationGrid));
 
         VortexGrid actualGrid = reader.read(buildTestTime(1,0), buildTestTime(2,0));
         float[] expectedData = buildTestData(20f);
@@ -346,7 +347,7 @@ class TemporalDataReaderTest {
 
     /* Helpers */
     private TemporalDataReader setupAccumulationReader() {
-        List<VortexGrid> accumulationGrids = List.of(
+        List<VortexData> accumulationGrids = List.of(
                 buildTestGrid(ACCUMULATION, 1, 2, 20),
                 buildTestGrid(ACCUMULATION, 2, 3, 20),
                 buildTestGrid(ACCUMULATION, 3, 4, 30),
@@ -354,11 +355,11 @@ class TemporalDataReaderTest {
                 buildTestGrid(ACCUMULATION, 5, 6, 15)
         );
 
-        return new TemporalDataReader(mockBufferedDataReader(accumulationGrids));
+        return new TemporalDataReader(mockDataReader(accumulationGrids));
     }
 
     private TemporalDataReader setupAverageReader() {
-        List<VortexGrid> averageGrids = List.of(
+        List<VortexData> averageGrids = List.of(
                 buildTestGrid(AVERAGE, 1, 2, 5),
                 buildTestGrid(AVERAGE, 2, 3, 2),
                 buildTestGrid(AVERAGE, 3, 4, 10),
@@ -366,11 +367,11 @@ class TemporalDataReaderTest {
                 buildTestGrid(AVERAGE, 5, 6, 3)
         );
 
-        return new TemporalDataReader(mockBufferedDataReader(averageGrids));
+        return new TemporalDataReader(mockDataReader(averageGrids));
     }
 
     private TemporalDataReader setupInstantReader() {
-        List<VortexGrid> instantGrids = List.of(
+        List<VortexData> instantGrids = List.of(
                 buildTestGrid(INSTANTANEOUS, 1, 1, 5),
                 buildTestGrid(INSTANTANEOUS, 2, 2, 2),
                 buildTestGrid(INSTANTANEOUS, 3, 3, 10),
@@ -378,22 +379,13 @@ class TemporalDataReaderTest {
                 buildTestGrid(INSTANTANEOUS, 5, 5, 3)
         );
 
-        return new TemporalDataReader(mockBufferedDataReader(instantGrids));
+        return new TemporalDataReader(mockDataReader(instantGrids));
     }
 
-    private BufferedDataReader mockBufferedDataReader(List<VortexGrid> gridList) {
-        BufferedDataReader bufferedReader = Mockito.mock(BufferedDataReader.class);
-
-        int numGrids = gridList.size();
-        Mockito.when(bufferedReader.getCount()).thenReturn(numGrids);
-        Mockito.when(bufferedReader.getType()).thenReturn(gridList.get(0).dataType());
-
-        for (int i = 0; i < numGrids; i++) {
-            VortexGrid grid = gridList.get(i);
-            Mockito.when(bufferedReader.get(i)).thenReturn(grid);
-        }
-
-        return bufferedReader;
+    private DataReader mockDataReader(List<VortexData> gridList) {
+        DataReader dataReader = Mockito.mock(DataReader.class);
+        Mockito.when(dataReader.getDtos()).thenReturn(gridList);
+        return dataReader;
     }
 
     private VortexGrid buildTestGrid(VortexDataType type, int hourStart, int hourEnd, int dataValue) {
