@@ -191,27 +191,14 @@ public class TemporalDataReader {
 
         for (int i = 0; i < numDataArrays; i++) {
             float[] data = dataArrays[i];
-            double weight = (i == 0 || i == numDataArrays - 1) ? 0.5 : 1;
-
-            // weightedAverage[j] += (data[j] * weight)
-            for (int j = 0; j < numData; j++) {
-                double result = getDouble(weightedAverage[j]) + (getDouble(data[j]) * weight);
-                weightedAverage[j] = (float) result;
-            }
+            float weight = (i == 0 || i == numDataArrays - 1) ? 0.5f : 1f;
+            for (int j = 0; j < numData; j++) data[j] *= weight;
+            for (int j = 0; j < numData; j++) weightedAverage[j] += data[j];
         }
 
-        // weightedAverage[i] /= (numDataArrays - 1)
-        for (int i = 0; i < numData; i++) {
-            double result = getDouble(weightedAverage[i]) / (numDataArrays - 1);
-            weightedAverage[i] = (float) result;
-        }
+        for (int i = 0; i < numData; i++) weightedAverage[i] /= (numDataArrays - 1);
 
         return weightedAverage;
-    }
-
-    private double getDouble(float f) {
-        // Avoiding floating point rounding error
-        return Double.parseDouble(String.valueOf(f));
     }
 
     private VortexGrid buildGrid(VortexGrid grid, ZonedDateTime startTime, ZonedDateTime endTime, float[] data) {
