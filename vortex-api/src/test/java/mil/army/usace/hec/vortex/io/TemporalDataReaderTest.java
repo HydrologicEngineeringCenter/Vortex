@@ -17,6 +17,38 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TemporalDataReaderTest {
     @Test
+    void GriddedEtNeedHelpTest() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-02T00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-03T00:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 64.2875f); // Actual: 63.896f
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
+    void GriddedEtWeirdTest() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-01T00:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-01T01:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 51.8f);
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
     void RedwoodCreekSmallIntervalTest() {
         String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/RedwoodCreek/data/MRMS_adjusted.dss";
 
