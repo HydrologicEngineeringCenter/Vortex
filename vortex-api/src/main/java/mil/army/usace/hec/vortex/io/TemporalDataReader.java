@@ -9,9 +9,10 @@ import mil.army.usace.hec.vortex.VortexGrid;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
@@ -67,7 +68,6 @@ public class TemporalDataReader {
     private VortexGrid readAccumulationData(ZonedDateTime startTime, ZonedDateTime endTime) {
         List<VortexGrid> overlappedGrids = getOverlappedIntervalGrids(startTime, endTime);
         if (overlappedGrids.isEmpty()) return null;
-        printGrids(overlappedGrids, startTime, endTime);
 
         VortexGrid firstGrid = overlappedGrids.get(0);
         float[] accumulationData = new float[firstGrid.data().length];
@@ -114,7 +114,6 @@ public class TemporalDataReader {
                 .stream()
                 .toList();
         if (overlappedGrids.isEmpty()) return null;
-        printGrids(overlappedGrids, startTime, endTime);
 
         float[][] dataArrays = overlappedGrids.stream()
                 .map(VortexGrid::data)
@@ -242,25 +241,5 @@ public class TemporalDataReader {
         double overlapStart = Math.max(startTime.toEpochSecond(), grid.startTime().toEpochSecond());
         double overlapEnd = Math.min(endTime.toEpochSecond(), grid.endTime().toEpochSecond());
         return (overlapEnd - overlapStart) / (grid.endTime().toEpochSecond() - grid.startTime().toEpochSecond());
-    }
-
-    private void printGrids(Collection<VortexGrid> grids, ZonedDateTime startTime, ZonedDateTime endTime) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy (HHmm)");
-        String targetStart = startTime.format(dateTimeFormatter);
-        String targetEnd = endTime.format(dateTimeFormatter);
-
-        System.out.println(reader.getType() + " | Calculating Time for period: " + targetStart + " - " + targetEnd);
-        System.out.println("--Relevant Grids (" + grids.size() + ")--");
-
-        for (VortexGrid vortexGrid : grids) {
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
-            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmm");
-
-            String dateStr = vortexGrid.startTime().format(dateFormatter);
-            String startStr = vortexGrid.startTime().format(timeFormatter);
-            String endStr = vortexGrid.endTime().format(timeFormatter);
-            String dataStr = String.valueOf(vortexGrid.data()[0]);
-            System.out.println(dateStr + " (" + startStr + " - " + endStr + "): " + dataStr);
-        }
     }
 }
