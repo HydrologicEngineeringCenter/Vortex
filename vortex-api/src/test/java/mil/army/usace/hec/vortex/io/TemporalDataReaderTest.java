@@ -101,6 +101,22 @@ class TemporalDataReaderTest {
     }
 
     @Test
+    void DssPrecisionTestTwo() {
+        String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
+
+        TemporalDataReader reader = new TemporalDataReader(pathToFile, "*");
+        ZonedDateTime start = ZonedDateTime.parse("2004-10-01T12:00Z");
+        ZonedDateTime end = ZonedDateTime.parse("2004-10-01T13:00Z");
+        VortexGrid actualGrid = reader.read(start, end);
+
+        float[] actualData = actualGrid.data();
+        float[] expectedData = new float[actualData.length];
+        Arrays.fill(expectedData, 67.100006f);
+
+        assertArrayEquals(expectedData, actualData);
+    }
+
+    @Test
     void DssAccuracyTest() {
         String pathToFile = "/Users/work/Documents-Local/HMS-Dataset/gridded_et/data/EF_Russian_Temperature.dss";
 
