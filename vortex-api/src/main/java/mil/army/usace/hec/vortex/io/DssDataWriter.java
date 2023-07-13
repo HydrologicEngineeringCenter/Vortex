@@ -681,63 +681,39 @@ public class DssDataWriter extends DataWriter {
         return gridInfo;
     }
 
-    private static HecTime getStartTime(GridInfo gridInfo){
-        return getHecTime(gridInfo.getStartTime());
-    }
-    private static HecTime getEndTime(GridInfo gridInfo){
-        return getHecTime(gridInfo.getEndTime());
-    }
-
-    private static HecTime getHecTime(String dateTimeString) {
-        HecTime time = new HecTime();
-
-        if (dateTimeString.isEmpty())
-            return time;
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-        LocalDateTime date;
-        try {
-            date = LocalDateTime.parse(dateTimeString, formatter);
-        } catch (DateTimeParseException e) {
-            return time;
-        }
-
-        time.setXML(date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        return time;
-    }
-
     private static HecTime getHecTime(ZonedDateTime zonedDateTime){
         HecTime time = new HecTime();
         time.setXML(zonedDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         return time;
     }
 
-    private void write(float[] data, GridInfo info, DSSPathname pathname){
+    private void write(float[] data, GridInfo gridInfo, DSSPathname pathname){
         if (options.containsKey("units")) {
             String unitString = options.get("units");
-            info.setDataUnits(unitString);
+            gridInfo.setDataUnits(unitString);
         }
 
         if (options.containsKey("dataType")) {
             String dataType = options.get("dataType");
             if (dataType.equals("INST-VAL"))
-                info.setDataType(DssDataType.INST_VAL.value());
+                gridInfo.setDataType(DssDataType.INST_VAL.value());
             if (dataType.equals("PER-AVER"))
-                info.setDataType(DssDataType.PER_AVER.value());
+                gridInfo.setDataType(DssDataType.PER_AVER.value());
             if (dataType.equals("PER-CUM"))
-                info.setDataType(DssDataType.PER_CUM.value());
+                gridInfo.setDataType(DssDataType.PER_CUM.value());
             if (dataType.equals("INST-CUM"))
-                info.setDataType(DssDataType.INST_CUM.value());
+                gridInfo.setDataType(DssDataType.INST_CUM.value());
         }
 
-        GridData gridData = new GridData(data, info);
+        GridData gridData = new GridData(data, gridInfo);
 
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(destination.toString());
 
         griddedData.setPathname(updatePathname(pathname, options).toString());
-        HecTime startTime = getStartTime(gridData.getGridInfo());
-        HecTime endTime = getEndTime(gridData.getGridInfo());
+
+        HecTime startTime = new HecTime(gridInfo.getStartTime());
+        HecTime endTime = new HecTime(gridInfo.getEndTime());
 
         if (endTime.isDefined()) {
             if (gridData.getGridInfo().getDataType() == DssDataType.INST_VAL.value()) {
@@ -747,7 +723,7 @@ public class DssDataWriter extends DataWriter {
             }
         }
 
-        int status = griddedData.storeGriddedData(info, gridData);
+        int status = griddedData.storeGriddedData(gridInfo, gridData);
         if (status != 0) {
             System.out.println("DSS write error");
         }

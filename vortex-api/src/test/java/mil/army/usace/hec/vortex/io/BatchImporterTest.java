@@ -254,7 +254,7 @@ class BatchImporterTest {
         int[] status = new int[1];
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(outFile);
-        griddedData.setPathname("///TEMPERATURE/01JAN1960:0000/01FEB1960:0000//");
+        griddedData.setPathname("///TEMPERATURE/01JAN1960:0000/31Jan1960:2400//");
         GridData gridData = new GridData();
         griddedData.retrieveGriddedData(true, gridData, status);
         if (status[0] < 0) {
