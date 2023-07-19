@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static javax.measure.MetricPrefix.*;
+import static javax.measure.MetricPrefix.KILO;
+import static javax.measure.MetricPrefix.MILLI;
 import static systems.uom.common.USCustomary.*;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.HOUR;
@@ -97,20 +97,31 @@ public class DssDataWriter extends DataWriter {
                 options.put("dataType", "PER-AVER");
             }
 
-            if (cPart.equals("PRECIPITATION") && (units.equals(MILLI(METRE).divide(SECOND))
+            if (cPart.equals("PRECIPITATION") && !grid.interval().isZero()
+                    && (units.equals(MILLI(METRE).divide(SECOND))
                     || units.equals(MILLI(METRE).divide(HOUR))
                     || units.equals(MILLI(METRE).divide(DAY)))) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
                 LocalDateTime startTime = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
                 LocalDateTime endTime = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
                 Duration interval = Duration.between(startTime, endTime);
-                float[] convertedData = new float[data.length];
+
+                float conversion;
                 if (units.equals(MILLI(METRE).divide(SECOND))) {
-                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * interval.getSeconds());
-                } else if (units.equals(MILLI(METRE).divide(HOUR))){
-                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * interval.getSeconds()/SECONDS_PER_HOUR);
-                } else if (units.equals(MILLI(METRE).divide(DAY))){
-                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * interval.getSeconds()/SECONDS_PER_DAY);
+                    conversion = interval.getSeconds();
+                } else if (units.equals(MILLI(METRE).divide(HOUR))) {
+                    conversion = (float) interval.getSeconds() / SECONDS_PER_HOUR;
+                } else if (units.equals(MILLI(METRE).divide(DAY))) {
+                    conversion = (float) interval.getSeconds() / SECONDS_PER_DAY;
+                } else {
+                    conversion = 1;
+                }
+
+                for (int i = 0; i < data.length; i++) {
+                    if (data[i] == Heclib.UNDEFINED_FLOAT)
+                        continue;
+
+                    data[i] *= conversion;
                 }
 
                 gridInfo.setDataUnits("MM");
@@ -124,7 +135,7 @@ public class DssDataWriter extends DataWriter {
                     }
                 }
 
-                write(convertedData, gridInfo, dssPathname);
+                write(data, gridInfo, dssPathname);
 
             } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN) || units.equals(CELSIUS)) {
                 float[] convertedData = new float[data.length];
@@ -471,6 +482,9 @@ public class DssDataWriter extends DataWriter {
         if (unit.equals(MILLI(METRE).divide(HOUR))){
             return "MM/HR";
         }
+        if (unit.equals(MILLI(METRE).divide(DAY))){
+            return "MM/DAY";
+        }
         if (unit.equals(CUBIC_METRE.divide(SECOND))){
             return "M3/S";
         }
@@ -531,7 +545,7 @@ public class DssDataWriter extends DataWriter {
         if (unit.equals(CELSIUS.multiply(DAY))){
             return "DEGC-D";
         }
-        return "";
+        return unit.toString();
     }
 
     private static String getEPart(int seconds) {
@@ -676,15 +690,18 @@ public class DssDataWriter extends DataWriter {
             gridInfo.setDataType(DssDataType.PER_CUM.value());
         }
 
-        gridInfo.setGridTimes(getHecTime(startTime), getHecTime(endTime));
+        HecTime hecTimeStart = getHecTime(startTime);
+        hecTimeStart.showTimeAsBeginningOfDay(true);
+        HecTime hecTimeEnd = getHecTime(endTime);
+        hecTimeEnd.showTimeAsBeginningOfDay(false);
+
+        gridInfo.setGridTimes(hecTimeStart, hecTimeEnd);
 
         return gridInfo;
     }
 
     private static HecTime getHecTime(ZonedDateTime zonedDateTime){
-        HecTime time = new HecTime();
-        time.setXML(zonedDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        return time;
+        return new HecTime(zonedDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
     }
 
     private void write(float[] data, GridInfo gridInfo, DSSPathname pathname){

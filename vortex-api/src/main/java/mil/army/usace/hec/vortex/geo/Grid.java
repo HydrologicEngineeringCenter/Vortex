@@ -1,5 +1,7 @@
 package mil.army.usace.hec.vortex.geo;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,56 +10,65 @@ import java.util.stream.IntStream;
 public class Grid {
     private double originX;
     private double originY;
-    private double dx;
-    private double dy;
-    private int nx;
-    private int ny;
+    private final double dx;
+    private final double dy;
+    private final int nx;
+    private final int ny;
+
+    private final String crs;
     private List<GridCell> gridCells;
 
-    private Grid (GridBuilder builder){
+    private Grid(Builder builder) {
         this.originX = builder.originX;
         this.originY = builder.originY;
         this.dx = builder.dx;
         this.dy = builder.dy;
         this.nx = builder.nx;
         this.ny = builder.ny;
+        this.crs = builder.crs;
     }
 
-    public static class GridBuilder{
+    public static class Builder {
         private double originX;
         private double originY;
         private double dx;
         private double dy;
         private int nx;
         private int ny;
+        private String crs;
 
-        public GridBuilder originX (double originX){
+        public Builder originX(double originX) {
             this.originX = originX;
             return this;
         }
 
-        public GridBuilder originY (double originY){
+        public Builder originY(double originY) {
             this.originY = originY;
             return this;
         }
 
-        public GridBuilder dx (double dx){
+        public Builder dx(double dx) {
             this.dx = dx;
             return this;
         }
 
-        public GridBuilder dy (double dy){
+        public Builder dy(double dy) {
             this.dy = dy;
             return this;
         }
 
-        public GridBuilder nx (int nx){
+        public Builder nx(int nx) {
             this.nx = nx;
             return this;
         }
 
-        public GridBuilder ny (int ny){
+        public Builder ny(int ny) {
             this.ny = ny;
+            return this;
+        }
+
+        public Builder crs(String crs) {
+            this.crs = crs;
             return this;
         }
 
@@ -66,12 +77,12 @@ public class Grid {
         }
     }
 
-    public static GridBuilder builder() {
-        return new GridBuilder();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public List<GridCell> getGridCells(){
-        if (gridCells == null){
+    public List<GridCell> getGridCells() {
+        if (gridCells == null) {
             gridCells = new ArrayList<>();
             AtomicInteger index = new AtomicInteger();
             IntStream.range(0, ny).forEach(y -> IntStream.range(0, nx).forEach(x -> {
@@ -103,6 +114,14 @@ public class Grid {
         return originY;
     }
 
+    public double getTerminusX() {
+        return originX + dx * nx;
+    }
+
+    public double getTerminusY() {
+        return originY + dy * ny;
+    }
+
     public double getDx() {
         return dx;
     }
@@ -119,14 +138,35 @@ public class Grid {
         return ny;
     }
 
-    public Grid copy() {
-        return Grid.builder()
-                .originX(this.originX)
-                .originY(this.originY)
-                .dx(this.dx)
-                .dy(this.dy)
-                .nx(this.nx)
-                .ny(this.ny)
-                .build();
+    public String getCrs() {
+        return crs;
+    }
+
+    public double[] getPoint(int index) {
+        int row = index / nx;
+        int column = index % nx;
+
+        double x = originX + column * dx + 0.5 * dx;
+        double y = originY + row * dy + 0.5 * dy;
+        return new double[]{x, y};
+    }
+
+    public Coordinate getCoordinate(int index) {
+        double[] xy = getPoint(index);
+        return new Coordinate(xy[0], xy[1]);
+    }
+
+    public Coordinate[] getGridCellCentroidCoords() {
+        int size = nx * ny;
+        Coordinate[] coordinates = new Coordinate[size];
+        for (int i = 0; i < size; i++) {
+            coordinates[i] = getCoordinate(i);
+        }
+        return coordinates;
+    }
+
+    public void shift(double shiftX, double shiftY) {
+        originX += shiftX;
+        originY += shiftY;
     }
 }
