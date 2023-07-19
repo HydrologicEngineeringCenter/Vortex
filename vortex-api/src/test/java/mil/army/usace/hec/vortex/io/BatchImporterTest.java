@@ -323,4 +323,54 @@ class BatchImporterTest {
             Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
         }
     }
+
+    @Test
+    void irregularSpatialGrid() {
+        URL inUrl = Objects.requireNonNull(getClass().getResource(
+                "/ACCESS1-3_rcp45_BCSD_met_1950.nc"));
+
+        String inFile = new File(inUrl.getFile()).toString();
+
+        List<String> inFiles = new ArrayList<>();
+        inFiles.add(inFile);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "irregularSpatial.dss");
+
+        List<String> variables = new ArrayList<>();
+        variables.add("pcp");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(variables)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        griddedData.setPathname("///PRECIPITATION/31DEC1949:2400///");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("1 January 1950, 00:00", gridInfo.getStartTime());
+        Assertions.assertEquals("1 January 1950, 00:00", gridInfo.getEndTime());
+        Assertions.assertEquals("MM/DAY", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridInfo.getDataType());
+        Assertions.assertEquals(49.710297, gridInfo.getMaxValue(), 1E-2);
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
 }

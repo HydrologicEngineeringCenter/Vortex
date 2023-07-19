@@ -2,10 +2,9 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.geo.Grid;
-import mil.army.usace.hec.vortex.geo.ReferenceUtils;
-import mil.army.usace.hec.vortex.geo.WktFactory;
+import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.TimeConverter;
+import org.locationtech.jts.geom.Coordinate;
 import ucar.ma2.Array;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
@@ -223,10 +222,17 @@ public class NetcdfDataReader extends DataReader {
                                 Array array;
                                 try {
                                     array = gridDatatype.readDataSlice(rtIndex, ensIndex, timeIndex, -1, -1, -1);
-                                    float[] data = getFloatArray(array);
+                                    float[] slice = getFloatArray(array);
+                                    float[] data = getData(slice, gcs, grid, noDataValue);
+
                                     ZonedDateTime startTime = times.get(timeIndex)[0];
                                     ZonedDateTime endTime = times.get(timeIndex)[1];
                                     Duration interval = Duration.between(startTime, endTime);
+
+                                    // Grid must be shifted after getData call since getData uses the original locations
+                                    // to map values.
+                                    shiftGrid(grid);
+
                                     grids.add(VortexGrid.builder()
                                             .dx(grid.getDx()).dy(grid.getDy())
                                             .nx(grid.getNx()).ny(grid.getNy())
@@ -251,10 +257,17 @@ public class NetcdfDataReader extends DataReader {
             IntStream.range(0, times.size()).forEach(timeIndex -> {
                 try {
                     Array array = gridDatatype.readDataSlice(timeIndex, -1, -1, -1);
-                    float[] data = getFloatArray(array);
+                    float[] slice = getFloatArray(array);
+                    float[] data = getData(slice, gcs, grid, noDataValue);
+
                     ZonedDateTime startTime = times.get(timeIndex)[0];
                     ZonedDateTime endTime = times.get(timeIndex)[1];
                     Duration interval = Duration.between(startTime, endTime);
+
+                    // Grid must be shifted after getData call since getData uses the original locations
+                    // to map values.
+                    shiftGrid(grid);
+
                     grids.add(VortexGrid.builder()
                             .dx(grid.getDx()).dy(grid.getDy())
                             .nx(grid.getNx()).ny(grid.getNy())
@@ -278,7 +291,9 @@ public class NetcdfDataReader extends DataReader {
         } else {
             try {
                 Array array = gridDatatype.readDataSlice(1, -1, -1, -1);
-                float[] data = getFloatArray(array);
+                float[] slice = getFloatArray(array);
+                float[] data = getData(slice, gcs, grid, noDataValue);
+
                 ZonedDateTime startTime;
                 ZonedDateTime endTime;
                 Duration interval;
@@ -298,6 +313,10 @@ public class NetcdfDataReader extends DataReader {
                     endTime = null;
                     interval = null;
                 }
+
+                // Grid must be shifted after getData call since getData uses the original locations
+                // to map values.
+                shiftGrid(grid);
 
                 grids.add(VortexGrid.builder()
                         .dx(grid.getDx()).dy(grid.getDy())
@@ -470,19 +489,57 @@ public class NetcdfDataReader extends DataReader {
         CoordinateAxis xAxis = coordinateSystem.getXHorizAxis();
         CoordinateAxis yAxis = coordinateSystem.getYHorizAxis();
 
-        int nx = (int) xAxis.getSize();
-        int ny = (int) yAxis.getSize();
+        int nx;
+        int ny;
 
-        double[] edgesX = ((CoordinateAxis1D) xAxis).getCoordEdges();
+        double[] edgesX;
+        double[] edgesY;
+
+        if (xAxis instanceof CoordinateAxis1D
+                && yAxis instanceof CoordinateAxis1D) {
+            nx = (int) xAxis.getSize();
+            ny = (int) yAxis.getSize();
+            edgesX = ((CoordinateAxis1D) xAxis).getCoordEdges();
+            edgesY = ((CoordinateAxis1D) yAxis).getCoordEdges();
+        } else if (xAxis instanceof CoordinateAxis2D xAxis2D
+                && yAxis instanceof CoordinateAxis2D yAxis2D) {
+            int shapeX = xAxis2D.getEdges().getShape()[1] - 1;
+            double minX = xAxis2D.getMinValue();
+            double maxX = xAxis2D.getMaxValue();
+            double dx = (maxX - minX) / (shapeX - 1);
+
+            int shapeY = xAxis2D.getEdges().getShape()[0] - 1;
+            double minY = yAxis2D.getMinValue();
+            double maxY = yAxis2D.getMaxValue();
+            double dy = (maxY - minY) / (shapeY - 1);
+
+            double cellSize = (dx + dy) / 2;
+
+            nx = (int) Math.round((maxX - minX) / cellSize);
+            ny = (int) Math.round((maxY - minY) / cellSize);
+
+            edgesX = new double[nx];
+            for (int i = 0; i < nx; i++) {
+                edgesX[i] = minX + i * cellSize;
+            }
+
+            edgesY = new double[ny];
+            for (int i = 0; i < ny; i++) {
+                edgesY[i] = minY + i * cellSize;
+            }
+        } else {
+            throw new IllegalStateException();
+        }
+
         double ulx = edgesX[0];
-
         double urx = edgesX[edgesX.length - 1];
         double dx = (urx - ulx) / nx;
 
-        double[] edgesY = ((CoordinateAxis1D) yAxis).getCoordEdges();
         double uly = edgesY[0];
         double lly = edgesY[edgesY.length - 1];
         double dy = (lly - uly) / ny;
+
+        String wkt = getWkt(coordinateSystem.getProjection());
 
         grid.set(Grid.builder()
                 .nx(nx)
@@ -491,9 +548,8 @@ public class NetcdfDataReader extends DataReader {
                 .dy(dy)
                 .originX(ulx)
                 .originY(uly)
+                .crs(wkt)
                 .build());
-
-        String wkt = getWkt(coordinateSystem.getProjection());
 
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();
 
@@ -530,10 +586,6 @@ public class NetcdfDataReader extends DataReader {
                 csUnits = ONE;
         }
 
-        if (cellUnits == DEGREE_ANGLE && (grid.get().getOriginX() == 0 || grid.get().getOriginX() > 180)) {
-            grid.set(shiftGrid(grid.get()));
-        }
-
         if (cellUnits.isCompatible(csUnits) && !cellUnits.equals(csUnits)) {
             grid.set(scaleGrid(grid.get(), cellUnits, csUnits));
         }
@@ -541,19 +593,11 @@ public class NetcdfDataReader extends DataReader {
         return grid.get();
     }
 
-    private static Grid shiftGrid(Grid grid){
-        if (grid.getOriginX() > 180) {
-            return Grid.builder()
-                    .originX(grid.getOriginX() - 360)
-                    .originY(grid.getOriginY())
-                    .dx(grid.getDx())
-                    .dy(grid.getDy())
-                    .nx(grid.getNx())
-                    .ny(grid.getNy())
-                    .build();
-        } else {
-            return grid;
-        }
+    private static void shiftGrid(Grid grid) {
+        String crs = grid.getCrs();
+        boolean isGeographic = ReferenceUtils.isGeographic(crs);
+        if (isGeographic && (grid.getOriginX() > 180 || grid.getTerminusX() > 180))
+            grid.shift(-360, 0);
     }
 
     private static Grid scaleGrid(Grid grid, Unit<?> cellUnits, Unit<?> csUnits){
@@ -606,15 +650,16 @@ public class NetcdfDataReader extends DataReader {
 
         List<ZonedDateTime[]> times = getTimeBounds(gcs);
 
-        Array array;
+        float[] slice;
         try {
-            array = gridDatatype.readDataSlice(idx, -1, -1, -1);
+            Array array = gridDatatype.readDataSlice(idx, -1, -1, -1);
+            slice = getFloatArray(array);
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
             return null;
         }
 
-        float[] data = getFloatArray(array);
+        float[] data = getData(slice, gcs, grid, noDataValue);
 
         ZonedDateTime startTime;
         ZonedDateTime endTime;
@@ -641,6 +686,11 @@ public class NetcdfDataReader extends DataReader {
         } else {
             units = gridDatatype.getUnitsString();
         }
+
+        // Grid must be shifted after getData call since getData uses the original locations
+        // to map values.
+        shiftGrid(grid);
+
         return VortexGrid.builder()
                 .dx(grid.getDx())
                 .dy(grid.getDy())
@@ -660,5 +710,21 @@ public class NetcdfDataReader extends DataReader {
                 .endTime(endTime)
                 .interval(interval)
                 .build();
+    }
+
+    private float[] getData(float[] slice, GridCoordSystem gcs, Grid gridDefinition, double noDataValue) {
+        if (gcs.isRegularSpatial())
+            return slice;
+
+        IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gcs);
+        Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
+        float[] data = new float[coordinates.length];
+        for (int i = 0; i < data.length; i++) {
+            Coordinate coordinate = coordinates[i];
+            int index = indexSearcher.getIndex(coordinate.x, coordinate.y);
+            data[i] = index >= 0 ? slice[index] : (float) noDataValue;
+        }
+
+        return data;
     }
 }
