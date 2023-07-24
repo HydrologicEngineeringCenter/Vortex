@@ -6,9 +6,12 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.osr.SpatialReference;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Objects;
+import java.util.logging.Logger;
 
 public class ReferenceUtils {
+    private static final Logger logger = Logger.getLogger(ReferenceUtils.class.getName());
+
     static {
         GdalRegister.getInstance();
     }
@@ -48,40 +51,47 @@ public class ReferenceUtils {
         return 1;
     }
 
-    public static boolean compareSpatiallyEquivalent(VortexGrid grid1, VortexGrid grid2){
-        AtomicBoolean valid = new AtomicBoolean();
-        valid.set(true);
+    public static boolean compareSpatiallyEquivalent(VortexGrid grid1, VortexGrid grid2) {
+        boolean isValid = true;
 
-        if (grid1.nx() != grid2.nx()){
-            valid.set(false);
+        if (grid1.nx() != grid2.nx()) {
+            isValid = false;
         }
-        if (grid1.ny() != grid2.ny()){
-            valid.set(false);
+        if (grid1.ny() != grid2.ny()) {
+            isValid = false;
         }
-        if (grid1.dx() != grid2.dx()){
-            valid.set(false);
+        if (grid1.dx() != grid2.dx()) {
+            isValid = false;
         }
-        if (grid1.dy() != grid2.dy()){
-            valid.set(false);
+        if (grid1.dy() != grid2.dy()) {
+            isValid = false;
         }
 
         if (!equals(grid1.wkt(), grid2.wkt())) {
-            valid.set(false);
+            isValid = false;
         }
 
-        return valid.get();
+        return isValid;
     }
 
-    public static boolean equals(String wkt1, String wkt2) {
-        SpatialReference sr1 = new SpatialReference(wkt1);
-        SpatialReference sr2 = new SpatialReference(wkt2);
+    public static boolean equals (String wkt1, String wkt2) {
+        if (Objects.equals(wkt1, wkt2)) {
+            return true;
+        }
 
-        boolean isSame = sr1.IsSame(sr2) != 1;
-
-        sr1.delete();
-        sr2.delete();
-
-        return isSame;
+        SpatialReference srs1 = new SpatialReference(wkt1);
+        SpatialReference srs2 = new SpatialReference(wkt2);
+        try {
+            if (srs1.IsSame(srs2) == 1) {
+                return true;
+            }
+        } catch (Exception e) {
+            logger.warning(e::getMessage);
+        } finally {
+            srs1.delete();
+            srs2.delete();
+        }
+        return false;
     }
 
     public static boolean isShg(GridInfo info){

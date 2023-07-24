@@ -15,8 +15,8 @@ import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 public class GridToPointConverter {
 
@@ -116,52 +116,62 @@ public class GridToPointConverter {
 
     public static GridToPointConverterBuilder builder() {return new GridToPointConverterBuilder();}
 
-    public void convert(){
-        List<VortexGrid> grids = new ArrayList<>();
-        variables.forEach(variable -> grids.addAll(
-                DataReader.builder()
-                        .path(pathToGrids)
-                        .variable(variable)
-                        .build()
-                        .getDtos()
-                        .stream()
-                        .map(grid -> (VortexGrid)grid)
-                        .collect(Collectors.toList())));
+    public void convert() {
+        VortexGrid grid0 = (VortexGrid) DataReader.builder()
+                .path(pathToGrids)
+                .variable(variables.iterator().next())
+                .build()
+                .getDto(0);
 
-        AtomicReference<VortexGrid> maskedGrid = new AtomicReference<>();
-        maskedGrid.set(grids.get(0));
+        AtomicReference<VortexGrid> reference = new AtomicReference<>();
+        reference.set(grid0);
 
-        AtomicReference<Map<String, Integer[]>> zoneMasks = new AtomicReference<>();
-        zoneMasks.set(ZonalStatisticsCalculator.createZoneMasks(pathToZoneDataset, field, maskedGrid.get()));
+        Map<String, Integer[]> zoneMasks = ZonalStatisticsCalculator.createZoneMasks(pathToZoneDataset, field, grid0);
 
         List<VortexData> points = new ArrayList<>();
 
-        grids.forEach(grid -> {
+        int totalCount = variables.size();
+        AtomicInteger doneCount = new AtomicInteger();
 
-            if (!ReferenceUtils.compareSpatiallyEquivalent(grid, maskedGrid.get())){
-                maskedGrid.set(grid);
-                zoneMasks.set(ZonalStatisticsCalculator.createZoneMasks(pathToZoneDataset, field, grid));
+        variables.forEach(variable -> {
+            DataReader reader = DataReader.builder()
+                    .path(pathToGrids)
+                    .variable(variable)
+                    .build();
+
+            List<VortexGrid> grids = reader.getDtos().stream()
+                    .map(VortexGrid.class::cast)
+                    .toList();
+
+            for (VortexGrid grid : grids) {
+                if (!ReferenceUtils.compareSpatiallyEquivalent(grid, reference.get())) {
+                    reference.set(grid);
+                    zoneMasks.clear();
+                    zoneMasks.putAll(ZonalStatisticsCalculator.createZoneMasks(pathToZoneDataset, field, grid));
+                }
+
+                List<ZonalStatistics> zonalStatistics = ZonalStatisticsCalculator.builder()
+                        .grid(grid)
+                        .zoneMasks(zoneMasks)
+                        .build()
+                        .getZonalStatistics();
+
+                zonalStatistics.forEach(zone -> {
+                    VortexPoint point = VortexPoint.builder()
+                            .id(zone.getId())
+                            .units(grid.units())
+                            .data((float) zone.getAverage())
+                            .description(grid.description())
+                            .startTime(grid.startTime())
+                            .endTime(grid.endTime())
+                            .interval(grid.interval())
+                            .build();
+
+                    points.add(point);
+                });
             }
-
-            List<ZonalStatistics> zonalStatistics = ZonalStatisticsCalculator.builder()
-                    .grid(grid)
-                    .zoneMasks(zoneMasks.get())
-                    .build()
-                    .getZonalStatistics();
-
-            zonalStatistics.forEach(zone -> {
-                VortexPoint point = VortexPoint.builder()
-                        .id(zone.getId())
-                        .units(grid.units())
-                        .data((float) zone.getAverage())
-                        .description(grid.description())
-                        .startTime(grid.startTime())
-                        .endTime(grid.endTime())
-                        .interval(grid.interval())
-                        .build();
-
-                points.add(point);
-            });
+            int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
+            support.firePropertyChange("progress", null, newValue);
         });
 
         DataWriter writer = DataWriter.builder()
@@ -171,8 +181,6 @@ public class GridToPointConverter {
                 .build();
 
         writer.write();
-
-        support.firePropertyChange("progress", 0, 100);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
