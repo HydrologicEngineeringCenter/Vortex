@@ -89,14 +89,37 @@ public class ZonalStatisticsCalculator {
 
         AtomicReference<List<GridCell>> gridCells = new AtomicReference<>();
 
-        Map<String, Integer[]> zoneMasks = new HashMap<>();
+        Map<String, List<Long>> idFidsMap = new HashMap<>();
         long count = inLayer.GetFeatureCount();
         for (int i = 0; i < count; i++) {
             Feature inFeature = inLayer.GetFeature(i);
             String id = inFeature.GetFieldAsString(field);
-            Geometry geometry = inFeature.GetGeometryRef();
+            long fid = inFeature.GetFID();
+
+            idFidsMap.computeIfAbsent(id, fids -> new ArrayList<>());
+
+            idFidsMap.get(id).add(fid);
+        }
+
+        Map<String, Integer[]> zoneMasks = new HashMap<>();
+
+        for (Map.Entry<String, List<Long>> entry : idFidsMap.entrySet()) {
+
+            List<Long> fids = entry.getValue();
+            if (fids.isEmpty())
+                continue;
+
+            Geometry geometry = new Geometry(ogrConstants.wkbGeometryCollection);
+
+            for (Long fid : fids) {
+                Feature inFeature = inLayer.GetFeature(fid);
+                geometry.AddGeometry(inFeature.GetGeometryRef());
+                inFeature.delete();
+            }
+
             geometry.Transform(transformation);
 
+            String id = entry.getKey();
             Layer layer = dataSource.CreateLayer(id, tgt, geometry.GetGeometryType());
 
             Feature feature = new Feature(layer.GetLayerDefn());
@@ -160,7 +183,6 @@ public class ZonalStatisticsCalculator {
                 zoneMasks.put(id, intersectionMaskArray);
             }
 
-            inFeature.delete();
             geometry.delete();
             layer.delete();
             feature.delete();
@@ -201,7 +223,6 @@ public class ZonalStatisticsCalculator {
                 .average(average)
                 .build();
     }
-
 }
 
 
