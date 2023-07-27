@@ -40,14 +40,16 @@ public class UnitUtil {
             case "celsius":
             case "degrees c":
             case "deg c":
+            case "deg_c":
             case "degc":
             case "c":
                 return CELSIUS;
             case "degc-d":
                 return CELSIUS.multiply(DAY);
             case "fahrenheit":
-            case "degf":
             case "deg f":
+            case "deg_f":
+            case "degf":
             case "f":
                 return FAHRENHEIT;
             case "kelvin":
