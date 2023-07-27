@@ -68,7 +68,7 @@ public class DssDataWriter extends DataWriter {
 
             double noDataValue = grid.noDataValue();
             for (int i = 0; i < data.length; i++) {
-                if (Double.compare(data[i], noDataValue) == 0) {
+                if (Double.compare(data[i], noDataValue) == 0 || Double.isNaN(data[i])) {
                     data[i] = Heclib.UNDEFINED_FLOAT;
                 }
             }
