@@ -49,36 +49,37 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public List<VortexData> getDtos() {
-        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path);  Formatter errlog = new Formatter()) {
+        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path); Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
             if (dataset != null) {
                 FeatureType ftype = dataset.getFeatureType();
-                if (ftype == FeatureType.GRID) {
-                    assert (dataset instanceof GridDataset);
-                    GridDataset gridDataset = (GridDataset) dataset;
+                if (ftype == FeatureType.GRID
+                        && dataset instanceof GridDataset gridDataset
+                        && gridDataset.findGridDatatype(variableName) != null) {
                     return getData(gridDataset, variableName);
                 }
-            } else {
-                List<Variable> variables = ncd.getVariables();
-                for (Variable variable : variables) {
-                    if (variable.getShortName().equals(variableName) && variable instanceof VariableDS) {
-                        VariableDS variableDS = (VariableDS) variable;
-                        int count = getDtoCount(variableDS);
+            }
 
-                        VariableDsReader reader = VariableDsReader.builder()
-                                .setNetcdfFile(ncd)
-                                .setVariableName(variableName)
-                                .build();
+            List<Variable> variables = ncd.getVariables();
+            for (Variable variable : variables) {
+                if (variable.getShortName().equals(variableName)
+                        && variable instanceof VariableDS variableDS) {
+                    int count = getDtoCount(variableDS);
 
-                        List<VortexData> dataList = new ArrayList<>();
-                        for (int i = 0; i < count; i++) {
-                            VortexData data = reader.read(i);
-                            dataList.add(data);
-                        }
-                        return dataList;
+                    VariableDsReader reader = VariableDsReader.builder()
+                            .setNetcdfFile(ncd)
+                            .setVariableName(variableName)
+                            .build();
+
+                    List<VortexData> dataList = new ArrayList<>();
+                    for (int i = 0; i < count; i++) {
+                        VortexData data = reader.read(i);
+                        dataList.add(data);
                     }
+                    return dataList;
                 }
             }
+
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
             return Collections.emptyList();
@@ -88,33 +89,33 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public VortexData getDto(int idx) {
-        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path);  Formatter errlog = new Formatter()) {
+        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path); Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
             if (dataset != null) {
                 FeatureType ftype = dataset.getFeatureType();
-                if (ftype == FeatureType.GRID) {
-                    assert (dataset instanceof GridDataset);
-                    GridDataset gridDataset = (GridDataset) dataset;
+                if (ftype == FeatureType.GRID
+                        && dataset instanceof GridDataset gridDataset
+                        && gridDataset.findGridDatatype(variableName) != null) {
                     return getData(gridDataset, variableName, idx);
                 }
-            } else {
-                List<Variable> variables = ncd.getVariables();
-                for (Variable variable : variables){
-                    if (variable.getShortName().equals(variableName) && variable instanceof VariableDS) {
-                        VariableDS variableDS = (VariableDS) variable;
-                        List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
+            }
 
-                        boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
-                                && ncd.findCoordinateAxis(AxisType.Lat) != null;
+            List<Variable> variables = ncd.getVariables();
+            for (Variable variable : variables) {
+                if (variable.getShortName().equals(variableName)
+                        && variable instanceof VariableDS variableDS) {
+                    List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
 
-                        if (!coordinateSystems.isEmpty() || isLatLon) {
-                            VariableDsReader reader = VariableDsReader.builder()
-                                    .setNetcdfFile(ncd)
-                                    .setVariableName(variableName)
-                                    .build();
+                    boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
+                            && ncd.findCoordinateAxis(AxisType.Lat) != null;
 
-                            return reader.read(idx);
-                        }
+                    if (!coordinateSystems.isEmpty() || isLatLon) {
+                        VariableDsReader reader = VariableDsReader.builder()
+                                .setNetcdfFile(ncd)
+                                .setVariableName(variableName)
+                                .build();
+
+                        return reader.read(idx);
                     }
                 }
             }
@@ -127,31 +128,31 @@ public class NetcdfDataReader extends DataReader {
 
     @Override
     public int getDtoCount() {
-        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path);  Formatter errlog = new Formatter()) {
+        try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path); Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
             if (dataset != null) {
                 FeatureType ftype = dataset.getFeatureType();
-                if (ftype == FeatureType.GRID) {
-                    assert (dataset instanceof GridDataset);
-                    GridDataset gridDataset = (GridDataset) dataset;
+                if (ftype == FeatureType.GRID
+                        && dataset instanceof GridDataset gridDataset
+                        && gridDataset.findGridDatatype(variableName) != null) {
                     return getDtoCount(gridDataset, variableName);
                 }
-            } else {
-                List<Variable> variables = ncd.getVariables();
-                for (Variable variable : variables){
-                    if (variable.getShortName().equals(variableName) && variable instanceof VariableDS) {
-                        VariableDS variableDS = (VariableDS) variable;
-                        List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
+            }
 
-                        boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
-                                && ncd.findCoordinateAxis(AxisType.Lat) != null;
+            List<Variable> variables = ncd.getVariables();
+            for (Variable variable : variables) {
+                if (variable.getShortName().equals(variableName) && variable instanceof VariableDS variableDS) {
+                    List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
 
-                        if (!coordinateSystems.isEmpty() || isLatLon) {
-                            return getDtoCount(variableDS);
-                        }
+                    boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
+                            && ncd.findCoordinateAxis(AxisType.Lat) != null;
+
+                    if (!coordinateSystems.isEmpty() || isLatLon) {
+                        return getDtoCount(variableDS);
                     }
                 }
             }
+
         } catch (IOException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
@@ -621,21 +622,22 @@ public class NetcdfDataReader extends DataReader {
     private int getDtoCount(GridDataset dataset, String variable) {
         GridDatatype gridDatatype = dataset.findGridDatatype(variable);
         Dimension timeDim = gridDatatype.getTimeDimension();
-        if (timeDim != null) {
+        if (timeDim != null)
             return timeDim.getLength();
-        } else {
-            return 1;
-        }
+
+        return 1;
+
     }
 
     private int getDtoCount(VariableDS variableDS) {
         List<Dimension> dimensions = variableDS.getDimensions();
-        for (Dimension dimension : dimensions){
-            if (dimension.getShortName().equals("time")){
+        for (Dimension dimension : dimensions) {
+            if (dimension.getShortName().equals("time")) {
                 return dimension.getLength();
             }
         }
-        return 0;
+
+        return 1;
     }
 
     private VortexData getData(GridDataset dataset, String variable, int idx) {

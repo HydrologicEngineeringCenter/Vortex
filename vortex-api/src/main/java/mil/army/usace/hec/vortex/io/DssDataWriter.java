@@ -36,6 +36,7 @@ import static systems.uom.common.USCustomary.*;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.HOUR;
 import static tech.units.indriya.unit.Units.*;
+import static tech.units.indriya.unit.Units.MINUTE;
 
 public class DssDataWriter extends DataWriter {
 
@@ -52,15 +53,15 @@ public class DssDataWriter extends DataWriter {
     @Override
     public void write() {
         List<VortexGrid> grids = data.stream()
-                .filter(vortexData -> vortexData instanceof VortexGrid)
-                .map(vortexData -> (VortexGrid) vortexData)
-                .collect(Collectors.toList());
+                .filter(VortexGrid.class::isInstance)
+                .map(VortexGrid.class::cast)
+                .toList();
 
         grids.forEach(grid -> {
             GridInfo gridInfo = getGridInfo(grid);
 
             float[] data;
-            if (grid.dy() < 0){
+            if (grid.dy() < 0) {
                 data = MatrixUtils.flipArray(grid.data(), grid.nx(), grid.ny());
             } else {
                 data = grid.data();
@@ -76,13 +77,8 @@ public class DssDataWriter extends DataWriter {
             Unit<?> units = UnitUtil.getUnits(grid.units());
 
             DSSPathname dssPathname = new DSSPathname();
-            String cPart = getCPartForGrid(grid.shortName());
-            if (cPart.isEmpty()) {
-                cPart = getCPartForGrid(grid.description());
-            }
-            if (cPart.isEmpty()) {
-                cPart = getCPartForGrid(grid.fileName());
-            }
+
+            String cPart = getCPart(grid);
 
             dssPathname.setCPart(cPart);
 
@@ -126,7 +122,7 @@ public class DssDataWriter extends DataWriter {
 
                 gridInfo.setDataUnits("MM");
                 gridInfo.setDataType(DssDataType.PER_CUM.value());
-                
+
                 if (options.containsKey("partF") && options.get("partF").equals("*")) {
                     DSSPathname pathnameIn = new DSSPathname();
                     int status = pathnameIn.setPathname(grid.fullName());
@@ -142,7 +138,7 @@ public class DssDataWriter extends DataWriter {
                 if (units.equals(FAHRENHEIT)) {
                     IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i]);
                     gridInfo.setDataUnits("DEG F");
-                } else if (units.equals(KELVIN)){
+                } else if (units.equals(KELVIN)) {
                     IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) (data[i] - 273.15));
                     gridInfo.setDataUnits("DEG C");
                 } else if (units.equals(CELSIUS)) {
@@ -187,9 +183,9 @@ public class DssDataWriter extends DataWriter {
         });
 
         List<VortexPoint> points = data.stream()
-                .filter(vortexData -> vortexData instanceof VortexPoint)
-                .map(vortexData -> (VortexPoint) vortexData)
-                .collect(Collectors.toList());
+                .filter(VortexPoint.class::isInstance)
+                .map(VortexPoint.class::cast)
+                .toList();
 
         Set<String> ids = points.stream()
                 .map(VortexPoint::id)
@@ -204,17 +200,17 @@ public class DssDataWriter extends DataWriter {
                     .filter(point -> point.id().equals(id))
                     .filter(point -> point.description().equals(description))
                     .sorted(Comparator.comparing(VortexPoint::startTime))
-                    .collect(Collectors.toList());
+                    .toList();
 
             List<ZonedDateTime> startTimes = filtered.stream()
                     .map(VortexPoint::startTime)
                     .sorted()
-                    .collect(Collectors.toList());
+                    .toList();
 
             List<ZonedDateTime> endTimes = filtered.stream()
                     .map(VortexPoint::endTime)
                     .sorted()
-                    .collect(Collectors.toList());
+                    .toList();
 
             boolean isRegular = true;
             Duration diff;
@@ -317,76 +313,129 @@ public class DssDataWriter extends DataWriter {
         }));
     }
 
-    private static String getCPartForGrid(String shortName){
-        String desc;
-        if (shortName != null) {
-            desc = shortName.toLowerCase();
-        } else {
-            return "";
-        }
+    private static String getCPart(VortexGrid vortexGrid) {
+        String cPartFromShortName = getCPartForGrid(vortexGrid.shortName());
+        if (!cPartFromShortName.isBlank() && isStandardCPart(cPartFromShortName))
+            return cPartFromShortName;
 
-        if (desc.contains("precipitation") && desc.contains("frequency")) {
+        String cPartFromDescription = getCPartForGrid(vortexGrid.description());
+        if (!cPartFromDescription.isBlank() && isStandardCPart(cPartFromDescription))
+            return cPartFromDescription;
+
+        String cPartFromFileName = getCPartForGrid(vortexGrid.fileName());
+        if (!cPartFromFileName.isBlank() && isStandardCPart(cPartFromFileName))
+            return cPartFromFileName;
+
+        return cPartFromShortName;
+    }
+
+    private static String getCPartForGrid(String description) {
+        if (description == null) return "";
+
+        String descriptionLower = description.toLowerCase();
+
+        if (descriptionLower.contains("precipitation")
+                && descriptionLower.contains("frequency")) {
             return "PRECIPITATION-FREQUENCY";
-        } else if (desc.contains("pressure") && desc.contains("surface")) {
+        } else if (descriptionLower.contains("pressure")
+                && descriptionLower.contains("surface")) {
             return "PRESSURE";
-        } else if (desc.contains("precipitation")
-                || desc.contains("precip")
-                || desc.contains("precip") && desc.contains("rate")
-                || desc.contains("qpe01h")
-                || desc.contains("var209-6")
-                || desc.contains("rainfall")
-                || desc.equals("pr")) {
+        } else if (descriptionLower.equals("precipitation")
+                || descriptionLower.equals("precip")
+                || descriptionLower.contains("precip")
+                && descriptionLower.contains("rate")
+                || descriptionLower.equals("qpe01h")
+                || descriptionLower.equals("var209-6")
+                || descriptionLower.equals("cmorph")
+                || descriptionLower.equals("rainfall")
+                || descriptionLower.equals("pcp")
+                || descriptionLower.equals("pr")) {
             return "PRECIPITATION";
-        } else if (desc.contains("temperature")
-                || desc.equals("airtemp")
-                || desc.equals("tasmin")
-                || desc.equals("tasmax")
-                || desc.equals("temp-air")) {
+        } else if (descriptionLower.contains("temperature")
+                || descriptionLower.equals("airtemp")
+                || descriptionLower.equals("tasmin")
+                || descriptionLower.equals("tasmax")
+                || descriptionLower.equals("temp-air")) {
             return "TEMPERATURE";
-        } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
-                && desc.contains("radiation")){
+        } else if ((descriptionLower.contains("short")
+                && descriptionLower.contains("wave")
+                || descriptionLower.contains("solar"))
+                && descriptionLower.contains("radiation")) {
             return "SOLAR RADIATION";
-        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
+        } else if ((descriptionLower.contains("wind"))
+                && (descriptionLower.contains("speed"))) {
             return "WINDSPEED";
-        } else if (desc.contains("snow") && desc.contains("water") && desc.contains("equivalent")
-                || desc.equals("swe")) {
+        } else if (descriptionLower.contains("snow")
+                && descriptionLower.contains("water")
+                && descriptionLower.contains("equivalent")
+                || descriptionLower.equals("swe")) {
             return "SWE";
-        } else if ((desc.contains("snowfall")) && (desc.contains("accumulation"))) {
+        } else if ((descriptionLower.contains("snowfall"))
+                && (descriptionLower.contains("accumulation"))) {
             return "SNOWFALL ACCUMULATION";
-        } else if (desc.contains("albedo")) {
+        } else if (descriptionLower.contains("albedo")) {
             return "ALBEDO";
-        } else if (desc.contains("snow") && desc.contains("depth")) {
+        } else if (descriptionLower.contains("snow")
+                && descriptionLower.contains("depth")) {
             return "SNOW DEPTH";
-        } else if (desc.contains("snow") && desc.contains("melt") && desc.contains("runoff")) {
+        } else if (descriptionLower.contains("snow")
+                && descriptionLower.contains("melt")
+                && descriptionLower.contains("runoff")) {
             return "LIQUID WATER";
-        } else if (desc.contains("snow") && desc.contains("sublimation")) {
+        } else if (descriptionLower.contains("snow")
+                && descriptionLower.contains("sublimation")) {
             return "SNOW SUBLIMATION";
-        } else if (desc.equals("cold content")){
+        } else if (descriptionLower.equals("cold content")) {
             return "COLD CONTENT";
-        } else if (desc.equals("cold content ati")){
+        } else if (descriptionLower.equals("cold content ati")) {
             return "COLD CONTENT ATI";
-        } else if (desc.equals("liquid water")){
+        } else if (descriptionLower.equals("liquid water")) {
             return "LIQUID WATER";
-        } else if (desc.equals("meltrate ati")){
+        } else if (descriptionLower.equals("meltrate ati")) {
             return "MELTRATE ATI";
-        } else if (desc.equals("snow depth")){
+        } else if (descriptionLower.equals("snow depth")) {
             return "SNOW DEPTH";
-        } else if (desc.equals("snow melt")){
+        } else if (descriptionLower.equals("snow melt")) {
             return "SNOW MELT";
-        } else if (desc.matches("moisture\\s?deficit")){
+        } else if (descriptionLower.matches("moisture\\s?deficit")) {
             return "MOISTURE DEFICIT";
-        } else if (desc.matches("impervious\\s?area")){
+        } else if (descriptionLower.matches("impervious\\s?area")) {
             return "IMPERVIOUS AREA";
-        } else if (desc.equals("percolation") || desc.matches("percolation\\s?rate")){
+        } else if (descriptionLower.equals("percolation") || descriptionLower.matches("percolation\\s?rate")) {
             return "PERCOLATION";
-        } else if (desc.matches("curve\\s?number")){
+        } else if (descriptionLower.matches("curve\\s?number")) {
             return "CURVE NUMBER";
+        } else if (!descriptionLower.isEmpty()) {
+            return descriptionLower.toUpperCase();
         } else {
             return "";
         }
     }
 
-    private static String getCPartForTimeSeries(String description, DssDataType type){
+    private static boolean isStandardCPart(String cPart) {
+        return cPart.equals("PRECIPITATION-FREQUENCY")
+                || cPart.equals("PRESSURE")
+                || cPart.equals("PRECIPITATION")
+                || cPart.equals("TEMPERATURE")
+                || cPart.equals("SOLAR RADIATION")
+                || cPart.equals("WINDSPEED")
+                || cPart.equals("SWE")
+                || cPart.equals("SNOWFALL ACCUMULATION")
+                || cPart.equals("ALBEDO")
+                || cPart.equals("SNOW DEPTH")
+                || cPart.equals("LIQUID WATER")
+                || cPart.equals("SNOW SUBLIMATION")
+                || cPart.equals("COLD CONTENT")
+                || cPart.equals("COLD CONTENT ATI")
+                || cPart.equals("MELTRATE ATI")
+                || cPart.equals("SNOW MELT")
+                || cPart.equals("MOISTURE DEFICIT")
+                || cPart.equals("IMPERVIOUS AREA")
+                || cPart.equals("PERCOLATION")
+                || cPart.equals("CURVE NUMBER");
+    }
+
+    private static String getCPartForTimeSeries(String description, DssDataType type) {
         String desc;
         if (description != null) {
             desc = description.toLowerCase();
@@ -466,151 +515,126 @@ public class DssDataWriter extends DataWriter {
         return pathnameOut;
     }
 
-    private static String getUnitsString(Unit<?> unit){
-        if (unit.equals(MILLI(METRE))){
+    private static String getUnitsString(Unit<?> unit) {
+        if (unit.equals(MILLI(METRE))) {
             return "MM";
         }
-        if (unit.equals(INCH)){
+        if (unit.equals(INCH)) {
             return "IN";
         }
-        if (unit.equals(INCH.divide(HOUR))){
+        if (unit.equals(INCH.divide(HOUR))) {
             return "IN/HR";
         }
-        if (unit.equals(MILLI(METRE).divide(SECOND))){
+        if (unit.equals(MILLI(METRE).divide(SECOND))) {
             return "MM/S";
         }
-        if (unit.equals(MILLI(METRE).divide(HOUR))){
+        if (unit.equals(MILLI(METRE).divide(HOUR))) {
             return "MM/HR";
         }
-        if (unit.equals(MILLI(METRE).divide(DAY))){
+        if (unit.equals(MILLI(METRE).divide(DAY))) {
             return "MM/DAY";
         }
-        if (unit.equals(CUBIC_METRE.divide(SECOND))){
+        if (unit.equals(CUBIC_METRE.divide(SECOND))) {
             return "M3/S";
         }
-        if (unit.equals(CUBIC_FOOT.divide(SECOND))){
+        if (unit.equals(CUBIC_FOOT.divide(SECOND))) {
             return "CFS";
         }
-        if (unit.equals(METRE)){
+        if (unit.equals(METRE)) {
             return "M";
         }
-        if (unit.equals(FOOT)){
+        if (unit.equals(FOOT)) {
             return "FT";
         }
-        if (unit.equals(CELSIUS)){
+        if (unit.equals(CELSIUS)) {
             return "DEG C";
         }
-        if (unit.equals(FAHRENHEIT)){
+        if (unit.equals(FAHRENHEIT)) {
             return "DEG F";
         }
-        if (unit.equals(WATT.divide(SQUARE_METRE))){
+        if (unit.equals(WATT.divide(SQUARE_METRE))) {
             return "WATT/M2";
         }
-        if (unit.equals(KILOMETRE_PER_HOUR)){
+        if (unit.equals(KILOMETRE_PER_HOUR)) {
             return "KPH";
         }
-        if (unit.equals(METRE_PER_SECOND)){
+        if (unit.equals(METRE_PER_SECOND)) {
             return "M/S";
         }
-        if (unit.equals(MILE_PER_HOUR)){
+        if (unit.equals(MILE_PER_HOUR)) {
             return "MPH";
         }
-        if (unit.equals(FOOT_PER_SECOND)){
+        if (unit.equals(FOOT_PER_SECOND)) {
             return "FT/S";
         }
-        if (unit.equals(KILO(PASCAL))){
+        if (unit.equals(KILO(PASCAL))) {
             return "KPA";
         }
         if (unit.equals(PASCAL)) {
             return "PA";
         }
-        if (unit.equals(PERCENT)){
+        if (unit.equals(PERCENT)) {
             return "%";
         }
-        if (unit.equals(KILO(METRE))){
+        if (unit.equals(KILO(METRE))) {
             return "KM";
         }
-        if (unit.equals(MILE)){
+        if (unit.equals(MILE)) {
             return "MILE";
         }
-        if (unit.equals(ONE)){
+        if (unit.equals(ONE)) {
             return "UNSPECIF";
         }
-        if (unit.equals(TON)){
+        if (unit.equals(TON)) {
             return "TONS";
         }
-        if (unit.equals(MILLI(GRAM).divide(LITRE))){
+        if (unit.equals(MILLI(GRAM).divide(LITRE))) {
             return "MG/L";
         }
-        if (unit.equals(CELSIUS.multiply(DAY))){
+        if (unit.equals(CELSIUS.multiply(DAY))) {
             return "DEGC-D";
+        }
+        if (unit.equals(MINUTE)) {
+            return "MINUTES";
         }
         return unit.toString();
     }
 
     private static String getEPart(int seconds) {
         int minutes = seconds / SECONDS_PER_MINUTE;
-        switch (minutes) {
-            case 1:
-                return "1Minute";
-            case 2:
-                return "2Minute";
-            case 3:
-                return "3Minute";
-            case 4:
-                return "4Minute";
-            case 5:
-                return "5Minute";
-            case 6:
-                return "6Minute";
-            case 8:
-                return "8Minute";
-            case 10:
-                return "10Minute";
-            case 12:
-                return "12Minute";
-            case 15:
-                return "15Minute";
-            case 20:
-                return "20Minute";
-            case 30:
-                return "30Minutes";
-            case 60:
-                return "1Hour";
-            case 120:
-                return "2Hours";
-            case 180:
-                return "3Hours";
-            case 240:
-                return "4Hours";
-            case 360:
-                return "6Hours";
-            case 480:
-                return "8Hours";
-            case 720:
-                return "12Hours";
-            case 1440:
-                return "1Day";
-            case 2880:
-                return "2Days";
-            case 5760:
-                return "3Days";
-            case 7200:
-                return "4Days";
-            case 8640:
-                return "6Days";
-            case 10080:
-                return "1Week";
-            case 43200:
-                return "1Month";
-            case 525600:
-                return "1Year";
-            default:
-                return "0";
-        }
+        return switch (minutes) {
+            case 1 -> "1Minute";
+            case 2 -> "2Minute";
+            case 3 -> "3Minute";
+            case 4 -> "4Minute";
+            case 5 -> "5Minute";
+            case 6 -> "6Minute";
+            case 8 -> "8Minute";
+            case 10 -> "10Minute";
+            case 12 -> "12Minute";
+            case 15 -> "15Minute";
+            case 20 -> "20Minute";
+            case 30 -> "30Minutes";
+            case 60 -> "1Hour";
+            case 120 -> "2Hours";
+            case 180 -> "3Hours";
+            case 240 -> "4Hours";
+            case 360 -> "6Hours";
+            case 480 -> "8Hours";
+            case 720 -> "12Hours";
+            case 1440 -> "1Day";
+            case 2880 -> "2Days";
+            case 5760 -> "3Days";
+            case 7200 -> "4Days";
+            case 8640 -> "6Days";
+            case 10080 -> "1Week";
+            case 43200 -> "1Month";
+            case 525600 -> "1Year";
+            default -> "0";
+        };
     }
 
-    private static GridInfo getGridInfo(VortexGrid grid){
+    private static GridInfo getGridInfo(VortexGrid grid) {
         GridInfo gridInfo;
 
         SpatialReference srs = new SpatialReference(grid.wkt());
@@ -623,13 +647,13 @@ public class DssDataWriter extends DataWriter {
             crsName = "";
         }
 
-        if (crsName.toLowerCase().contains("albers")){
+        if (crsName.toLowerCase().contains("albers")) {
 
             AlbersInfo albersInfo = new AlbersInfo();
             albersInfo.setCoordOfGridCellZero(0, 0);
 
             String datum = srs.GetAttrValue("geogcs");
-            if (datum.contains("83")){
+            if (datum.contains("83")) {
                 albersInfo.setProjectionDatum(GridInfo.getNad83());
             }
 
@@ -659,7 +683,7 @@ public class DssDataWriter extends DataWriter {
 
         double llx = grid.originX();
         double lly;
-        if (grid.dy() < 0){
+        if (grid.dy() < 0) {
             lly = grid.originY() + grid.dy() * grid.ny();
         } else {
             lly = grid.originY();
@@ -667,8 +691,8 @@ public class DssDataWriter extends DataWriter {
         double dx = grid.dx();
         double dy = grid.dy();
         float cellSize = (float) ((Math.abs(dx) + Math.abs(dy)) / 2.0);
-        int minX = (int) Math.round(llx/cellSize);
-        int minY = (int) Math.round(lly/cellSize);
+        int minX = (int) Math.round(llx / cellSize);
+        int minY = (int) Math.round(lly / cellSize);
 
         gridInfo.setCellInfo(minX, minY, grid.nx(), grid.ny(), cellSize);
 
@@ -700,11 +724,11 @@ public class DssDataWriter extends DataWriter {
         return gridInfo;
     }
 
-    private static HecTime getHecTime(ZonedDateTime zonedDateTime){
+    private static HecTime getHecTime(ZonedDateTime zonedDateTime) {
         return new HecTime(zonedDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
     }
 
-    private void write(float[] data, GridInfo gridInfo, DSSPathname pathname){
+    private void write(float[] data, GridInfo gridInfo, DSSPathname pathname) {
         if (options.containsKey("units")) {
             String unitString = options.get("units");
             gridInfo.setDataUnits(unitString);

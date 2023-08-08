@@ -23,7 +23,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -98,108 +97,111 @@ public class VariableDsReader {
             timeAxis = (CoordinateAxis1D) ncd.findCoordinateAxis("time");
         }
 
-        if (timeAxis != null) {
-            List<Dimension> dimensions = variableDS.getDimensions();
-            int timeDimension = -1;
-            for (int i = 0; i < dimensions.size(); i++) {
-                if (dimensions.get(i).getShortName().contains("time")) {
-                    timeDimension = i;
-                }
-            }
-
-            AtomicInteger iterations = new AtomicInteger();
-            iterations.set((int) timeAxis.getSize());
-            if (timeDimension >= 0) {
-                iterations.set((int) Math.min(timeAxis.getSize(), dimensions.get(timeDimension).getLength()));
-            }
-
-
+        if (timeAxis == null) {
             Array array;
             try {
-                if (timeDimension >= 0) {
-                    array = variableDS.slice(timeDimension, index).read();
-                } else {
-                    array = variableDS.read();
-                }
-            } catch (IOException | InvalidRangeException e) {
+                array = variableDS.read();
+            } catch (IOException e) {
                 logger.log(Level.SEVERE, e, e::getMessage);
                 array = ucar.ma2.Array.factory(DataType.FLOAT, new int[]{});
             }
 
             float[] data = getFloatArray(array);
+            return createDTO(data);
+        }
 
-            String timeAxisUnits = timeAxis.getUnitsString();
-
-            if (timeAxisUnits.equalsIgnoreCase("yyyymm")) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuuMM");
-                try {
-                    YearMonth startYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound1()[index])), formatter);
-                    YearMonth endYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound2()[index])), formatter);
-                    ZonedDateTime startTime = ZonedDateTime.of(startYearMonth.getYear(), startYearMonth.getMonth().getValue(),
-                            1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    ZonedDateTime endTime = ZonedDateTime.of(endYearMonth.getYear(), endYearMonth.getMonth().getValue(),
-                            1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    Duration interval = Duration.between(startTime, endTime);
-                    return createDTO(data, startTime, endTime, interval);
-                } catch (DateTimeParseException e) {
-                    logger.info(e::getMessage);
-                    ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    Duration interval = Duration.ofMinutes(0);
-                    return createDTO(data, startTime, endTime, interval);
-                }
-            } else {
-                String dateTimeString = (timeAxisUnits.split(" ", 3)[2]).replaceFirst(" ", "T").split(" ")[0].replace(".", "");
-
-                ZonedDateTime origin;
-                if (dateTimeString.contains("T")) {
-                    origin = ZonedDateTime.of(LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC"));
-                } else {
-                    origin = ZonedDateTime.of(LocalDate.parse(dateTimeString, DateTimeFormatter.ofPattern("uuuu-M-d")), LocalTime.of(0, 0), ZoneId.of("UTC"));
-                }
-
-                try {
-                    ZonedDateTime startTime;
-                    ZonedDateTime endTime;
-                    if (timeAxisUnits.toLowerCase().matches("^month[s]? since.*$")) {
-                        startTime = origin.plusMonths((long) timeAxis.getBound1()[index]);
-                        endTime = origin.plusMonths((long) timeAxis.getBound2()[index]);
-                    } else if (timeAxisUnits.toLowerCase().matches("^day[s]? since.*$")) {
-                        startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 86400);
-                        endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 86400);
-                    } else if (timeAxisUnits.toLowerCase().matches("^hour[s]? since.*$")) {
-                        startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 3600);
-                        if (ncd.getLocation().toLowerCase().matches("hrrr.*wrfsfcf.*")) {
-                            endTime = startTime.plusHours(1);
-                        } else {
-                            endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 3600);
-                        }
-                    } else if (timeAxisUnits.toLowerCase().matches("^minute[s]? since.*$")) {
-                        endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 60);
-                        if (variableDS.getDescription().toLowerCase().contains("qpe01h")) {
-                            startTime = endTime.minusHours(1);
-                        } else {
-                            startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 60);
-                        }
-                    } else if (timeAxisUnits.toLowerCase().matches("^second[s]? since.*$")) {
-                        startTime = origin.plusSeconds((long) timeAxis.getBound1()[index]);
-                        endTime = origin.plusSeconds((long) timeAxis.getBound2()[index]);
-                    } else {
-                        startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                        endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    }
-                    Duration interval = Duration.between(startTime, endTime);
-                    return createDTO(data, startTime, endTime, interval);
-                } catch (Exception e) {
-                    logger.info(e::getMessage);
-                    ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    Duration interval = Duration.ofMinutes(0);
-                    return createDTO(data, startTime, endTime, interval);
-                }
+        List<Dimension> dimensions = variableDS.getDimensions();
+        int timeDimension = -1;
+        for (int i = 0; i < dimensions.size(); i++) {
+            if (dimensions.get(i).getShortName().contains("time")) {
+                timeDimension = i;
             }
         }
-        return null;
+
+        Array array;
+        try {
+            if (timeDimension >= 0) {
+                array = variableDS.slice(timeDimension, index).read();
+            } else {
+                array = variableDS.read();
+            }
+        } catch (IOException | InvalidRangeException e) {
+            logger.log(Level.SEVERE, e, e::getMessage);
+            array = ucar.ma2.Array.factory(DataType.FLOAT, new int[]{});
+        }
+
+        float[] data = getFloatArray(array);
+
+        String timeAxisUnits = timeAxis.getUnitsString();
+
+        if (timeAxisUnits.equalsIgnoreCase("yyyymm")) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuuMM");
+            try {
+                YearMonth startYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound1()[index])), formatter);
+                YearMonth endYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound2()[index])), formatter);
+                ZonedDateTime startTime = ZonedDateTime.of(startYearMonth.getYear(), startYearMonth.getMonth().getValue(),
+                        1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                ZonedDateTime endTime = ZonedDateTime.of(endYearMonth.getYear(), endYearMonth.getMonth().getValue(),
+                        1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                Duration interval = Duration.between(startTime, endTime);
+                return createDTO(data, startTime, endTime, interval);
+            } catch (DateTimeParseException e) {
+                logger.info(e::getMessage);
+                ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                Duration interval = Duration.ofMinutes(0);
+                return createDTO(data, startTime, endTime, interval);
+            }
+        } else {
+            String dateTimeString = (timeAxisUnits.split(" ", 3)[2]).replaceFirst(" ", "T").split(" ")[0].replace(".", "");
+
+            ZonedDateTime origin;
+            if (dateTimeString.contains("T")) {
+                origin = ZonedDateTime.of(LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC"));
+            } else {
+                origin = ZonedDateTime.of(LocalDate.parse(dateTimeString, DateTimeFormatter.ofPattern("uuuu-M-d")), LocalTime.of(0, 0), ZoneId.of("UTC"));
+            }
+
+            try {
+                ZonedDateTime startTime;
+                ZonedDateTime endTime;
+                if (timeAxisUnits.toLowerCase().matches("^month[s]? since.*$")) {
+                    startTime = origin.plusMonths((long) timeAxis.getBound1()[index]);
+                    endTime = origin.plusMonths((long) timeAxis.getBound2()[index]);
+                } else if (timeAxisUnits.toLowerCase().matches("^day[s]? since.*$")) {
+                    startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 86400);
+                    endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 86400);
+                } else if (timeAxisUnits.toLowerCase().matches("^hour[s]? since.*$")) {
+                    startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 3600);
+                    if (ncd.getLocation().toLowerCase().matches("hrrr.*wrfsfcf.*")) {
+                        endTime = startTime.plusHours(1);
+                    } else {
+                        endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 3600);
+                    }
+                } else if (timeAxisUnits.toLowerCase().matches("^minute[s]? since.*$")) {
+                    endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 60);
+                    if (variableDS.getDescription().toLowerCase().contains("qpe01h")) {
+                        startTime = endTime.minusHours(1);
+                    } else {
+                        startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 60);
+                    }
+                } else if (timeAxisUnits.toLowerCase().matches("^second[s]? since.*$")) {
+                    startTime = origin.plusSeconds((long) timeAxis.getBound1()[index]);
+                    endTime = origin.plusSeconds((long) timeAxis.getBound2()[index]);
+                } else {
+                    startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                    endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                }
+                Duration interval = Duration.between(startTime, endTime);
+                return createDTO(data, startTime, endTime, interval);
+            } catch (Exception e) {
+                logger.info(e::getMessage);
+                ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+                Duration interval = Duration.ofMinutes(0);
+                return createDTO(data, startTime, endTime, interval);
+            }
+        }
     }
 
     private VortexGrid createDTO(float[] data, ZonedDateTime startTime, ZonedDateTime endTime, Duration interval) {
@@ -224,6 +226,10 @@ public class VariableDsReader {
                 .build();
     }
 
+    private VortexGrid createDTO(float[] data) {
+        return createDTO(data, null, null, Duration.ZERO);
+    }
+
     private float[] getFloatArray(ucar.ma2.Array array) {
         float[] data;
         Object myArr;
@@ -232,8 +238,7 @@ public class VariableDsReader {
             if (myArr instanceof float[]) {
                 data = (float[]) myArr;
                 return data;
-            } else if (myArr instanceof double[]) {
-                double[] doubleArray = (double[]) myArr;
+            } else if (myArr instanceof double[] doubleArray) {
                 data = new float[(int) array.getSize()];
                 float[] datalocal = data;
                 for (int i = 0; i < data.length; i++) {
@@ -292,23 +297,12 @@ public class VariableDsReader {
 
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();
 
-        Unit<?> cellUnits;
-        switch (xAxisUnits.toLowerCase()) {
-            case "m":
-            case "meter":
-            case "metre":
-                cellUnits = Units.METRE;
-                break;
-            case "km":
-                cellUnits = KILO(Units.METRE);
-                break;
-            case "degrees_east":
-            case "degrees_north":
-                cellUnits = NonSI.DEGREE_ANGLE;
-                break;
-            default:
-                cellUnits = AbstractUnit.ONE;
-        }
+        Unit<?> cellUnits = switch (xAxisUnits.toLowerCase()) {
+            case "m", "meter", "metre" -> Units.METRE;
+            case "km" -> KILO(Units.METRE);
+            case "degrees_east", "degrees_north" -> NonSI.DEGREE_ANGLE;
+            default -> AbstractUnit.ONE;
+        };
 
         if (cellUnits == NonSI.DEGREE_ANGLE && ulx == 0) {
             ulx = -180;
@@ -318,19 +312,11 @@ public class VariableDsReader {
             ulx = ulx - 360;
         }
 
-        Unit<?> csUnits;
-        switch (ReferenceUtils.getMapUnits(wkt).toLowerCase()) {
-            case "m":
-            case "meter":
-            case "metre":
-                csUnits = Units.METRE;
-                break;
-            case "km":
-                csUnits = KILO(Units.METRE);
-                break;
-            default:
-                csUnits = AbstractUnit.ONE;
-        }
+        Unit<?> csUnits = switch (ReferenceUtils.getMapUnits(wkt).toLowerCase()) {
+            case "m", "meter", "metre" -> Units.METRE;
+            case "km" -> KILO(Units.METRE);
+            default -> AbstractUnit.ONE;
+        };
 
         if (cellUnits.isCompatible(csUnits)) {
             try {
