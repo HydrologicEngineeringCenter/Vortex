@@ -19,10 +19,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Shifter {
-    private static final Logger logger = Logger.getLogger(Normalizer.class.getName());
+    private static final Logger logger = Logger.getLogger(Shifter.class.getName());
 
     private final String pathToFile;
-    private final Set<String> grids;
+    private final Set<String> variables;
     private final Set<TimeShiftMethod> methods;
     private final Duration shift;
     private final Path destination;
@@ -31,7 +31,7 @@ public class Shifter {
 
     private Shifter(Builder builder) {
         this.pathToFile = builder.pathToFile;
-        this.grids = builder.grids;
+        this.variables = builder.grids;
         this.methods = builder.methods;
         this.shift = builder.shift;
         this.destination = builder.destination;
@@ -114,30 +114,31 @@ public class Shifter {
 
         logger.info(() -> "Time-shift started...");
 
-        List<VortexData> targets = new ArrayList<>();
-        grids.forEach(grid -> targets.addAll(
-                DataReader.builder()
-                        .path(pathToFile)
-                        .variable(grid)
-                        .build()
-                        .getDtos()));
-
-        List<VortexGrid> output = new ArrayList<>();
-        targets.forEach(grid -> output.add(shift((VortexGrid) grid, methods, shift)));
-
         AtomicInteger processed = new AtomicInteger();
-        int total = grids.size();
-        output.parallelStream().forEach(dto -> {
-            List<VortexData> data = new ArrayList<>();
-            data.add(dto);
+        int total = variables.size();
 
-            DataWriter writer = DataWriter.builder()
-                    .data(data)
-                    .destination(destination)
-                    .options(options)
+        variables.forEach(variable -> {
+            DataReader reader = DataReader.builder()
+                    .path(pathToFile)
+                    .variable(variable)
                     .build();
 
-            writer.write();
+            int count = reader.getDtoCount();
+
+            for (int i = 0; i < count; i++) {
+                VortexGrid grid = (VortexGrid) reader.getDto(i);
+
+                List<VortexData> shiftedGrids = new ArrayList<>();
+                shiftedGrids.add(shift(grid, methods, shift));
+
+                DataWriter writer = DataWriter.builder()
+                        .data(shiftedGrids)
+                        .destination(destination)
+                        .options(options)
+                        .build();
+
+                writer.write();
+            }
 
             int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
             support.firePropertyChange("progress", null, newValue);
