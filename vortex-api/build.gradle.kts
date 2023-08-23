@@ -23,6 +23,13 @@ dependencies {
     implementation("mil.army.usace.hec:hec-nucleus-data:2.+")
     implementation("mil.army.usace.hec:hec-nucleus-metadata:2.+")
     implementation("org.gdal:gdal:3.2.0")
+    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+        implementation("org.gdal:gdal:3.0.0")
+    } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+        implementation("org.gdal:gdal:3.5.0")
+    } else {
+        implementation("org.gdal:gdal:3.2.0")
+    }
     implementation("org.locationtech.jts:jts-core:1.19.0")
     implementation("tech.units:indriya:2.1.4")
     implementation("systems.uom:systems-common:2.1")
