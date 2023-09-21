@@ -109,8 +109,10 @@ public abstract class BatchImporter {
 
         inFiles.forEach(file -> {
             if (DataReader.isVariableRequired(file)) {
+                Set<String> availableVariables = new HashSet<>(DataReader.getVariables(file));
+
                 variables.forEach(variable -> {
-                    if (DataReader.getVariables(file).contains(variable)) {
+                    if (availableVariables.contains(variable)) {
                         DataReader reader = DataReader.builder()
                                 .path(file)
                                 .variable(variable)

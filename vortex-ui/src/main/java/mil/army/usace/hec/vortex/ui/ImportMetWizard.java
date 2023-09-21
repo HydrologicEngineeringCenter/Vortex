@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -498,7 +499,7 @@ public class ImportMetWizard extends VortexWizard {
         leftVariablesList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) { addSelectedVariables(); }
+                if(e.getClickCount() == 2) { updateVariablesAction(VariableChooserAction.ADD); }
             }
         });
         JScrollPane leftScrollPanel = new JScrollPane();
@@ -510,7 +511,7 @@ public class ImportMetWizard extends VortexWizard {
         rightVariablesList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) { removeSelectedVariables(); }
+                if(e.getClickCount() == 2) { updateVariablesAction(VariableChooserAction.REMOVE); }
             }
         });
         JScrollPane rightScrollPanel = new JScrollPane();
@@ -522,11 +523,11 @@ public class ImportMetWizard extends VortexWizard {
         JButton addVariableButton = new JButton(IconResources.loadIcon("images/right-arrow-24.png"));
         addVariableButton.setPreferredSize(new Dimension(22,22));
         addVariableButton.setMaximumSize(new Dimension(22,22));
-        addVariableButton.addActionListener(evt -> addSelectedVariables());
+        addVariableButton.addActionListener(evt -> updateVariablesAction(VariableChooserAction.ADD));
         JButton removeVariableButton = new JButton(IconResources.loadIcon("images/left-arrow-24.png"));
         removeVariableButton.setPreferredSize(new Dimension(22,22));
         removeVariableButton.setMaximumSize(new Dimension(22,22));
-        removeVariableButton.addActionListener(evt -> removeSelectedVariables());
+        removeVariableButton.addActionListener(evt -> updateVariablesAction(VariableChooserAction.REMOVE));
         transferButtonsPanel.add(addVariableButton);
         transferButtonsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         transferButtonsPanel.add(removeVariableButton);
@@ -742,40 +743,78 @@ public class ImportMetWizard extends VortexWizard {
         return targetCellSizeSectionPanel;
     }
 
-    private void addSelectedVariables() {
-        List<String> selectedVariables = leftVariablesList.getSelectedValuesList();
-
-        /* Adding to Right Variables List */
-        DefaultListModel<String> defaultRightModel = getDefaultListModel(rightVariablesList);
-        if(defaultRightModel == null) { return; }
-        List<String> rightVariablesList = Collections.list(defaultRightModel.elements());
-        rightVariablesList.addAll(selectedVariables);
-        sortDssVariables(rightVariablesList);
-        defaultRightModel.clear();
-        defaultRightModel.addAll(rightVariablesList);
-
-        /* Removing from Left Variables List */
-        DefaultListModel<String> defaultLeftModel = getDefaultListModel(leftVariablesList);
-        if(defaultLeftModel == null) { return; }
-        selectedVariables.forEach(defaultLeftModel::removeElement);
+    /* Actions */
+    private enum VariableChooserAction {
+        ADD, REMOVE
     }
 
-    private void removeSelectedVariables() {
-        List<String> selectedVariables = rightVariablesList.getSelectedValuesList();
+    private void updateVariablesAction(VariableChooserAction action) {
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        /* Adding to Left Variables List */
-        DefaultListModel<String> defaultLeftModel = getDefaultListModel(leftVariablesList);
-        if(defaultLeftModel == null) { return; }
-        List<String> leftVariablesList = Collections.list(defaultLeftModel.elements());
-        leftVariablesList.addAll(selectedVariables);
-        sortDssVariables(leftVariablesList);
-        defaultLeftModel.clear();
-        defaultLeftModel.addAll(leftVariablesList);
+        SwingWorker<Map<String, List<String>>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Map<String, List<String>> doInBackground() {
+                DefaultListModel<String> defaultLeftModel = getDefaultListModel(leftVariablesList);
+                DefaultListModel<String> defaultRightModel = getDefaultListModel(rightVariablesList);
 
-        /* Removing from Left Variables List */
-        DefaultListModel<String> defaultRightModel = getDefaultListModel(rightVariablesList);
-        if(defaultRightModel == null) { return; }
-        selectedVariables.forEach(defaultRightModel::removeElement);
+                if (defaultLeftModel == null || defaultRightModel == null) {
+                    return Collections.emptyMap();
+                }
+
+                Set<String> availableVariableSet = new HashSet<>(Collections.list(defaultLeftModel.elements()));
+                Set<String> selectedVariableSet = new HashSet<>(Collections.list(defaultRightModel.elements()));
+
+                if (action == VariableChooserAction.ADD) {
+                    List<String> selectedVariables = leftVariablesList.getSelectedValuesList();
+                    selectedVariables.forEach(availableVariableSet::remove);
+                    selectedVariableSet.addAll(selectedVariables);
+                } else if (action == VariableChooserAction.REMOVE) {
+                    List<String> selectedVariables = rightVariablesList.getSelectedValuesList();
+                    selectedVariables.forEach(selectedVariableSet::remove);
+                    availableVariableSet.addAll(selectedVariables);
+                }
+
+                return generateSortedLists(availableVariableSet, selectedVariableSet);
+            }
+
+            @Override
+            protected void done() {
+                DefaultListModel<String> defaultLeftModel = getDefaultListModel(leftVariablesList);
+                DefaultListModel<String> defaultRightModel = getDefaultListModel(rightVariablesList);
+                if (defaultLeftModel == null || defaultRightModel == null) return;
+
+                try {
+                    Map<String, List<String>> lists = get();
+                    if (lists.isEmpty()) return;
+
+                    defaultLeftModel.clear();
+                    defaultRightModel.clear();
+
+                    defaultLeftModel.addAll(lists.getOrDefault("available", Collections.emptyList()));
+                    defaultRightModel.addAll(lists.getOrDefault("selected", Collections.emptyList()));
+                } catch (InterruptedException | ExecutionException e) {
+                    logger.warning(e.getMessage());
+                    Thread.currentThread().interrupt();
+                } finally {
+                    setCursor(Cursor.getDefaultCursor());
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private Map<String, List<String>> generateSortedLists(Set<String> available, Set<String> selected) {
+        List<String> availableList = new ArrayList<>(available);
+        sortDssVariables(availableList);
+
+        List<String> selectedList = new ArrayList<>(selected);
+        sortDssVariables(selectedList);
+
+        Map<String, List<String>> resultMap = new HashMap<>();
+        resultMap.put("available", availableList);
+        resultMap.put("selected", selectedList);
+
+        return resultMap;
     }
 
     private void addFilesBrowseAction(FileBrowseButton fileBrowseButton) {
