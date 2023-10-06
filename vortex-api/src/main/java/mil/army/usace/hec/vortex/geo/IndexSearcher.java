@@ -4,20 +4,18 @@ import org.locationtech.jts.geom.*;
 import ucar.nc2.dataset.CoordinateAxis;
 import ucar.nc2.dataset.CoordinateAxis1D;
 import ucar.nc2.dataset.CoordinateAxis2D;
-import ucar.nc2.dt.GridCoordSystem;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IndexSearcher {
     private final Map<Point, Integer> cache = new ConcurrentHashMap<>();
     private final List<IndexedGeometry> geometries = new ArrayList<>();
-    IndexSearcher(GridCoordSystem gcs) {
+    IndexSearcher(CoordinateAxes coordinateAxes) {
 
-        CoordinateAxis xAxis = gcs.getXHorizAxis();
-        CoordinateAxis yAxis = gcs.getYHorizAxis();
+        CoordinateAxis xAxis = coordinateAxes.xAxis();
+        CoordinateAxis yAxis = coordinateAxes.yAxis();
 
         GeometryFactory factory = new GeometryFactory();
 
@@ -63,10 +61,19 @@ public class IndexSearcher {
                 coordinates[2] = new Coordinate(edgesX[i + nx + 1], edgesY[i + nx + 1]);
                 coordinates[3] = new Coordinate(edgesX[i + nx], edgesY[i + nx]);
                 coordinates[4] = new Coordinate(edgesX[i], edgesY[i]);
-                LinearRing ring = factory.createLinearRing(coordinates);
-                Geometry geometry = factory.createPolygon(ring);
 
-                geometries.add(new IndexedGeometry(index, geometry));
+                Set<Double> values = new HashSet<>();
+                for (Coordinate coordinate : coordinates) {
+                    values.add(coordinate.getX());
+                    values.add(coordinate.getY());
+                }
+
+                if (!values.contains(Double.NaN)) {
+                    LinearRing ring = factory.createLinearRing(coordinates);
+                    Geometry geometry = factory.createPolygon(ring);
+                    geometries.add(new IndexedGeometry(index, geometry));
+                }
+
                 index++;
             }
         } else {
@@ -92,5 +99,39 @@ public class IndexSearcher {
         return index;
     }
 
+    public int[] getIndices(Coordinate[] coordinates) {
+        int[] indices = new int[coordinates.length];
+        Arrays.fill(indices, -1);
+
+        GeometryFactory factory = new GeometryFactory();
+
+        List<IndexedPoint> indexedPoints = Collections.synchronizedList(new ArrayList<>());
+        for (int i = 0; i < coordinates.length; i++) {
+            Point point = factory.createPoint(coordinates[i]);
+            indexedPoints.add(new IndexedPoint(i, point));
+        }
+
+        AtomicInteger processed = new AtomicInteger();
+
+        int count = indexedPoints.size();
+
+        indexedPoints.parallelStream().forEach(ip -> {
+            int index = geometries.parallelStream()
+                    .filter(ig -> ig.geometry.contains(ip.point))
+                    .findFirst()
+                    .map(ig -> ig.index)
+                    .orElse(-1);
+
+            indices[ip.index] = index;
+
+            processed.incrementAndGet();
+            System.out.println(count - processed.get());
+        });
+
+        return indices;
+    }
+
     private record IndexedGeometry(int index, Geometry geometry) {}
+
+    private record IndexedPoint(int index, Point point) {}
 }

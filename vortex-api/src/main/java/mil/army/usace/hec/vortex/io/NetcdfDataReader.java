@@ -106,10 +106,17 @@ public class NetcdfDataReader extends DataReader {
                         && variable instanceof VariableDS variableDS) {
                     List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
 
-                    boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
+                    boolean hasLatLonAxes = ncd.findCoordinateAxis(AxisType.Lon) != null
                             && ncd.findCoordinateAxis(AxisType.Lat) != null;
 
-                    if (!coordinateSystems.isEmpty() || isLatLon) {
+                    Set<String> dimensions = variable.getDimensions()
+                            .stream()
+                            .map(Dimension::getShortName)
+                            .collect(Collectors.toSet());
+
+                    boolean hasLatLonDims = dimensions.contains("east_west") && dimensions.contains("north_south");
+
+                    if (!coordinateSystems.isEmpty() || hasLatLonAxes || hasLatLonDims) {
                         VariableDsReader reader = VariableDsReader.builder()
                                 .setNetcdfFile(ncd)
                                 .setVariableName(variableName)
@@ -163,21 +170,29 @@ public class NetcdfDataReader extends DataReader {
     public static Set<String> getVariables(String path) {
         try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path)) {
             List<Variable> variables = ncd.getVariables();
-            Set<String> variableNames = new HashSet<>();
+
+            Set<String> selectableVariables = new HashSet<>();
             for (Variable variable : variables) {
                 if (isSelectableVariable(variable)) {
                     VariableDS variableDS = (VariableDS) variable;
                     List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
 
-                    boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
+                    boolean hasLatLonAxes = ncd.findCoordinateAxis(AxisType.Lon) != null
                             && ncd.findCoordinateAxis(AxisType.Lat) != null;
 
-                    if (!coordinateSystems.isEmpty() || isLatLon) {
-                        variableNames.add(variable.getFullName());
+                    Set<String> dimensions = variable.getDimensions()
+                            .stream()
+                            .map(Dimension::getShortName)
+                            .collect(Collectors.toSet());
+
+                    boolean hasLatLonDims = dimensions.contains("east_west") && dimensions.contains("north_south");
+
+                    if (!coordinateSystems.isEmpty() || hasLatLonAxes || hasLatLonDims) {
+                        selectableVariables.add(variable.getFullName());
                     }
                 }
             }
-            return variableNames;
+            return selectableVariables;
         } catch (Exception e) {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
@@ -718,7 +733,11 @@ public class NetcdfDataReader extends DataReader {
         if (gcs.isRegularSpatial())
             return slice;
 
-        IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gcs);
+        CoordinateAxis xAxis = gcs.getXHorizAxis();
+        CoordinateAxis yAxis = gcs.getYHorizAxis();
+        CoordinateAxes coordinateAxes = new CoordinateAxes(xAxis, yAxis);
+
+        IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(coordinateAxes);
         Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
         float[] data = new float[coordinates.length];
         for (int i = 0; i < data.length; i++) {

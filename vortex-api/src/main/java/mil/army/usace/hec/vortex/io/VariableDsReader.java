@@ -1,8 +1,8 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.geo.ReferenceUtils;
-import mil.army.usace.hec.vortex.geo.WktFactory;
+import mil.army.usace.hec.vortex.geo.*;
+import org.locationtech.jts.geom.Coordinate;
 import si.uom.NonSI;
 import tech.units.indriya.AbstractUnit;
 import tech.units.indriya.unit.Units;
@@ -130,7 +130,10 @@ public class VariableDsReader {
             array = ucar.ma2.Array.factory(DataType.FLOAT, new int[]{});
         }
 
+        double noDataValue = variableDS.getFillValue();
+
         float[] data = getFloatArray(array);
+        float[] indexed = getData(data, noDataValue);
 
         String timeAxisUnits = timeAxis.getUnitsString();
 
@@ -144,13 +147,13 @@ public class VariableDsReader {
                 ZonedDateTime endTime = ZonedDateTime.of(endYearMonth.getYear(), endYearMonth.getMonth().getValue(),
                         1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 Duration interval = Duration.between(startTime, endTime);
-                return createDTO(data, startTime, endTime, interval);
+                return createDTO(indexed, startTime, endTime, interval);
             } catch (DateTimeParseException e) {
                 logger.info(e::getMessage);
                 ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 Duration interval = Duration.ofMinutes(0);
-                return createDTO(data, startTime, endTime, interval);
+                return createDTO(indexed, startTime, endTime, interval);
             }
         } else {
             String dateTimeString = (timeAxisUnits.split(" ", 3)[2]).replaceFirst(" ", "T").split(" ")[0].replace(".", "");
@@ -193,13 +196,13 @@ public class VariableDsReader {
                     endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 }
                 Duration interval = Duration.between(startTime, endTime);
-                return createDTO(data, startTime, endTime, interval);
+                return createDTO(indexed, startTime, endTime, interval);
             } catch (Exception e) {
                 logger.info(e::getMessage);
                 ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 Duration interval = Duration.ofMinutes(0);
-                return createDTO(data, startTime, endTime, interval);
+                return createDTO(indexed, startTime, endTime, interval);
             }
         }
     }
@@ -254,13 +257,15 @@ public class VariableDsReader {
         return data;
     }
 
-    private void processCellInfo() {
-
+    private CoordinateAxes getCoordinateAxes() {
         CoordinateAxis lonAxis = ncd.findCoordinateAxis(AxisType.Lon);
         CoordinateAxis latAxis = ncd.findCoordinateAxis(AxisType.Lat);
 
         CoordinateAxis geoXAxis = ncd.findCoordinateAxis(AxisType.GeoX);
         CoordinateAxis geoYAxis = ncd.findCoordinateAxis(AxisType.GeoY);
+
+        Variable latVar = ncd.findVariable("lat");
+        Variable lonVar = ncd.findVariable("lon");
 
         CoordinateAxis xAxis;
         CoordinateAxis yAxis;
@@ -271,27 +276,73 @@ public class VariableDsReader {
         } else if (lonAxis != null && latAxis != null) {
             xAxis = lonAxis;
             yAxis = latAxis;
+        } else if (lonVar != null && latVar != null) {
+            xAxis = CoordinateAxis.fromVariableDS(VariableDS.builder().copyFrom(lonVar)).build(ncd.getRootGroup());
+            yAxis = CoordinateAxis.fromVariableDS(VariableDS.builder().copyFrom(latVar)).build(ncd.getRootGroup());
         } else {
             throw new IllegalStateException();
         }
 
-        nx = (int) xAxis.getSize();
-        ny = (int) yAxis.getSize();
+        return new CoordinateAxes(xAxis, yAxis);
+    }
 
-        double[] edgesX = ((CoordinateAxis1D) xAxis).getCoordEdges();
-        ulx = edgesX[0];
+    private void processCellInfo() {
+        CoordinateAxes coordinateAxes = getCoordinateAxes();
+        CoordinateAxis xAxis = coordinateAxes.xAxis();
+        CoordinateAxis yAxis = coordinateAxes.yAxis();
 
-        double urx = edgesX[edgesX.length - 1];
-        dx = (urx - ulx) / nx;
+        if (xAxis instanceof CoordinateAxis1D xAxis1D
+                && yAxis instanceof CoordinateAxis1D yAxis1D) {
+            nx = (int) xAxis.getSize();
+            ny = (int) yAxis.getSize();
 
-        double[] edgesY = ((CoordinateAxis1D) yAxis).getCoordEdges();
-        uly = edgesY[0];
-        double lly = edgesY[edgesY.length - 1];
-        dy = (lly - uly) / ny;
+            double[] edgesX = xAxis1D.getCoordEdges();
+            ulx = edgesX[0];
+
+            double urx = edgesX[edgesX.length - 1];
+            dx = (urx - ulx) / nx;
+
+            double[] edgesY = yAxis1D.getCoordEdges();
+            uly = edgesY[0];
+
+            double lly = edgesY[edgesY.length - 1];
+            dy = (lly - uly) / ny;
+        }
+
+        if (xAxis instanceof CoordinateAxis2D xAxis2D
+                && yAxis instanceof CoordinateAxis2D yAxis2D) {
+            int shapeX = xAxis2D.getEdges().getShape()[1] - 1;
+            double minX = xAxis2D.getMinValue();
+            double maxX = xAxis2D.getMaxValue();
+            dx = (maxX - minX) / (shapeX - 1);
+
+            int shapeY = xAxis2D.getEdges().getShape()[0] - 1;
+            double minY = yAxis2D.getMinValue();
+            double maxY = yAxis2D.getMaxValue();
+            dy = (maxY - minY) / (shapeY - 1);
+
+            double cellSize = (dx + dy) / 2;
+
+            nx = (int) Math.round((maxX - minX) / cellSize);
+            ny = (int) Math.round((maxY - minY) / cellSize);
+
+            double[] edgesX = new double[nx];
+            for (int i = 0; i < nx; i++) {
+                edgesX[i] = minX + i * cellSize;
+            }
+
+            double[] edgesY = new double[ny];
+            for (int i = 0; i < ny; i++) {
+                edgesY[i] = minY + i * cellSize;
+            }
+
+            ulx = edgesX[0];
+            uly = edgesY[0];
+        }
 
         if (coordinateSystem != null) {
             wkt = WktFactory.createWkt(coordinateSystem.getProjection());
-        } else if (lonAxis != null && latAxis != null) {
+        } else {
             wkt = WktFactory.fromEpsg(4326);
         }
 
@@ -300,7 +351,7 @@ public class VariableDsReader {
         Unit<?> cellUnits = switch (xAxisUnits.toLowerCase()) {
             case "m", "meter", "metre" -> Units.METRE;
             case "km" -> KILO(Units.METRE);
-            case "degrees_east", "degrees_north" -> NonSI.DEGREE_ANGLE;
+            case "degrees_east", "degree_east", "degrees_north" -> NonSI.DEGREE_ANGLE;
             default -> AbstractUnit.ONE;
         };
 
@@ -329,6 +380,37 @@ public class VariableDsReader {
                 logger.log(Level.SEVERE, e, e::getMessage);
             }
         }
+    }
+
+    private float[] getData(float[] slice, double noDataValue) {
+        CoordinateAxes coordinateAxes = getCoordinateAxes();
+        CoordinateAxis xAxis = coordinateAxes.xAxis();
+        CoordinateAxis yAxis = coordinateAxes.yAxis();
+
+        if (xAxis.isInterval() && yAxis.isInterval())
+            return slice;
+
+        Grid gridDefinition = Grid.builder()
+                .nx(nx)
+                .ny(ny)
+                .dx(dx)
+                .dy(dy)
+                .originX(ulx)
+                .originY(uly)
+                .crs(wkt)
+                .build();
+
+        IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(coordinateAxes);
+        Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
+        int[] indices = indexSearcher.getIndices(coordinates);
+
+        float[] data = new float[coordinates.length];
+        for (int i = 0; i < indices.length; i++) {
+            int index = indices[i];
+            data[i] = index != -1 ? slice[index] : (float) noDataValue;
+        }
+
+        return data;
     }
 }
 

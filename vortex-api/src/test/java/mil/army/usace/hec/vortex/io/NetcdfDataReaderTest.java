@@ -187,6 +187,26 @@ class NetcdfDataReaderTest {
     }
 
     @Test
+    void WLDAS(){
+        String inFile = "C:/Temp/LIS_HIST_197901030000.d01.nc";
+
+        DataReader reader = DataReader.builder()
+                .path(inFile)
+                .variable("Qg_tavg")
+                .build();
+
+        VortexData vortexData = reader.getDto(0);
+        VortexGrid vortexGrid = (VortexGrid) vortexData;
+
+        DataWriter writer = DataWriter.builder()
+                .destination("C:/Temp/out.dss")
+                .data(Collections.singletonList(vortexGrid))
+                .build();
+
+        writer.write();
+    }
+
+    @Test
     void NLDAS_Forcing_APCP(){
         String inFile = new File(getClass().getResource("/NLDAS_FORA0125_H.A19820101.0000.002.grb.SUB.nc4").getFile()).toString();
 
