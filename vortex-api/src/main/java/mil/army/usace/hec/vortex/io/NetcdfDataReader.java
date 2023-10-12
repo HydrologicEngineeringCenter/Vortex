@@ -377,6 +377,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(0));
                 } else if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
+                } else if (fileName.matches("prec.[0-9]{4}.nc")) {
+                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
                 }
@@ -395,6 +397,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
                 } else if (fileName.matches("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(3);
+                } else if (fileName.matches("prec.[0-9]{4}.nc")) {
+                    zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
                 }
@@ -463,7 +467,8 @@ public class NetcdfDataReader extends DataReader {
                 "nldas_fora0125_h.a.*",
                 "hrrr.*wrfsfcf.*",
                 ".*cmorph.*h.*ly.*",
-                "ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*"
+                "ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*",
+                "prec.[0-9]{4}.nc"
         };
 
         if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
