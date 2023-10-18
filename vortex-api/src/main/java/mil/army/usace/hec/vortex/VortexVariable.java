@@ -104,7 +104,7 @@ public enum VortexVariable {
 
     private static boolean isValidSWEName(String shortName) {
         return shortName.contains("snow") && shortName.contains("water") && shortName.contains("equivalent")
-                || shortName.equals("swe");
+                || shortName.equals("swe") || shortName.equals("weasd");
     }
 
     private static boolean isValidSnowfallAccumulationName(String shortName) {
