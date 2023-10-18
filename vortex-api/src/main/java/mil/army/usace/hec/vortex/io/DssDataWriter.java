@@ -369,7 +369,8 @@ public class DssDataWriter extends DataWriter {
         } else if (descriptionLower.contains("snow")
                 && descriptionLower.contains("water")
                 && descriptionLower.contains("equivalent")
-                || descriptionLower.equals("swe")) {
+                || descriptionLower.equals("swe")
+                || descriptionLower.equals("weasd")) {
             return "SWE";
         } else if ((descriptionLower.contains("snowfall"))
                 && (descriptionLower.contains("accumulation"))) {
