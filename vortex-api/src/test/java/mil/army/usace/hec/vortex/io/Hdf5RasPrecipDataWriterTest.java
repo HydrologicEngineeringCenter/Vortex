@@ -48,7 +48,7 @@ class Hdf5DataWriterTest {
 
         String inFile = new File(getClass().getResource("/normalizer/qpe.dss").getFile()).toString();
 
-        Path destination = Paths.get(tempDir, "data2.p15.hdf");
+        Path destination = Paths.get(tempDir, "data.p15.hdf");
 
         for(String datapath:DataReader.getVariables(inFile)){
 
