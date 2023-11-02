@@ -150,12 +150,13 @@ public class Hdf5RasPrecipDataWriter extends DataWriter {
             for (VortexGrid grid : grids) {
                 long[] start = {this.lastrow + i, 0};
                 long[] count = {1, cols};
+                float[] transposedData = verticalTranpose(grid);
                 try {
                     //select the location in the hdf5 dataset to copy the new data into
                     H5.H5Sselect_hyperslab(this.filespace_id, HDF5Constants.H5S_SELECT_SET, start, stride, count, block);
 
-                    //write the vortex grid data to hdf5
-                    H5.H5Dwrite(this.dataset_id, HDF5Constants.H5T_IEEE_F32LE, this.memoryspace_id, this.filespace_id, HDF5Constants.H5P_DEFAULT, grid.data());
+                    //write the transposed vortex grid data to hdf5
+                    H5.H5Dwrite(this.dataset_id, HDF5Constants.H5T_IEEE_F32LE, this.memoryspace_id, this.filespace_id, HDF5Constants.H5P_DEFAULT, transposedData);
                 } catch (HDF5Exception e) {
                     //can't throw a checked exception in a foreach
                     //so throw a runtime exception.
@@ -257,6 +258,22 @@ public class Hdf5RasPrecipDataWriter extends DataWriter {
             } catch (Exception ex){
                 logger.severe("Failed to close hdf resource:" + ex.getMessage());
             }
+        }
+
+        private float[] verticalTranpose(VortexGrid grid) {
+            float[] data = grid.data();
+            float[] transposedData = new float[data.length];
+            int rows = grid.nx();
+            int cols = grid.ny();
+            for (int r = 0; r < rows; r++) {
+                int readindex = r * cols;
+                int writeindex = (rows - r - 1) * cols;
+                for (int c = 0; c < cols; c++) {
+                    float val = data[readindex+c];
+                    transposedData[writeindex + c] = (val<0)?0:val; //setting all values <0 to 0 rather than only values matching a specific negative NODATA value
+                }
+            }
+            return transposedData;
         }
     }
 }
