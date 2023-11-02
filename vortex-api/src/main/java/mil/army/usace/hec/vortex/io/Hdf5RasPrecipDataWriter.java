@@ -96,7 +96,7 @@ public class Hdf5RasPrecipDataWriter extends DataWriter {
             long[] maxdims = new long[2];
 
             if (exists(this.dataset_name)){
-                logger.info(String.format("Found existing dataset: %s in file.  Opening dataset for write.",this.dataset_name));
+                logger.finest(String.format("Found existing dataset: %s in file.  Opening dataset for write.",this.dataset_name));
                 this.dataset_id = H5.H5Dopen(this.file_id, this.dataset_name, HDF5Constants.H5P_DEFAULT);
 
                 //dataset exists so we need to extend the dataset.
@@ -112,7 +112,7 @@ public class Hdf5RasPrecipDataWriter extends DataWriter {
                 this.filespace_id = H5.H5Screate_simple(RANK, dims, maxdims);
 
             } else {
-                logger.info(String.format("Did not find dataset: %s in file.  Creating dataset for write.",this.dataset_name));
+                logger.finest(String.format("Did not find dataset: %s in file.  Creating dataset for write.",this.dataset_name));
                 createPath(this.dataset_name);
                 dims = new long[]{this.grids.size(), cols};
                 maxdims = new long[]{max_rows,cols};
