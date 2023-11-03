@@ -78,6 +78,31 @@ public class VortexGrid implements VortexData, Serializable {
         private Duration interval;
         private VortexDataType dataType;
 
+        public VortexGridBuilder() {
+            // Empty constructor
+        }
+
+        public VortexGridBuilder(VortexGrid copy) {
+            dx = copy.dx;
+            dy = copy.dy;
+            nx = copy.nx;
+            ny = copy.ny;
+            originX = copy.originX;
+            originY = copy.originY;
+            wkt = copy.wkt;
+            data = copy.data;
+            noDataValue = copy.noDataValue;
+            units = copy.units;
+            fileName = copy.fileName;
+            shortName = copy.shortName;
+            fullName = copy.fullName;
+            description = copy.description;
+            startTime = copy.startTime;
+            endTime = copy.endTime;
+            interval = copy.interval;
+            dataType = copy.dataType;
+        }
+
         public VortexGridBuilder dx (final double dx) {
             this.dx = dx;
             return this;
@@ -188,6 +213,10 @@ public class VortexGrid implements VortexData, Serializable {
         return new VortexGridBuilder();
     }
 
+    public VortexGridBuilder toBuilder() {
+        return new VortexGridBuilder(this);
+    }
+
     public double dx() {
         return dx;
     }
@@ -296,13 +325,14 @@ public class VortexGrid implements VortexData, Serializable {
         return data3D;
     }
 
+    public boolean isNoDataValue(double value) {
+        return value == noDataValue;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VortexGrid)) return false;
-
-        VortexGrid that = (VortexGrid) o;
-
+        if (!(o instanceof VortexGrid that)) return false;
         if (Double.compare(that.dx, dx) != 0) return false;
         if (Double.compare(that.dy, dy) != 0) return false;
         if (nx != that.nx) return false;

@@ -3,6 +3,8 @@ package mil.army.usace.hec.vortex.util;
 import hec.heclib.util.HecTime;
 import ucar.nc2.time.CalendarDate;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
@@ -16,6 +18,11 @@ public class TimeConverter {
 
     public static ZonedDateTime toZonedDateTime(CalendarDate calendarDate){
         return ZonedDateTime.parse(calendarDate.toString());
+    }
+
+    public static ZonedDateTime toZonedDateTime(long epochSeconds, ZoneId zoneId) {
+        Instant instant = Instant.ofEpochSecond(epochSeconds);
+        return ZonedDateTime.ofInstant(instant, zoneId);
     }
 
     public static HecTime toHecTime(ZonedDateTime zonedDateTime){
