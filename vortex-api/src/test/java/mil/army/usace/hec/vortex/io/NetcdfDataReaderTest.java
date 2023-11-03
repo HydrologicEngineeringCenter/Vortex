@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.dss.DssDataType;
+import hec.heclib.dss.HecDataManager;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GriddedData;
@@ -13,7 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Envelope;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -21,6 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -314,30 +320,33 @@ class NetcdfDataReaderTest {
 
     @Test
     void gefs() {
-        URL inUrl = Objects.requireNonNull(getClass().getResource(
-                "/gefs/gep01.t06z.pgrb2s.0p25.f000.grb2"));
+        URL url = getClass().getResource("/gefs/gep01.t06z.pgrb2s.0p25.f000.grb2");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
 
-        String inFile = new File(inUrl.getFile()).toString();
-        List<String> inFiles = Collections.singletonList(inFile);
+        List<String> inFiles = Collections.singletonList(file);
 
-        URL outURL = Objects.requireNonNull(getClass().getResource(
-                "/gefs/gefs.dss"));
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "gefs.dss");
 
-        String outFile = new File(outURL.getFile()).toString();
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
 
         List<String> vars = Collections.singletonList("Precipitable_water_entire_atmosphere_single_layer_ens");
 
         BatchImporter importer = BatchImporter.builder()
                 .inFiles(inFiles)
                 .variables(vars)
-                .destination(outFile)
+                .destination(pathToDestination.toString())
                 .build();
 
         importer.process();
 
         int[] status = new int[1];
         GriddedData griddedData = new GriddedData();
-        griddedData.setDSSFileName(outFile);
+        griddedData.setDSSFileName(pathToDestination.toString());
         griddedData.setPathname("///PRECIPITATION/27JUN2022:0600/27JUN2022:0900//");
         GridData gridData = new GridData();
         griddedData.retrieveGriddedData(true, gridData, status);
@@ -355,6 +364,13 @@ class NetcdfDataReaderTest {
         Assertions.assertEquals(20.607605, gridInfo.getMeanValue(), 1E-2);
 
         griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
     }
 
     @Test

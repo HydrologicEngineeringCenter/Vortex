@@ -28,10 +28,12 @@ class BatchImporterTest {
 
     @Test
     void MrmsPrecipPassesRegression() {
-        String inFile = new File(getClass().getResource(
-                "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
+        URL url = getClass().getResource("/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
         List<String> inFiles = new ArrayList<>();
-        inFiles.add(inFile);
+        inFiles.add(file);
 
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
         List<String> variables = new ArrayList<>();
@@ -284,6 +286,12 @@ class BatchImporterTest {
         inFiles.add(inFile);
 
         Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "cmorph.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
 
         List<String> variables = new ArrayList<>();
         variables.add("cmorph");
