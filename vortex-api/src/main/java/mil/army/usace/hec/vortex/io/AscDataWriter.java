@@ -3,7 +3,6 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.util.ImageUtils;
-import mil.army.usace.hec.vortex.util.MatrixUtils;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.TranslateOptions;
 import org.gdal.gdal.gdal;
@@ -37,7 +36,7 @@ public class AscDataWriter extends DataWriter {
             if (grid.dy() < 0){
                 gridOut = grid;
             } else {
-                float[] flipped = MatrixUtils.flipArray(grid.data(), grid.nx(), grid.ny());
+                float[] flipped = RasterUtils.flipVertically(grid.data(), grid.nx());
                 gridOut = VortexGrid.builder()
                         .dx(grid.dx())
                         .dy(grid.dy())

@@ -12,7 +12,7 @@ import hec.io.DataContainer;
 import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
-import mil.army.usace.hec.vortex.util.MatrixUtils;
+import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.util.UnitUtil;
 import org.gdal.osr.SpatialReference;
 
@@ -35,8 +35,8 @@ import static javax.measure.MetricPrefix.MILLI;
 import static systems.uom.common.USCustomary.*;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.HOUR;
-import static tech.units.indriya.unit.Units.*;
 import static tech.units.indriya.unit.Units.MINUTE;
+import static tech.units.indriya.unit.Units.*;
 
 public class DssDataWriter extends DataWriter {
 
@@ -62,7 +62,7 @@ public class DssDataWriter extends DataWriter {
 
             float[] data;
             if (grid.dy() < 0) {
-                data = MatrixUtils.flipArray(grid.data(), grid.nx(), grid.ny());
+                data = RasterUtils.flipVertically(grid.data(), grid.nx());
             } else {
                 data = grid.data();
             }

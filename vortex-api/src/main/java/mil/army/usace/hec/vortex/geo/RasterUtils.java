@@ -82,4 +82,20 @@ public class RasterUtils {
                 .interval(grid.interval())
                 .build();
     }
+
+    public static float[] flipVertically (float[] data, int nx) {
+        int length = data.length;
+        float[] flipped = new float[length];
+        int ny = length / nx;
+
+        for (int i = 0; i < length; i++) {
+            int row = i / nx;
+            int newRow = ny - row - 1;
+            int column = i % nx;
+            int newI = newRow * nx + column;
+            flipped[newI] = data[i];
+        }
+
+        return flipped;
+    }
 }

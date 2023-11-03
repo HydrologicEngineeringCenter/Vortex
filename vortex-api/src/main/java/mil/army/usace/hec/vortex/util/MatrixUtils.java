@@ -27,9 +27,4 @@ public class MatrixUtils {
         }
         return array;
     }
-
-    public static float[] flipArray(float[] array, int nx, int ny) {
-        float[][] matrix = arrayToMatrix(array, nx, ny);
-        return matrixToArray(matrix, nx, ny);
-    }
 }

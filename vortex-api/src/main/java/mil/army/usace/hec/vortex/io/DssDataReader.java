@@ -1,10 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.heclib.dss.DSSPathname;
-import hec.heclib.dss.DssDataType;
-import hec.heclib.dss.HecDSSDataAttributes;
-import hec.heclib.dss.HecDSSFileAccess;
-import hec.heclib.dss.HecDssCatalog;
+import hec.heclib.dss.*;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
@@ -12,9 +8,9 @@ import hec.heclib.grid.GriddedData;
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
-import mil.army.usace.hec.vortex.util.MatrixUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -93,7 +89,7 @@ class DssDataReader extends DataReader {
             interval = Duration.between(startTime, endTime);
         }
 
-        float[] data = MatrixUtils.flipArray(gridData.getData(), nx, ny);
+        float[] data = RasterUtils.flipVertically(gridData.getData(), nx);
 
         String dssTypeString = DssDataType.fromInt(gridInfo.getDataType()).toString();
 
