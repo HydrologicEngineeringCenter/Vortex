@@ -28,6 +28,13 @@ public class GridToPointWizard extends VortexWizard {
     private CardLayout cardLayout;
     private JButton backButton, nextButton, cancelButton;
     private int cardNumber;
+    private JCheckBox minCheckBox;
+    private JCheckBox maxCheckBox;
+    private JCheckBox medianCheckBox;
+    private JCheckBox pct25thCheckBox;
+    private JCheckBox pct75thCheckBox;
+    private JCheckBox pctCellsGreaterZeroCheckBox;
+    private JCheckBox pctCellsGreater25thPctBox;
 
     private JTextField zonesShapefile;
     private JTextField sourceFileTextField;
@@ -82,6 +89,7 @@ public class GridToPointWizard extends VortexWizard {
         contentCards.add("Step Three", stepThreePanel());
         contentCards.add("Step Four", stepFourPanel());
         contentCards.add("Step Five", stepFivePanel());
+        contentCards.add("Step Six", stepSixPanel());
     }
 
     private void initializeButtonPanel() {
@@ -121,19 +129,19 @@ public class GridToPointWizard extends VortexWizard {
         cardNumber++;
         backButton.setEnabled(true);
 
-        if(cardNumber == 3) {
+        if(cardNumber == 4) {
             backButton.setEnabled(false);
             nextButton.setEnabled(false);
-        } // If: Step Four (Processing...) Then disable Back and Next button
+        }
 
-        if(cardNumber == 4) {
+        if(cardNumber == 5) {
             backButton.setVisible(false);
             nextButton.setText(TextProperties.getInstance().getProperty("GridToPointWiz_Restart"));
             nextButton.setToolTipText(TextProperties.getInstance().getProperty("GridToPointWiz_Restart_TT"));
             nextButton.setEnabled(true);
             cancelButton.setText(TextProperties.getInstance().getProperty("GridToPointWiz_Close"));
             cancelButton.setToolTipText(TextProperties.getInstance().getProperty("GridToPointWiz_Close_TT"));
-        } // If: Step Five (Change Cancel to Close)
+        }
 
         cardLayout.next(contentCards);
     }
@@ -167,12 +175,21 @@ public class GridToPointWizard extends VortexWizard {
         /* Clearing Step Two Panel */
         zonesShapefile.setText("");
 
-        /* Clearing Step Three Panel */
+        // reset the statistics checkboxes
+        minCheckBox.setSelected(false);
+        maxCheckBox.setSelected(false);
+        medianCheckBox.setSelected(false);
+        pct25thCheckBox.setSelected(false);
+        pct75thCheckBox.setSelected(false);
+        pctCellsGreaterZeroCheckBox.setSelected(false);
+        pctCellsGreater25thPctBox.setSelected(false);
+
+        /* Clearing Step Four Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
         destinationSelectionPanel.getFieldA().setText("");
         destinationSelectionPanel.getFieldF().setText("");
 
-        /* Clearing Step Four Panel */
+        /* Clearing Step Five Panel */
         progressBar.setIndeterminate(true);
         progressBar.setStringPainted(false);
         progressBar.setValue(0);
@@ -180,22 +197,24 @@ public class GridToPointWizard extends VortexWizard {
     }
 
     private boolean validateCurrentStep() {
-        switch(cardNumber) {
-            case 0: return validateStepOne();
-            case 1: return validateStepTwo();
-            case 2: return validateStepThree();
-            case 3: return validateStepFour();
-            default: return unknownStepError();
-        }
+        return switch (cardNumber) {
+            case 0 -> validateStepOne();
+            case 1 -> validateStepTwo();
+            case 2 -> validateStepThree();
+            case 3 -> validateStepFour();
+            case 4 -> validateStepFive();
+            default -> unknownStepError();
+        };
     }
 
     private void submitCurrentStep() {
-        switch(cardNumber) {
-            case 0: submitStepOne(); break;
-            case 1: submitStepTwo(); break;
-            case 2: submitStepThree(); break;
-            case 3: submitStepFour(); break;
-            default: unknownStepError(); break;
+        switch (cardNumber) {
+            case 0 -> submitStepOne();
+            case 1 -> submitStepTwo();
+            case 2 -> submitStepThree();
+            case 3 -> submitStepFour();
+            case 4 -> submitStepFive();
+            default -> unknownStepError();
         }
     }
 
@@ -332,6 +351,86 @@ public class GridToPointWizard extends VortexWizard {
     private void submitStepTwo() {}
 
     private JPanel stepThreePanel() {
+        JLabel statisticsLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWizStatisticsL"));
+        JPanel statisticsLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        statisticsLabelPanel.add(statisticsLabel);
+
+        JPanel statisticsCheckBoxesPanel = statisticsCheckBoxesPanel();
+
+        GridBagLayout gridBagLayout = new GridBagLayout();
+
+        JPanel stepThreePanel = new JPanel(gridBagLayout);
+        stepThreePanel.setBorder(BorderFactory.createEmptyBorder(5,9,5,7));
+
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new Insets(0, 0, 5, 0);
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.weightx = 1;
+        gridBagConstraints.weighty = 0;
+
+        gridBagConstraints.gridy = 0;
+        stepThreePanel.add(statisticsLabelPanel, gridBagConstraints);
+
+        gridBagConstraints.gridy = 1;
+        stepThreePanel.add(statisticsCheckBoxesPanel, gridBagConstraints);
+
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.weighty = 1;
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        stepThreePanel.add(new JPanel(), gridBagConstraints);
+
+        return stepThreePanel;
+    }
+
+    private JPanel statisticsCheckBoxesPanel() {
+        // create check boxes
+        minCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMinL"),false);
+        maxCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMaxL"),false);
+        medianCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMedianL"),false);
+        pct25thCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWiz25thPctL"),false);
+        pct75thCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWiz75thPctL"),false);
+        pctCellsGreaterZeroCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizPctCellsGreaterZeroL"),false);
+        pctCellsGreater25thPctBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizPctCellsGreater25thPctL"),false);
+
+        Box statisticsBox = Box.createVerticalBox();
+        statisticsBox.add(minCheckBox);
+        statisticsBox.add(maxCheckBox);
+        statisticsBox.add(medianCheckBox);
+        statisticsBox.add(pct25thCheckBox);
+        statisticsBox.add(pct75thCheckBox);
+        statisticsBox.add(pctCellsGreaterZeroCheckBox);
+        statisticsBox.add(pctCellsGreater25thPctBox);
+
+        JPanel statisticsCheckBoxesPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        statisticsCheckBoxesPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        statisticsCheckBoxesPanel.add(statisticsBox);
+
+        return statisticsCheckBoxesPanel;
+    }
+
+    private void submitStepThree() {}
+
+    private boolean validateStepThree() {
+        if (minCheckBox.isSelected() ||
+                maxCheckBox.isSelected() ||
+                medianCheckBox.isSelected() ||
+                pct25thCheckBox.isSelected() ||
+                pct75thCheckBox.isSelected() ||
+                pctCellsGreaterZeroCheckBox.isSelected() ||
+                pctCellsGreater25thPctBox.isSelected()) {
+            return true;
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    TextProperties.getInstance().getProperty("GridToPointWizNoStatisticsSelected"),
+                    TextProperties.getInstance().getProperty("GridToPointWizInvalid"),
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private JPanel stepFourPanel() {
         destinationSelectionPanel = new DestinationSelectionPanel(this);
 
         JTextField fieldB = destinationSelectionPanel.getFieldB();
@@ -341,7 +440,7 @@ public class GridToPointWizard extends VortexWizard {
         return destinationSelectionPanel;
     }
 
-    private boolean validateStepThree() {
+    private boolean validateStepFour() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if(destinationFile == null || destinationFile.isEmpty() ) {
             JOptionPane.showMessageDialog(this, "Destination file is required.",
@@ -352,7 +451,7 @@ public class GridToPointWizard extends VortexWizard {
         return true;
     }
 
-    private void submitStepThree() {
+    private void submitStepFour() {
         SwingWorker<Void, Void> task = new SwingWorker<>() {
             @Override
             protected Void doInBackground() {
@@ -378,6 +477,24 @@ public class GridToPointWizard extends VortexWizard {
         /* Shapefile */
         String shapefile = zonesShapefile.getText();
         String fieldSelection = String.valueOf(fieldComboBox.getSelectedItem());
+
+        List<String> statisticsList = new ArrayList<>();
+
+        if (minCheckBox.isSelected()) {
+            statisticsList.add(minCheckBox.getText());
+        } if (maxCheckBox.isSelected()) {
+            statisticsList.add(maxCheckBox.getText());
+        } if (medianCheckBox.isSelected()) {
+            statisticsList.add(medianCheckBox.getText());
+        } if (pct25thCheckBox.isSelected()) {
+            statisticsList.add(pct25thCheckBox.getText());
+        } if (pct75thCheckBox.isSelected()) {
+            statisticsList.add(pct75thCheckBox.getText());
+        } if (pctCellsGreaterZeroCheckBox.isSelected()) {
+            statisticsList.add(pctCellsGreaterZeroCheckBox.getText());
+        } if (pctCellsGreater25thPctBox.isSelected()) {
+            statisticsList.add(pctCellsGreater25thPctBox.getText());
+        }
 
         /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
@@ -417,6 +534,7 @@ public class GridToPointWizard extends VortexWizard {
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToSource)
                 .variables(sourceGrids)
+                .statistics(statisticsList)
                 .pathToFeatures(shapefile)
                 .field(fieldSelection)
                 .destination(destination)
@@ -437,8 +555,8 @@ public class GridToPointWizard extends VortexWizard {
         converter.convert();
     }
 
-    private JPanel stepFourPanel() {
-        JPanel stepFourPanel = new JPanel(new GridBagLayout());
+    private JPanel stepFivePanel() {
+        JPanel stepFivePanel = new JPanel(new GridBagLayout());
 
         JPanel insidePanel = new JPanel();
         insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
@@ -455,20 +573,20 @@ public class GridToPointWizard extends VortexWizard {
         progressPanel.add(progressBar);
         insidePanel.add(progressPanel);
 
-        stepFourPanel.add(insidePanel);
+        stepFivePanel.add(insidePanel);
 
-        return stepFourPanel;
+        return stepFivePanel;
     }
 
-    private boolean validateStepFour() { return true; }
+    private boolean validateStepFive() { return true; }
 
-    private void submitStepFour() {}
+    private void submitStepFive() {}
 
-    private JPanel stepFivePanel() {
-        JPanel stepFivePanel = new JPanel(new GridBagLayout());
+    private JPanel stepSixPanel() {
+        JPanel stepSixPanel = new JPanel(new GridBagLayout());
         JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWiz_Complete_L"));
-        stepFivePanel.add(completeLabel);
-        return stepFivePanel;
+        stepSixPanel.add(completeLabel);
+        return stepSixPanel;
     }
 
     private void dataSourceBrowseAction(FileBrowseButton fileBrowseButton) {

@@ -234,38 +234,134 @@ public class DssDataWriter extends DataWriter {
                 }
             }
 
-            double[] values = filtered.stream()
-                    .mapToDouble(VortexPoint::data)
+            String cPartStatistic = "";
+            double[] averages = filtered.stream()
+                    .mapToDouble(VortexPoint::getAverage)
                     .toArray();
+            // Always write out averages
+            writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, averages, cPartStatistic);
 
-            String units = filtered.get(0).units();
-            DssDataType type = getDssDataType(description, diff);
+            double[] mins = filtered.stream()
+                    .mapToDouble(VortexPoint::getMin)
+                    .toArray();
+            cPartStatistic = "-MIN";
+            if(!Double.isNaN(mins[0])) {
+                writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, mins, cPartStatistic);
+            }
 
-            DSSPathname pathname = new DSSPathname();
-            pathname.setBPart(id);
-            String cPart = getCPartForTimeSeries(description, type);
-            pathname.setCPart(cPart);
+            double[] maxes = filtered.stream()
+                    .mapToDouble(VortexPoint::getMax)
+                    .toArray();
+            cPartStatistic = "-MAX";
+            if(!Double.isNaN(maxes[0])) {
+                writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, maxes, cPartStatistic);
+            }
 
-            TimeSeriesContainer tsc = new TimeSeriesContainer();
-            tsc.setUnits(units);
-            tsc.setType(type.toString());
-            tsc.setValues(values);
+            double[] medians = filtered.stream()
+                    .mapToDouble(VortexPoint::getMedian)
+                    .toArray();
+            cPartStatistic = "-MEDIAN";
+            if(!Double.isNaN(medians[0])) {
+                writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, medians, cPartStatistic);
+            }
 
-            if (isRegular) {
-                int seconds = (int) diff.abs().getSeconds();
-                String ePart = getEPart(seconds);
-                pathname.setEPart(ePart);
+            double[] firstQuartiles = filtered.stream()
+                    .mapToDouble(VortexPoint::getFirstQuartile)
+                    .toArray();
+            cPartStatistic = "-Q1";
+            if(!Double.isNaN(firstQuartiles[0])) {
+                writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, firstQuartiles, cPartStatistic);
+            }
 
-                HecTime startTime = getHecTime(startTimes.get(0));
-                if (type.equals(DssDataType.PER_CUM) || type.equals(DssDataType.PER_AVER)) {
-                    startTime.addSeconds(seconds);
-                }
+            double[] thirdQuartiles = filtered.stream()
+                    .mapToDouble(VortexPoint::getThirdQuartile)
+                    .toArray();
+            cPartStatistic = "-Q3";
+            if(!Double.isNaN(thirdQuartiles[0])) {
+                writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, thirdQuartiles, cPartStatistic);
+            }
 
-                tsc.setStartTime(startTime);
-            } else {
-                logger.info(() -> "Inconsistent time-interval in record. Data will be stored as irregular interval.");
-                pathname.setEPart("Ir-Day");
+            double[] pctCellsGreaterThanZero = filtered.stream()
+                    .mapToDouble(VortexPoint::getPctCellsGreaterThanZero)
+                    .toArray();
+            cPartStatistic = "-PCTGREATERZERO";
+            if(!Double.isNaN(pctCellsGreaterThanZero[0])) {
+                writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, pctCellsGreaterThanZero, cPartStatistic);
+            }
 
+            double[] pctCellsGreaterThanFirstQuartile = filtered.stream()
+                    .mapToDouble(VortexPoint::pctCellsGreaterThanFirstQuartile)
+                    .toArray();
+            cPartStatistic = "-PCTGREATERQ1";
+            if(!Double.isNaN(pctCellsGreaterThanFirstQuartile[0])) {
+                writeDssTimeSeries(id, description, filtered, startTimes, endTimes, isRegular, diff, pctCellsGreaterThanFirstQuartile, cPartStatistic);
+            }
+
+        }));
+    }
+
+    private void writeDssTimeSeries(String id, String description, List<VortexPoint> filtered,
+                                    List<ZonedDateTime> startTimes, List<ZonedDateTime> endTimes,
+                                    boolean isRegular, Duration diff, double[] data, String cPartStatistic) {
+        String units = filtered.get(0).units();
+        DssDataType type = getDssDataType(description, diff);
+
+        DSSPathname pathname = new DSSPathname();
+        pathname.setBPart(id);
+        String cPart = getCPartForTimeSeries(description, type) + cPartStatistic;
+        pathname.setCPart(cPart);
+
+        TimeSeriesContainer tsc = new TimeSeriesContainer();
+        tsc.setUnits(units);
+        tsc.setType(type.toString());
+        tsc.setValues(data);
+
+        if (isRegular) {
+            int seconds = (int) diff.abs().getSeconds();
+            String ePart = getEPart(seconds);
+            pathname.setEPart(ePart);
+
+            HecTime startTime = getHecTime(startTimes.get(0));
+            if (type.equals(DssDataType.PER_CUM) || type.equals(DssDataType.PER_AVER)) {
+                startTime.addSeconds(seconds);
+            }
+
+            tsc.setStartTime(startTime);
+        } else {
+            logger.info(() -> "Inconsistent time-interval in record. Data will be stored as irregular interval.");
+            pathname.setEPart("Ir-Day");
+
+            int[] times = new int[endTimes.size()];
+            for (int i = 0; i < endTimes.size(); i++) {
+                ZonedDateTime zdtEndTime = endTimes.get(i);
+                HecTime endTime = getHecTime(zdtEndTime);
+                times[i] = endTime.value();
+            }
+
+            HecTimeArray hecTimeArray = new HecTimeArray(times);
+            tsc.setTimes(hecTimeArray);
+        }
+
+        tsc.setName(updatePathname(pathname, options).toString());
+
+        HecTimeSeries dssTimeSeries = new HecTimeSeries();
+        dssTimeSeries.setDSSFileName(destination.toString());
+
+        int status = dssTimeSeries.write(tsc);
+
+        if (options.getOrDefault("isAccumulate", "false").equalsIgnoreCase("true")
+                && cPart.toLowerCase().contains("precip") && cPartStatistic.equals("")) {
+            computeCumulativePrecipitation(tsc, endTimes, dssTimeSeries);
+        }
+
+        dssTimeSeries.done();
+        if (status != 0) logger.severe("Dss write error");
+    }
+
+    private void computeCumulativePrecipitation(TimeSeriesContainer tsc, List<ZonedDateTime> endTimes,
+                                                HecTimeSeries dssTimeSeries) {
+        try {
+            if (tsc.getTimes() == null) {
                 int[] times = new int[endTimes.size()];
                 for (int i = 0; i < endTimes.size(); i++) {
                     ZonedDateTime zdtEndTime = endTimes.get(i);
@@ -276,48 +372,21 @@ public class DssDataWriter extends DataWriter {
                 HecTimeArray hecTimeArray = new HecTimeArray(times);
                 tsc.setTimes(hecTimeArray);
             }
+            HecMath math = HecMath.createInstance(tsc).accumulation();
+            DataContainer container = math.getData();
+            TimeSeriesContainer tscAccum = (TimeSeriesContainer) container;
+            DSSPathname dssPathname = new DSSPathname(tscAccum.getFullName());
 
-            tsc.setName(updatePathname(pathname, options).toString());
+            dssPathname.setCPart("PRECIP-CUM");
+            tscAccum.setType(DssDataType.INST_CUM.toString());
 
-            HecTimeSeries dssTimeSeries = new HecTimeSeries();
-            dssTimeSeries.setDSSFileName(destination.toString());
-
-            int status = dssTimeSeries.write(tsc);
-
-            if (options.getOrDefault("isAccumulate", "false").equalsIgnoreCase("true")
-                    && cPart.toLowerCase().contains("precip")) {
-                try {
-                    if (tsc.getTimes() == null) {
-                        int[] times = new int[endTimes.size()];
-                        for (int i = 0; i < endTimes.size(); i++) {
-                            ZonedDateTime zdtEndTime = endTimes.get(i);
-                            HecTime endTime = getHecTime(zdtEndTime);
-                            times[i] = endTime.value();
-                        }
-
-                        HecTimeArray hecTimeArray = new HecTimeArray(times);
-                        tsc.setTimes(hecTimeArray);
-                    }
-                    HecMath math = HecMath.createInstance(tsc).accumulation();
-                    DataContainer container = math.getData();
-                    TimeSeriesContainer tscAccum = (TimeSeriesContainer) container;
-                    DSSPathname dssPathname = new DSSPathname(tscAccum.getFullName());
-
-                    dssPathname.setCPart("PRECIP-CUM");
-                    tscAccum.setType(DssDataType.INST_CUM.toString());
-
-                    tscAccum.setFullName(dssPathname.getPathname());
-                    if (dssTimeSeries.write(tscAccum) != 0) {
-                        logger.severe("Dss write error");
-                    }
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, e, e::getMessage);
-                }
+            tscAccum.setFullName(dssPathname.getPathname());
+            if (dssTimeSeries.write(tscAccum) != 0) {
+                logger.severe("Dss write error");
             }
-
-            dssTimeSeries.done();
-            if (status != 0) logger.severe("Dss write error");
-        }));
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e, e::getMessage);
+        }
     }
 
     private static String getCPart(VortexGrid vortexGrid) {

@@ -9,7 +9,14 @@ public class VortexPoint implements VortexData, Serializable {
     private double originY;
     private String id;
     private String wkt;
-    private float data;
+    private final float average;
+    private final float min;
+    private final float max;
+    private final float median;
+    private final float firstQuartile;
+    private final float thirdQuartile;
+    private final double pctCellsGreaterThanZero;
+    private final double pctCellsGreaterThanFirstQuartile;
     private String units;
     private String fileName;
     private String shortName;
@@ -25,7 +32,14 @@ public class VortexPoint implements VortexData, Serializable {
         this.originY = builder.originY;
         this.id = builder.id;
         this.wkt = builder.wkt;
-        this.data = builder.data;
+        this.average = builder.average;
+        this.min = builder.min;
+        this.max = builder.max;
+        this.median = builder.median;
+        this.firstQuartile = builder.firstQuartile;
+        this.thirdQuartile = builder.thirdQuartile;
+        this.pctCellsGreaterThanZero = builder.pctCellsGreaterThanZero;
+        this.pctCellsGreaterThanFirstQuartile = builder.pctCellsGreaterThanFirstQuartile;
         this.units = builder.units;
         this.fileName = builder.fileName;
         this.shortName = builder.shortName;
@@ -34,7 +48,6 @@ public class VortexPoint implements VortexData, Serializable {
         this.startTime = builder.startTime;
         this.endTime = builder.endTime;
         this.interval = builder.interval;
-
     }
 
     public static class VortexPointBuilder {
@@ -42,7 +55,14 @@ public class VortexPoint implements VortexData, Serializable {
         private double originY;
         private String id;
         private String wkt;
-        private float data;
+        private float average;
+        private float min;
+        private float max;
+        private float median;
+        private float firstQuartile;
+        private float thirdQuartile;
+        private double pctCellsGreaterThanZero;
+        private double pctCellsGreaterThanFirstQuartile;
         private String units;
         private String fileName;
         private String shortName;
@@ -72,8 +92,43 @@ public class VortexPoint implements VortexData, Serializable {
             return this;
         }
 
-        public VortexPointBuilder data (final float data) {
-            this.data = data;
+        public VortexPointBuilder average(final float average) {
+            this.average = average;
+            return this;
+        }
+
+        public VortexPointBuilder min (final float min) {
+            this.min = min;
+            return this;
+        }
+
+        public VortexPointBuilder max (final float max) {
+            this.max = max;
+            return this;
+        }
+
+        public VortexPointBuilder median (final float median) {
+            this.median = median;
+            return this;
+        }
+
+        public VortexPointBuilder firstQuartile (final float firstQuartile) {
+            this.firstQuartile = firstQuartile;
+            return this;
+        }
+
+        public VortexPointBuilder thirdQuartile (final float thirdQuartile) {
+            this.thirdQuartile = thirdQuartile;
+            return this;
+        }
+
+        public VortexPointBuilder pctCellsGreaterThanZero (final double pctCellsGreaterThanZero) {
+            this.pctCellsGreaterThanZero = pctCellsGreaterThanZero;
+            return this;
+        }
+
+        public VortexPointBuilder pctCellsGreaterThanFirstQuartile (final double pctCellsGreaterThanFirstQuartile) {
+            this.pctCellsGreaterThanFirstQuartile = pctCellsGreaterThanFirstQuartile;
             return this;
         }
 
@@ -141,8 +196,36 @@ public class VortexPoint implements VortexData, Serializable {
         return wkt;
     }
 
-    public float data() {
-        return data;
+    public float getAverage() {
+        return average;
+    }
+
+    public float getMin() {
+        return min;
+    }
+
+    public float getMax() {
+        return max;
+    }
+
+    public float getMedian() {
+        return median;
+    }
+
+    public float getFirstQuartile() {
+        return firstQuartile;
+    }
+
+    public float getThirdQuartile() {
+        return thirdQuartile;
+    }
+
+    public double getPctCellsGreaterThanZero() {
+        return pctCellsGreaterThanZero;
+    }
+
+    public double pctCellsGreaterThanFirstQuartile() {
+        return pctCellsGreaterThanFirstQuartile;
     }
 
     public String units() {

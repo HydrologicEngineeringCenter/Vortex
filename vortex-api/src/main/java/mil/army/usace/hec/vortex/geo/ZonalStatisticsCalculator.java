@@ -46,11 +46,11 @@ public class ZonalStatisticsCalculator {
 
     public static ZonalStatisticsCalculatorBuilder builder(){ return new ZonalStatisticsCalculatorBuilder(); }
 
-    public List<ZonalStatistics> getZonalStatistics() {
-        float[] data = grid.data();
+    public List<ZonalStatistics> getZonalStatistics(List<String> statistics) {
+         float[] data = grid.data();
         List<ZonalStatistics> zoneStatistics = new ArrayList<>();
         zoneMasks.forEach((id, mask) -> {
-            ZonalStatistics zonalStatistics = computeZonalStatistics(id, mask, data);
+            ZonalStatistics zonalStatistics = computeZonalStatistics(id, mask, data, statistics);
             zoneStatistics.add(zonalStatistics);
         });
         return zoneStatistics;
@@ -202,15 +202,22 @@ public class ZonalStatisticsCalculator {
         return zoneMasks;
     }
 
-    private ZonalStatistics computeZonalStatistics(String id, Integer[] mask, float[] data) {
+    private ZonalStatistics computeZonalStatistics(String id, Integer[] mask, float[] data, List<String> statistics) {
 
         double noDataValue = grid.noDataValue();
 
+        List<Double> goodData = new ArrayList<>();
+
+        // compute average
         int count = 0;
         double sum = 0;
         for (int i = 0; i < data.length; i++) {
             double value = data[i];
             if (mask[i] == 1 && Double.compare(value, noDataValue) != 0) {
+
+                //if we've gotten to this point, it's a legit value; add it to the list of good data
+                goodData.add(value);
+
                 sum += value;
                 count++;
             }
@@ -218,9 +225,42 @@ public class ZonalStatisticsCalculator {
 
         double average = sum / count;
 
+        // compute 5 number summary
+        // first, gotta sort the Collection in ascending order
+        Collections.sort(goodData);
+
+        double min = goodData.get(0);
+        double max = goodData.get(count - 1);
+        double median = goodData.get((count + 1) / 2);
+        double firstQuartile = goodData.get((count + 1) / 4);
+        double thirdQuartile = goodData.get(3 * (count + 1) / 4);
+
+        int numCellsGreaterThanZero = 0;
+        int numCellsGreaterThanFirstQuartile = 0;
+
+        for (Double value : goodData) {
+            if (value > 0) {
+                numCellsGreaterThanZero++;
+            }
+
+            if (value > firstQuartile) {
+                numCellsGreaterThanFirstQuartile++;
+            }
+        }
+
+        double pctCellsGreaterThanZero = (double) 100 * numCellsGreaterThanZero / count;
+        double pctCellsGreaterThanFirstQuartile = (double) 100 * numCellsGreaterThanFirstQuartile / count;
+
         return ZonalStatistics.builder()
                 .id(id)
                 .average(average)
+                .min(min, statistics)
+                .max(max, statistics)
+                .median(median, statistics)
+                .firstQuartile(firstQuartile, statistics)
+                .thirdQuartile(thirdQuartile, statistics)
+                .pctCellsGreaterThanZero(pctCellsGreaterThanZero, statistics)
+                .pctCellsGreaterThanFirstQuartile(pctCellsGreaterThanFirstQuartile, statistics)
                 .build();
     }
 }

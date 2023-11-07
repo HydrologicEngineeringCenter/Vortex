@@ -22,6 +22,7 @@ public class GridToPointConverter {
 
     private final String pathToGrids;
     private final Set<String> variables;
+    private final List<String> statistics;
     private final Path pathToZoneDataset;
     private final String field;
     private final Path destination;
@@ -31,6 +32,7 @@ public class GridToPointConverter {
     private GridToPointConverter(GridToPointConverterBuilder builder){
         this.pathToGrids = builder.pathToGrids;
         this.variables = builder.variables;
+        this.statistics = builder.statistics;
         this.pathToZoneDataset = builder.pathToFeatures;
         this.field = builder.field;
         this.destination = builder.destination;
@@ -41,6 +43,7 @@ public class GridToPointConverter {
     public static class GridToPointConverterBuilder {
         private String pathToGrids;
         private Set<String> variables;
+        private List<String> statistics;
         private Path pathToFeatures;
         private String field;
         private Path destination;
@@ -53,6 +56,11 @@ public class GridToPointConverter {
 
         public GridToPointConverterBuilder variables(final Set<String> variables){
             this.variables = variables;
+            return this;
+        }
+
+        public GridToPointConverterBuilder statistics(final List<String> statisticsList){
+            this.statistics = statisticsList;
             return this;
         }
 
@@ -154,13 +162,21 @@ public class GridToPointConverter {
                         .grid(grid)
                         .zoneMasks(zoneMasks)
                         .build()
-                        .getZonalStatistics();
+                        .getZonalStatistics(statistics);
 
                 zonalStatistics.forEach(zone -> {
                     VortexPoint point = VortexPoint.builder()
                             .id(zone.getId())
                             .units(grid.units())
-                            .data((float) zone.getAverage())
+                            .average((float) zone.getAverage())
+                            .min((float) zone.getMin())
+                            .max((float) zone.getMax())
+                            .median((float) zone.getMedian())
+                            .firstQuartile((float) zone.getFirstQuartile())
+                            .thirdQuartile((float) zone.getThirdQuartile())
+                            .pctCellsGreaterThanZero(zone.getPctCellsGreaterThanZero())
+                            .pctCellsGreaterThanFirstQuartile(zone.getPctCellsGreaterThanFirstQuartile())
+
                             .description(grid.description())
                             .startTime(grid.startTime())
                             .endTime(grid.endTime())
