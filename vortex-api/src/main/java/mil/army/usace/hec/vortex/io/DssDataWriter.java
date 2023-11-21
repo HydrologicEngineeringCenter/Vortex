@@ -342,17 +342,16 @@ public class DssDataWriter extends DataWriter {
             return "PRESSURE";
         } else if (descriptionLower.equals("precipitation")
                 || descriptionLower.equals("precip")
-                || descriptionLower.contains("precip")
-                && descriptionLower.contains("rate")
-                || descriptionLower.contains("precipitable")
-                && descriptionLower.contains("water")
+                || descriptionLower.contains("precip") && descriptionLower.contains("rate")
+                || descriptionLower.contains("precipitable") && descriptionLower.contains("water")
                 || descriptionLower.contains("qpe")
                 || descriptionLower.equals("var209-6")
                 || descriptionLower.equals("cmorph")
                 || descriptionLower.equals("rainfall")
                 || descriptionLower.equals("pcp")
                 || descriptionLower.equals("pr")
-                || descriptionLower.equals("prec")) {
+                || descriptionLower.equals("prec")
+                || descriptionLower.equals("total precipitation")) {
             return "PRECIPITATION";
         } else if (descriptionLower.contains("temperature")
                 || descriptionLower.equals("airtemp")

@@ -72,13 +72,18 @@ public enum VortexVariable {
     }
 
     private static boolean isValidPrecipitationName(String shortName) {
-        return shortName.contains("precipitation")
-                || shortName.contains("precip")
+        return shortName.equals("precipitation")
+                || shortName.equals("precip")
                 || shortName.contains("precip") && shortName.contains("rate")
-                || shortName.contains("qpe01h")
-                || shortName.contains("var209-6")
-                || shortName.contains("rainfall")
-                || shortName.equals("pr");
+                || shortName.contains("precipitable") && shortName.contains("water")
+                || shortName.contains("qpe")
+                || shortName.equals("var209-6")
+                || shortName.equals("cmorph")
+                || shortName.equals("rainfall")
+                || shortName.equals("pcp")
+                || shortName.equals("pr")
+                || shortName.equals("prec")
+                || shortName.equals("total precipitation");
     }
 
     private static boolean isValidPressureName(String shortName) {
