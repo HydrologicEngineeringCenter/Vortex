@@ -133,6 +133,13 @@ public class DssDataWriter extends DataWriter {
 
                 write(data, gridInfo, dssPathname);
 
+            } else if (cPart.equals("PRECIPITATION") && units.equals(METRE)) {
+                float[] convertedData = new float[data.length];
+                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * 1000);
+
+                gridInfo.setDataUnits("MM");
+
+                write(convertedData, gridInfo, dssPathname);
             } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN) || units.equals(CELSIUS)) {
                 float[] convertedData = new float[data.length];
                 if (units.equals(FAHRENHEIT)) {
