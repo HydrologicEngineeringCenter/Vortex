@@ -24,6 +24,8 @@ class ZonalStatisticsCalculatorTest {
         String inFile = new File(getClass().getResource(
                 "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
+        List<String> statisticsToCalculate = new ArrayList<>(List.of("Max", "Min", "Median", "25th Percentile", "75th Percentile",
+                "Percentage of Cells > 0", "Percentage of Cells > 25th Percentile"));
 
         DataReader reader = DataReader.builder()
                 .path(inFile)
@@ -45,10 +47,17 @@ class ZonalStatisticsCalculatorTest {
                 .zoneMasks(zoneMasks)
                 .build();
 
-        List<ZonalStatistics> zonalStatistics = zonalStatisticsCalculator.getZonalStatistics();
+        List<ZonalStatistics> zonalStatistics = zonalStatisticsCalculator.getZonalStatistics(statisticsToCalculate);
         ZonalStatistics zone = zonalStatistics.get(0);
         assertEquals("Truckee", zone.getId());
         assertEquals(0.0767, zone.getAverage(), 1E-4);
+        assertEquals(0.9000, zone.getMax(), 1E-4);
+        assertEquals(0.0, zone.getMin(), 1E-4);
+        assertEquals(0.0, zone.getMedian(), 1E-4);
+        assertEquals(0.0, zone.getFirstQuartile(), 1E-4);
+        assertEquals(0.1000, zone.getThirdQuartile(), 1E-4);
+        assertEquals(28.06, zone.getPctCellsGreaterThanZero(), 1E-2);
+        assertEquals(28.06, zone.getPctCellsGreaterThanFirstQuartile(), 1E-2);
     }
 
     @Test

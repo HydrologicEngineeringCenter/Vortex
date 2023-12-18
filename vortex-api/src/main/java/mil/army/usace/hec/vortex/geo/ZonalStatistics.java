@@ -46,72 +46,38 @@ public class ZonalStatistics {
            return this;
         }
 
-        public ZonalStatisticsBuilder min(double min, List<String> statistics){
-            if(statistics.contains("Min")) {
-                this.min = min;
-            } else {
-                this.min = Double.NaN;
-            }
+        public ZonalStatisticsBuilder min(double min) {
+            this.min = min;
             return this;
         }
 
-        public ZonalStatisticsBuilder max(double max, List<String> statistics){
-            if(statistics.contains("Max")) {
-                this.max = max;
-                return this;
-            } else {
-                this.max = Double.NaN;
-            }
+        public ZonalStatisticsBuilder max(double max) {
+            this.max = max;
             return this;
         }
 
-        public ZonalStatisticsBuilder median(double median, List<String> statistics){
-            if(statistics.contains("Median")) {
-                this.median = median;
-                return this;
-            } else {
-                this.median = Double.NaN;
-            }
+        public ZonalStatisticsBuilder median(double median) {
+            this.median = median;
             return this;
         }
 
-        public ZonalStatisticsBuilder firstQuartile(double firstQuartile, List<String> statistics){
-            if(statistics.contains("25th Percentile")) {
-                this.firstQuartile = firstQuartile;
-                return this;
-            } else {
-                this.firstQuartile = Double.NaN;
-            }
+        public ZonalStatisticsBuilder firstQuartile(double firstQuartile) {
+            this.firstQuartile = firstQuartile;
             return this;
         }
 
-        public ZonalStatisticsBuilder thirdQuartile(double thirdQuartile, List<String> statistics){
-            if(statistics.contains("75th Percentile")) {
-                this.thirdQuartile = thirdQuartile;
-                return this;
-            } else {
-                this.thirdQuartile = Double.NaN;
-            }
+        public ZonalStatisticsBuilder thirdQuartile(double thirdQuartile) {
+            this.thirdQuartile = thirdQuartile;
             return this;
         }
 
-        public ZonalStatisticsBuilder pctCellsGreaterThanZero(double pctCellsGreaterThanZero, List<String> statistics){
-            if(statistics.contains("Percentage of Cells > 0")) {
-                this.pctCellsGreaterThanZero = pctCellsGreaterThanZero;
-                return this;
-            } else {
-                this.pctCellsGreaterThanZero = Double.NaN;
-            }
+        public ZonalStatisticsBuilder pctCellsGreaterThanZero(double pctCellsGreaterThanZero) {
+            this.pctCellsGreaterThanZero = pctCellsGreaterThanZero;
             return this;
         }
 
-        public ZonalStatisticsBuilder pctCellsGreaterThanFirstQuartile(double pctCellsGreaterThanFirstQuartile, List<String> statistics) {
-            if (statistics.contains("Percentage of Cells > 25th Percentile")) {
-                this.pctCellsGreaterThanFirstQuartile = pctCellsGreaterThanFirstQuartile;
-                return this;
-            } else {
-                this.pctCellsGreaterThanFirstQuartile = Double.NaN;
-            }
+        public ZonalStatisticsBuilder pctCellsGreaterThanFirstQuartile(double pctCellsGreaterThanFirstQuartile) {
+            this.pctCellsGreaterThanFirstQuartile = pctCellsGreaterThanFirstQuartile;
             return this;
         }
 

@@ -413,21 +413,8 @@ public class GridToPointWizard extends VortexWizard {
     private void submitStepThree() {}
 
     private boolean validateStepThree() {
-        if (minCheckBox.isSelected() ||
-                maxCheckBox.isSelected() ||
-                medianCheckBox.isSelected() ||
-                pct25thCheckBox.isSelected() ||
-                pct75thCheckBox.isSelected() ||
-                pctCellsGreaterZeroCheckBox.isSelected() ||
-                pctCellsGreater25thPctBox.isSelected()) {
-            return true;
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    TextProperties.getInstance().getProperty("GridToPointWizNoStatisticsSelected"),
-                    TextProperties.getInstance().getProperty("GridToPointWizInvalid"),
-                    JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+        // Optional step
+        return true;
     }
 
     private JPanel stepFourPanel() {

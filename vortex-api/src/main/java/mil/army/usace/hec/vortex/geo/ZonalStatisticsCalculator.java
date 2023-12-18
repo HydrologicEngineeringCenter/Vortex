@@ -224,16 +224,38 @@ public class ZonalStatisticsCalculator {
         }
 
         double average = sum / count;
+        double min, max, median, firstQuartile, thirdQuartile;
 
-        // compute 5 number summary
-        // first, gotta sort the Collection in ascending order
-        Collections.sort(goodData);
+        // Only sort if user selects a statistic in step 3
+        if(statistics.size() != 0) {
+            Collections.sort(goodData);
+        }
 
-        double min = goodData.get(0);
-        double max = goodData.get(count - 1);
-        double median = goodData.get((count + 1) / 2);
-        double firstQuartile = goodData.get((count + 1) / 4);
-        double thirdQuartile = goodData.get(3 * (count + 1) / 4);
+        if(statistics.toString().contains("Min")) {
+            min = goodData.get(0);
+        } else {
+            min = Double.NaN;
+        }
+        if(statistics.toString().contains("Max")) {
+            max = goodData.get(count - 1);
+        } else {
+            max = Double.NaN;
+        }
+        if(statistics.toString().contains("Median")){
+            median = goodData.get((count + 1) / 2);
+        } else {
+            median = Double.NaN;
+        }
+        if(statistics.toString().contains("25th Percentile")){
+            firstQuartile = goodData.get((count + 1) / 4);
+        } else {
+            firstQuartile = Double.NaN;
+        }
+        if(statistics.toString().contains("75th Percentile")){
+            thirdQuartile = goodData.get(3 * (count + 1) / 4);
+        } else {
+            thirdQuartile = Double.NaN;
+        }
 
         int numCellsGreaterThanZero = 0;
         int numCellsGreaterThanFirstQuartile = 0;
@@ -251,16 +273,23 @@ public class ZonalStatisticsCalculator {
         double pctCellsGreaterThanZero = (double) 100 * numCellsGreaterThanZero / count;
         double pctCellsGreaterThanFirstQuartile = (double) 100 * numCellsGreaterThanFirstQuartile / count;
 
+        if(!statistics.toString().contains("Percentage of Cells > 0")){
+            pctCellsGreaterThanZero = Double.NaN;
+        }
+        if(!statistics.toString().contains("Percentage of Cells > 25th Percentile")){
+            pctCellsGreaterThanFirstQuartile = Double.NaN;
+        }
+
         return ZonalStatistics.builder()
                 .id(id)
                 .average(average)
-                .min(min, statistics)
-                .max(max, statistics)
-                .median(median, statistics)
-                .firstQuartile(firstQuartile, statistics)
-                .thirdQuartile(thirdQuartile, statistics)
-                .pctCellsGreaterThanZero(pctCellsGreaterThanZero, statistics)
-                .pctCellsGreaterThanFirstQuartile(pctCellsGreaterThanFirstQuartile, statistics)
+                .min(min)
+                .max(max)
+                .median(median)
+                .firstQuartile(firstQuartile)
+                .thirdQuartile(thirdQuartile)
+                .pctCellsGreaterThanZero(pctCellsGreaterThanZero)
+                .pctCellsGreaterThanFirstQuartile(pctCellsGreaterThanFirstQuartile)
                 .build();
     }
 }
