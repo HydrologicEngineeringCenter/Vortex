@@ -222,62 +222,61 @@ public class ZonalStatisticsCalculator {
                 count++;
             }
         }
-
         double average = sum / count;
-        double min, max, median, firstQuartile, thirdQuartile;
-
-        // Only sort if user selects a statistic in step 3
-        if(statistics.size() != 0) {
-            Collections.sort(goodData);
-        }
-
-        if(statistics.toString().contains("Min")) {
-            min = goodData.get(0);
-        } else {
-            min = Double.NaN;
-        }
-        if(statistics.toString().contains("Max")) {
-            max = goodData.get(count - 1);
-        } else {
-            max = Double.NaN;
-        }
-        if(statistics.toString().contains("Median")){
-            median = goodData.get((count + 1) / 2);
-        } else {
-            median = Double.NaN;
-        }
-        if(statistics.toString().contains("25th Percentile")){
-            firstQuartile = goodData.get((count + 1) / 4);
-        } else {
-            firstQuartile = Double.NaN;
-        }
-        if(statistics.toString().contains("75th Percentile")){
-            thirdQuartile = goodData.get(3 * (count + 1) / 4);
-        } else {
-            thirdQuartile = Double.NaN;
-        }
-
+        double min = Double.NaN;
+        double max = Double.NaN;
+        double median = Double.NaN;
+        double firstQuartile = Double.NaN;
+        double thirdQuartile = Double.NaN;
+        double q1;
+        double pctCellsGreaterThanZero = Double.NaN;
+        double pctCellsGreaterThanFirstQuartile = Double.NaN;
         int numCellsGreaterThanZero = 0;
-        int numCellsGreaterThanFirstQuartile = 0;
 
-        for (Double value : goodData) {
-            if (value > 0) {
-                numCellsGreaterThanZero++;
+        // if there are less than 4 goodData values, don't compute additional statistics
+        if (goodData.size() >= 4) {
+
+            if (statistics.size() != 0) {
+                // if user selects at least one of the statistics on panel 3
+                Collections.sort(goodData);
+
+                if (statistics.toString().contains("Min")) {
+                    min = goodData.get(0);
+                }
+                if (statistics.toString().contains("Max")) {
+                    max = goodData.get(count - 1);
+                }
+                if (statistics.toString().contains("Median")) {
+                    median = goodData.get((count + 1) / 2);
+                }
+
+                q1 = goodData.get((count + 1) / 4);
+                if (statistics.toString().contains("25th Percentile")) {
+                    firstQuartile = q1;
+                }
+                if (statistics.toString().contains("75th Percentile")) {
+                    thirdQuartile = goodData.get(3 * (count + 1) / 4);
+                }
+
+                int numCellsGreaterThanFirstQuartile = 0;
+
+                for (Double value : goodData) {
+                    if (value > 0) {
+                        numCellsGreaterThanZero++;
+                    }
+
+                    if (value > q1) {
+                        numCellsGreaterThanFirstQuartile++;
+                    }
+                }
+
+                if (statistics.toString().contains("Percentage of Cells > 0")) {
+                    pctCellsGreaterThanZero = (double) 100 * numCellsGreaterThanZero / count;
+                }
+                if (statistics.toString().contains("Percentage of Cells > 25th Percentile")) {
+                    pctCellsGreaterThanFirstQuartile = (double) 100 * numCellsGreaterThanFirstQuartile / count;
+                }
             }
-
-            if (value > firstQuartile) {
-                numCellsGreaterThanFirstQuartile++;
-            }
-        }
-
-        double pctCellsGreaterThanZero = (double) 100 * numCellsGreaterThanZero / count;
-        double pctCellsGreaterThanFirstQuartile = (double) 100 * numCellsGreaterThanFirstQuartile / count;
-
-        if(!statistics.toString().contains("Percentage of Cells > 0")){
-            pctCellsGreaterThanZero = Double.NaN;
-        }
-        if(!statistics.toString().contains("Percentage of Cells > 25th Percentile")){
-            pctCellsGreaterThanFirstQuartile = Double.NaN;
         }
 
         return ZonalStatistics.builder()
