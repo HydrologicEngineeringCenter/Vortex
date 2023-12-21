@@ -222,6 +222,7 @@ public class ZonalStatisticsCalculator {
                 count++;
             }
         }
+
         double average = sum / count;
         double min = Double.NaN;
         double max = Double.NaN;
@@ -232,6 +233,7 @@ public class ZonalStatisticsCalculator {
         double pctCellsGreaterThanZero = Double.NaN;
         double pctCellsGreaterThanFirstQuartile = Double.NaN;
         int numCellsGreaterThanZero = 0;
+        int numCellsGreaterThanFirstQuartile = 0;
 
         // if there are less than 4 goodData values, don't compute additional statistics
         if (goodData.size() >= 4) {
@@ -250,6 +252,8 @@ public class ZonalStatisticsCalculator {
                     median = goodData.get((count + 1) / 2);
                 }
 
+                // compute first quartile as q1 for use in computation of % of cells > first quartile
+                // assign q1 to firstQuartile only if user selects First Quartile
                 q1 = goodData.get((count + 1) / 4);
                 if (statistics.toString().contains("25th Percentile")) {
                     firstQuartile = q1;
@@ -257,8 +261,6 @@ public class ZonalStatisticsCalculator {
                 if (statistics.toString().contains("75th Percentile")) {
                     thirdQuartile = goodData.get(3 * (count + 1) / 4);
                 }
-
-                int numCellsGreaterThanFirstQuartile = 0;
 
                 for (Double value : goodData) {
                     if (value > 0) {
