@@ -28,6 +28,7 @@ public class GridToPointWizard extends VortexWizard {
     private CardLayout cardLayout;
     private JButton backButton, nextButton, cancelButton;
     private int cardNumber;
+    private JCheckBox averageCheckBox;
     private JCheckBox minCheckBox;
     private JCheckBox maxCheckBox;
     private JCheckBox medianCheckBox;
@@ -176,6 +177,7 @@ public class GridToPointWizard extends VortexWizard {
         zonesShapefile.setText("");
 
         // reset the statistics checkboxes
+        averageCheckBox.setSelected(true);
         minCheckBox.setSelected(false);
         maxCheckBox.setSelected(false);
         medianCheckBox.setSelected(false);
@@ -351,41 +353,13 @@ public class GridToPointWizard extends VortexWizard {
     private void submitStepTwo() {}
 
     private JPanel stepThreePanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+
         JLabel statisticsLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWizStatisticsL"));
-        JPanel statisticsLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        statisticsLabelPanel.add(statisticsLabel);
+        statisticsLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-        JPanel statisticsCheckBoxesPanel = statisticsCheckBoxesPanel();
-
-        GridBagLayout gridBagLayout = new GridBagLayout();
-
-        JPanel stepThreePanel = new JPanel(gridBagLayout);
-        stepThreePanel.setBorder(BorderFactory.createEmptyBorder(5,9,5,7));
-
-        GridBagConstraints gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new Insets(0, 0, 5, 0);
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.weightx = 1;
-        gridBagConstraints.weighty = 0;
-
-        gridBagConstraints.gridy = 0;
-        stepThreePanel.add(statisticsLabelPanel, gridBagConstraints);
-
-        gridBagConstraints.gridy = 1;
-        stepThreePanel.add(statisticsCheckBoxesPanel, gridBagConstraints);
-
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.weighty = 1;
-        gridBagConstraints.fill = GridBagConstraints.BOTH;
-        stepThreePanel.add(new JPanel(), gridBagConstraints);
-
-        return stepThreePanel;
-    }
-
-    private JPanel statisticsCheckBoxesPanel() {
-        // create check boxes
+        averageCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizAverageL"),true);
         minCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMinL"),false);
         maxCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMaxL"),false);
         medianCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMedianL"),false);
@@ -394,27 +368,50 @@ public class GridToPointWizard extends VortexWizard {
         pctCellsGreaterZeroCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizPctCellsGreaterZeroL"),false);
         pctCellsGreater25thPctBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizPctCellsGreater25thPctL"),false);
 
-        Box statisticsBox = Box.createVerticalBox();
-        statisticsBox.add(minCheckBox);
-        statisticsBox.add(maxCheckBox);
-        statisticsBox.add(medianCheckBox);
-        statisticsBox.add(pct25thCheckBox);
-        statisticsBox.add(pct75thCheckBox);
-        statisticsBox.add(pctCellsGreaterZeroCheckBox);
-        statisticsBox.add(pctCellsGreater25thPctBox);
+        Box optionsBox = Box.createVerticalBox();
+        optionsBox.add(averageCheckBox);
+        optionsBox.add(minCheckBox);
+        optionsBox.add(maxCheckBox);
+        optionsBox.add(medianCheckBox);
+        optionsBox.add(pct25thCheckBox);
+        optionsBox.add(pct75thCheckBox);
+        optionsBox.add(pctCellsGreaterZeroCheckBox);
+        optionsBox.add(pctCellsGreater25thPctBox);
 
-        JPanel statisticsCheckBoxesPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-        statisticsCheckBoxesPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-        statisticsCheckBoxesPanel.add(statisticsBox);
+        optionsBox.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
-        return statisticsCheckBoxesPanel;
+        panel.add(statisticsLabel, BorderLayout.NORTH);
+        panel.add(optionsBox, BorderLayout.CENTER);
+
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+
+        return panel;
     }
+
 
     private void submitStepThree() {}
 
     private boolean validateStepThree() {
-        // Optional step
-        return true;
+        boolean isStatisticSelected = averageCheckBox.isSelected() ||
+                minCheckBox.isSelected() ||
+                maxCheckBox.isSelected() ||
+                medianCheckBox.isSelected() ||
+                pct25thCheckBox.isSelected() ||
+                pct75thCheckBox.isSelected() ||
+                pctCellsGreaterZeroCheckBox.isSelected() ||
+                pctCellsGreater25thPctBox.isSelected();
+
+        if (!isStatisticSelected) {
+            JOptionPane.showMessageDialog(this,
+                    TextProperties.getInstance().getProperty("GridToPointWizNoStatisticsSelected"),
+                    TextProperties.getInstance().getProperty("GridToPointWizInvalid"),
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+
+        } else {
+            return true;
+        }
+
     }
 
     private JPanel stepFourPanel() {
@@ -467,25 +464,34 @@ public class GridToPointWizard extends VortexWizard {
 
         List<String> statisticsList = new ArrayList<>();
 
+        if (averageCheckBox.isSelected()) {
+            statisticsList.add(averageCheckBox.getText());
+        }
         if (minCheckBox.isSelected()) {
             statisticsList.add(minCheckBox.getText());
-        } if (maxCheckBox.isSelected()) {
+        }
+        if (maxCheckBox.isSelected()) {
             statisticsList.add(maxCheckBox.getText());
-        } if (medianCheckBox.isSelected()) {
+        }
+        if (medianCheckBox.isSelected()) {
             statisticsList.add(medianCheckBox.getText());
-        } if (pct25thCheckBox.isSelected()) {
+        }
+        if (pct25thCheckBox.isSelected()) {
             statisticsList.add(pct25thCheckBox.getText());
-        } if (pct75thCheckBox.isSelected()) {
+        }
+        if (pct75thCheckBox.isSelected()) {
             statisticsList.add(pct75thCheckBox.getText());
-        } if (pctCellsGreaterZeroCheckBox.isSelected()) {
+        }
+        if (pctCellsGreaterZeroCheckBox.isSelected()) {
             statisticsList.add(pctCellsGreaterZeroCheckBox.getText());
-        } if (pctCellsGreater25thPctBox.isSelected()) {
+        }
+        if (pctCellsGreater25thPctBox.isSelected()) {
             statisticsList.add(pctCellsGreater25thPctBox.getText());
         }
 
         /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
-        if(chosenSourceList == null) return;
+        if (chosenSourceList == null) return;
         Map<String, Set<String>> pathnameParts = DssUtil.getPathnameParts(chosenSourceList);
 
         List<String> partAList = new ArrayList<>(pathnameParts.get("aParts"));
@@ -518,10 +524,50 @@ public class GridToPointWizard extends VortexWizard {
 
         writeOptions.put("isAccumulate", "true");
 
+        if(statisticsList.toString().contains("Average")){
+            writeOptions.put("Average", "true");
+        } else {
+            writeOptions.put("Average", "false");
+        }
+        if(statisticsList.toString().contains("Min")){
+            writeOptions.put("Min", "true");
+        } else {
+            writeOptions.put("Min", "false");
+        }
+        if(statisticsList.toString().contains("Max")){
+            writeOptions.put("Max", "true");
+        } else {
+            writeOptions.put("Max", "false");
+        }
+        if(statisticsList.toString().contains("Median")){
+            writeOptions.put("Median", "true");
+        } else {
+            writeOptions.put("Median", "false");
+        }
+        if(statisticsList.toString().contains("25th Percentile")){
+            writeOptions.put("25th Percentile", "true");
+        } else {
+            writeOptions.put("25th Percentile", "false");
+        }
+        if(statisticsList.toString().contains("75th Percentile")){
+            writeOptions.put("75th Percentile", "true");
+        } else {
+            writeOptions.put("75th Percentile", "false");
+        }
+        if(statisticsList.toString().contains("Percentage of Cells > 0")){
+            writeOptions.put("Percentage of Cells > 0", "true");
+        } else {
+            writeOptions.put("Percentage of Cells > 0", "false");
+        }
+        if(statisticsList.toString().contains("Percentage of Cells > 25th Percentile")){
+            writeOptions.put("Percentage of Cells > 25th Percentile", "true");
+        } else {
+            writeOptions.put("Percentage of Cells > 25th Percentile", "false");
+        }
+
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToSource)
                 .variables(sourceGrids)
-                .statistics(statisticsList)
                 .pathToFeatures(shapefile)
                 .field(fieldSelection)
                 .destination(destination)

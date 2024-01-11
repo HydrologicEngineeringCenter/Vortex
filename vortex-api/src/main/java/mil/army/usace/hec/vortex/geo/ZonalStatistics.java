@@ -1,7 +1,5 @@
 package mil.army.usace.hec.vortex.geo;
 
-import java.util.List;
-
 public class ZonalStatistics {
     private final String id;
     private final double average;

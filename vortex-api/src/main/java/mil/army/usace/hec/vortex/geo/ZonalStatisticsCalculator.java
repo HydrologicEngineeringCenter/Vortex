@@ -46,11 +46,11 @@ public class ZonalStatisticsCalculator {
 
     public static ZonalStatisticsCalculatorBuilder builder(){ return new ZonalStatisticsCalculatorBuilder(); }
 
-    public List<ZonalStatistics> getZonalStatistics(List<String> statistics) {
+    public List<ZonalStatistics> getZonalStatistics() {
          float[] data = grid.data();
         List<ZonalStatistics> zoneStatistics = new ArrayList<>();
         zoneMasks.forEach((id, mask) -> {
-            ZonalStatistics zonalStatistics = computeZonalStatistics(id, mask, data, statistics);
+            ZonalStatistics zonalStatistics = computeZonalStatistics(id, mask, data);
             zoneStatistics.add(zonalStatistics);
         });
         return zoneStatistics;
@@ -202,11 +202,11 @@ public class ZonalStatisticsCalculator {
         return zoneMasks;
     }
 
-    private ZonalStatistics computeZonalStatistics(String id, Integer[] mask, float[] data, List<String> statistics) {
+    private ZonalStatistics computeZonalStatistics(String id, Integer[] mask, float[] data) {
 
         double noDataValue = grid.noDataValue();
 
-        List<Double> goodData = new ArrayList<>();
+        List<Double> validValues = new ArrayList<>();
 
         // compute average
         int count = 0;
@@ -215,8 +215,8 @@ public class ZonalStatisticsCalculator {
             double value = data[i];
             if (mask[i] == 1 && Double.compare(value, noDataValue) != 0) {
 
-                //if we've gotten to this point, it's a legit value; add it to the list of good data
-                goodData.add(value);
+                //if we've gotten to this point, it's a legit value; add it to the list of valid values
+                validValues.add(value);
 
                 sum += value;
                 count++;
@@ -229,56 +229,35 @@ public class ZonalStatisticsCalculator {
         double median = Double.NaN;
         double firstQuartile = Double.NaN;
         double thirdQuartile = Double.NaN;
-        double q1;
-        double pctCellsGreaterThanZero = Double.NaN;
-        double pctCellsGreaterThanFirstQuartile = Double.NaN;
+        float pctCellsGreaterThanZero = (float) Double.NaN;
+        float pctCellsGreaterThanFirstQuartile = (float) Double.NaN;
         int numCellsGreaterThanZero = 0;
         int numCellsGreaterThanFirstQuartile = 0;
 
-        // if there are less than 4 goodData values, don't compute additional statistics
-        if (goodData.size() >= 4) {
+        // if there are less than 4 valid values, don't compute additional statistics
+        if (validValues.size() >= 4) {
 
-            if (statistics.size() != 0) {
-                // if user selects at least one of the statistics on panel 3
-                Collections.sort(goodData);
+            Collections.sort(validValues);
+            min = validValues.get(0);
+            max = validValues.get(count - 1);
+            median = validValues.get((count + 1) / 2);
 
-                if (statistics.toString().contains("Min")) {
-                    min = goodData.get(0);
-                }
-                if (statistics.toString().contains("Max")) {
-                    max = goodData.get(count - 1);
-                }
-                if (statistics.toString().contains("Median")) {
-                    median = goodData.get((count + 1) / 2);
-                }
+            firstQuartile = validValues.get((count + 1) / 4);
+            thirdQuartile = validValues.get(3 * (count + 1) / 4);
 
-                // compute first quartile as q1 for use in computation of % of cells > first quartile
-                // assign q1 to firstQuartile only if user selects First Quartile
-                q1 = goodData.get((count + 1) / 4);
-                if (statistics.toString().contains("25th Percentile")) {
-                    firstQuartile = q1;
-                }
-                if (statistics.toString().contains("75th Percentile")) {
-                    thirdQuartile = goodData.get(3 * (count + 1) / 4);
+            for (Double value : validValues) {
+                if (value > 0) {
+                    numCellsGreaterThanZero++;
                 }
 
-                for (Double value : goodData) {
-                    if (value > 0) {
-                        numCellsGreaterThanZero++;
-                    }
-
-                    if (value > q1) {
-                        numCellsGreaterThanFirstQuartile++;
-                    }
-                }
-
-                if (statistics.toString().contains("Percentage of Cells > 0")) {
-                    pctCellsGreaterThanZero = (double) 100 * numCellsGreaterThanZero / count;
-                }
-                if (statistics.toString().contains("Percentage of Cells > 25th Percentile")) {
-                    pctCellsGreaterThanFirstQuartile = (double) 100 * numCellsGreaterThanFirstQuartile / count;
+                if (value > firstQuartile) {
+                    numCellsGreaterThanFirstQuartile++;
                 }
             }
+
+            pctCellsGreaterThanZero = 100 * numCellsGreaterThanZero / count;
+            pctCellsGreaterThanFirstQuartile = 100 * numCellsGreaterThanFirstQuartile / count;
+
         }
 
         return ZonalStatistics.builder()
