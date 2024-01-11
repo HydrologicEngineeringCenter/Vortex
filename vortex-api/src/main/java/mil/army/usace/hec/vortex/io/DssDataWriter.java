@@ -787,7 +787,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(averageTsc, endTimes);
             }
 
-            if(options.get("Average").equalsIgnoreCase("true")) {
+            if(options.get("Average").equalsIgnoreCase("true") && !Double.isNaN(averageTsc.getValue(0))) {
                 tscs.add(averageTsc);
 
                 if (options.getOrDefault("isAccumulate", "false").equalsIgnoreCase("true")
@@ -808,7 +808,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(minTsc, endTimes);
             }
 
-            if(options.get("Min").equalsIgnoreCase("true")) {
+            if(options.get("Min").equalsIgnoreCase("true") && !Double.isNaN(minTsc.getValue(0))) {
                 tscs.add(minTsc);
             }
 
@@ -823,7 +823,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(maxTsc, endTimes);
             }
 
-            if(options.get("Max").equalsIgnoreCase("true")) {
+            if(options.get("Max").equalsIgnoreCase("true") && !Double.isNaN(maxTsc.getValue(0))) {
                 tscs.add(maxTsc);
             }
 
@@ -838,7 +838,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(medianTsc, endTimes);
             }
 
-            if(options.get("Median").equalsIgnoreCase("true")) {
+            if(options.get("Median").equalsIgnoreCase("true") && !Double.isNaN(medianTsc.getValue(0))) {
                 tscs.add(medianTsc);
             }
 
@@ -853,7 +853,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(firstQuartileTsc, endTimes);
             }
 
-            if(options.get("25th Percentile").equalsIgnoreCase("true")) {
+            if(options.get("25th Percentile").equalsIgnoreCase("true") && !Double.isNaN(firstQuartileTsc.getValue(0))) {
                 tscs.add(firstQuartileTsc);
             }
 
@@ -868,7 +868,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(thirdQuartileTsc, endTimes);
             }
 
-            if(options.get("75th Percentile").equalsIgnoreCase("true")) {
+            if(options.get("75th Percentile").equalsIgnoreCase("true") && !Double.isNaN(thirdQuartileTsc.getValue(0))) {
                 tscs.add(thirdQuartileTsc);
             }
 
@@ -883,7 +883,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(pctCellsGreaterThanZeroTsc, endTimes);
             }
 
-            if(options.get("Percentage of Cells > 0").equalsIgnoreCase("true")) {
+            if(options.get("Percentage of Cells > 0").equalsIgnoreCase("true") && !Double.isNaN(pctCellsGreaterThanZeroTsc.getValue(0))) {
                 tscs.add(pctCellsGreaterThanZeroTsc);
             }
 
@@ -898,7 +898,7 @@ public class DssDataWriter extends DataWriter {
                 setIrregularTscTimes(pctCellsGreaterThanFirstQuartileTsc, endTimes);
             }
 
-            if(options.get("Percentage of Cells > 25th Percentile").equalsIgnoreCase("true")) {
+            if(options.get("Percentage of Cells > 25th Percentile").equalsIgnoreCase("true") && !Double.isNaN(pctCellsGreaterThanFirstQuartileTsc.getValue(0))) {
                 tscs.add(pctCellsGreaterThanFirstQuartileTsc);
             }
 
