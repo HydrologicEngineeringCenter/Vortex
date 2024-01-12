@@ -13,7 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class IndexSearcher {
     private final Map<Point, Integer> cache = new ConcurrentHashMap<>();
-    private final List<IndexedGeometry> geometries = new ArrayList<>();
+    private final List<IndexedGeometry> indexedGeometries = new ArrayList<>();
+
+    private Geometry domain;
+
+    private int index;
+
     IndexSearcher(GridCoordSystem gcs) {
 
         CoordinateAxis xAxis = gcs.getXHorizAxis();
@@ -39,7 +44,7 @@ public class IndexSearcher {
                     LinearRing ring = factory.createLinearRing(coordinates);
                     Geometry geometry = factory.createPolygon(ring);
 
-                    geometries.add(new IndexedGeometry(index, geometry));
+                    indexedGeometries.add(new IndexedGeometry(index, geometry));
                     index++;
                 }
             }
@@ -66,12 +71,24 @@ public class IndexSearcher {
                 LinearRing ring = factory.createLinearRing(coordinates);
                 Geometry geometry = factory.createPolygon(ring);
 
-                geometries.add(new IndexedGeometry(index, geometry));
+                indexedGeometries.add(new IndexedGeometry(index, geometry));
                 index++;
             }
         } else {
             throw new IllegalStateException();
         }
+
+        initDomain();
+    }
+
+    private void initDomain() {
+        List<Geometry> geometries = indexedGeometries.stream()
+                .map(IndexedGeometry::geometry)
+                .toList();
+
+        GeometryFactory factory =  new GeometryFactory();
+        GeometryCollection geometryCollection = (GeometryCollection) factory.buildGeometry(geometries);
+        domain = geometryCollection.union();
     }
 
     public int getIndex(double x, double y) {
@@ -81,11 +98,19 @@ public class IndexSearcher {
         if (cache.containsKey(point))
             return cache.get(point);
 
-        int index = geometries.parallelStream()
-                .filter(g -> g.geometry().contains(point))
-                .findAny()
-                .map(IndexedGeometry::index)
-                .orElse(-1);
+        if (!domain.contains(point))
+            return -1;
+
+        int count = indexedGeometries.size();
+
+        for (int i = 0; i < count; i++) {
+            int searchIndex = (index + i) % count;
+            IndexedGeometry indexedGeometry = indexedGeometries.get(searchIndex);
+            if (indexedGeometry.geometry().contains(point)) {
+                index = indexedGeometry.index();
+                break;
+            }
+        }
 
         cache.put(point, index);
 
