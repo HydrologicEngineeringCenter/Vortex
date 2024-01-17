@@ -310,7 +310,7 @@ public class VortexGrid implements VortexData, Serializable {
         if (Double.compare(that.originX, originX) != 0) return false;
         if (Double.compare(that.originY, originY) != 0) return false;
         if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
-        if (ReferenceUtils.equals(wkt, that.wkt)) return false;
+        if (!ReferenceUtils.equals(wkt, that.wkt)) return false;
         if (!Arrays.equals(data, that.data)) return false;
         if (!Objects.equals(units, that.units)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
