@@ -13,6 +13,8 @@ import java.util.stream.IntStream;
 
 public class ImportableUnit {
 
+    public static final String IMPORT_COMPLETE = "import_complete";
+
     private final DataReader reader;
     private final Map<String,String> geoOptions;
     private final Path destination;
@@ -92,8 +94,11 @@ public class ImportableUnit {
     public void process() {
         GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
 
+        reader.addPropertyChangeListener(support::firePropertyChange);
+
         int count = reader.getDtoCount();
-        IntStream.range(0, count).parallel().forEach(i -> {
+
+        for (int i = 0; i < count; i++) {
             VortexGrid grid = (VortexGrid) reader.getDto(i);
             VortexGrid processed = geoProcessor.process(grid);
 
@@ -107,17 +112,17 @@ public class ImportableUnit {
                     .build();
 
             writer.write();
-        });
+        }
 
-        support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
+        support.firePropertyChange(IMPORT_COMPLETE, null, null);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        this.support.addPropertyChangeListener(pcl);
+        support.addPropertyChangeListener(pcl);
     }
 
     public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        this.support.removePropertyChangeListener(pcl);
+        support.removePropertyChangeListener(pcl);
     }
 
 }

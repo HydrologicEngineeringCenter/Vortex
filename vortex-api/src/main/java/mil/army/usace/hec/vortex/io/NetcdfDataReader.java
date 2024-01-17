@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 import org.locationtech.jts.geom.Coordinate;
@@ -723,13 +724,18 @@ public class NetcdfDataReader extends DataReader {
         if (gcs.isRegularSpatial())
             return slice;
 
+        support.firePropertyChange(VortexProperty.STATUS, null, "ReIndexing");
+
         IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gcs);
         Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
         float[] data = new float[coordinates.length];
-        for (int i = 0; i < data.length; i++) {
+        int count = data.length;
+        for (int i = 0; i < count; i++) {
             Coordinate coordinate = coordinates[i];
             int index = indexSearcher.getIndex(coordinate.x, coordinate.y);
             data[i] = index >= 0 ? slice[index] : (float) noDataValue;
+            int progress = (int) (((float) i / count) * 100);
+            support.firePropertyChange(VortexProperty.PROGRESS, null, progress);
         }
 
         return data;

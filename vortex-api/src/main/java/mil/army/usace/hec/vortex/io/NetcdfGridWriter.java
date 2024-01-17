@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
@@ -147,7 +148,6 @@ public class NetcdfGridWriter {
                     VortexGrid grid = entry.getValue();
                     int[] origin = {index, 0, 0};
                     writer.write(variable, origin, Array.makeFromJavaArray(grid.data3D()));
-                    support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
                 } catch (IOException | InvalidRangeException e) {
                     logger.warning(e.getMessage());
                     hasErrors.set(true);
@@ -160,7 +160,7 @@ public class NetcdfGridWriter {
             String overwriteErrorMessage = "Failed to overwrite file.";
             String appendErrorMessage = "Some reasons may be:\n* Attempted to append to non-existing variable\n* Attempted to append data with different projection\n* Attempted to append data with different location";
             String message = isAppend ? appendErrorMessage : overwriteErrorMessage;
-            support.firePropertyChange(DataWriter.WRITE_ERROR, null, message);
+            support.firePropertyChange(VortexProperty.ERROR, null, message);
         }
     }
 

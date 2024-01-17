@@ -2,23 +2,23 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexProperty;
 
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public abstract class DataWriter {
     final PropertyChangeSupport support = new PropertyChangeSupport(this);
     final Path destination;
     final List<VortexData> data;
     final Map<String, String> options = new HashMap<>();
-
-    public static final String WRITE_ERROR = "WriteError";
-    public static final String WRITE_COMPLETED = "WriteCompleted";
 
     DataWriter(Builder builder){
         this.destination = builder.destination;
@@ -105,21 +105,8 @@ public abstract class DataWriter {
 
     public abstract void write();
 
-    /* Property Change */
-    void fireWriteCompleted() {
-        support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
-    }
-
     void fireWriteError(String errorMessage) {
-        support.firePropertyChange(WRITE_ERROR, null, errorMessage);
-    }
-
-    public void addListener(PropertyChangeListener pcl) {
-        support.addPropertyChangeListener(pcl);
-    }
-
-    public void removeListener(PropertyChangeListener pcl) {
-        support.removePropertyChangeListener(pcl);
+        support.firePropertyChange(VortexProperty.ERROR, null, errorMessage);
     }
 }
 

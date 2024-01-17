@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexProperty;
 import ucar.nc2.Attribute;
 import ucar.nc2.write.Nc4Chunking;
 import ucar.nc2.write.Nc4ChunkingStrategy;
@@ -67,11 +68,8 @@ public class NetcdfDataWriter extends DataWriter {
     private PropertyChangeListener writerPropertyListener() {
         return e -> {
             String propertyName = e.getPropertyName();
-            if (propertyName.equals(DataWriter.WRITE_COMPLETED)) {
-                fireWriteCompleted();
-            }
 
-            if (propertyName.equals(DataWriter.WRITE_ERROR)) {
+            if (propertyName.equals(VortexProperty.ERROR)) {
                 String errorMessage = String.valueOf(e.getNewValue());
                 fireWriteError(errorMessage);
             }
