@@ -1,9 +1,9 @@
 package mil.army.usace.hec.vortex.ui;
 
 import com.formdev.flatlaf.FlatLightLaf;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
-import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
@@ -32,6 +32,7 @@ public class ImportMetWizard extends VortexWizard {
     private Container contentCards;
     private CardLayout cardLayout;
     private JButton backButton, nextButton, cancelButton;
+    private JLabel processingLabel;
     private JProgressBar progressBar;
     private int cardNumber;
 
@@ -193,6 +194,7 @@ public class ImportMetWizard extends VortexWizard {
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Five Panel */
+        processingLabel.setText(TextProperties.getInstance().getProperty("ImportMetWizProcessing_L"));
         progressBar.setIndeterminate(true);
         progressBar.setStringPainted(false);
         progressBar.setValue(0);
@@ -404,21 +406,30 @@ public class ImportMetWizard extends VortexWizard {
                 .build();
 
         importer.addPropertyChangeListener(evt -> {
-            if(evt.getPropertyName().equalsIgnoreCase("progress")) {
-                if(!(evt.getNewValue() instanceof Integer)) return;
+            if (VortexProperty.STATUS.equals(evt.getPropertyName())) {
+                String value = String.valueOf(evt.getNewValue());
+                String message = TextProperties.getInstance().getProperty(value);
+                processingLabel.setText(message);
+            }
+
+            if (VortexProperty.PROGRESS.equals(evt.getPropertyName())) {
+                if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
                 progressBar.setIndeterminate(false);
                 progressBar.setStringPainted(true);
                 progressBar.setValue(progressValue);
                 progressBar.setString(progressValue + "%");
-                if (progressValue == 100) setImportStatusMessageLabel(true);
             }
 
-            if (evt.getPropertyName().equals(DataWriter.WRITE_ERROR)) {
+            if (VortexProperty.ERROR.equals(evt.getPropertyName())) {
                 String errorMessage = String.valueOf(evt.getNewValue());
                 JOptionPane.showMessageDialog(this, errorMessage,
                         "Error: Failed to write", JOptionPane.ERROR_MESSAGE);
                 setImportStatusMessageLabel(false);
+            }
+
+            if (VortexProperty.COMPLETE.equals(evt.getPropertyName())) {
+                setImportStatusMessageLabel(true);
             }
         });
 
@@ -602,7 +613,7 @@ public class ImportMetWizard extends VortexWizard {
         JPanel insidePanel = new JPanel();
         insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
 
-        JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizProcessing_L"));
+        processingLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizProcessing_L"));
         JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         processingPanel.add(processingLabel);
         insidePanel.add(processingPanel);

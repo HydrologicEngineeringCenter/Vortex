@@ -91,7 +91,7 @@ public class IndexSearcher {
         domain = geometryCollection.union();
     }
 
-    public int getIndex(double x, double y) {
+    public synchronized int getIndex(double x, double y) {
         GeometryFactory factory = new GeometryFactory();
         Point point = factory.createPoint(new Coordinate(x, y));
 
