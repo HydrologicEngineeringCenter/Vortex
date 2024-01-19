@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexTimeRecord;
 import org.gdal.gdal.gdal;
 
 import java.io.File;
@@ -74,5 +75,12 @@ public class AscZipDataReader extends DataReader implements VirtualFileSystem{
         }
         return null;
     } // Extended getDto(): Asc Zip
+
+    @Override
+    public List<VortexTimeRecord> getTimeRecords() {
+        return getDtos().stream()
+                .map(VortexTimeRecord::of)
+                .toList();
+    }
 
 } // AscZipDataReader class
