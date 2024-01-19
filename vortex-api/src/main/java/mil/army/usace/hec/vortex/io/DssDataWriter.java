@@ -87,7 +87,7 @@ public class DssDataWriter extends DataWriter {
                 options.put("partF", grid.description());
             }
 
-            if (cPart.matches("(SWE|SNOW DEPTH)")
+            if (!cPart.equals("PRECIPITATION")
                     && options.getOrDefault("dataType", "").isEmpty()
                     && !grid.interval().equals(Duration.ZERO)) {
                 options.put("dataType", "PER-AVER");
@@ -160,6 +160,13 @@ public class DssDataWriter extends DataWriter {
                         dssPathname.setFPart(pathnameIn.getFPart());
                     }
                 }
+
+                write(convertedData, gridInfo, dssPathname);
+            } else if (cPart.equals("HUMIDITY") && units.equals(ONE)) {
+                float[] convertedData = new float[data.length];
+                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * 100);
+
+                gridInfo.setDataUnits("%");
 
                 write(convertedData, gridInfo, dssPathname);
             } else if (units.equals(ONE.divide(INCH.multiply(1000)))) {
@@ -371,6 +378,8 @@ public class DssDataWriter extends DataWriter {
                 || descriptionLower.contains("solar"))
                 && descriptionLower.contains("radiation")) {
             return "SOLAR RADIATION";
+        } else if (descriptionLower.matches("long.*radiation")) {
+            return "LONGWAVE RADIATION";
         } else if ((descriptionLower.contains("wind"))
                 && (descriptionLower.contains("speed"))) {
             return "WINDSPEED";
@@ -415,6 +424,8 @@ public class DssDataWriter extends DataWriter {
             return "PERCOLATION";
         } else if (descriptionLower.matches("curve\\s?number")) {
             return "CURVE NUMBER";
+        } else if (descriptionLower.contains("humidity")) {
+            return "HUMIDITY";
         } else if (!descriptionLower.isEmpty()) {
             return descriptionLower.toUpperCase();
         } else {
@@ -428,6 +439,8 @@ public class DssDataWriter extends DataWriter {
                 || cPart.equals("PRECIPITATION")
                 || cPart.equals("TEMPERATURE")
                 || cPart.equals("SOLAR RADIATION")
+                || cPart.equals("LONGWAVE RADIATION")
+                || cPart.equals("RADIATION")
                 || cPart.equals("WINDSPEED")
                 || cPart.equals("SWE")
                 || cPart.equals("SNOWFALL ACCUMULATION")
@@ -442,7 +455,8 @@ public class DssDataWriter extends DataWriter {
                 || cPart.equals("MOISTURE DEFICIT")
                 || cPart.equals("IMPERVIOUS AREA")
                 || cPart.equals("PERCOLATION")
-                || cPart.equals("CURVE NUMBER");
+                || cPart.equals("CURVE NUMBER")
+                || cPart.equals("HUMIDITY");
     }
 
     private static String getCPartForTimeSeries(String description, DssDataType type) {

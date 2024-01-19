@@ -13,6 +13,7 @@ import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
 import ucar.nc2.dataset.*;
+import ucar.nc2.time.CalendarDate;
 
 import javax.measure.IncommensurableException;
 import javax.measure.Unit;
@@ -157,7 +158,8 @@ public class VariableDsReader {
 
             ZonedDateTime origin;
             if (dateTimeString.contains("T")) {
-                origin = ZonedDateTime.of(LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC"));
+                CalendarDate calendarDate = CalendarDate.parseISOformat(null, dateTimeString);
+                origin = ZonedDateTime.of(LocalDateTime.parse(calendarDate.toString(), DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC"));
             } else {
                 origin = ZonedDateTime.of(LocalDate.parse(dateTimeString, DateTimeFormatter.ofPattern("uuuu-M-d")), LocalTime.of(0, 0), ZoneId.of("UTC"));
             }
@@ -291,7 +293,10 @@ public class VariableDsReader {
 
         if (coordinateSystem != null) {
             wkt = WktFactory.createWkt(coordinateSystem.getProjection());
-        } else if (lonAxis != null && latAxis != null) {
+        }
+
+        // If there is no wkt at this point, assume WGS84
+        if (wkt == null || wkt.isBlank()) {
             wkt = WktFactory.fromEpsg(4326);
         }
 
