@@ -173,6 +173,7 @@ public class NetcdfDataReader extends DataReader {
                             && ncd.findCoordinateAxis(AxisType.Lat) != null;
 
                     if (!coordinateSystems.isEmpty() || isLatLon) {
+//                        variableWithTimes(variableDS);
                         variableNames.add(variable.getFullName());
                     }
                 }
@@ -182,6 +183,10 @@ public class NetcdfDataReader extends DataReader {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
         return Collections.emptySet();
+    }
+
+    private static Set<String> variableWithTimes(VariableDS variableDS) {
+        return null;
     }
 
     private static boolean isSelectableVariable(Variable variable) {
@@ -206,7 +211,7 @@ public class NetcdfDataReader extends DataReader {
         double noDataValue = variableDs.getFillValue();
 
         Grid grid = getGrid(gcs);
-        String wkt = getWkt(gcs.getProjection());
+        String wkt = getWkt(gcs.getProjectionCT());
 
         VortexDataType vortexDataType = getVortexDataType(variableDs);
         VortexVariable vortexVariable = VortexVariable.fromName(variable);
@@ -351,8 +356,9 @@ public class NetcdfDataReader extends DataReader {
         return grids;
     }
 
-    private static String getWkt(Projection projection) {
-        return WktFactory.createWkt((ProjectionImpl) projection);
+    private static String getWkt(ProjectionCT projectionCT) {
+        String wkt = projectionCT.getAttributeContainer().findAttributeString("crs_wkt", "");
+        return !wkt.isEmpty() ? wkt : WktFactory.createWkt(projectionCT.getProjection());
     }
 
     private List<ZonedDateTime[]> getTimeBounds(GridCoordSystem gcs) {
@@ -554,7 +560,7 @@ public class NetcdfDataReader extends DataReader {
         double lly = edgesY[edgesY.length - 1];
         double dy = (lly - uly) / ny;
 
-        String wkt = getWkt(coordinateSystem.getProjection());
+        String wkt = getWkt(coordinateSystem.getProjectionCT());
 
         grid.set(Grid.builder()
                 .nx(nx)
@@ -662,7 +668,7 @@ public class NetcdfDataReader extends DataReader {
         double noDataValue = variableDS.getFillValue();
 
         Grid grid = getGrid(gcs);
-        String wkt = getWkt(gcs.getProjection());
+        String wkt = getWkt(gcs.getProjectionCT());
 
         List<ZonedDateTime[]> times = getTimeBounds(gcs);
 
