@@ -58,7 +58,7 @@ public class NetcdfGridWriter {
         lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(defaultCollection.getNx()).build();
         yDim = Dimension.builder().setName("y").setLength(defaultCollection.getNy()).build();
         xDim = Dimension.builder().setName("x").setLength(defaultCollection.getNx()).build();
-        boundsDim = Dimension.builder().setName("nv").setLength(BOUNDS_LEN).build();
+        boundsDim = Dimension.builder().setName("nv").setIsUnlimited(true).build();
     }
 
     private Map<String, VortexGridCollection> initGridCollectionMap(List<VortexGrid> vortexGridList) {
@@ -335,7 +335,11 @@ public class NetcdfGridWriter {
             int startIndex = timeVar.getShape(0);
             writeVariableGrids(writer, startIndex);
             writer.write(timeVar, new int[] {startIndex}, Array.makeFromJavaArray(defaultCollection.getTimeData()));
-        } catch (IOException | InvalidRangeException e) {
+
+            if (defaultCollection.hasTimeBounds()) {
+                writer.write(getBoundsName(timeDim), new int[] {startIndex, 0}, Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
+            }
+        } catch (Exception e) {
             logger.severe(e.getMessage());
         }
     }

@@ -52,7 +52,7 @@ public class VortexGrid implements VortexData, Serializable {
         this.endTime = builder.endTime;
         this.interval = builder.interval;
         this.dataType = builder.dataType;
-        this.variable = VortexVariable.fromName(shortName);
+        this.variable = builder.variable;
 
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
@@ -77,6 +77,7 @@ public class VortexGrid implements VortexData, Serializable {
         private ZonedDateTime endTime;
         private Duration interval;
         private VortexDataType dataType;
+        private VortexVariable variable;
 
         public VortexGridBuilder dx (final double dx) {
             this.dx = dx;
@@ -168,20 +169,29 @@ public class VortexGrid implements VortexData, Serializable {
             return this;
         }
 
-        public VortexGridBuilder dataType (final String dataTypeString) {
-            VortexDataType type = VortexDataType.fromString(dataTypeString);
-            return dataType(type);
+        public VortexGridBuilder vortexVariable (final VortexVariable vortexVariable) {
+            this.variable = vortexVariable;
+            return this;
         }
 
         public VortexGrid build() {
             // Set data type if it has not been set by the builder arg
             if (dataType == null) {
-                dataType = (interval == null || interval.isZero()) ? VortexDataType.INSTANTANEOUS : VortexDataType.UNDEFINED;
+                dataType = inferDataType();
             }
 
             return new VortexGrid(this);
         }
 
+        private VortexDataType inferDataType() {
+            if (interval == null || interval.isZero()) return VortexDataType.INSTANTANEOUS;
+
+            return switch (variable) {
+                case PRECIPITATION -> VortexDataType.ACCUMULATION;
+                case TEMPERATURE, SOLAR_RADIATION, WINDSPEED, PRESSURE -> VortexDataType.AVERAGE;
+                default -> VortexDataType.INSTANTANEOUS;
+            };
+        }
     }
 
     public static VortexGridBuilder builder(){
@@ -276,6 +286,10 @@ public class VortexGrid implements VortexData, Serializable {
         return dataType;
     }
 
+    public VortexVariable vortexVariable() {
+        return variable;
+    }
+
     public double[] xCoordinates() {
         double[] xCoordinates = new double[nx];
         // xCoordinates[i] = midpoint of xEdges[i] and xEdges[i + 1]
@@ -310,9 +324,9 @@ public class VortexGrid implements VortexData, Serializable {
         if (Double.compare(that.originX, originX) != 0) return false;
         if (Double.compare(that.originY, originY) != 0) return false;
         if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
-        if (ReferenceUtils.equals(wkt, that.wkt)) return false;
+        if (!ReferenceUtils.equals(wkt, that.wkt)) return false;
         if (!Arrays.equals(data, that.data)) return false;
-        if (!Objects.equals(units, that.units)) return false;
+        if (!units.equalsIgnoreCase(that.units)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
         if (!Objects.equals(interval, that.interval)) return false;

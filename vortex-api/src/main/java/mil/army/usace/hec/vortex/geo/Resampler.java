@@ -154,6 +154,8 @@ public class Resampler {
                 .startTime(grid.startTime())
                 .endTime(grid.endTime())
                 .interval(grid.interval())
+                .dataType(grid.dataType())
+                .vortexVariable(grid.vortexVariable())
                 .build();
     }
 
