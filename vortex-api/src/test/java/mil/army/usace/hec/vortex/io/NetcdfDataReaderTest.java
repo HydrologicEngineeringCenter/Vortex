@@ -442,4 +442,55 @@ class NetcdfDataReaderTest {
 
         griddedData.done();
     }
+
+    @Test
+    void prmsl() {
+        URL url = getClass().getResource("/prmsl/prmsl.nc");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<String> inFiles = Collections.singletonList(file);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "prmsl.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
+
+        List<String> vars = Collections.singletonList("prmsl");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        griddedData.setPathname("///PRESSURE/30DEC2015:2400///");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("31 December 2015, 00:00", gridInfo.getStartTime());
+        Assertions.assertEquals("KPA", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridInfo.getDataType());
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
 }
