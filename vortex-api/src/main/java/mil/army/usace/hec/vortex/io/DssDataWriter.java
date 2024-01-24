@@ -351,8 +351,7 @@ public class DssDataWriter extends DataWriter {
         if (descriptionLower.contains("precipitation")
                 && descriptionLower.contains("frequency")) {
             return "PRECIPITATION-FREQUENCY";
-        } else if (descriptionLower.contains("pressure")
-                && descriptionLower.contains("surface")) {
+        } else if (descriptionLower.contains("pressure")) {
             return "PRESSURE";
         } else if (descriptionLower.equals("precipitation")
                 || descriptionLower.equals("precip")
@@ -473,7 +472,7 @@ public class DssDataWriter extends DataWriter {
                 || desc.contains("qpe01h")
                 || desc.contains("var209-6")
                 || desc.contains("rainfall")
-                || desc.contains("pr")) {
+                || desc.equals("pr")) {
             if (type.equals(DssDataType.INST_CUM)) {
                 return "PRECIP-CUM";
             } else {
