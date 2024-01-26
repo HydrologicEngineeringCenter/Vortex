@@ -261,14 +261,11 @@ public class Transposer {
         transposedResampled.delete();
         resampledBand.delete();
 
-        VortexGrid resampledGrid = VortexGrid.builder()
+        VortexGrid resampledGrid = grid.toBuilder()
                 .dx(resampledDx).dy(resampledDy)
                 .nx(resampledNx).ny(resampledNy)
                 .originX(resampledOriginX).originY(resampledOriginY)
-                .wkt(grid.wkt()).data(resampledData).units(grid.units())
-                .fileName(grid.fileName()).shortName(grid.shortName())
-                .fullName(grid.shortName()).description(grid.description())
-                .startTime(grid.startTime()).endTime(grid.endTime()).interval(grid.interval())
+                .data(resampledData)
                 .build();
 
         if (debug) {

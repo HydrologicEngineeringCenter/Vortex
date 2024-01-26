@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import si.uom.NonSI;
@@ -205,6 +206,9 @@ public class VariableDsReader {
     }
 
     private VortexGrid createDTO(float[] data, ZonedDateTime startTime, ZonedDateTime endTime, Duration interval) {
+        VortexVariable vortexVariable = VortexVariable.fromName(variableDS.getShortName());
+        // FIXME: How about VortexDataType
+
         return VortexGrid.builder()
                 .dx(dx)
                 .dy(dy)
@@ -223,6 +227,7 @@ public class VariableDsReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .vortexVariable(vortexVariable)
                 .build();
     }
 

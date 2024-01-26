@@ -1,8 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.GdalRegister;
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.util.FilenameUtil;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
@@ -237,6 +235,9 @@ class AscDataReader extends DataReader {
         dataset.delete();
         band.delete();
 
+        VortexVariable vortexVariable = VortexVariable.fromName(shortName);
+        // FIXME: What should the data type be?
+
         VortexGrid dto = VortexGrid.builder()
                 .dx(dx).dy(dy)
                 .nx(nx).ny(ny)
@@ -253,6 +254,7 @@ class AscDataReader extends DataReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .vortexVariable(vortexVariable)
                 .build();
 
         List<VortexData> list = new ArrayList<>();

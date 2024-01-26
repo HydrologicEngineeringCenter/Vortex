@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexVariable;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.TranslateOptions;
@@ -208,6 +209,9 @@ class BilDataReader extends DataReader {
         raster.delete();
         band.delete();
 
+        VortexVariable vortexVariable = VortexVariable.fromName(shortName);
+        // FIXME: What should the data type be?
+
         VortexGrid dto = VortexGrid.builder()
                 .dx(dx)
                 .dy(dy)
@@ -226,6 +230,7 @@ class BilDataReader extends DataReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .vortexVariable(vortexVariable)
                 .build();
 
         List<VortexData> list = new ArrayList<>();

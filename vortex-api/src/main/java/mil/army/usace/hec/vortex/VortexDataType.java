@@ -19,7 +19,8 @@ public enum VortexDataType {
 
     public static VortexDataType fromString(String dataTypeString) {
         for (VortexDataType type : values()) {
-            if (dataTypeString.equals(type.getDssString()) || dataTypeString.equals(type.getNcString()))
+            dataTypeString = dataTypeString.toLowerCase();
+            if (dataTypeString.contains(type.getDssString()) || dataTypeString.contains(type.getNcString()))
                 return type;
         }
         throw new IllegalArgumentException("dataTypeString not recognized");

@@ -27,16 +27,19 @@ class NormalizerTest {
         when(dto1.data()).thenReturn(new float[]{0,Float.NaN,2,4,2,2,2,2});
         when(dto1.startTime()).thenReturn(ZonedDateTime.of(0, 1, 1,0,0,0,0, ZoneId.of("UTC")));
         when(dto1.endTime()).thenReturn(ZonedDateTime.of(0, 1, 1,0,0,0,0, ZoneId.of("UTC")));
+        when(dto1.toBuilder()).thenReturn(new VortexGrid.VortexGridBuilder(dto1));
 
         VortexGrid dto2 = mock(VortexGrid.class);
         when(dto2.data()).thenReturn(new float[]{0,2,2,4,2,2,2,1});
         when(dto2.startTime()).thenReturn(ZonedDateTime.of(0, 1, 1,0,0,0,0, ZoneId.of("UTC")));
         when(dto2.endTime()).thenReturn(ZonedDateTime.of(0, 1, 1,0,0,0,0, ZoneId.of("UTC")));
+        when(dto2.toBuilder()).thenReturn(new VortexGrid.VortexGridBuilder(dto2));
 
         VortexGrid dto3 = mock(VortexGrid.class);
         when(dto3.data()).thenReturn(new float[]{0,2,Float.NaN,6,2,8,2,2});
         when(dto3.startTime()).thenReturn(ZonedDateTime.of(0, 1, 1,0,0,0,0, ZoneId.of("UTC")));
         when(dto3.endTime()).thenReturn(ZonedDateTime.of(0, 1, 1,0,0,0,0, ZoneId.of("UTC")));
+        when(dto3.toBuilder()).thenReturn(new VortexGrid.VortexGridBuilder(dto3));
 
         List<VortexGrid> inputs = new ArrayList<>();
         inputs.add(dto1);

@@ -177,20 +177,7 @@ public class Shifter {
             interval = dto.interval();
         }
 
-        return VortexGrid.builder()
-                .dx(dto.dx())
-                .dy(dto.dy())
-                .nx(dto.nx())
-                .ny(dto.ny())
-                .originX(dto.originX())
-                .originY(dto.originY())
-                .wkt(dto.wkt())
-                .data(dto.data())
-                .units(dto.units())
-                .fileName(dto.fileName())
-                .shortName(dto.shortName())
-                .fullName(dto.shortName())
-                .description(dto.description())
+        return dto.toBuilder()
                 .startTime(shiftedStart)
                 .endTime(shiftedEnd)
                 .interval(interval)

@@ -79,6 +79,31 @@ public class VortexGrid implements VortexData, Serializable {
         private VortexDataType dataType;
         private VortexVariable variable;
 
+        public VortexGridBuilder() {
+            // Empty constructor
+        }
+
+        public VortexGridBuilder(VortexGrid copy) {
+            dx = copy.dx;
+            dy = copy.dy;
+            nx = copy.nx;
+            ny = copy.ny;
+            originX = copy.originX;
+            originY = copy.originY;
+            wkt = copy.wkt;
+            data = copy.data;
+            noDataValue = copy.noDataValue;
+            units = copy.units;
+            fileName = copy.fileName;
+            shortName = copy.shortName;
+            fullName = copy.fullName;
+            description = copy.description;
+            startTime = copy.startTime;
+            endTime = copy.endTime;
+            interval = copy.interval;
+            dataType = copy.dataType;
+        }
+
         public VortexGridBuilder dx (final double dx) {
             this.dx = dx;
             return this;
@@ -192,6 +217,10 @@ public class VortexGrid implements VortexData, Serializable {
                 default -> VortexDataType.INSTANTANEOUS;
             };
         }
+    }
+
+    public VortexGridBuilder toBuilder() {
+        return new VortexGridBuilder(this);
     }
 
     public static VortexGridBuilder builder(){
