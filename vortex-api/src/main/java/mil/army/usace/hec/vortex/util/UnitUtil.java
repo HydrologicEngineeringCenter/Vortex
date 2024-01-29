@@ -20,6 +20,7 @@ public class UnitUtil {
             case "1/1000 in" -> ONE.divide(INCH.multiply(1000));
             case "celsius", "degrees c", "deg c", "deg_c", "degc", "c" -> CELSIUS;
             case "degc-d" -> CELSIUS.multiply(DAY);
+	        case "degf-d" -> FAHRENHEIT.multiply(DAY);
             case "fahrenheit", "deg f", "deg_f", "degf", "f" -> FAHRENHEIT;
             case "kelvin", "k" -> KELVIN;
             case "watt/m2", "w m-2" -> WATT.divide(SQUARE_METRE);
