@@ -379,6 +379,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else if (fileName.matches("prec.[0-9]{4}.nc")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
+                } else if (fileName.matches("gfs.nc")) {
+                    zonedDateTimes[0] = convert(dates[0]).plusMinutes(90);
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
                 }
@@ -399,6 +401,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(3);
                 } else if (fileName.matches("prec.[0-9]{4}.nc")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
+                } else if (fileName.matches("gfs.nc")) {
+                    zonedDateTimes[1] = convert(dates[1]).plusMinutes(90);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
                 }
@@ -471,7 +475,8 @@ public class NetcdfDataReader extends DataReader {
                 "prec.[0-9]{4}.nc"
         };
 
-        if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
+        if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")
+                || fileName.matches("gfs.nc") && variableName.equals("Precipitation_rate_surface")) {
             return true;
         }
 
