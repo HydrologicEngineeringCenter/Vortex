@@ -1,9 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.TestUtil;
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexDataType;
-import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -42,7 +39,8 @@ class NetcdfDataWriterTest {
                     .startTime(time.plusHours(i))
                     .endTime(time.plusHours(i))
                     .interval(Duration.between(time, time))
-                    .dataType(VortexDataType.INSTANTANEOUS)
+                    .vortexVariable(VortexVariable.TEMPERATURE)
+                    .dataType(VortexDataType.AVERAGE)
                     .build();
 
             originalGrids.add(grid);
@@ -95,7 +93,8 @@ class NetcdfDataWriterTest {
                     .startTime(startTime.plusHours(i))
                     .endTime(endTime.plusHours(i))
                     .interval(Duration.between(startTime, endTime))
-                    .dataType(VortexDataType.UNDEFINED)
+                    .vortexVariable(VortexVariable.PRECIPITATION)
+                    .dataType(VortexDataType.ACCUMULATION)
                     .build();
 
             originalGrids.add(grid);

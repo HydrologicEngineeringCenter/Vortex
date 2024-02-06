@@ -17,8 +17,6 @@ import ucar.nc2.dt.grid.GridDataset;
 import ucar.nc2.ft.FeatureDataset;
 import ucar.nc2.ft.FeatureDatasetFactoryManager;
 import ucar.nc2.time.CalendarDate;
-import ucar.unidata.geoloc.Projection;
-import ucar.unidata.geoloc.ProjectionImpl;
 
 import javax.measure.IncommensurableException;
 import javax.measure.Unit;
@@ -173,7 +171,6 @@ public class NetcdfDataReader extends DataReader {
                             && ncd.findCoordinateAxis(AxisType.Lat) != null;
 
                     if (!coordinateSystems.isEmpty() || isLatLon) {
-//                        variableWithTimes(variableDS);
                         variableNames.add(variable.getFullName());
                     }
                 }
@@ -183,10 +180,6 @@ public class NetcdfDataReader extends DataReader {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
         return Collections.emptySet();
-    }
-
-    private static Set<String> variableWithTimes(VariableDS variableDS) {
-        return null;
     }
 
     private static boolean isSelectableVariable(Variable variable) {
