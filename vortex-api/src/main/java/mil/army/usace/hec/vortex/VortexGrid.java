@@ -194,17 +194,7 @@ public class VortexGrid implements VortexData, Serializable {
             return this;
         }
 
-        public VortexGridBuilder dataType (final String dataTypeString) {
-            VortexDataType type = VortexDataType.fromString(dataTypeString);
-            return dataType(type);
-        }
-
         public VortexGrid build() {
-            // Set data type if it has not been set by the builder arg
-            if (dataType == null) {
-                dataType = (interval == null || interval.isZero()) ? VortexDataType.INSTANTANEOUS : VortexDataType.UNDEFINED;
-            }
-
             return new VortexGrid(this);
         }
     }
@@ -310,8 +300,8 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
-    public VortexDataType dataType() {
-        return dataType;
+    VortexDataType dataType() {
+        return dataType != null ? dataType : inferDataType();
     }
 
     public double[] xCoordinates() {
@@ -332,6 +322,16 @@ public class VortexGrid implements VortexData, Serializable {
         float[][][] data3D = new float[1][ny][nx];
         for (int y = 0; y < ny; y++) System.arraycopy(data, y * nx, data3D[0][y], 0, nx);
         return data3D;
+    }
+
+    private VortexDataType inferDataType() {
+        if (interval == null || interval.isZero()) return VortexDataType.INSTANTANEOUS;
+
+        return switch (VortexVariable.fromName(shortName)) {
+            case PRECIPITATION -> VortexDataType.ACCUMULATION;
+            case TEMPERATURE, SOLAR_RADIATION, WINDSPEED, PRESSURE -> VortexDataType.AVERAGE;
+            default -> VortexDataType.INSTANTANEOUS;
+        };
     }
 
     @Override

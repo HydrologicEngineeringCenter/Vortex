@@ -1,8 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 import org.locationtech.jts.geom.Coordinate;
@@ -10,6 +8,7 @@ import ucar.ma2.Array;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
+import ucar.nc2.constants.CF;
 import ucar.nc2.constants.FeatureType;
 import ucar.nc2.dataset.*;
 import ucar.nc2.dt.GridCoordSystem;
@@ -209,6 +208,8 @@ public class NetcdfDataReader extends DataReader {
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
 
+        VortexDataType vortexDataType = getVortexDataType(variableDs);
+
         List<ZonedDateTime[]> times = getTimeBounds(gcs);
 
         Dimension timeDim = gridDatatype.getTimeDimension();
@@ -250,6 +251,7 @@ public class NetcdfDataReader extends DataReader {
                                             .startTime(startTime)
                                             .endTime(endTime)
                                             .interval(interval)
+                                            .dataType(vortexDataType)
                                             .build());
                                 } catch (IOException e) {
                                     logger.log(Level.SEVERE, e, e::getMessage);
@@ -285,6 +287,7 @@ public class NetcdfDataReader extends DataReader {
                             .startTime(startTime)
                             .endTime(endTime)
                             .interval(interval)
+                            .dataType(vortexDataType)
                             .build());
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, e, e::getMessage);
@@ -335,6 +338,7 @@ public class NetcdfDataReader extends DataReader {
                         .startTime(startTime)
                         .endTime(endTime)
                         .interval(interval)
+                        .dataType(vortexDataType)
                         .build());
             } catch (IOException e) {
                 logger.log(Level.SEVERE, e, e::getMessage);
@@ -704,6 +708,8 @@ public class NetcdfDataReader extends DataReader {
         // to map values.
         shiftGrid(grid);
 
+        VortexDataType vortexDataType = getVortexDataType(variableDS);
+
         return VortexGrid.builder()
                 .dx(grid.getDx())
                 .dy(grid.getDy())
@@ -722,6 +728,7 @@ public class NetcdfDataReader extends DataReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .dataType(vortexDataType)
                 .build();
     }
 
@@ -744,5 +751,10 @@ public class NetcdfDataReader extends DataReader {
         }
 
         return data;
+    }
+
+    private VortexDataType getVortexDataType(VariableDS variableDS) {
+        String cellMethods = variableDS.findAttributeString(CF.CELL_METHODS, "");
+        return VortexDataType.fromString(cellMethods);
     }
 }
