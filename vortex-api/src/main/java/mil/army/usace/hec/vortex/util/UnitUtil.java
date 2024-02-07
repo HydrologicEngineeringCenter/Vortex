@@ -2,6 +2,8 @@ package mil.army.usace.hec.vortex.util;
 
 import javax.measure.Unit;
 
+import java.util.Optional;
+
 import static javax.measure.MetricPrefix.*;
 import static systems.uom.common.USCustomary.FAHRENHEIT;
 import static systems.uom.common.USCustomary.INCH;
@@ -33,5 +35,11 @@ public class UnitUtil {
             case "min" -> MINUTE;
             default -> ONE;
         };
+    }
+
+    public static boolean equals(String units1, String units2) {
+        return Optional.ofNullable(units1)
+                .map(u -> u.equalsIgnoreCase(units2))
+                .orElse(units2 == null);
     }
 }

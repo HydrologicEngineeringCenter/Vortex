@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex;
 
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
+import mil.army.usace.hec.vortex.util.UnitUtil;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -349,7 +350,7 @@ public class VortexGrid implements VortexData, Serializable {
         if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
         if (!ReferenceUtils.equals(wkt, that.wkt)) return false;
         if (!Arrays.equals(data, that.data)) return false;
-        if (!Objects.equals(units, that.units)) return false;
+        if (!UnitUtil.equals(units, that.units)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
         if (!Objects.equals(interval, that.interval)) return false;

@@ -66,7 +66,7 @@ class DssDataReader extends DataReader {
         int direction = ReferenceUtils.getUlyDirection(wkt, ulx, lly);
         double uly = lly + direction * ny * cellSize;
 
-        DSSPathname dssPathname = new DSSPathname(variableName);
+        DSSPathname dssPathname = new DSSPathname(pathname);
         String pathName = dssPathname.getPathname();
         String variable = dssPathname.cPart();
 
