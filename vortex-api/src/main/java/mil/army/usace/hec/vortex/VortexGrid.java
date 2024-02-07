@@ -28,7 +28,6 @@ public class VortexGrid implements VortexData, Serializable {
     private final ZonedDateTime startTime;
     private final ZonedDateTime endTime;
     private final Duration interval;
-    private final VortexVariable variable;
     private final VortexDataType dataType;
     private final double terminusX;
     private final double terminusY;
@@ -53,7 +52,6 @@ public class VortexGrid implements VortexData, Serializable {
         this.endTime = builder.endTime;
         this.interval = builder.interval;
         this.dataType = builder.dataType;
-        this.variable = VortexVariable.fromName(shortName);
 
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
@@ -354,7 +352,6 @@ public class VortexGrid implements VortexData, Serializable {
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
         if (!Objects.equals(interval, that.interval)) return false;
-        if (variable != that.variable) return false;
         return dataType == that.dataType;
     }
 
@@ -380,7 +377,6 @@ public class VortexGrid implements VortexData, Serializable {
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
         result = 31 * result + (endTime != null ? endTime.hashCode() : 0);
         result = 31 * result + (interval != null ? interval.hashCode() : 0);
-        result = 31 * result + (variable != null ? variable.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         return result;
     }
