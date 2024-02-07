@@ -43,13 +43,6 @@ public class Scaler {
         for (int i = 0; i < count; i++){
             scaled[i] = (float) (data[i] * factor);
         }
-        return VortexGrid.builder()
-                .dx(grid.dx()).dy(grid.dy()).nx(grid.nx()).ny(grid.ny())
-                .originX(grid.originX()).originY(grid.originY())
-                .wkt(grid.wkt()).data(scaled).units(grid.units())
-                .fileName(grid.fileName()).shortName(grid.shortName())
-                .fullName(grid.fullName()).description(grid.description())
-                .startTime(grid.startTime()).endTime(grid.endTime())
-                .interval(grid.interval()).build();
+        return VortexGrid.toBuilder(grid).data(scaled).build();
     }
 }

@@ -78,6 +78,31 @@ public class VortexGrid implements VortexData, Serializable {
         private Duration interval;
         private VortexDataType dataType;
 
+        public VortexGridBuilder() {
+            // Empty constructor
+        }
+
+        private VortexGridBuilder(VortexGrid copy) {
+            dx = copy.dx;
+            dy = copy.dy;
+            nx = copy.nx;
+            ny = copy.ny;
+            originX = copy.originX;
+            originY = copy.originY;
+            wkt = copy.wkt;
+            data = copy.data;
+            noDataValue = copy.noDataValue;
+            units = copy.units;
+            fileName = copy.fileName;
+            shortName = copy.shortName;
+            fullName = copy.fullName;
+            description = copy.description;
+            startTime = copy.startTime;
+            endTime = copy.endTime;
+            interval = copy.interval;
+            dataType = copy.dataType;
+        }
+
         public VortexGridBuilder dx (final double dx) {
             this.dx = dx;
             return this;
@@ -181,7 +206,19 @@ public class VortexGrid implements VortexData, Serializable {
 
             return new VortexGrid(this);
         }
+    }
 
+    /**
+     * Creates a {@link VortexGridBuilder} instance that is initialized with the properties of the specified {@code vortexGrid}.
+     * This method facilitates the creation of a new {@code VortexGrid} object that is a modified version of the existing one
+     * by copying its current state into a builder. Modifications can then be made on the builder before constructing a new
+     * {@code VortexGrid} instance.
+     *
+     * @param vortexGrid The {@link VortexGrid} instance from which to copy properties.
+     * @return A {@code VortexGridBuilder} initialized with the properties copied from the provided {@code vortexGrid}.
+     */
+    public static VortexGridBuilder toBuilder(VortexGrid vortexGrid) {
+        return new VortexGridBuilder(vortexGrid);
     }
 
     public static VortexGridBuilder builder(){

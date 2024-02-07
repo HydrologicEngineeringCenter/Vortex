@@ -105,21 +105,8 @@ public class Calculator {
             }
         }
 
-        return VortexGrid.builder()
-                .dx(inputGrid.dx()).dy(inputGrid.dy())
-                .nx(inputGrid.nx()).ny(inputGrid.ny())
-                .originX(inputGrid.originX())
-                .originY(inputGrid.originY())
-                .wkt(inputGrid.wkt())
+        return VortexGrid.toBuilder(inputGrid)
                 .data(resultantData)
-                .units(inputGrid.units())
-                .fileName(inputGrid.fileName())
-                .shortName(inputGrid.shortName())
-                .fullName(inputGrid.fullName())
-                .description(inputGrid.description())
-                .startTime(inputGrid.startTime())
-                .endTime(inputGrid.endTime())
-                .interval(inputGrid.interval())
                 .build();
     }
 

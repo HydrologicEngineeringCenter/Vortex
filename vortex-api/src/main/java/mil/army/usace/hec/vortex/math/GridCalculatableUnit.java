@@ -103,21 +103,8 @@ public class GridCalculatableUnit {
 
             float[] calculated = calculator.calculate();
 
-            VortexGrid output = VortexGrid.builder()
-                    .dx(grid.dx()).dy(grid.dy())
-                    .nx(grid.nx()).ny(grid.ny())
-                    .originX(grid.originX())
-                    .originY(grid.originY())
-                    .wkt(grid.wkt())
+            VortexGrid output = VortexGrid.toBuilder(grid)
                     .data(calculated)
-                    .units(grid.units())
-                    .fileName(grid.fileName())
-                    .shortName(grid.shortName())
-                    .fullName(grid.fullName())
-                    .description(grid.description())
-                    .startTime(grid.startTime())
-                    .endTime(grid.endTime())
-                    .interval(grid.interval())
                     .build();
 
             List<VortexData> data = new ArrayList<>();
