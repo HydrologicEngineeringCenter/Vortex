@@ -1,23 +1,29 @@
 package mil.army.usace.hec.vortex.geo;
 
+import mil.army.usace.hec.vortex.VortexProperty;
 import org.locationtech.jts.geom.*;
 import ucar.nc2.dataset.CoordinateAxis;
 import ucar.nc2.dataset.CoordinateAxis1D;
 import ucar.nc2.dataset.CoordinateAxis2D;
 import ucar.nc2.dt.GridCoordSystem;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class IndexSearcher {
-    private final Map<Point, Integer> cache = new ConcurrentHashMap<>();
+    private static final GeometryFactory FACTORY = new GeometryFactory();
+    private final Map<Coordinate, Integer> cache = new ConcurrentHashMap<>();
     private final List<IndexedGeometry> indexedGeometries = new ArrayList<>();
 
     private Geometry domain;
 
     private int index;
+
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
 
     IndexSearcher(GridCoordSystem gcs) {
 
@@ -81,6 +87,29 @@ public class IndexSearcher {
         initDomain();
     }
 
+    public synchronized void cacheCoordinates(Coordinate[] coordinates) {
+        boolean isCoordinatesCached = true;
+        for (Coordinate coordinate : coordinates) {
+            if (!cache.containsKey(coordinate)) {
+                isCoordinatesCached = false;
+                break;
+            }
+        }
+
+        if (isCoordinatesCached)
+            return;
+
+        support.firePropertyChange(VortexProperty.STATUS, null, "ReIndexing");
+
+        int count = coordinates.length;
+        for (int i = 0; i < count; i++) {
+            Coordinate coordinate = coordinates[i];
+            getIndex(coordinate);
+            int progress = (int) (((float) i / count) * 100);
+            support.firePropertyChange(VortexProperty.PROGRESS, null, progress);
+        }
+    }
+
     private void initDomain() {
         List<Geometry> geometries = indexedGeometries.stream()
                 .map(IndexedGeometry::geometry)
@@ -92,14 +121,24 @@ public class IndexSearcher {
     }
 
     public synchronized int getIndex(double x, double y) {
-        GeometryFactory factory = new GeometryFactory();
-        Point point = factory.createPoint(new Coordinate(x, y));
+        Coordinate coordinate = new Coordinate(x, y);
 
-        if (cache.containsKey(point))
-            return cache.get(point);
+        if (cache.containsKey(coordinate))
+            return cache.get(coordinate);
 
-        if (!domain.contains(point))
+        return getIndex(coordinate);
+    }
+
+    /**
+     * Gets index for coordinate. This method is to remain private and not synchronized.
+     */
+    private int getIndex(Coordinate coordinate) {
+        Point point = FACTORY.createPoint(coordinate);
+
+        if (!domain.contains(point)) {
+            cache.put(coordinate, -1);
             return -1;
+        }
 
         int count = indexedGeometries.size();
 
@@ -112,10 +151,18 @@ public class IndexSearcher {
             }
         }
 
-        cache.put(point, index);
+        cache.put(coordinate, index);
 
         return index;
     }
 
     private record IndexedGeometry(int index, Geometry geometry) {}
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        support.removePropertyChangeListener(pcl);
+    }
 }

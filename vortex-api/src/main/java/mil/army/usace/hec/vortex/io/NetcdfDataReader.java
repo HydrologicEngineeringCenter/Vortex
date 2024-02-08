@@ -736,18 +736,18 @@ public class NetcdfDataReader extends DataReader {
         if (gcs.isRegularSpatial())
             return slice;
 
-        support.firePropertyChange(VortexProperty.STATUS, null, "ReIndexing");
-
         IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gcs);
+        indexSearcher.addPropertyChangeListener(support::firePropertyChange);
+
         Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
+        indexSearcher.cacheCoordinates(coordinates);
+
         float[] data = new float[coordinates.length];
         int count = data.length;
         for (int i = 0; i < count; i++) {
             Coordinate coordinate = coordinates[i];
             int index = indexSearcher.getIndex(coordinate.x, coordinate.y);
             data[i] = index >= 0 ? slice[index] : (float) noDataValue;
-            int progress = (int) (((float) i / count) * 100);
-            support.firePropertyChange(VortexProperty.PROGRESS, null, progress);
         }
 
         return data;

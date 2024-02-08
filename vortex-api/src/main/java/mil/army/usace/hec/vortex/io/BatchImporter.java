@@ -151,11 +151,12 @@ public abstract class BatchImporter {
             // Propagating Write Progress to UI
             if (VortexProperty.STATUS.equals(evt.getPropertyName())
                     && ImportableUnit.IMPORT_COMPLETE.equals(evt.getNewValue())) {
+                support.firePropertyChange(VortexProperty.STATUS, null, "Importing");
                 int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
                 support.firePropertyChange(VortexProperty.PROGRESS, null, newValue);
+            } else {
+                support.firePropertyChange(evt);
             }
-
-            support.firePropertyChange(evt);
         };
     }
 

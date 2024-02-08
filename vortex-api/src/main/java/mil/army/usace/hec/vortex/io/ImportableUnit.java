@@ -112,9 +112,13 @@ public class ImportableUnit {
                     .build();
 
             writer.write();
-        }
 
-        support.firePropertyChange(VortexProperty.STATUS, null, ImportableUnit.IMPORT_COMPLETE);
+            support.firePropertyChange(VortexProperty.STATUS, null, ImportableUnit.IMPORT_COMPLETE);
+        }
+    }
+
+    public int getDtoCount() {
+        return reader.getDtoCount();
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
