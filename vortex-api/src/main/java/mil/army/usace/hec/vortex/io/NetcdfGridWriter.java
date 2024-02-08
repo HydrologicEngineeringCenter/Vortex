@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
@@ -37,6 +38,7 @@ public class NetcdfGridWriter {
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
     public static final int BOUNDS_LEN = 2;
+    public static final String CRS_WKT = "crs_wkt";
 
     private final Map<String, VortexGridCollection> gridCollectionMap;
     private final VortexGridCollection defaultCollection;
@@ -57,7 +59,7 @@ public class NetcdfGridWriter {
         lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(defaultCollection.getNx()).build();
         yDim = Dimension.builder().setName("y").setLength(defaultCollection.getNy()).build();
         xDim = Dimension.builder().setName("x").setLength(defaultCollection.getNx()).build();
-        boundsDim = Dimension.builder().setName("nv").setLength(BOUNDS_LEN).build();
+        boundsDim = Dimension.builder().setName("nv").setIsUnlimited(true).build();
     }
 
     private Map<String, VortexGridCollection> initGridCollectionMap(List<VortexGrid> vortexGridList) {
@@ -147,7 +149,6 @@ public class NetcdfGridWriter {
                     VortexGrid grid = entry.getValue();
                     int[] origin = {index, 0, 0};
                     writer.write(variable, origin, Array.makeFromJavaArray(grid.data3D()));
-                    support.firePropertyChange(DataWriter.WRITE_COMPLETED, null, null);
                 } catch (IOException | InvalidRangeException e) {
                     logger.warning(e.getMessage());
                     hasErrors.set(true);
@@ -160,7 +161,7 @@ public class NetcdfGridWriter {
             String overwriteErrorMessage = "Failed to overwrite file.";
             String appendErrorMessage = "Some reasons may be:\n* Attempted to append to non-existing variable\n* Attempted to append data with different projection\n* Attempted to append data with different location";
             String message = isAppend ? appendErrorMessage : overwriteErrorMessage;
-            support.firePropertyChange(DataWriter.WRITE_ERROR, null, message);
+            support.firePropertyChange(VortexProperty.ERROR, null, message);
         }
     }
 
@@ -253,6 +254,10 @@ public class NetcdfGridWriter {
                     Attribute.builder().setName(name).setValues(Array.makeFromJavaArray(numericValues)).build();
             variableBuilder.addAttribute(attribute);
         }
+
+        // Adding CRS WKT for Grid's Coordinate System information
+        // CF Conventions: https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#use-of-the-crs-well-known-text-format
+        variableBuilder.addAttribute(new Attribute(CRS_WKT, defaultCollection.getWkt()));
     }
 
     private void addVariableGridCollection(NetcdfFormatWriter.Builder writerBuilder) {
@@ -335,7 +340,11 @@ public class NetcdfGridWriter {
             int startIndex = timeVar.getShape(0);
             writeVariableGrids(writer, startIndex);
             writer.write(timeVar, new int[] {startIndex}, Array.makeFromJavaArray(defaultCollection.getTimeData()));
-        } catch (IOException | InvalidRangeException e) {
+
+            if (defaultCollection.hasTimeBounds()) {
+                writer.write(getBoundsName(timeDim), new int[] {startIndex, 0}, Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
+            }
+        } catch (Exception e) {
             logger.severe(e.getMessage());
         }
     }

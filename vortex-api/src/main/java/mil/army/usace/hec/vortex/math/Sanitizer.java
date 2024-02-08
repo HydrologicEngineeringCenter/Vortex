@@ -72,21 +72,8 @@ public class Sanitizer {
             }
         }
 
-        return VortexGrid.builder()
-                .dx(input.dx()).dy(input.dy())
-                .nx(input.nx()).ny(input.ny())
-                .originX(input.originX())
-                .originY(input.originY())
-                .wkt(input.wkt())
+        return VortexGrid.toBuilder(input)
                 .data(sanitizedData)
-                .units(input.units())
-                .fileName(input.fileName())
-                .shortName(input.shortName())
-                .fullName(input.fullName())
-                .description(input.description())
-                .startTime(input.startTime())
-                .endTime(input.endTime())
-                .interval(input.interval())
                 .build();
     }
 

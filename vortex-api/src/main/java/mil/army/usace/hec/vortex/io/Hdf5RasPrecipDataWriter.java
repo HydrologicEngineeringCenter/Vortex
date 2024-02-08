@@ -264,8 +264,8 @@ public class Hdf5RasPrecipDataWriter extends DataWriter {
         private float[] transposeVerticalAndReplaceNodata(VortexGrid grid) {
             float[] data = grid.data();
             float[] transposedData = new float[data.length];
-            int rows = grid.nx();
-            int cols = grid.ny();
+            int rows = grid.ny();
+            int cols = grid.nx();
             for (int r = 0; r < rows; r++) {
                 int readindex = r * cols;
                 int writeindex = (rows - r - 1) * cols;

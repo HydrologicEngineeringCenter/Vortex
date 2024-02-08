@@ -136,24 +136,12 @@ public class Resampler {
         envSrs.delete();
         destSrs.delete();
 
-        return VortexGrid.builder()
-                .dx(dx)
-                .dy(dy)
-                .nx(nx)
-                .ny(ny)
-                .originX(originX)
-                .originY(originY)
+        return VortexGrid.toBuilder(grid)
+                .dx(dx).dy(dy)
+                .nx(nx).ny(ny)
+                .originX(originX).originY(originY)
                 .wkt(wkt)
                 .data(data)
-                .noDataValue(grid.noDataValue())
-                .units(grid.units())
-                .fileName(grid.fileName())
-                .shortName(grid.shortName())
-                .fullName(grid.fullName())
-                .description(grid.description())
-                .startTime(grid.startTime())
-                .endTime(grid.endTime())
-                .interval(grid.interval())
                 .build();
     }
 

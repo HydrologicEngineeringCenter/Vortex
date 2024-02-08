@@ -2,6 +2,8 @@ package mil.army.usace.hec.vortex.util;
 
 import javax.measure.Unit;
 
+import java.util.Optional;
+
 import static javax.measure.MetricPrefix.*;
 import static systems.uom.common.USCustomary.FAHRENHEIT;
 import static systems.uom.common.USCustomary.INCH;
@@ -20,6 +22,7 @@ public class UnitUtil {
             case "1/1000 in" -> ONE.divide(INCH.multiply(1000));
             case "celsius", "degrees c", "deg c", "deg_c", "degc", "c" -> CELSIUS;
             case "degc-d" -> CELSIUS.multiply(DAY);
+	        case "degf-d" -> FAHRENHEIT.multiply(DAY);
             case "fahrenheit", "deg f", "deg_f", "degf", "f" -> FAHRENHEIT;
             case "kelvin", "k" -> KELVIN;
             case "watt/m2", "w m-2" -> WATT.divide(SQUARE_METRE);
@@ -33,5 +36,11 @@ public class UnitUtil {
             case "min" -> MINUTE;
             default -> ONE;
         };
+    }
+
+    public static boolean equals(String units1, String units2) {
+        return Optional.ofNullable(units1)
+                .map(u -> u.equalsIgnoreCase(units2))
+                .orElse(units2 == null);
     }
 }

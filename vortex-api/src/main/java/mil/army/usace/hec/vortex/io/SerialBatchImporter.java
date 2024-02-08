@@ -1,15 +1,10 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.geo.GeographicProcessor;
+import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 class SerialBatchImporter extends BatchImporter {
     private static final Logger logger = Logger.getLogger(SerialBatchImporter.class.getName());
@@ -20,30 +15,22 @@ class SerialBatchImporter extends BatchImporter {
 
     @Override
     public void process() {
-        Instant start = Instant.now();
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
 
-        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
+        List<ImportableUnit> importableUnits = getImportableUnits();
 
-        List<VortexData> vortexDataList = getDataReaders().parallelStream()
-                .map(DataReader::getDtos)
-                .flatMap(Collection::stream)
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
-                .map(geoProcessor::process)
-                .collect(Collectors.toList());
+        totalCount = importableUnits.size();
 
-        DataWriter writer = DataWriter.builder()
-                .data(vortexDataList)
-                .destination(destination)
-                .options(writeOptions)
-                .build();
+        importableUnits.forEach(importableUnit -> {
+            importableUnit.addPropertyChangeListener(propertyChangeListener());
+            importableUnit.process();
+        });
 
-        int totalCount = vortexDataList.size();
-        writer.addListener(writeProgressListener(totalCount));
-        writer.write();
-
-        long seconds = Duration.between(start, Instant.now()).toSeconds();
-        String timeMessage = String.format("Batch import time: %d:%02d:%02d%n", seconds / 3600, (seconds % 3600) / 60, (seconds % 60));
+        stopwatch.end();
+        String timeMessage = "Batch import time: " + stopwatch;
         logger.info(timeMessage);
+
+        support.firePropertyChange(VortexProperty.STATUS, null, null);
     }
 }

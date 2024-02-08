@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex;
 
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
+import mil.army.usace.hec.vortex.util.UnitUtil;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -27,7 +28,6 @@ public class VortexGrid implements VortexData, Serializable {
     private final ZonedDateTime startTime;
     private final ZonedDateTime endTime;
     private final Duration interval;
-    private final VortexVariable variable;
     private final VortexDataType dataType;
     private final double terminusX;
     private final double terminusY;
@@ -52,7 +52,6 @@ public class VortexGrid implements VortexData, Serializable {
         this.endTime = builder.endTime;
         this.interval = builder.interval;
         this.dataType = builder.dataType;
-        this.variable = VortexVariable.fromName(shortName);
 
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
@@ -77,6 +76,31 @@ public class VortexGrid implements VortexData, Serializable {
         private ZonedDateTime endTime;
         private Duration interval;
         private VortexDataType dataType;
+
+        public VortexGridBuilder() {
+            // Empty constructor
+        }
+
+        private VortexGridBuilder(VortexGrid copy) {
+            dx = copy.dx;
+            dy = copy.dy;
+            nx = copy.nx;
+            ny = copy.ny;
+            originX = copy.originX;
+            originY = copy.originY;
+            wkt = copy.wkt;
+            data = copy.data;
+            noDataValue = copy.noDataValue;
+            units = copy.units;
+            fileName = copy.fileName;
+            shortName = copy.shortName;
+            fullName = copy.fullName;
+            description = copy.description;
+            startTime = copy.startTime;
+            endTime = copy.endTime;
+            interval = copy.interval;
+            dataType = copy.dataType;
+        }
 
         public VortexGridBuilder dx (final double dx) {
             this.dx = dx;
@@ -168,20 +192,22 @@ public class VortexGrid implements VortexData, Serializable {
             return this;
         }
 
-        public VortexGridBuilder dataType (final String dataTypeString) {
-            VortexDataType type = VortexDataType.fromString(dataTypeString);
-            return dataType(type);
-        }
-
         public VortexGrid build() {
-            // Set data type if it has not been set by the builder arg
-            if (dataType == null) {
-                dataType = (interval == null || interval.isZero()) ? VortexDataType.INSTANTANEOUS : VortexDataType.UNDEFINED;
-            }
-
             return new VortexGrid(this);
         }
+    }
 
+    /**
+     * Creates a {@link VortexGridBuilder} instance that is initialized with the properties of the specified {@code vortexGrid}.
+     * This method facilitates the creation of a new {@code VortexGrid} object that is a modified version of the existing one
+     * by copying its current state into a builder. Modifications can then be made on the builder before constructing a new
+     * {@code VortexGrid} instance.
+     *
+     * @param vortexGrid The {@link VortexGrid} instance from which to copy properties.
+     * @return A {@code VortexGridBuilder} initialized with the properties copied from the provided {@code vortexGrid}.
+     */
+    public static VortexGridBuilder toBuilder(VortexGrid vortexGrid) {
+        return new VortexGridBuilder(vortexGrid);
     }
 
     public static VortexGridBuilder builder(){
@@ -272,8 +298,8 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
-    public VortexDataType dataType() {
-        return dataType;
+    VortexDataType dataType() {
+        return dataType != null ? dataType : inferDataType();
     }
 
     public double[] xCoordinates() {
@@ -296,6 +322,16 @@ public class VortexGrid implements VortexData, Serializable {
         return data3D;
     }
 
+    private VortexDataType inferDataType() {
+        if (interval == null || interval.isZero()) return VortexDataType.INSTANTANEOUS;
+
+        return switch (VortexVariable.fromName(shortName)) {
+            case PRECIPITATION -> VortexDataType.ACCUMULATION;
+            case TEMPERATURE, SOLAR_RADIATION, WINDSPEED, PRESSURE -> VortexDataType.AVERAGE;
+            default -> VortexDataType.INSTANTANEOUS;
+        };
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -312,11 +348,10 @@ public class VortexGrid implements VortexData, Serializable {
         if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
         if (!ReferenceUtils.equals(wkt, that.wkt)) return false;
         if (!Arrays.equals(data, that.data)) return false;
-        if (!Objects.equals(units, that.units)) return false;
+        if (!UnitUtil.equals(units, that.units)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
         if (!Objects.equals(interval, that.interval)) return false;
-        if (variable != that.variable) return false;
         return dataType == that.dataType;
     }
 
@@ -342,7 +377,6 @@ public class VortexGrid implements VortexData, Serializable {
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
         result = 31 * result + (endTime != null ? endTime.hashCode() : 0);
         result = 31 * result + (interval != null ? interval.hashCode() : 0);
-        result = 31 * result + (variable != null ? variable.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         return result;
     }

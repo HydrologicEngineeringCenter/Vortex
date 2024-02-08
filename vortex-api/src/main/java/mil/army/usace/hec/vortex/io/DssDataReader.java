@@ -7,6 +7,7 @@ import hec.heclib.grid.GridUtilities;
 import hec.heclib.grid.GriddedData;
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
@@ -66,7 +67,7 @@ class DssDataReader extends DataReader {
         int direction = ReferenceUtils.getUlyDirection(wkt, ulx, lly);
         double uly = lly + direction * ny * cellSize;
 
-        DSSPathname dssPathname = new DSSPathname(variableName);
+        DSSPathname dssPathname = new DSSPathname(pathname);
         String pathName = dssPathname.getPathname();
         String variable = dssPathname.cPart();
 
@@ -92,6 +93,7 @@ class DssDataReader extends DataReader {
         float[] data = RasterUtils.flipVertically(gridData.getData(), nx);
 
         String dssTypeString = DssDataType.fromInt(gridInfo.getDataType()).toString();
+        VortexDataType dataType = VortexDataType.fromString(dssTypeString);
 
         return  VortexGrid.builder()
                 .dx(cellSize)
@@ -110,7 +112,7 @@ class DssDataReader extends DataReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
-                .dataType(dssTypeString)
+                .dataType(dataType)
                 .build();
     }
 

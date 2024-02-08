@@ -1,7 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 import org.locationtech.jts.geom.Coordinate;
@@ -9,6 +8,7 @@ import ucar.ma2.Array;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
+import ucar.nc2.constants.CF;
 import ucar.nc2.constants.FeatureType;
 import ucar.nc2.dataset.*;
 import ucar.nc2.dt.GridCoordSystem;
@@ -208,6 +208,8 @@ public class NetcdfDataReader extends DataReader {
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
 
+        VortexDataType vortexDataType = getVortexDataType(variableDs);
+
         List<ZonedDateTime[]> times = getTimeBounds(gcs);
 
         Dimension timeDim = gridDatatype.getTimeDimension();
@@ -249,6 +251,7 @@ public class NetcdfDataReader extends DataReader {
                                             .startTime(startTime)
                                             .endTime(endTime)
                                             .interval(interval)
+                                            .dataType(vortexDataType)
                                             .build());
                                 } catch (IOException e) {
                                     logger.log(Level.SEVERE, e, e::getMessage);
@@ -284,6 +287,7 @@ public class NetcdfDataReader extends DataReader {
                             .startTime(startTime)
                             .endTime(endTime)
                             .interval(interval)
+                            .dataType(vortexDataType)
                             .build());
                 } catch (IOException e) {
                     logger.log(Level.SEVERE, e, e::getMessage);
@@ -334,6 +338,7 @@ public class NetcdfDataReader extends DataReader {
                         .startTime(startTime)
                         .endTime(endTime)
                         .interval(interval)
+                        .dataType(vortexDataType)
                         .build());
             } catch (IOException e) {
                 logger.log(Level.SEVERE, e, e::getMessage);
@@ -379,6 +384,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else if (fileName.matches("prec.[0-9]{4}.nc")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
+                } else if (fileName.matches("gfs.nc")) {
+                    zonedDateTimes[0] = convert(dates[0]).plusMinutes(90);
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
                 }
@@ -399,6 +406,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(3);
                 } else if (fileName.matches("prec.[0-9]{4}.nc")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
+                } else if (fileName.matches("gfs.nc")) {
+                    zonedDateTimes[1] = convert(dates[1]).plusMinutes(90);
                 } else {
                     zonedDateTimes[1] = convert(dates[1]);
                 }
@@ -471,7 +480,8 @@ public class NetcdfDataReader extends DataReader {
                 "prec.[0-9]{4}.nc"
         };
 
-        if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
+        if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")
+                || fileName.matches("gfs.nc") && variableName.equals("Precipitation_rate_surface")) {
             return true;
         }
 
@@ -698,6 +708,8 @@ public class NetcdfDataReader extends DataReader {
         // to map values.
         shiftGrid(grid);
 
+        VortexDataType vortexDataType = getVortexDataType(variableDS);
+
         return VortexGrid.builder()
                 .dx(grid.getDx())
                 .dy(grid.getDy())
@@ -716,6 +728,7 @@ public class NetcdfDataReader extends DataReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .dataType(vortexDataType)
                 .build();
     }
 
@@ -723,15 +736,25 @@ public class NetcdfDataReader extends DataReader {
         if (gcs.isRegularSpatial())
             return slice;
 
+        support.firePropertyChange(VortexProperty.STATUS, null, "ReIndexing");
+
         IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gcs);
         Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
         float[] data = new float[coordinates.length];
-        for (int i = 0; i < data.length; i++) {
+        int count = data.length;
+        for (int i = 0; i < count; i++) {
             Coordinate coordinate = coordinates[i];
             int index = indexSearcher.getIndex(coordinate.x, coordinate.y);
             data[i] = index >= 0 ? slice[index] : (float) noDataValue;
+            int progress = (int) (((float) i / count) * 100);
+            support.firePropertyChange(VortexProperty.PROGRESS, null, progress);
         }
 
         return data;
+    }
+
+    private VortexDataType getVortexDataType(VariableDS variableDS) {
+        String cellMethods = variableDS.findAttributeString(CF.CELL_METHODS, "");
+        return VortexDataType.fromString(cellMethods);
     }
 }

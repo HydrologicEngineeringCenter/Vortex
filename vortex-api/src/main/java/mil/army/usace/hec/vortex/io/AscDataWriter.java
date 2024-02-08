@@ -37,24 +37,9 @@ public class AscDataWriter extends DataWriter {
                 gridOut = grid;
             } else {
                 float[] flipped = RasterUtils.flipVertically(grid.data(), grid.nx());
-                gridOut = VortexGrid.builder()
-                        .dx(grid.dx())
-                        .dy(grid.dy())
-                        .nx(grid.nx())
-                        .ny(grid.ny())
-                        .originX(grid.originX())
+                gridOut = VortexGrid.toBuilder(grid)
                         .originY(grid.originY() + grid.dy() * grid.ny())
-                        .wkt(grid.wkt())
                         .data(flipped)
-                        .noDataValue(grid.noDataValue())
-                        .units(grid.units())
-                        .fileName(grid.fileName())
-                        .shortName(grid.shortName())
-                        .fullName(grid.fullName())
-                        .description(grid.description())
-                        .startTime(grid.startTime())
-                        .endTime(grid.endTime())
-                        .interval(grid.interval())
                         .build();
             }
 

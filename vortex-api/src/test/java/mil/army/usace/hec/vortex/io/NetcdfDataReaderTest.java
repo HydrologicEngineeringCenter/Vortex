@@ -493,4 +493,344 @@ class NetcdfDataReaderTest {
             Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
         }
     }
+
+    @Test
+    void gfs() {
+        URL url = getClass().getResource("/gfs/GFS.nc");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<String> inFiles = Collections.singletonList(file);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "gfs.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
+
+        List<String> vars = List.of("Precipitation_rate_surface", "Temperature_surface");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        GridData gridData = new GridData();
+
+        griddedData.setPathname("///PRECIPITATION/24JAN2024:0000/24JAN2024:0300//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("24 January 2024, 00:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("24 January 2024, 03:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///PRECIPITATION/16FEB2024:0600/16FEB2024:0900//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("16 February 2024, 06:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("16 February 2024, 09:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/23JAN2024:2400///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("24 January 2024, 00:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("24 January 2024, 00:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/16FEB2024:0600///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("16 February 2024, 06:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("16 February 2024, 06:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
+
+    @Test
+    void hrrr() {
+        URL url = getClass().getResource("/hrrr/HRRR.nc");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<String> inFiles = Collections.singletonList(file);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "hrrr.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
+
+        List<String> vars = List.of("Total_precipitation_surface_1_Hour_Accumulation", "Temperature_height_above_ground");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        GridData gridData = new GridData();
+
+        griddedData.setPathname("///PRECIPITATION/28JAN2024:0000/28JAN2024:0100//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("28 January 2024, 00:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("28 January 2024, 01:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///PRECIPITATION/01FEB2024:0500/01FEB2024:0600//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("1 February 2024, 05:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("1 February 2024, 06:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/27JAN2024:2400///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("28 January 2024, 00:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("28 January 2024, 00:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/01FEB2024:0600///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("1 February 2024, 06:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("1 February 2024, 06:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
+
+    @Test
+    void nam() {
+        URL url = getClass().getResource("/nam/NAM.nc");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<String> inFiles = Collections.singletonList(file);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "nam.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
+
+        List<String> vars = List.of("Total_precipitation_surface_3_Hour_Accumulation", "Temperature_height_above_ground");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        GridData gridData = new GridData();
+
+        griddedData.setPathname("///PRECIPITATION/01JAN2024:0000/01JAN2024:0300//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("1 January 2024, 00:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("1 January 2024, 03:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///PRECIPITATION/03FEB2024:1500/03FEB2024:1800//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("3 February 2024, 15:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("3 February 2024, 18:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/31DEC2023:2400///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("1 January 2024, 00:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("1 January 2024, 00:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/03FEB2024:1800///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("3 February 2024, 18:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("3 February 2024, 18:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
+
+    @Test
+    void rtma() {
+        URL url = getClass().getResource("/rtma/RTMA.nc");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<String> inFiles = Collections.singletonList(file);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "rtma.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
+
+        List<String> vars = List.of("Total_precipitation_Forecast_altitude_above_msl_1_Hour_Accumulation", "Temperature_Analysis_height_above_ground");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        GridData gridData = new GridData();
+
+        griddedData.setPathname("///PRECIPITATION/24JAN2024:1400/24JAN2024:1500//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("24 January 2024, 14:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("24 January 2024, 15:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///PRECIPITATION/31JAN2024:1200/31JAN2024:1300//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("31 January 2024, 12:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("31 January 2024, 13:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/24JAN2024:1500///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("24 January 2024, 15:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("24 January 2024, 15:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.setPathname("///TEMPERATURE/31JAN2024:1200///");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("31 January 2024, 12:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("31 January 2024, 12:00", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
 }

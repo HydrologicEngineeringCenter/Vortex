@@ -263,14 +263,9 @@ public class Normalizer {
                 }
                 outData[i] = value;
             }
-            output.add(VortexGrid.builder()
-                    .dx(dto.dx()).dy(dto.dy()).nx(dto.nx()).ny(dto.ny())
-                    .originX(dto.originX()).originY(dto.originY())
-                    .wkt(dto.wkt()).data(outData).units(dto.units())
-                    .fileName(dto.fileName()).shortName(dto.shortName())
-                    .fullName(dto.fullName()).description(dto.description())
-                    .startTime(dto.startTime()).endTime(dto.endTime())
-                    .interval(dto.interval()).build()
+            output.add(VortexGrid.toBuilder(dto)
+                    .data(outData)
+                    .build()
             );
         });
 

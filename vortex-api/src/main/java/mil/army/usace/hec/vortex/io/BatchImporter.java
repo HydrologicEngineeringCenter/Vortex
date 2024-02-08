@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.VortexProperty;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -18,7 +19,8 @@ public abstract class BatchImporter {
     final Map<String, String> geoOptions;
     final Map<String, String> writeOptions;
 
-    private final PropertyChangeSupport support;
+    final PropertyChangeSupport support;
+    int totalCount;
     private final AtomicInteger doneCount;
 
     BatchImporter(Builder builder) {
@@ -133,18 +135,27 @@ public abstract class BatchImporter {
         return readers;
     }
 
-    PropertyChangeListener writeProgressListener(int totalCount) {
+    List<ImportableUnit> getImportableUnits() {
+        return getDataReaders().stream()
+                .map(reader -> ImportableUnit.builder()
+                        .reader(reader)
+                        .geoOptions(geoOptions)
+                        .destination(destination)
+                        .writeOptions(writeOptions)
+                        .build())
+                .toList();
+    }
+
+    PropertyChangeListener propertyChangeListener() {
         return evt -> {
             // Propagating Write Progress to UI
-            if (evt.getPropertyName().equals(DataWriter.WRITE_COMPLETED)) {
+            if (VortexProperty.STATUS.equals(evt.getPropertyName())
+                    && ImportableUnit.IMPORT_COMPLETE.equals(evt.getNewValue())) {
                 int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
-                support.firePropertyChange("progress", null, newValue);
+                support.firePropertyChange(VortexProperty.PROGRESS, null, newValue);
             }
 
-            // Propagating Write Error to UI
-            if (evt.getPropertyName().equals(DataWriter.WRITE_ERROR)) {
-                support.firePropertyChange(evt);
-            }
+            support.firePropertyChange(evt);
         };
     }
 

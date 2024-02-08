@@ -2,17 +2,23 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
 public abstract class DataReader {
+    final PropertyChangeSupport support;
+
     final String path;
     final String variableName;
 
     DataReader(DataReaderBuilder builder){
         this.path = builder.path;
         this.variableName = builder.variableName;
+
+        support = new PropertyChangeSupport(this);
     } // DataReader builder()
 
     public static class DataReaderBuilder{
@@ -100,5 +106,13 @@ public abstract class DataReader {
         String fileName = new File(pathToFile).getName().toLowerCase();
 
         return !fileName.matches(".*\\.(asc|tif|tiff|bil|bil.zip|asc.zip)$");
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        support.removePropertyChangeListener(pcl);
     }
 } // DataReader class

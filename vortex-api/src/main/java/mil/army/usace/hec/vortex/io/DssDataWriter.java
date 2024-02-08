@@ -364,7 +364,7 @@ public class DssDataWriter extends DataWriter {
                 || descriptionLower.equals("pcp")
                 || descriptionLower.equals("pr")
                 || descriptionLower.equals("prec")
-                || descriptionLower.equals("total precipitation")) {
+                || descriptionLower.contains("total") && descriptionLower.contains("precipitation")) {
             return "PRECIPITATION";
         } else if (descriptionLower.contains("temperature")
                 || descriptionLower.equals("airtemp")

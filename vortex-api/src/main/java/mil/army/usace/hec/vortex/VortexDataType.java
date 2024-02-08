@@ -19,10 +19,13 @@ public enum VortexDataType {
 
     public static VortexDataType fromString(String dataTypeString) {
         for (VortexDataType type : values()) {
-            if (dataTypeString.equals(type.getDssString()) || dataTypeString.equals(type.getNcString()))
+            boolean isDssString = type.getDssString().equalsIgnoreCase(dataTypeString);
+            boolean isNcString = type.getNcString().equalsIgnoreCase(dataTypeString);
+            if (isDssString || isNcString) {
                 return type;
+            }
         }
-        throw new IllegalArgumentException("dataTypeString not recognized");
+        return UNDEFINED;
     }
 
     public String getDssString() {
