@@ -177,10 +177,13 @@ public class Normalizer {
                 logger.warning(() -> format("No source grids for period %s to %s", formatter.format(start), formatter.format(end)));
             }
 
-            List<VortexGrid> normalsFiltered = normals.stream().filter(grid -> ((grid.startTime().equals(start) || grid.startTime().isAfter(start))
-                    && (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
-                    .map(grid -> (VortexGrid)grid)
-                    .collect(Collectors.toList());
+            List<VortexGrid> normalsFiltered = normals.stream()
+                    .filter(VortexGrid.class::isInstance)
+                    .map(VortexGrid.class::cast)
+                    .filter(grid -> (
+                            (grid.startTime().isEqual(start) || grid.startTime().isAfter(start)) &&
+                            (grid.endTime().isEqual(end) || grid.endTime().isBefore(end))))
+                    .toList();
 
             if (normalsFiltered.isEmpty()){
                 logger.warning(() -> format("No normals grids for period %s to %s", formatter.format(start), formatter.format(end)));
