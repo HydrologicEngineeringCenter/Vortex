@@ -57,7 +57,7 @@ public class DssDataWriter extends DataWriter {
                 .map(VortexGrid.class::cast)
                 .toList();
 
-        grids.forEach(grid -> {
+        for (VortexGrid grid : grids) {
             GridInfo gridInfo = getGridInfo(grid);
 
             float[] data;
@@ -194,7 +194,7 @@ public class DssDataWriter extends DataWriter {
 
                 write(data, gridInfo, dssPathname);
             }
-        });
+        }
 
         List<VortexPoint> points = data.stream()
                 .filter(VortexPoint.class::isInstance)
@@ -364,7 +364,8 @@ public class DssDataWriter extends DataWriter {
                 || descriptionLower.equals("pcp")
                 || descriptionLower.equals("pr")
                 || descriptionLower.equals("prec")
-                || descriptionLower.contains("total") && descriptionLower.contains("precipitation")) {
+                || descriptionLower.contains("total") && descriptionLower.contains("precipitation")
+                || descriptionLower.contains("convective") && descriptionLower.contains("rainfall")) {
             return "PRECIPITATION";
         } else if (descriptionLower.contains("temperature")
                 || descriptionLower.equals("airtemp")
