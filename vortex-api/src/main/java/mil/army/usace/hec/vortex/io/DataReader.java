@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexTimeRecord;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -101,6 +102,8 @@ public abstract class DataReader {
     public abstract int getDtoCount();
 
     public abstract VortexData getDto(int idx);
+
+    public abstract List<VortexTimeRecord> getTimeRecords();
 
     public static boolean isVariableRequired(String pathToFile) {
         String fileName = new File(pathToFile).getName().toLowerCase();
