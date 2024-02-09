@@ -5,6 +5,7 @@ import hec.heclib.dss.HecDataManager;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GriddedData;
+import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Resampler;
@@ -107,19 +108,6 @@ class NetcdfDataReaderTest {
         List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
         assertEquals(62, dtos.size());
         assertEquals(10512, dtos.get(0).data().length);
-    }
-
-    @Test
-    void GpmSubImport(){
-        String inFile = new File(getClass().getResource("/3B-HHR.MS.MRG.3IMERG.20170103-S110000-E112959.0660.V06B.HDF5.SUB.hdf5").getFile()).toString();
-        String variableName = "precipitationCal";
-
-        DataReader reader = DataReader.builder()
-                .path(inFile)
-                .variable(variableName)
-                .build();
-
-        List<VortexGrid> dtos = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
     }
 
     @Test
@@ -823,6 +811,140 @@ class NetcdfDataReaderTest {
         Assertions.assertEquals("31 January 2024, 12:00", gridData.getGridInfo().getEndTime());
         Assertions.assertEquals("DEG C", gridData.getGridInfo().getDataUnits());
         Assertions.assertEquals(DssDataType.INST_VAL.value(), gridData.getGridInfo().getDataType());
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
+
+    @Test
+    void GpmHourSub(){
+        URL url = getClass().getResource("/3B-HHR.MS.MRG.3IMERG.20170103-S110000-E112959.0660.V06B.HDF5.SUB.hdf5");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<String> inFiles = Collections.singletonList(file);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "gpm_hour_subset.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
+
+        List<String> vars = List.of("precipitationCal");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        GridData gridData = new GridData();
+
+        griddedData.setPathname("///PRECIPITATION/03JAN2017:1100/03JAN2017:1130//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("3 January 2017, 11:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("3 January 2017, 11:30", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        float[] data = gridData.getData();
+
+        URL validationUrl = getClass().getResource("/gpm/gpm_hour_subset.dss");
+        if (validationUrl == null) Assertions.fail();
+        String validationFile = new File(validationUrl.getFile()).toString();
+
+        griddedData.setDSSFileName(validationFile);
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        float[] validationData = gridData.getData();
+
+        for (int i = 0; i < data.length; i++) {
+            Assertions.assertEquals(validationData[i], data[i]);
+        }
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
+
+    @Test
+    void gpmDay() {
+        URL url = getClass().getResource("/3B-DAY.MS.MRG.3IMERG.20010130-S000000-E235959.V07B.nc4");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<String> inFiles = Collections.singletonList(file);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "gpm_day.dss");
+
+        try {
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Assertions.fail();
+        }
+
+        List<String> vars = List.of("precipitation");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(vars)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        GridData gridData = new GridData();
+
+        griddedData.setPathname("///PRECIPITATION/30JAN2001:0000/30JAN2001:2359//");
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        Assertions.assertEquals("30 January 2001, 00:00", gridData.getGridInfo().getStartTime());
+        Assertions.assertEquals("30 January 2001, 23:59", gridData.getGridInfo().getEndTime());
+        Assertions.assertEquals("MM", gridData.getGridInfo().getDataUnits());
+        Assertions.assertEquals(DssDataType.PER_CUM.value(), gridData.getGridInfo().getDataType());
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        int nx = gridInfo.getNumberOfCellsX();
+
+        float[] data = gridData.getData();
+
+        // This dataset had an issue where querying the Array resulted in a transposed data array. This check
+        // verifies that the first 5 rows of the dataset are undefined. If the data is not being read correctly,
+        // the value in index 6 will be 0.0 and this test will fail.
+        for (int i = 0; i < nx * 5; i++) {
+            Assertions.assertEquals(Heclib.UNDEFINED_FLOAT, data[i]);
+        }
 
         griddedData.done();
 

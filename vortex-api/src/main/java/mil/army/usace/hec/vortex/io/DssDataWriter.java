@@ -355,8 +355,7 @@ public class DssDataWriter extends DataWriter {
             return "PRESSURE";
         } else if (descriptionLower.equals("precipitation")
                 || descriptionLower.equals("precip")
-                || descriptionLower.contains("precip") && descriptionLower.contains("rate")
-                || descriptionLower.contains("precipitable") && descriptionLower.contains("water")
+                || descriptionLower.equals("precipitationcal")
                 || descriptionLower.contains("qpe")
                 || descriptionLower.equals("var209-6")
                 || descriptionLower.equals("cmorph")
@@ -364,6 +363,8 @@ public class DssDataWriter extends DataWriter {
                 || descriptionLower.equals("pcp")
                 || descriptionLower.equals("pr")
                 || descriptionLower.equals("prec")
+                || descriptionLower.contains("precip") && descriptionLower.contains("rate")
+                || descriptionLower.contains("precipitable") && descriptionLower.contains("water")
                 || descriptionLower.contains("total") && descriptionLower.contains("precipitation")
                 || descriptionLower.contains("convective") && descriptionLower.contains("rainfall")) {
             return "PRECIPITATION";

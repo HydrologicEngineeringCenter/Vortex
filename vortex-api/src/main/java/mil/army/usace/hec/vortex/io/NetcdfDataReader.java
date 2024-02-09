@@ -5,6 +5,7 @@ import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 import org.locationtech.jts.geom.Coordinate;
 import ucar.ma2.Array;
+import ucar.ma2.DataType;
 import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
@@ -192,11 +193,7 @@ public class NetcdfDataReader extends DataReader {
     }
 
     private float[] getFloatArray(Array array) {
-        float[] data = new float[(int) array.getSize()];
-        for (int i = 0; i < array.getSize(); i++) {
-            data[i] = array.getFloat(i);
-        }
-        return data;
+        return (float[]) array.get1DJavaArray(DataType.FLOAT);
     }
 
     private List<VortexData> getData(GridDataset gridDataset, String variable) {
