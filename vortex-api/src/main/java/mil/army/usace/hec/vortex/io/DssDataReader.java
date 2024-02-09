@@ -1,6 +1,9 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.heclib.dss.*;
+import hec.heclib.dss.DSSPathname;
+import hec.heclib.dss.DssDataType;
+import hec.heclib.dss.HecDSSDataAttributes;
+import hec.heclib.dss.HecDataManager;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GriddedData;
@@ -27,7 +30,7 @@ import static hec.heclib.dss.HecDSSDataAttributes.*;
 
 class DssDataReader extends DataReader {
     private static final Logger logger = Logger.getLogger(DssDataReader.class.getName());
-    private List<String> catalogPathnameList = null;
+    private List<DSSPathname> catalogPathnameList = null;
 
     DssDataReader(DataReaderBuilder builder) {
         super(builder);
@@ -35,7 +38,9 @@ class DssDataReader extends DataReader {
 
     @Override
     public List<VortexData> getDtos() {
-        return IntStream.range(0, getDtoCount())
+        List<DSSPathname> recordPathnameList = getRecordPathnameList();
+        return IntStream.range(0, recordPathnameList.size())
+                .filter(i -> recordPathnameList.get(i).isSamePathname(variableName, true))
                 .mapToObj(this::getDto)
                 .toList();
     }
@@ -68,18 +73,10 @@ class DssDataReader extends DataReader {
             startTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getStartTime(), formatter), ZoneId.of("UTC"));
             try {
                 endTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getEndTime(), formatter), ZoneId.of("UTC"));
-                if (endTime.isEqual(ZonedDateTime.parse("1899-12-31T00:00Z[UTC]")))
-                    endTime = startTime;
             } catch (DateTimeParseException e) {
                 endTime = startTime;
             }
             interval = Duration.between(startTime, endTime);
-        }
-
-        VortexTimeRecord timeRecord = VortexTimeRecord.of(dssPathname);
-        if (timeRecord != null) {
-            startTime = timeRecord.startTime();
-            endTime = timeRecord.endTime();
         }
 
         float[] data = RasterUtils.flipVertically(gridData.getData(), nx);
@@ -145,7 +142,7 @@ class DssDataReader extends DataReader {
 
     @Override
     public VortexData getDto(int idx) {
-        String pathname = getRecordPathnameList().get(idx);
+        String pathname = getRecordPathnameList().get(idx).getPathname();
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(path);
         griddedData.setPathname(pathname);
@@ -165,12 +162,11 @@ class DssDataReader extends DataReader {
     @Override
     public List<VortexTimeRecord> getTimeRecords() {
         return getRecordPathnameList().stream()
-                .map(DSSPathname::new)
                 .map(VortexTimeRecord::of)
                 .toList();
     }
 
-    private List<String> getRecordPathnameList() {
+    private List<DSSPathname> getRecordPathnameList() {
         if (catalogPathnameList == null) {
             HecDataManager dataManager = new HecDataManager(path);
             String pathnameFilter = getPathnameFilter();
@@ -179,6 +175,7 @@ class DssDataReader extends DataReader {
 
             catalogPathnameList = Arrays.stream(paths)
                     .sorted(this::comparePathname)
+                    .map(DSSPathname::new)
                     .toList();
         }
 
