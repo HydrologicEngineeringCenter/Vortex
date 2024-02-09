@@ -332,6 +332,23 @@ public class VortexGrid implements VortexData, Serializable {
         };
     }
 
+    public double getValueAt(int x, int y) {
+        if (x < originX() || x >= getTerminusX() || y < originY() || y >= terminusY()) {
+            return Double.NaN;
+        }
+
+        // Get the data and return it.
+        y -= originY();
+        x -= originX();
+        int k = y * nx() + x;
+
+        if (k >= data().length || k < 0 || isNoDataValue(data[k])) {
+            return Double.NaN;
+        }
+
+        return data[k];
+    }
+
     public boolean isNoDataValue(double value) {
         return value == noDataValue;
     }
