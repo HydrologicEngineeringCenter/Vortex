@@ -298,7 +298,7 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
-    VortexDataType dataType() {
+    public VortexDataType dataType() {
         return dataType != null ? dataType : inferDataType();
     }
 
@@ -330,6 +330,10 @@ public class VortexGrid implements VortexData, Serializable {
             case TEMPERATURE, SOLAR_RADIATION, WINDSPEED, PRESSURE -> VortexDataType.AVERAGE;
             default -> VortexDataType.INSTANTANEOUS;
         };
+    }
+
+    public boolean isNoDataValue(double value) {
+        return value == noDataValue;
     }
 
     @Override

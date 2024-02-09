@@ -11,12 +11,6 @@ repositories {
 }
 
 dependencies {
-    implementation("edu.ucar:netcdf4")
-    constraints {
-        implementation("edu.ucar:netcdf4:5.5.3")
-        runtimeOnly("net.java.dev.jna:jna:5.13.0")
-    }
-    
     implementation("mil.army.usace.hec:hec-monolith:3.+") {
         isTransitive = false
     }
@@ -34,6 +28,7 @@ dependencies {
     implementation("tech.units:indriya:2.1.4")
     implementation("systems.uom:systems-common:2.1")
     implementation("edu.ucar:cdm-core:5.5.3")
+    implementation("edu.ucar:netcdf4:5.5.3")
     implementation("org.apache.commons:commons-compress:1.21")
     implementation("org.hdfgroup:jarhdf5:3.3.2")
     //start runtime-only deps required by HEC shared libraries
@@ -47,6 +42,13 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("com.google.guava:guava:32.0.1-jre")
+        force("net.java.dev.jna:jna:5.13.0")
+    }
 }
 
 project.version = project.version.toString()

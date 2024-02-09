@@ -127,6 +127,13 @@ public class NetcdfDataReader extends DataReader {
     }
 
     @Override
+    public List<VortexTimeRecord> getTimeRecords() {
+        return getDtos().stream()
+                .map(VortexTimeRecord::of)
+                .toList();
+    }
+
+    @Override
     public int getDtoCount() {
         try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path); Formatter errlog = new Formatter()) {
             FeatureDataset dataset = FeatureDatasetFactoryManager.wrap(FeatureType.GRID, ncd, null, errlog);
