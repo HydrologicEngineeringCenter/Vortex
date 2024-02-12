@@ -35,7 +35,7 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) {
     }
 
     public Duration getRecordDuration() {
-        return Duration.between(startTime, endTime);
+        return this.startTime != null && this.endTime != null ? Duration.between(this.startTime, this.endTime) : null;
     }
 
     public double getPercentOverlapped(long start, long end) {
