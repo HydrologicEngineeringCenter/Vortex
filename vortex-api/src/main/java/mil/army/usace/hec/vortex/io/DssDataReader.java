@@ -73,10 +73,19 @@ class DssDataReader extends DataReader {
             startTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getStartTime(), formatter), ZoneId.of("UTC"));
             try {
                 endTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getEndTime(), formatter), ZoneId.of("UTC"));
+                if (endTime.isEqual(ZonedDateTime.parse("1899-12-31T00:00Z[UTC]"))) {
+                    endTime = startTime;
+                }
             } catch (DateTimeParseException e) {
                 endTime = startTime;
             }
             interval = Duration.between(startTime, endTime);
+        }
+
+        VortexTimeRecord timeRecord = VortexTimeRecord.of(dssPathname);
+        if (timeRecord != null) {
+            startTime = timeRecord.startTime();
+            endTime = timeRecord.endTime();
         }
 
         float[] data = RasterUtils.flipVertically(gridData.getData(), nx);
