@@ -73,4 +73,8 @@ public class BufferedDataReader {
     public String getPathToFile() {
         return dataReader.path;
     }
+
+    public String getPathToData() {
+        return dataReader.variableName;
+    }
 }

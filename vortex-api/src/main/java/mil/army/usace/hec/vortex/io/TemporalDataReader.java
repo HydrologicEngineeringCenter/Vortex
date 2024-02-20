@@ -100,6 +100,14 @@ public class TemporalDataReader {
     }
 
     /**
+     * Returns the path to the data within the data source.
+     * @return A string representing the path to the data file.
+     */
+    public String getPathToData() {
+        return bufferedReader.getPathToData();
+    }
+
+    /**
      * Retrieves the start time of the data records.
      * @return The ZonedDateTime representing the earliest start time in the record list.
      *         Returns null if no record is found.
