@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexTimeRecord;
 import mil.army.usace.hec.vortex.geo.Grid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
@@ -37,7 +38,6 @@ public class VariableDsReader extends NetcdfDataReader {
         this.variableDS = getVariableDS(ncd, variableName);
         CoordinateSystem coordinateSystem = getCoordinateSystem(variableDS);
         this.gridDefinition = getGridDefinition(ncd, coordinateSystem);
-        shiftGrid(gridDefinition);
     }
 
     private static VariableDS getVariableDS(NetcdfDataset ncd, String variableName) {
@@ -129,14 +129,13 @@ public class VariableDsReader extends NetcdfDataReader {
                         1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 ZonedDateTime endTime = ZonedDateTime.of(endYearMonth.getYear(), endYearMonth.getMonth().getValue(),
                         1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                Duration interval = Duration.between(startTime, endTime);
-                return createDTO(data, startTime, endTime, interval);
+                Duration.between(startTime, endTime);
+                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
             } catch (DateTimeParseException e) {
                 logger.info(e::getMessage);
                 ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                Duration interval = Duration.ofMinutes(0);
-                return createDTO(data, startTime, endTime, interval);
+                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
             }
         } else {
             String dateTimeString = (timeAxisUnits.split(" ", 3)[2]).replaceFirst(" ", "T").split(" ")[0].replace(".", "");
@@ -178,24 +177,26 @@ public class VariableDsReader extends NetcdfDataReader {
                     startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                     endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 }
-                Duration interval = Duration.between(startTime, endTime);
-                return createDTO(data, startTime, endTime, interval);
+                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
             } catch (Exception e) {
                 logger.info(e::getMessage);
                 ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
                 ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                Duration interval = Duration.ofMinutes(0);
-                return createDTO(data, startTime, endTime, interval);
+                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
             }
         }
     }
 
-    private VortexGrid createDTO(float[] data, ZonedDateTime startTime, ZonedDateTime endTime, Duration interval) {
+    private VortexGrid buildGrid(float[] data, VortexTimeRecord timeRecord) {
+        // Grid must be shifted after getData call since getData uses the original locations to map values.
+        Grid grid = Grid.toBuilder(gridDefinition).build();
+        shiftGrid(grid);
+
         return VortexGrid.builder()
-                .dx(gridDefinition.getDx()).dy(gridDefinition.getDy())
-                .nx(gridDefinition.getNx()).ny(gridDefinition.getNy())
-                .originX(gridDefinition.getOriginX()).originY(gridDefinition.getOriginY())
-                .wkt(gridDefinition.getCrs())
+                .dx(grid.getDx()).dy(grid.getDy())
+                .nx(grid.getNx()).ny(grid.getNy())
+                .originX(grid.getOriginX()).originY(grid.getOriginY())
+                .wkt(grid.getCrs())
                 .data(data)
                 .noDataValue(variableDS.getFillValue())
                 .units(variableDS.getUnitsString())
@@ -203,15 +204,15 @@ public class VariableDsReader extends NetcdfDataReader {
                 .shortName(variableDS.getShortName())
                 .fullName(variableDS.getFullName())
                 .description(variableDS.getDescription())
-                .startTime(startTime)
-                .endTime(endTime)
-                .interval(interval)
+                .startTime(timeRecord.startTime())
+                .endTime(timeRecord.endTime())
+                .interval(timeRecord.getRecordDuration())
                 .dataType(getVortexDataType(variableDS))
                 .build();
     }
 
     private VortexGrid createDTO(float[] data) {
-        return createDTO(data, null, null, Duration.ZERO);
+        return buildGrid(data, new VortexTimeRecord(null, null));
     }
 
     private float[] getFloatArray(ucar.ma2.Array array) {
