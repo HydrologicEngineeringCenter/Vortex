@@ -217,27 +217,7 @@ public class VariableDsReader extends NetcdfDataReader {
     }
 
     private float[] getFloatArray(ucar.ma2.Array array) {
-        float[] data;
-        Object myArr;
-        try {
-            myArr = array.copyTo1DJavaArray();
-            if (myArr instanceof float[]) {
-                data = (float[]) myArr;
-                return data;
-            } else if (myArr instanceof double[] doubleArray) {
-                data = new float[(int) array.getSize()];
-                float[] datalocal = data;
-                for (int i = 0; i < data.length; i++) {
-                    datalocal[i] = (float) (doubleArray[i]);
-                }
-            } else {
-                // Could not parse
-                data = new float[]{};
-            }
-        } catch (ClassCastException e) {
-            data = new float[]{};
-        }
-        return data;
+        return (float[]) array.get1DJavaArray(DataType.FLOAT);
     }
 
     private static Grid getGridDefinition(NetcdfDataset ncd, CoordinateSystem coordinateSystem) {
