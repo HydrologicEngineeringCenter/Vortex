@@ -52,7 +52,7 @@ public class GridDatasetReader extends NetcdfDataReader {
         AORC_APCP(".*aorc.*apcp.*nc4.*", ".*"),
         AORC_TMP(".*aorc.*tmp.*nc4.*", ".*"),
         UA_SWE("[0-9]{2}.nc", ".*"),
-        NLDAS_APCP("nldas_fora0125_h.a.*", "ACPC"),
+        NLDAS_APCP("nldas_fora0125_h.a.*", "APCP"),
         CMORPH(".*cmorph.*h.*ly.*", ".*"),
         GEFS("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*", ".*"),
         LIVNEH_PRECIP("prec.\\d{4}.nc", ".*"),
@@ -149,7 +149,7 @@ public class GridDatasetReader extends NetcdfDataReader {
     }
 
     private List<VortexData> getStaticGrid() {
-        VortexData staticGrid = createGridFromDataSlice(0, 0, 1);
+        VortexData staticGrid = createGridFromDataSlice(0, 0, 0);
         return staticGrid != null ? List.of(staticGrid) : Collections.emptyList();
     }
 
