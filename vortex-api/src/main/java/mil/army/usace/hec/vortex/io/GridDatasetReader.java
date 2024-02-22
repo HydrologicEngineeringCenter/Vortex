@@ -130,6 +130,7 @@ public class GridDatasetReader extends NetcdfDataReader {
             for (int endIndex = 0; endIndex < endDim.getLength(); endIndex ++) {
                 for (int timeIndex = 0; timeIndex < timeDim.getLength(); timeIndex++) {
                     VortexGrid vortexGrid = createGridFromDataSlice(rtIndex, endIndex, timeIndex);
+                    // Note: still add to list even if vortexGrid is null
                     gridList.add(vortexGrid);
                 }
             }
@@ -166,7 +167,7 @@ public class GridDatasetReader extends NetcdfDataReader {
             Array array = gridDatatype.readDataSlice(rtIndex, endIndex, timeIndex, -1, -1, -1);
             float[] slice = getFloatArray(array);
             float[] data = getGridData(slice);
-            VortexTimeRecord timeRecord = getTimeRecord(timeIndex);
+            VortexTimeRecord timeRecord = timeBounds.get(timeIndex);
             return buildGrid(data, timeRecord);
         } catch (IOException e) {
             logger.severe(e.getMessage());
@@ -309,69 +310,50 @@ public class GridDatasetReader extends NetcdfDataReader {
     }
 
     /* Time Record Helpers */
-    private VortexTimeRecord getTimeRecord(int timeIndex) {
-        // Check for Time Bounds
-        if (!timeBounds.isEmpty()) {
-            return timeBounds.get(timeIndex);
-        }
-
-        // Check for Start & Stop Dates
-        String startDate = Optional.ofNullable(gridDatatype.findAttributeIgnoreCase("start_date"))
-                .map(Attribute::getStringValue)
-                .orElse(null);
-        String stopDate = Optional.ofNullable(gridDatatype.findAttributeIgnoreCase("stop_date"))
-                .map(Attribute::getStringValue)
-                .orElse(null);
-        if (startDate != null && stopDate != null) {
-            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
-            ZonedDateTime startTime = ZonedDateTime.parse(startDate, dateTimeFormatter);
-            ZonedDateTime endTime = ZonedDateTime.parse(stopDate, dateTimeFormatter);
-            return new VortexTimeRecord(startTime, endTime);
-        }
-
-        return new VortexTimeRecord(null, null);
-    }
-
     private List<VortexTimeRecord> getTimeBounds(GridCoordSystem gcs) {
         if (gcs.hasTimeAxis1D()) {
             return getTimeRecordsWithTimeAxis1D(gcs.getTimeAxis1D());
         } else if (gcs.hasTimeAxis()) {
             return getTimeRecords();
         } else {
-            return getTimeRecordsFromAttributes();
+            VortexTimeRecord timeRecord = getTimeRecordFromAttributes();
+            return timeRecord != null ? List.of(timeRecord) : Collections.emptyList();
         }
     }
 
-    private List<VortexTimeRecord> getTimeRecordsFromAttributes() {
+    private VortexTimeRecord getTimeRecordFromAttributes() {
         // No time axes found. Try reading times from attributes.
+        VortexTimeRecord startStopDateRecord = getTimeRecordFromStartStopDate();
+        return startStopDateRecord != null ? startStopDateRecord : getTimeRecordFromNominalProductTime();
+    }
+
+    private VortexTimeRecord getTimeRecordFromStartStopDate() {
         Attribute startDateAttribute = gridDatatype.findAttributeIgnoreCase("start_date");
         Attribute endDateAttribute = gridDatatype.findAttributeIgnoreCase("stop_date");
 
-        if (startDateAttribute != null && endDateAttribute != null) {
-            String startTimeString = startDateAttribute.getStringValue();
-            if (startTimeString == null) return Collections.emptyList();
-            ZonedDateTime startTime = ZonedDateTime.parse(startTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+        String startDateString = getAttributeStringValue(startDateAttribute);
+        String endDateString = getAttributeStringValue(endDateAttribute);
+        if (startDateString == null || endDateString == null) return null;
 
-            String endTimeString = endDateAttribute.getStringValue();
-            if (endTimeString == null) return Collections.emptyList();
-            ZonedDateTime endTime = ZonedDateTime.parse(endTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
+        ZonedDateTime startDate = ZonedDateTime.parse(startDateString, dateTimeFormatter);
+        ZonedDateTime endDate = ZonedDateTime.parse(endDateString, dateTimeFormatter);
+        return new VortexTimeRecord(startDate, endDate);
+    }
 
-            return List.of(new VortexTimeRecord(startTime, endTime));
-        }
-
+    private VortexTimeRecord getTimeRecordFromNominalProductTime() {
         Attribute nominalProductTimeAttribute = gridDataset.findGlobalAttributeIgnoreCase("nominal_product_time");
-        if (nominalProductTimeAttribute != null) {
-            String timeString = nominalProductTimeAttribute.getStringValue();
-            if (timeString == null) return Collections.emptyList();
+        String timeString = getAttributeStringValue(nominalProductTimeAttribute);
+        if (timeString == null) return null;
 
-            CalendarDate calendarDate = CalendarDate.parseISOformat(null, timeString);
-            LocalDateTime ldt = LocalDateTime.parse(calendarDate.toString(), DateTimeFormatter.ISO_DATE_TIME);
-            ZonedDateTime time = ZonedDateTime.of(ldt, ZoneId.of("UTC"));
+        CalendarDate calendarDate = CalendarDate.parseISOformat(null, timeString);
+        LocalDateTime ldt = LocalDateTime.parse(calendarDate.toString(), DateTimeFormatter.ISO_DATE_TIME);
+        ZonedDateTime time = ZonedDateTime.of(ldt, ZoneId.of("UTC"));
+        return new VortexTimeRecord(time, time);
+    }
 
-            return List.of(new VortexTimeRecord(time, time));
-        }
-
-        return Collections.emptyList();
+    private String getAttributeStringValue(Attribute attribute) {
+        return Optional.ofNullable(attribute).map(Attribute::getStringValue).orElse(null);
     }
 
     private List<VortexTimeRecord> getTimeRecordsWithTimeAxis1D(CoordinateAxis1DTime tAxis) {
