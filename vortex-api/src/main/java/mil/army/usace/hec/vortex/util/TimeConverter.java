@@ -14,6 +14,7 @@ public class TimeConverter {
     private TimeConverter(){}
 
     private static final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+            .appendOptional(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
             .appendOptional(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'Z'"))
             .appendOptional(DateTimeFormatter.ISO_DATE_TIME)
             .appendOptional(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
