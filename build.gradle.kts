@@ -36,7 +36,7 @@ dependencies {
     macOS_x64("org.gdal:gdal:3.5.0_1:macOS-x64@zip")
     macOS_x64("org.gdal:gdal-data:3.5.0_1@zip")
     macOS_x64("org.proj:proj-db:9.0.1@zip")
-    macOS_x64("mil.army.usace.hec:javaHeclib:7-IR-6-macOS-x86_64@zip")
+    macOS_x64("mil.army.usace.hec:javaHeclib:7-IS-1-macOS-x86_64@zip")
     macOS_x64("org.hdfgroup:hdf:1.14.0:macOS-x64@zip")
 }
 
