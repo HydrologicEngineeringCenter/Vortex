@@ -52,18 +52,6 @@ public class VariableDsReader extends NetcdfDataReader {
 
     /* Public Methods */
     @Override
-    public int getDtoCount() {
-        List<Dimension> dimensions = variableDS.getDimensions();
-        for (Dimension dimension : dimensions) {
-            if (dimension.getShortName().equals("time")) {
-                return dimension.getLength();
-            }
-        }
-
-        return 1;
-    }
-
-    @Override
     public List<VortexData> getDtos() {
         List<VortexData> dataList = new ArrayList<>();
         for (int i = 0; i < getDtoCount(); i++) {
@@ -187,6 +175,19 @@ public class VariableDsReader extends NetcdfDataReader {
         }
     }
 
+    @Override
+    public int getDtoCount() {
+        List<Dimension> dimensions = variableDS.getDimensions();
+        for (Dimension dimension : dimensions) {
+            if (dimension.getShortName().equals("time")) {
+                return dimension.getLength();
+            }
+        }
+
+        return 1;
+    }
+
+    /* Helpers */
     private VortexGrid buildGrid(float[] data, VortexTimeRecord timeRecord) {
         // Grid must be shifted after getData call since getData uses the original locations to map values.
         Grid grid = Grid.toBuilder(gridDefinition).build();
