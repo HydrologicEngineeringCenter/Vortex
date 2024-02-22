@@ -175,30 +175,6 @@ public class GridDatasetReader extends NetcdfDataReader {
         }
     }
 
-    private VortexGrid buildGrid(float[] data, VortexTimeRecord timeRecord) {
-        // Grid must be shifted after getData call since getData uses the original locations to map values.
-        Grid grid = Grid.toBuilder(gridDefinition).build();
-        shiftGrid(grid);
-
-        return VortexGrid.builder()
-                .dx(grid.getDx()).dy(grid.getDy())
-                .nx(grid.getNx()).ny(grid.getNy())
-                .originX(grid.getOriginX()).originY(grid.getOriginY())
-                .wkt(grid.getCrs())
-                .data(data)
-                .noDataValue(variableDS.getFillValue())
-                .units(getUnits(variableDS))
-                .fileName(path)
-                .shortName(gridDatatype.getShortName())
-                .fullName(gridDatatype.getFullName())
-                .description(gridDatatype.getDescription())
-                .startTime(timeRecord.startTime())
-                .endTime(timeRecord.endTime())
-                .interval(timeRecord.getRecordDuration())
-                .dataType(getVortexDataType(variableDS))
-                .build();
-    }
-
     private float[] getFloatArray(Array array) {
         // Check commit [939d691a] for details
         return (float[]) array.get1DJavaArray(DataType.FLOAT);
@@ -223,6 +199,30 @@ public class GridDatasetReader extends NetcdfDataReader {
         }
 
         return data;
+    }
+
+    private VortexGrid buildGrid(float[] data, VortexTimeRecord timeRecord) {
+        // Grid must be shifted after getData call since getData uses the original locations to map values.
+        Grid grid = Grid.toBuilder(gridDefinition).build();
+        shiftGrid(grid);
+
+        return VortexGrid.builder()
+                .dx(grid.getDx()).dy(grid.getDy())
+                .nx(grid.getNx()).ny(grid.getNy())
+                .originX(grid.getOriginX()).originY(grid.getOriginY())
+                .wkt(grid.getCrs())
+                .data(data)
+                .noDataValue(variableDS.getFillValue())
+                .units(getUnits(variableDS))
+                .fileName(path)
+                .shortName(gridDatatype.getShortName())
+                .fullName(gridDatatype.getFullName())
+                .description(gridDatatype.getDescription())
+                .startTime(timeRecord.startTime())
+                .endTime(timeRecord.endTime())
+                .interval(timeRecord.getRecordDuration())
+                .dataType(getVortexDataType(variableDS))
+                .build();
     }
 
     /* Grid Definition Helpers */
