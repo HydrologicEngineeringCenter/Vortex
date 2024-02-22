@@ -31,7 +31,6 @@ public class VariableDsReader extends NetcdfDataReader {
     private static final Logger logger = Logger.getLogger(VariableDsReader.class.getName());
 
     private final VariableDS variableDS;
-    private final CoordinateSystem coordinateSystem;
     private final Grid gridDefinition;
     private final List<VortexTimeRecord> timeBounds;
 
@@ -39,7 +38,7 @@ public class VariableDsReader extends NetcdfDataReader {
     public VariableDsReader(VariableDS variableDS, String variableName) {
         super(new DataReaderBuilder().path(variableDS.getDatasetLocation()).variable(variableName));
         this.variableDS = getVariableDS(ncd, variableName);
-        this.coordinateSystem = getCoordinateSystem(variableDS);
+        CoordinateSystem coordinateSystem = getCoordinateSystem(variableDS);
         this.gridDefinition = getGridDefinition(ncd, coordinateSystem);
         this.timeBounds = getTimeBounds();
     }
@@ -64,6 +63,40 @@ public class VariableDsReader extends NetcdfDataReader {
         }
 
         return dataList;
+    }
+
+    @Override
+    public VortexGrid getDto(int index) {
+        CoordinateAxis1D timeAxis = getTimeAxis();
+        if (timeAxis == null) {
+            return buildGrid(getFloatArrayFromRead(), undefinedTimeRecord());
+        } else {
+            int timeDimension = getTimeDimensionIndex();
+            float[] data = getFloatArrayFromSlice(timeDimension, index);
+            VortexTimeRecord timeRecord = timeBounds.get(index);
+            return buildGrid(data, timeRecord);
+        }
+    }
+
+    @Override
+    public int getDtoCount() {
+        List<Dimension> dimensions = variableDS.getDimensions();
+        for (Dimension dimension : dimensions) {
+            if (dimension.getShortName().equals("time")) {
+                return dimension.getLength();
+            }
+        }
+
+        return 1;
+    }
+
+    /* Helpers */
+    private List<VortexTimeRecord> getTimeBounds() {
+        CoordinateAxis1D timeAxis = getTimeAxis();
+        if (timeAxis == null) return Collections.emptyList();
+        String timeAxisUnits = timeAxis.getUnitsString();
+        boolean isYearMonth = timeAxisUnits.equalsIgnoreCase("yyyymm");
+        return isYearMonth ? getYearMonthTimeRecords(timeAxis) : getTimeRecords();
     }
 
     private CoordinateAxis1D getTimeAxis() {
@@ -103,24 +136,10 @@ public class VariableDsReader extends NetcdfDataReader {
             }
         } catch (IOException | InvalidRangeException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
-            array = ucar.ma2.Array.factory(DataType.FLOAT, new int[]{});
+            array = Array.factory(DataType.FLOAT, new int[]{});
         }
 
         return getFloatArray(array);
-    }
-
-    private VortexTimeRecord getYearMonthTimeRecord(CoordinateAxis1D timeAxis, int index) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuuMM");
-        try {
-            YearMonth startYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound1()[index])), formatter);
-            YearMonth endYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound2()[index])), formatter);
-            ZonedDateTime startTime = startYearMonth.atDay(1).atStartOfDay(ZoneId.of("UTC"));
-            ZonedDateTime endTime = endYearMonth.atDay(1).atStartOfDay(ZoneId.of("UTC"));
-            return new VortexTimeRecord(startTime, endTime);
-        } catch (DateTimeParseException e) {
-            logger.info(e::getMessage);
-            return undefinedTimeRecord();
-        }
     }
 
     private List<VortexTimeRecord> getYearMonthTimeRecords(CoordinateAxis1D timeAxis) {
@@ -143,51 +162,12 @@ public class VariableDsReader extends NetcdfDataReader {
         return timeRecords;
     }
 
-    @Override
-    public VortexGrid getDto(int index) {
-        CoordinateAxis1D timeAxis = getTimeAxis();
-
-        if (timeAxis == null) {
-            return createDTO(getFloatArrayFromRead());
-        }
-
-        int timeDimension = getTimeDimensionIndex();
-        float[] data = getFloatArrayFromSlice(timeDimension, index);
-
-        VortexTimeRecord timeRecord = timeBounds.get(index);
-
-        return buildGrid(data, timeRecord);
-    }
-
-    private List<VortexTimeRecord> getTimeBounds() {
-        CoordinateAxis1D timeAxis = getTimeAxis();
-        if (timeAxis == null) return Collections.emptyList();
-
-        String timeAxisUnits = timeAxis.getUnitsString();
-        boolean isYearMonth = timeAxisUnits.equalsIgnoreCase("yyyymm");
-
-        return isYearMonth ? getYearMonthTimeRecords(timeAxis) : getTimeRecords();
-    }
-
     private VortexTimeRecord undefinedTimeRecord() {
         ZonedDateTime undefinedStartTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
         ZonedDateTime undefinedEndTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
         return new VortexTimeRecord(undefinedStartTime, undefinedEndTime);
     }
 
-    @Override
-    public int getDtoCount() {
-        List<Dimension> dimensions = variableDS.getDimensions();
-        for (Dimension dimension : dimensions) {
-            if (dimension.getShortName().equals("time")) {
-                return dimension.getLength();
-            }
-        }
-
-        return 1;
-    }
-
-    /* Helpers */
     private VortexGrid buildGrid(float[] data, VortexTimeRecord timeRecord) {
         // Grid must be shifted after getData call since getData uses the original locations to map values.
         Grid grid = Grid.toBuilder(gridDefinition).build();
@@ -212,11 +192,7 @@ public class VariableDsReader extends NetcdfDataReader {
                 .build();
     }
 
-    private VortexGrid createDTO(float[] data) {
-        return buildGrid(data, new VortexTimeRecord(null, null));
-    }
-
-    private float[] getFloatArray(ucar.ma2.Array array) {
+    private float[] getFloatArray(Array array) {
         return (float[]) array.get1DJavaArray(DataType.FLOAT);
     }
 
