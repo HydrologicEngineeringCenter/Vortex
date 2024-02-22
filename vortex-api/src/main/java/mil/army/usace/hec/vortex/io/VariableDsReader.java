@@ -21,6 +21,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -30,14 +31,17 @@ public class VariableDsReader extends NetcdfDataReader {
     private static final Logger logger = Logger.getLogger(VariableDsReader.class.getName());
 
     private final VariableDS variableDS;
+    private final CoordinateSystem coordinateSystem;
     private final Grid gridDefinition;
+    private final List<VortexTimeRecord> timeBounds;
 
     /* Constructor */
     public VariableDsReader(VariableDS variableDS, String variableName) {
         super(new DataReaderBuilder().path(variableDS.getDatasetLocation()).variable(variableName));
         this.variableDS = getVariableDS(ncd, variableName);
-        CoordinateSystem coordinateSystem = getCoordinateSystem(variableDS);
+        this.coordinateSystem = getCoordinateSystem(variableDS);
         this.gridDefinition = getGridDefinition(ncd, coordinateSystem);
+        this.timeBounds = getTimeBounds();
     }
 
     private static VariableDS getVariableDS(NetcdfDataset ncd, String variableName) {
@@ -62,28 +66,13 @@ public class VariableDsReader extends NetcdfDataReader {
         return dataList;
     }
 
-    @Override
-    public VortexGrid getDto(int index) {
-        CoordinateAxis1D timeAxis;
-        if (ncd.findCoordinateAxis(AxisType.Time) != null) {
-            timeAxis = (CoordinateAxis1D) ncd.findCoordinateAxis(AxisType.Time);
-        } else {
-            timeAxis = (CoordinateAxis1D) ncd.findCoordinateAxis("time");
-        }
+    private CoordinateAxis1D getTimeAxis() {
+        CoordinateAxis timeAxis = ncd.findCoordinateAxis(AxisType.Time);
+        timeAxis = timeAxis == null ? ncd.findCoordinateAxis("time") : timeAxis;
+        return timeAxis instanceof CoordinateAxis1D axis ? axis : null;
+    }
 
-        if (timeAxis == null) {
-            Array array;
-            try {
-                array = variableDS.read();
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, e, e::getMessage);
-                array = ucar.ma2.Array.factory(DataType.FLOAT, new int[]{});
-            }
-
-            float[] data = getFloatArray(array);
-            return createDTO(data);
-        }
-
+    private int getTimeDimensionIndex() {
         List<Dimension> dimensions = variableDS.getDimensions();
         int timeDimension = -1;
         for (int i = 0; i < dimensions.size(); i++) {
@@ -91,11 +80,24 @@ public class VariableDsReader extends NetcdfDataReader {
                 timeDimension = i;
             }
         }
+        return timeDimension;
+    }
 
+    private float[] getFloatArrayFromRead() {
+        try {
+            Array array = variableDS.read();
+            return getFloatArray(array);
+        } catch (IOException e) {
+            logger.severe(e.getMessage());
+            return new float[0];
+        }
+    }
+
+    private float[] getFloatArrayFromSlice(int timeDimension, int timeIndex) {
         Array array;
         try {
             if (timeDimension >= 0) {
-                array = variableDS.slice(timeDimension, index).read();
+                array = variableDS.slice(timeDimension, timeIndex).read();
             } else {
                 array = variableDS.read();
             }
@@ -104,75 +106,73 @@ public class VariableDsReader extends NetcdfDataReader {
             array = ucar.ma2.Array.factory(DataType.FLOAT, new int[]{});
         }
 
-        float[] data = getFloatArray(array);
+        return getFloatArray(array);
+    }
 
-        String timeAxisUnits = timeAxis.getUnitsString();
+    private VortexTimeRecord getYearMonthTimeRecord(CoordinateAxis1D timeAxis, int index) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuuMM");
+        try {
+            YearMonth startYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound1()[index])), formatter);
+            YearMonth endYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound2()[index])), formatter);
+            ZonedDateTime startTime = startYearMonth.atDay(1).atStartOfDay(ZoneId.of("UTC"));
+            ZonedDateTime endTime = endYearMonth.atDay(1).atStartOfDay(ZoneId.of("UTC"));
+            return new VortexTimeRecord(startTime, endTime);
+        } catch (DateTimeParseException e) {
+            logger.info(e::getMessage);
+            return undefinedTimeRecord();
+        }
+    }
 
-        if (timeAxisUnits.equalsIgnoreCase("yyyymm")) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuuMM");
+    private List<VortexTimeRecord> getYearMonthTimeRecords(CoordinateAxis1D timeAxis) {
+        List<VortexTimeRecord> timeRecords = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuuMM");
+
+        for (int i = 0; i < getDtoCount(); i++) {
             try {
-                YearMonth startYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound1()[index])), formatter);
-                YearMonth endYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound2()[index])), formatter);
-                ZonedDateTime startTime = ZonedDateTime.of(startYearMonth.getYear(), startYearMonth.getMonth().getValue(),
-                        1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                ZonedDateTime endTime = ZonedDateTime.of(endYearMonth.getYear(), endYearMonth.getMonth().getValue(),
-                        1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                Duration.between(startTime, endTime);
-                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
+                YearMonth startYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound1()[i])), formatter);
+                YearMonth endYearMonth = YearMonth.parse(String.valueOf(Math.round(timeAxis.getBound2()[i])), formatter);
+                ZonedDateTime startTime = startYearMonth.atDay(1).atStartOfDay(ZoneId.of("UTC"));
+                ZonedDateTime endTime = endYearMonth.atDay(1).atStartOfDay(ZoneId.of("UTC"));
+                timeRecords.add(new VortexTimeRecord(startTime, endTime));
             } catch (DateTimeParseException e) {
                 logger.info(e::getMessage);
-                ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
-            }
-        } else {
-            String dateTimeString = (timeAxisUnits.split(" ", 3)[2]).replaceFirst(" ", "T").split(" ")[0].replace(".", "");
-
-            ZonedDateTime origin;
-            if (dateTimeString.contains("T")) {
-                origin = ZonedDateTime.of(LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC"));
-            } else {
-                origin = ZonedDateTime.of(LocalDate.parse(dateTimeString, DateTimeFormatter.ofPattern("uuuu-M-d")), LocalTime.of(0, 0), ZoneId.of("UTC"));
-            }
-
-            try {
-                ZonedDateTime startTime;
-                ZonedDateTime endTime;
-                if (timeAxisUnits.toLowerCase().matches("^month[s]? since.*$")) {
-                    startTime = origin.plusMonths((long) timeAxis.getBound1()[index]);
-                    endTime = origin.plusMonths((long) timeAxis.getBound2()[index]);
-                } else if (timeAxisUnits.toLowerCase().matches("^day[s]? since.*$")) {
-                    startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 86400);
-                    endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 86400);
-                } else if (timeAxisUnits.toLowerCase().matches("^hour[s]? since.*$")) {
-                    startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 3600);
-                    if (ncd.getLocation().toLowerCase().matches("hrrr.*wrfsfcf.*")) {
-                        endTime = startTime.plusHours(1);
-                    } else {
-                        endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 3600);
-                    }
-                } else if (timeAxisUnits.toLowerCase().matches("^minute[s]? since.*$")) {
-                    endTime = origin.plusSeconds((long) timeAxis.getBound2()[index] * 60);
-                    if (variableDS.getDescription().toLowerCase().contains("qpe01h")) {
-                        startTime = endTime.minusHours(1);
-                    } else {
-                        startTime = origin.plusSeconds((long) timeAxis.getBound1()[index] * 60);
-                    }
-                } else if (timeAxisUnits.toLowerCase().matches("^second[s]? since.*$")) {
-                    startTime = origin.plusSeconds((long) timeAxis.getBound1()[index]);
-                    endTime = origin.plusSeconds((long) timeAxis.getBound2()[index]);
-                } else {
-                    startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                    endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                }
-                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
-            } catch (Exception e) {
-                logger.info(e::getMessage);
-                ZonedDateTime startTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                ZonedDateTime endTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-                return buildGrid(data, new VortexTimeRecord(startTime, endTime));
+                timeRecords.add(undefinedTimeRecord());
             }
         }
+
+        return timeRecords;
+    }
+
+    @Override
+    public VortexGrid getDto(int index) {
+        CoordinateAxis1D timeAxis = getTimeAxis();
+
+        if (timeAxis == null) {
+            return createDTO(getFloatArrayFromRead());
+        }
+
+        int timeDimension = getTimeDimensionIndex();
+        float[] data = getFloatArrayFromSlice(timeDimension, index);
+
+        VortexTimeRecord timeRecord = timeBounds.get(index);
+
+        return buildGrid(data, timeRecord);
+    }
+
+    private List<VortexTimeRecord> getTimeBounds() {
+        CoordinateAxis1D timeAxis = getTimeAxis();
+        if (timeAxis == null) return Collections.emptyList();
+
+        String timeAxisUnits = timeAxis.getUnitsString();
+        boolean isYearMonth = timeAxisUnits.equalsIgnoreCase("yyyymm");
+
+        return isYearMonth ? getYearMonthTimeRecords(timeAxis) : getTimeRecords();
+    }
+
+    private VortexTimeRecord undefinedTimeRecord() {
+        ZonedDateTime undefinedStartTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime undefinedEndTime = ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+        return new VortexTimeRecord(undefinedStartTime, undefinedEndTime);
     }
 
     @Override
