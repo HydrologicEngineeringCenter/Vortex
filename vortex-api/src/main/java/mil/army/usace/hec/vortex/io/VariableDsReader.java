@@ -1,11 +1,11 @@
 package mil.army.usace.hec.vortex.io;
 
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.geo.Grid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
-import si.uom.NonSI;
-import tech.units.indriya.AbstractUnit;
-import tech.units.indriya.unit.Units;
+import mil.army.usace.hec.vortex.util.UnitUtil;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
@@ -13,84 +13,69 @@ import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
 import ucar.nc2.dataset.*;
-import ucar.nc2.time.CalendarDate;
 
-import javax.measure.IncommensurableException;
 import javax.measure.Unit;
-import javax.measure.UnitConverter;
 import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static javax.measure.MetricPrefix.KILO;
-
-public class VariableDsReader {
+public class VariableDsReader extends NetcdfDataReader {
     private static final Logger logger = Logger.getLogger(VariableDsReader.class.getName());
 
-    private final NetcdfDataset ncd;
-    private final String variableName;
+    private final VariableDS variableDS;
+    private final Grid gridDefinition;
 
-    private VariableDS variableDS;
-    private CoordinateSystem coordinateSystem;
-    private int nx;
-    private int ny;
-    private double dx;
-    private double dy;
-    private double ulx;
-    private double uly;
-    private String wkt;
-
-    private VariableDsReader(Builder builder) {
-        ncd = builder.ncd;
-        variableName = builder.variableName;
+    /* Constructor */
+    public VariableDsReader(VariableDS variableDS, String variableName) {
+        super(new DataReaderBuilder().path(variableDS.getDatasetLocation()).variable(variableName));
+        this.variableDS = getVariableDS(ncd, variableName);
+        CoordinateSystem coordinateSystem = getCoordinateSystem(variableDS);
+        this.gridDefinition = getGridDefinition(ncd, coordinateSystem);
+        shiftGrid(gridDefinition);
     }
 
-    public static class Builder {
-        private NetcdfDataset ncd;
-        private String variableName;
-
-        public Builder setNetcdfFile(NetcdfDataset ncd) {
-            this.ncd = ncd;
-            return this;
-        }
-
-        public Builder setVariableName(String variableName) {
-            this.variableName = variableName;
-            return this;
-        }
-
-        public VariableDsReader build() {
-            return new VariableDsReader(this);
-        }
+    private static VariableDS getVariableDS(NetcdfDataset ncd, String variableName) {
+        Variable variable = ncd.findVariable(variableName);
+        return variable instanceof VariableDS variableDS ? variableDS : null;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    private static CoordinateSystem getCoordinateSystem(VariableDS variableDS) {
+        List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
+        return !coordinateSystems.isEmpty() ? coordinateSystems.get(0) : null;
     }
 
-    public VortexGrid read(int index) {
-
-        try {
-            Variable variable = ncd.findVariable(variableName);
-            if (variable instanceof VariableDS) {
-                this.variableDS = (VariableDS) variable;
-
-                List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
-                if (!coordinateSystems.isEmpty()) {
-                    coordinateSystem = coordinateSystems.get(0);
-                }
+    /* Public Methods */
+    @Override
+    public int getDtoCount() {
+        List<Dimension> dimensions = variableDS.getDimensions();
+        for (Dimension dimension : dimensions) {
+            if (dimension.getShortName().equals("time")) {
+                return dimension.getLength();
             }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, e, e::getMessage);
         }
 
-        processCellInfo();
+        return 1;
+    }
 
+    @Override
+    public List<VortexData> getDtos() {
+        List<VortexData> dataList = new ArrayList<>();
+        for (int i = 0; i < getDtoCount(); i++) {
+            VortexData data = getDto(i);
+            dataList.add(data);
+        }
+
+        return dataList;
+    }
+
+    @Override
+    public VortexGrid getDto(int index) {
         CoordinateAxis1D timeAxis;
         if (ncd.findCoordinateAxis(AxisType.Time) != null) {
             timeAxis = (CoordinateAxis1D) ncd.findCoordinateAxis(AxisType.Time);
@@ -158,8 +143,7 @@ public class VariableDsReader {
 
             ZonedDateTime origin;
             if (dateTimeString.contains("T")) {
-                CalendarDate calendarDate = CalendarDate.parseISOformat(null, dateTimeString);
-                origin = ZonedDateTime.of(LocalDateTime.parse(calendarDate.toString(), DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC"));
+                origin = ZonedDateTime.of(LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME), ZoneId.of("UTC"));
             } else {
                 origin = ZonedDateTime.of(LocalDate.parse(dateTimeString, DateTimeFormatter.ofPattern("uuuu-M-d")), LocalTime.of(0, 0), ZoneId.of("UTC"));
             }
@@ -208,13 +192,10 @@ public class VariableDsReader {
 
     private VortexGrid createDTO(float[] data, ZonedDateTime startTime, ZonedDateTime endTime, Duration interval) {
         return VortexGrid.builder()
-                .dx(dx)
-                .dy(dy)
-                .nx(nx)
-                .ny(ny)
-                .originX(ulx)
-                .originY(uly)
-                .wkt(wkt)
+                .dx(gridDefinition.getDx()).dy(gridDefinition.getDy())
+                .nx(gridDefinition.getNx()).ny(gridDefinition.getNy())
+                .originX(gridDefinition.getOriginX()).originY(gridDefinition.getOriginY())
+                .wkt(gridDefinition.getCrs())
                 .data(data)
                 .noDataValue(variableDS.getFillValue())
                 .units(variableDS.getUnitsString())
@@ -225,6 +206,7 @@ public class VariableDsReader {
                 .startTime(startTime)
                 .endTime(endTime)
                 .interval(interval)
+                .dataType(getVortexDataType(variableDS))
                 .build();
     }
 
@@ -256,8 +238,7 @@ public class VariableDsReader {
         return data;
     }
 
-    private void processCellInfo() {
-
+    private static Grid getGridDefinition(NetcdfDataset ncd, CoordinateSystem coordinateSystem) {
         CoordinateAxis lonAxis = ncd.findCoordinateAxis(AxisType.Lon);
         CoordinateAxis latAxis = ncd.findCoordinateAxis(AxisType.Lat);
 
@@ -277,63 +258,43 @@ public class VariableDsReader {
             throw new IllegalStateException();
         }
 
-        nx = (int) xAxis.getSize();
-        ny = (int) yAxis.getSize();
+        int nx = (int) xAxis.getSize();
+        int ny = (int) yAxis.getSize();
 
         double[] edgesX = ((CoordinateAxis1D) xAxis).getCoordEdges();
-        ulx = edgesX[0];
+        double ulx = edgesX[0];
 
         double urx = edgesX[edgesX.length - 1];
-        dx = (urx - ulx) / nx;
+        double dx = (urx - ulx) / nx;
 
         double[] edgesY = ((CoordinateAxis1D) yAxis).getCoordEdges();
-        uly = edgesY[0];
+        double uly = edgesY[0];
         double lly = edgesY[edgesY.length - 1];
-        dy = (lly - uly) / ny;
+        double dy = (lly - uly) / ny;
 
+        String wkt = null;
         if (coordinateSystem != null) {
             wkt = WktFactory.createWkt(coordinateSystem.getProjection());
-        }
-
-        // If there is no wkt at this point, assume WGS84
-        if (wkt == null || wkt.isBlank()) {
+        } else if (lonAxis != null && latAxis != null) {
             wkt = WktFactory.fromEpsg(4326);
         }
 
+        Grid gridDefinition = Grid.builder()
+                .nx(nx).ny(ny)
+                .dx(dx).dy(dy)
+                .originX(ulx).originY(uly)
+                .crs(wkt)
+                .build();
+
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();
+        Unit<?> cellUnits = UnitUtil.getUnits(xAxisUnits.toLowerCase());
+        Unit<?> csUnits = UnitUtil.getUnits(ReferenceUtils.getMapUnits(wkt).toLowerCase());
 
-        Unit<?> cellUnits = switch (xAxisUnits.toLowerCase()) {
-            case "m", "meter", "metre" -> Units.METRE;
-            case "km" -> KILO(Units.METRE);
-            case "degrees_east", "degrees_north" -> NonSI.DEGREE_ANGLE;
-            default -> AbstractUnit.ONE;
-        };
-
-        if (cellUnits == NonSI.DEGREE_ANGLE && ulx == 0) {
-            ulx = -180;
+        if (cellUnits.isCompatible(csUnits) && !cellUnits.equals(csUnits)) {
+            gridDefinition = scaleGrid(gridDefinition, cellUnits, csUnits);
         }
 
-        if (cellUnits == NonSI.DEGREE_ANGLE && ulx > 180) {
-            ulx = ulx - 360;
-        }
-
-        Unit<?> csUnits = switch (ReferenceUtils.getMapUnits(wkt).toLowerCase()) {
-            case "m", "meter", "metre" -> Units.METRE;
-            case "km" -> KILO(Units.METRE);
-            default -> AbstractUnit.ONE;
-        };
-
-        if (cellUnits.isCompatible(csUnits)) {
-            try {
-                UnitConverter converter = cellUnits.getConverterToAny(csUnits);
-                ulx = converter.convert(ulx);
-                uly = converter.convert(uly);
-                dx = converter.convert(dx);
-                dy = converter.convert(dy);
-            } catch (IncommensurableException e) {
-                logger.log(Level.SEVERE, e, e::getMessage);
-            }
-        }
+        return gridDefinition;
     }
 }
 

@@ -73,7 +73,7 @@ public abstract class DataReader {
                 return new DssDataReader(this);
             }
 
-            return new NetcdfDataReader(this);
+            return NetcdfDataReader.createInstance(path, variableName);
         } // build()
     } // DataReaderBuilder class
 

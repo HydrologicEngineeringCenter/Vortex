@@ -401,5 +401,32 @@ public class VortexGrid implements VortexData, Serializable {
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         return result;
     }
+
+    // Add to help with debugging (when testing VortexGrid::equals)
+    @Override
+    public String toString() {
+        return "VortexGrid{" +
+                "dx=" + dx +
+                ", dy=" + dy +
+                ", nx=" + nx +
+                ", ny=" + ny +
+                ", originX=" + originX +
+                ", originY=" + originY +
+                ", wkt='" + wkt + '\'' +
+                ", data=" + Arrays.toString(data) +
+                ", noDataValue=" + noDataValue +
+                ", units='" + units + '\'' +
+                ", fileName='" + fileName + '\'' +
+                ", shortName='" + shortName + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", description='" + description + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", interval=" + interval +
+                ", dataType=" + dataType +
+                ", terminusX=" + terminusX +
+                ", terminusY=" + terminusY +
+                '}';
+    }
 }
 
