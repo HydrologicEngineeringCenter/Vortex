@@ -18,7 +18,6 @@ import ucar.nc2.dt.grid.GridDataset;
 import ucar.nc2.time.CalendarDate;
 
 import javax.measure.Unit;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -45,31 +44,33 @@ public class GridDatasetReader extends NetcdfDataReader {
     private final List<VortexTimeRecord> timeBounds;
 
     enum SpecialFileType {
-        ABRSC_GAUGE(".*gaugecorr.*qpe.*01h.*grib2"),
-        ABRSC_RADAR(".*radaronly.*qpe.*01h.*grib2"),
-        MRMS_IDP(".*multisensor.*qpe.*01h.*grib2"),
-        MRMS_PRECIP("mrms_preciprate.*"),
-        MRMS_PRECIP_2_MIN("preciprate_.*\\.grib2"),
-        GPM(".*hhr\\.ms\\.mrg.*hdf.*"),
-        AORC_APCP(".*aorc.*apcp.*nc4.*"),
-        AORC_TMP(".*aorc.*tmp.*nc4.*"),
-        UA_SWE("[0-9]{2}.nc"),
-        NLDAS_APCP("nldas_fora0125_h.a.*"),
-        CMORPH(".*cmorph.*h.*ly.*"),
-        GEFS("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*"),
-        LIVNEH_PRECIP("prec.\\d{4}.nc"),
-        HRRR_WRFSFCF("hrrr.*wrfsfcf.*"),
-        GFS("gfs.nc"),
-        UNDEFINED("");
+        ABRSC_GAUGE(".*gaugecorr.*qpe.*01h.*grib2", ".*"),
+        ABRSC_RADAR(".*radaronly.*qpe.*01h.*grib2", ".*"),
+        MRMS_IDP(".*multisensor.*qpe.*01h.*grib2", ".*"),
+        MRMS_PRECIP("mrms_preciprate.*", ".*"),
+        MRMS_PRECIP_2_MIN("preciprate_.*\\.grib2", ".*"),
+        GPM(".*hhr\\.ms\\.mrg.*hdf.*", ".*"),
+        AORC_APCP(".*aorc.*apcp.*nc4.*", ".*"),
+        AORC_TMP(".*aorc.*tmp.*nc4.*", ".*"),
+        UA_SWE("[0-9]{2}.nc", ".*"),
+        NLDAS_APCP("nldas_fora0125_h.a.*", "ACPC"),
+        CMORPH(".*cmorph.*h.*ly.*", ".*"),
+        GEFS("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*", ".*"),
+        LIVNEH_PRECIP("prec.\\d{4}.nc", ".*"),
+        HRRR_WRFSFCF("hrrr.*wrfsfcf.*", ".*"),
+        GFS("gfs.nc", "Precipitation_rate_surface"),
+        UNDEFINED("", ".*");
 
-        private final Pattern pattern;
+        private final Pattern filenamePattern;
+        private final Pattern variableNamePattern;
 
-        SpecialFileType(String regex) {
-            this.pattern = Pattern.compile(regex);
+        SpecialFileType(String filenameRegex, String variableRegex) {
+            this.filenamePattern = Pattern.compile(filenameRegex);
+            this.variableNamePattern = Pattern.compile(variableRegex);
         }
 
-        public boolean matches(String fileName) {
-            return pattern.matcher(fileName).matches();
+        public boolean matches(String fileName, String variableName) {
+            return filenamePattern.matcher(fileName).matches() && variableNamePattern.matcher(variableName).matches();
         }
     }
 
@@ -84,15 +85,13 @@ public class GridDatasetReader extends NetcdfDataReader {
         variableDS = gridDatatype.getVariable();
 
         gridDefinition = getGridDefinition(gridCoordSystem);
-        shiftGrid(gridDefinition);
-
         timeBounds = getTimeBounds(gridCoordSystem);
     }
 
     private SpecialFileType determineSpecialFileType(String pathToFile) {
         String filename = Path.of(pathToFile).getFileName().toString().toLowerCase();
         return Arrays.stream(values())
-                .filter(t -> t.matches(filename))
+                .filter(t -> t.matches(filename, variableName))
                 .findFirst()
                 .orElse(UNDEFINED);
     }
@@ -182,11 +181,15 @@ public class GridDatasetReader extends NetcdfDataReader {
     }
 
     private VortexGrid buildGrid(float[] data, VortexTimeRecord timeRecord) {
+        // Grid must be shifted after getData call since getData uses the original locations to map values.
+        Grid grid = Grid.toBuilder(gridDefinition).build();
+        shiftGrid(grid);
+
         return VortexGrid.builder()
-                .dx(gridDefinition.getDx()).dy(gridDefinition.getDy())
-                .nx(gridDefinition.getNx()).ny(gridDefinition.getNy())
-                .originX(gridDefinition.getOriginX()).originY(gridDefinition.getOriginY())
-                .wkt(gridDefinition.getCrs())
+                .dx(grid.getDx()).dy(grid.getDy())
+                .nx(grid.getNx()).ny(grid.getNy())
+                .originX(grid.getOriginX()).originY(grid.getOriginY())
+                .wkt(grid.getCrs())
                 .data(data)
                 .noDataValue(variableDS.getFillValue())
                 .units(getUnits(variableDS))
@@ -212,7 +215,11 @@ public class GridDatasetReader extends NetcdfDataReader {
         }
 
         IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gridCoordSystem);
+        indexSearcher.addPropertyChangeListener(support::firePropertyChange);
+
         Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
+        indexSearcher.cacheCoordinates(coordinates);
+
         float[] data = new float[coordinates.length];
         for (int i = 0; i < data.length; i++) {
             Coordinate coordinate = coordinates[i];
@@ -241,8 +248,7 @@ public class GridDatasetReader extends NetcdfDataReader {
             ny = (int) yAxis.getSize();
             edgesX = xCoord.getCoordEdges();
             edgesY = yCoord.getCoordEdges();
-        } else if (xAxis instanceof CoordinateAxis2D xAxis2D
-                && yAxis instanceof CoordinateAxis2D yAxis2D) {
+        } else if (xAxis instanceof CoordinateAxis2D xAxis2D && yAxis instanceof CoordinateAxis2D yAxis2D) {
             int shapeX = xAxis2D.getEdges().getShape()[1] - 1;
             double minX = xAxis2D.getMinValue();
             double maxX = xAxis2D.getMaxValue();
@@ -420,15 +426,6 @@ public class GridDatasetReader extends NetcdfDataReader {
     }
 
     private boolean isSpecialTimeBounds() {
-        String fileName = new File(path).getName().toLowerCase();
-        if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
-            return true;
-        }
-
-        if (GFS.matches(fileName) && variableName.equals("Temperature_surface")) {
-            return false;
-        }
-
         return specialFileType != null && specialFileType != UNDEFINED;
     }
 
