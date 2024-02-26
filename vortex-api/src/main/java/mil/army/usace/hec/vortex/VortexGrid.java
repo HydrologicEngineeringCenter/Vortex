@@ -332,20 +332,35 @@ public class VortexGrid implements VortexData, Serializable {
         };
     }
 
+    /**
+     * Retrieves the value from the data grid at the specified x and y coordinates,
+     * assuming the data grid is oriented with the origin at the top-left corner.
+     * @param x the x-coordinate of the point whose value is to be retrieved,
+     *          relative to the coordinate system defined by the grid's origin and cell size.
+     * @param y the y-coordinate of the point, adjusted to consider the grid's top-down orientation.
+     *          This value is calculated from the top of the data grid, with y values increasing downwards.
+     * @return the value at the specified x and y coordinates if within bounds and not a no-data value;
+     *         otherwise, returns {@code Double.NaN}.
+     */
     public double getValueAt(int x, int y) {
-        if (x < originX() || x >= getTerminusX() || y < originY() || y >= terminusY()) {
-            return Double.NaN;
-        }
+        // Calculate initialX based on the origin and dx
+        int initialX = (int) (originX / dx);
+        // Calculate initialY based on the origin and dy
+        int initialY = (int) (originY / Math.abs(dy)); // Ensure dy is positive for calculation
 
-        // Get the data and return it.
-        y -= originY();
-        x -= originX();
-        int k = y * nx() + x;
+        // Adjust x and y based on the grid's origin
+        x -= initialX;
+        y = initialY - y; // y's calculation from the top
 
+        // Calculate the index (k) in the data array
+        int k = y * nx + x;
+
+        // Check if the index is out of bounds or represents a no-data value
         if (k >= data().length || k < 0 || isNoDataValue(data[k])) {
-            return Double.NaN;
+            return Double.NaN; // Return NaN if out of bounds or no-data
         }
 
+        // Return the data value at the calculated index
         return data[k];
     }
 
