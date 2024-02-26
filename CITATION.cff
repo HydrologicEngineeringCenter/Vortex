@@ -1,0 +1,41 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Vortex
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name: >-
+      U.S. Army Corps of Engineers Hydrologic Engineering
+      Center
+    address: 609 Second St
+    city: Davis
+    post-code: '95616'
+    region: California
+    country: US
+    website: 'https://www.hec.usace.army.mil/'
+  - given-names: Thomas
+    family-names: Brauer
+    affiliation: >-
+      U.S. Army Corps of Engineers Hydrologic Engineering
+      Center
+    email: thomas.brauer@usace.army.mil
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10642440
+  - type: url
+    value: 'https://github.com/HydrologicEngineeringCenter/Vortex'
+repository-code: 'https://github.com/HydrologicEngineeringCenter/Vortex'
+abstract: >-
+  Vortex is a collection of data processing utilities
+  targeted for Hydrologic Engineering Center applications,
+  e.g. HEC-HMS, HEC-RAS. The Vortex API uses NetCDF Java and
+  GDAL libraries to perform operations on spatial data.
+keywords:
+  - >-
+    HEC-HMS HEC-RAS HEC-DSS NetCDF GRIB HDF GeoTIFF ASC HEC
+    GDAL hydrology hydraulics
+license: MIT

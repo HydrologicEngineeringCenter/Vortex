@@ -23,6 +23,7 @@
 !gradlew
 !gradlew.bat
 !gradle.properties
+!CITATION.cff
 !CONTRIBUTORS.md
 !CONTRIBUTING.md
 !INTENT.md
