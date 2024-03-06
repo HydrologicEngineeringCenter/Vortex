@@ -1,6 +1,9 @@
 package mil.army.usace.hec.vortex;
 
+import hec.heclib.dss.DssDataType;
+import hec.heclib.grid.GridInfo;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
+import mil.army.usace.hec.vortex.geo.WktParser;
 import mil.army.usace.hec.vortex.util.UnitUtil;
 
 import java.io.Serializable;
@@ -8,8 +11,10 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public class VortexGrid implements VortexData, Serializable {
+    private static final Logger logger = Logger.getLogger(VortexGrid.class.getName());
 
     private final double dx;
     private final double dy;
@@ -343,24 +348,14 @@ public class VortexGrid implements VortexData, Serializable {
      *         otherwise, returns {@code Double.NaN}.
      */
     public double getValueAt(int x, int y) {
-        // Calculate initialX based on the origin and dx
-        int initialX = (int) (originX / dx);
-        // Calculate initialY based on the origin and dy
-        int initialY = (int) (originY / Math.abs(dy)); // Ensure dy is positive for calculation
+        double scaledOriginX = originX / Math.abs(dx);
+        double scaledOriginY = originY / Math.abs(dy);
 
-        // Adjust x and y based on the grid's origin
-        x -= initialX;
-        y = initialY - y; // y's calculation from the top
+        // NOTE: Still not correct...
+        int dyFromOrigin = (int) (y - scaledOriginY);
+        int dxFromOrigin = (int) (x - scaledOriginX);
 
-        // Calculate the index (k) in the data array
-        int k = y * nx + x;
-
-        // Check if the index is out of bounds or represents a no-data value
-        if (k >= data().length || k < 0 || isNoDataValue(data[k])) {
-            return Double.NaN; // Return NaN if out of bounds or no-data
-        }
-
-        // Return the data value at the calculated index
+        int k = Math.abs((dyFromOrigin * nx) + dxFromOrigin);
         return data[k];
     }
 
@@ -368,13 +363,23 @@ public class VortexGrid implements VortexData, Serializable {
         return value == noDataValue;
     }
 
+    public GridInfo getGridInfo() {
+        int lowerLeftCellX = (int) (originX / dx);
+        int lowerLeftCellY = dy < 0 ? (int) (-terminusY / dy) : (int) (originY / dy);
+        int cellSize = (int) Math.abs(dx);
+
+        int dssDataType = DssDataType.fromString(dataType.getDssString()).value();
+        GridInfo info = WktParser.getGridInfo(wkt);
+        info.setCellInfo(lowerLeftCellX, lowerLeftCellY, nx, ny, cellSize);
+        info.setParameterInfo(units, dssDataType);
+
+        return info;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VortexGrid)) return false;
-
-        VortexGrid that = (VortexGrid) o;
-
+        if (!(o instanceof VortexGrid that)) return false;
         if (Double.compare(that.dx, dx) != 0) return false;
         if (Double.compare(that.dy, dy) != 0) return false;
         if (nx != that.nx) return false;

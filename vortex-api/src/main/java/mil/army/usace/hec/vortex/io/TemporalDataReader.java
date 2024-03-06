@@ -131,9 +131,22 @@ public class TemporalDataReader {
         return timeRecord.endTime();
     }
 
+    /**
+     * Retrieves the units string of the data.
+     * @return A string representing the units of the data.
+     */
+    public String getDataUnits() {
+        String baseGridUnits = bufferedReader.getBaseGrid().units();
+        String wktUnits = bufferedReader.getBaseGrid().wkt();
+        return baseGridUnits;
+    }
+
     /* Read Methods */
     private VortexGrid read(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) {
-        if (startTime == null || endTime == null) return null;
+        if (startTime == null && endTime == null) {
+            return bufferedReader.getBaseGrid();
+        }
+
         long start = startTime.toEpochSecond();
         long end = endTime.toEpochSecond();
 

@@ -1,5 +1,7 @@
 package mil.army.usace.hec.vortex.geo;
 
+import hec.heclib.grid.AlbersInfo;
+import hec.heclib.grid.GridInfo;
 import org.gdal.osr.SpatialReference;
 import ucar.unidata.geoloc.Earth;
 import ucar.unidata.geoloc.Projection;
@@ -54,6 +56,21 @@ public class WktParser {
             default:
                 return unitName;
         }
+    }
+
+    public static GridInfo getGridInfo(String wkt) {
+        GridInfo defaultGridInfo = new GridInfo();
+        if (wkt == null || wkt.isEmpty()) return defaultGridInfo;
+        SpatialReference srs = new SpatialReference(wkt);
+
+        String projectionType = srs.GetAttrValue("PROJECTION").toLowerCase();
+        if (projectionType.contains("albers")) {
+            AlbersInfo albersInfo = new AlbersInfo();
+            albersInfo.setFalseEastingAndNorthing((float) getFalseEasting(srs), (float) getFalseNorthing(srs));
+            return albersInfo;
+        }
+
+        return defaultGridInfo;
     }
 
     private static Projection parseLatLong(SpatialReference srs) {
