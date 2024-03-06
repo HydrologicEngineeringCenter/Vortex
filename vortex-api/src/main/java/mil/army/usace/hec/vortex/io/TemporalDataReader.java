@@ -91,6 +91,10 @@ public class TemporalDataReader {
                 .build();
     }
 
+    public VortexGrid getBaseGrid() {
+        return bufferedReader.getBaseGrid();
+    }
+
     /**
      * Returns the file path to the data source.
      * @return A string representing the path to the data file.
