@@ -53,6 +53,9 @@ public class TemporalDataReader {
     public VortexGrid read(ZonedDateTime startTime, ZonedDateTime endTime) {
         VortexGrid baseGrid = bufferedReader.getBaseGrid();
         if (baseGrid == null) return null;
+        // Special case
+        if (!baseGrid.hasTime() && bufferedReader.getCount() == 1) return baseGrid;
+
         VortexDataType dataType = baseGrid.dataType();
         return read(dataType, startTime, endTime);
     }
