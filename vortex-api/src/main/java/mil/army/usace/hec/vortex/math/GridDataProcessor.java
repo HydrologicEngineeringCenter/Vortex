@@ -6,9 +6,11 @@ import mil.army.usace.hec.vortex.VortexTimeRecord;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 public class GridDataProcessor {
@@ -95,8 +97,11 @@ public class GridDataProcessor {
 
     /* Helpers */
     public static VortexGrid buildGrid(VortexGrid baseGrid, long startTime, long endTime, float[] data) {
-        ZonedDateTime start = TimeConverter.toZonedDateTime(startTime, baseGrid.startTime().getZone());
-        ZonedDateTime end = TimeConverter.toZonedDateTime(endTime, baseGrid.endTime().getZone());
+        ZoneId zoneId = Optional.ofNullable(baseGrid.startTime())
+                .map(ZonedDateTime::getZone)
+                .orElse(ZoneId.of("UTC"));
+        ZonedDateTime start = TimeConverter.toZonedDateTime(startTime, zoneId);
+        ZonedDateTime end = TimeConverter.toZonedDateTime(endTime, zoneId);
 
         if (data == null || data.length == 0) {
             data = new float[baseGrid.data().length];
@@ -104,12 +109,9 @@ public class GridDataProcessor {
         }
 
         return VortexGrid.builder()
-                .dx(baseGrid.dx())
-                .dy(baseGrid.dy())
-                .nx(baseGrid.nx())
-                .ny(baseGrid.ny())
-                .originX(baseGrid.originX())
-                .originY(baseGrid.originY())
+                .dx(baseGrid.dx()).dy(baseGrid.dy())
+                .nx(baseGrid.nx()).ny(baseGrid.ny())
+                .originX(baseGrid.originX()).originY(baseGrid.originY())
                 .wkt(baseGrid.wkt())
                 .data(data)
                 .noDataValue(baseGrid.noDataValue())
@@ -118,8 +120,7 @@ public class GridDataProcessor {
                 .shortName(baseGrid.shortName())
                 .fullName(baseGrid.fullName())
                 .description(baseGrid.description())
-                .startTime(start)
-                .endTime(end)
+                .startTime(start).endTime(end)
                 .interval(Duration.between(start, end))
                 .dataType(baseGrid.dataType())
                 .build();
