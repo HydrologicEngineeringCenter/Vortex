@@ -66,7 +66,12 @@ public class WktParser {
         String projectionType = srs.GetAttrValue("PROJECTION").toLowerCase();
         if (projectionType.contains("albers")) {
             AlbersInfo albersInfo = new AlbersInfo();
+            albersInfo.setCentralMeridian((float) getCenterLongitude(srs));
+            albersInfo.setLatitudeOfProjectionOrigin((float) getCenterLatitude(srs));
+            albersInfo.setStandardParallels((float) getStandardParallel1(srs), (float) getStandardParallel2(srs));
             albersInfo.setFalseEastingAndNorthing((float) getFalseEasting(srs), (float) getFalseNorthing(srs));
+            albersInfo.setProjectionDatum(GridInfo.getNad83());
+            albersInfo.setProjectionUnits(getProjectionUnit(wkt));
             return albersInfo;
         }
 
