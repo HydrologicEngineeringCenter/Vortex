@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex;
 import hec.heclib.dss.DssDataType;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.util.HecTime;
+import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktParser;
 import mil.army.usace.hec.vortex.util.TimeConverter;
@@ -350,15 +351,33 @@ public class VortexGrid implements VortexData, Serializable {
      *         otherwise, returns {@code Double.NaN}.
      */
     public double getValueAt(int x, int y) {
-        double scaledOriginX = originX / Math.abs(dx);
-        double scaledOriginY = originY / Math.abs(dy);
+        if (isFlippedY()) return getValueAtFlippedY(x, y);
 
-        // NOTE: Still not correct...
-        int dyFromOrigin = (int) (y - scaledOriginY);
-        int dxFromOrigin = (int) (x - scaledOriginX);
+        int scaledOriginX = (int) (originX / Math.abs(dx));
+        int scaledOriginY = (int) (originY / Math.abs(dy));
 
-        int k = Math.abs((dyFromOrigin * nx) + dxFromOrigin);
+        int relativeX = x - scaledOriginX;
+        int relativeY = y - scaledOriginY;
+        int k = Math.abs((relativeY * nx) + relativeX);
+
         return data[k];
+    }
+
+    private double getValueAtFlippedY(int x, int y) {
+        int scaledOriginX = (int) (originX / Math.abs(dx));
+        int scaledTerminusY = (int) (terminusY / Math.abs(dy));
+
+        int relativeX = x - scaledOriginX;
+        int relativeY = y - scaledTerminusY;
+
+        int k = Math.abs((relativeY * nx) + relativeX);
+
+        float[] flippedData = RasterUtils.flipVertically(data, nx);
+        return flippedData[k];
+    }
+
+    private boolean isFlippedY() {
+        return terminusY < originY;
     }
 
     public boolean isNoDataValue(double value) {
