@@ -4,11 +4,13 @@ import hec.heclib.util.HecTime;
 import ucar.nc2.time.CalendarDate;
 
 import java.time.*;
+import java.time.chrono.ChronoZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 public class TimeConverter {
@@ -49,7 +51,11 @@ public class TimeConverter {
     }
 
     public static HecTime toHecTime(ZonedDateTime zonedDateTime){
-        return new HecTime(Date.from(zonedDateTime.toInstant()), 0);
+        return Optional.ofNullable(zonedDateTime)
+                .map(ChronoZonedDateTime::toInstant)
+                .map(Date::from)
+                .map(d -> new HecTime(d, 0))
+                .orElse(new HecTime());
     }
 
     public static ZonedDateTime toZonedDateTime(String dateTimeString) {
