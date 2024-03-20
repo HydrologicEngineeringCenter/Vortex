@@ -31,13 +31,6 @@ class GridToPointConverterTest {
 
         Map<String, String> options = new HashMap<>();
         options.put("Average", "true");
-        options.put("Min", "false");
-        options.put("Max", "false");
-        options.put("Median", "false");
-        options.put("25th Percentile", "false");
-        options.put("75th Percentile", "false");
-        options.put("Percentage of Cells > 0", "false");
-        options.put("Percentage of Cells > 25th Percentile", "false");
 
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)
@@ -86,13 +79,6 @@ class GridToPointConverterTest {
 
         Map<String, String> options = new HashMap<>();
         options.put("Average", "true");
-        options.put("Min", "false");
-        options.put("Max", "false");
-        options.put("Median", "false");
-        options.put("25th Percentile", "false");
-        options.put("75th Percentile", "false");
-        options.put("Percentage of Cells > 0", "false");
-        options.put("Percentage of Cells > 25th Percentile", "false");
 
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)
@@ -142,13 +128,6 @@ class GridToPointConverterTest {
         Map<String, String> options = new HashMap<>();
         options.put("partF", "test");
         options.put("Average", "true");
-        options.put("Min", "false");
-        options.put("Max", "false");
-        options.put("Median", "false");
-        options.put("25th Percentile", "false");
-        options.put("75th Percentile", "false");
-        options.put("Percentage of Cells > 0", "false");
-        options.put("Percentage of Cells > 25th Percentile", "false");
 
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)

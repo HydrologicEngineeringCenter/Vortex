@@ -45,9 +45,7 @@ public class VortexPoint implements VortexData, Serializable {
         private double originY;
         private String id;
         private String wkt;
-
         private ZonalStatistics zonalStatistics;
-
         private String units;
         private String fileName;
         private String shortName;
@@ -56,7 +54,6 @@ public class VortexPoint implements VortexData, Serializable {
         private ZonedDateTime startTime;
         private ZonedDateTime endTime;
         private Duration interval;
-        private List<VortexPoint> points = new ArrayList<>();
 
         public VortexPointBuilder originX(final double originX) {
             this.originX = originX;
@@ -82,7 +79,6 @@ public class VortexPoint implements VortexData, Serializable {
             this.zonalStatistics = zonalStatistics;
             return this;
         }
-
 
         public VortexPointBuilder units (final String units) {
             this.units = units;
@@ -148,7 +144,7 @@ public class VortexPoint implements VortexData, Serializable {
         return wkt;
     }
 
-    public ZonalStatistics getZonalStatistics(){
+    public ZonalStatistics getZonalStatistics() {
         return zonalStatistics;
     }
 

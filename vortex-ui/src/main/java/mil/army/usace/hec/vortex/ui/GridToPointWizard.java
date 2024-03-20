@@ -462,33 +462,6 @@ public class GridToPointWizard extends VortexWizard {
         String shapefile = zonesShapefile.getText();
         String fieldSelection = String.valueOf(fieldComboBox.getSelectedItem());
 
-        List<String> statisticsList = new ArrayList<>();
-
-        if (averageCheckBox.isSelected()) {
-            statisticsList.add(averageCheckBox.getText());
-        }
-        if (minCheckBox.isSelected()) {
-            statisticsList.add(minCheckBox.getText());
-        }
-        if (maxCheckBox.isSelected()) {
-            statisticsList.add(maxCheckBox.getText());
-        }
-        if (medianCheckBox.isSelected()) {
-            statisticsList.add(medianCheckBox.getText());
-        }
-        if (pct25thCheckBox.isSelected()) {
-            statisticsList.add(pct25thCheckBox.getText());
-        }
-        if (pct75thCheckBox.isSelected()) {
-            statisticsList.add(pct75thCheckBox.getText());
-        }
-        if (pctCellsGreaterZeroCheckBox.isSelected()) {
-            statisticsList.add(pctCellsGreaterZeroCheckBox.getText());
-        }
-        if (pctCellsGreater25thPctBox.isSelected()) {
-            statisticsList.add(pctCellsGreater25thPctBox.getText());
-        }
-
         /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
         if (chosenSourceList == null) return;
@@ -524,46 +497,14 @@ public class GridToPointWizard extends VortexWizard {
 
         writeOptions.put("isAccumulate", "true");
 
-        if(statisticsList.toString().contains("Average")){
-            writeOptions.put("Average", "true");
-        } else {
-            writeOptions.put("Average", "false");
-        }
-        if(statisticsList.toString().contains("Min")){
-            writeOptions.put("Min", "true");
-        } else {
-            writeOptions.put("Min", "false");
-        }
-        if(statisticsList.toString().contains("Max")){
-            writeOptions.put("Max", "true");
-        } else {
-            writeOptions.put("Max", "false");
-        }
-        if(statisticsList.toString().contains("Median")){
-            writeOptions.put("Median", "true");
-        } else {
-            writeOptions.put("Median", "false");
-        }
-        if(statisticsList.toString().contains("25th Percentile")){
-            writeOptions.put("25th Percentile", "true");
-        } else {
-            writeOptions.put("25th Percentile", "false");
-        }
-        if(statisticsList.toString().contains("75th Percentile")){
-            writeOptions.put("75th Percentile", "true");
-        } else {
-            writeOptions.put("75th Percentile", "false");
-        }
-        if(statisticsList.toString().contains("Percentage of Cells > 0")){
-            writeOptions.put("Percentage of Cells > 0", "true");
-        } else {
-            writeOptions.put("Percentage of Cells > 0", "false");
-        }
-        if(statisticsList.toString().contains("Percentage of Cells > 25th Percentile")){
-            writeOptions.put("Percentage of Cells > 25th Percentile", "true");
-        } else {
-            writeOptions.put("Percentage of Cells > 25th Percentile", "false");
-        }
+        writeOptions.put("Average", String.valueOf(averageCheckBox.isSelected()));
+        writeOptions.put("Min", String.valueOf(minCheckBox.isSelected()));
+        writeOptions.put("Max", String.valueOf(maxCheckBox.isSelected()));
+        writeOptions.put("Median", String.valueOf(medianCheckBox.isSelected()));
+        writeOptions.put("1Q", String.valueOf(pct25thCheckBox.isSelected()));
+        writeOptions.put("3Q", String.valueOf(pct75thCheckBox.isSelected()));
+        writeOptions.put("Pct>0", String.valueOf(pctCellsGreaterZeroCheckBox.isSelected()));
+        writeOptions.put("Pct>1Q", String.valueOf(pctCellsGreater25thPctBox.isSelected()));
 
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToSource)

@@ -47,7 +47,7 @@ public class ZonalStatisticsCalculator {
     public static ZonalStatisticsCalculatorBuilder builder(){ return new ZonalStatisticsCalculatorBuilder(); }
 
     public List<ZonalStatistics> getZonalStatistics() {
-         float[] data = grid.data();
+        float[] data = grid.data();
         List<ZonalStatistics> zoneStatistics = new ArrayList<>();
         zoneMasks.forEach((id, mask) -> {
             ZonalStatistics zonalStatistics = computeZonalStatistics(id, mask, data);
@@ -208,25 +208,23 @@ public class ZonalStatisticsCalculator {
 
         List<Double> validValues = new ArrayList<>();
 
-        // compute average
-        int count = 0;
-        double sum = 0;
+        // filter for masked and non no data values
         for (int i = 0; i < data.length; i++) {
             double value = data[i];
             if (mask[i] == 1 && Double.compare(value, noDataValue) != 0) {
-
-                //if we've gotten to this point, it's a legit value; add it to the list of valid values
                 validValues.add(value);
-
-                sum += value;
-                count++;
             }
         }
 
+        Collections.sort(validValues);
+
+        double sum = validValues.stream().mapToDouble(f -> f).sum();
+        int count = validValues.size();
+
         double average = sum / count;
-        double min = Double.NaN;
-        double max = Double.NaN;
-        double median = Double.NaN;
+        double min = validValues.get(0);
+        double max = validValues.get(count - 1);
+        double median = validValues.get((count + 1) / 2);
         double firstQuartile = Double.NaN;
         double thirdQuartile = Double.NaN;
         float pctCellsGreaterThanZero = (float) Double.NaN;
@@ -237,15 +235,10 @@ public class ZonalStatisticsCalculator {
         // if there are less than 4 valid values, don't compute additional statistics
         if (validValues.size() >= 4) {
 
-            Collections.sort(validValues);
-            min = validValues.get(0);
-            max = validValues.get(count - 1);
-            median = validValues.get((count + 1) / 2);
-
             firstQuartile = validValues.get((count + 1) / 4);
             thirdQuartile = validValues.get(3 * (count + 1) / 4);
 
-            for (Double value : validValues) {
+            for (double value : validValues) {
                 if (value > 0) {
                     numCellsGreaterThanZero++;
                 }
@@ -255,8 +248,8 @@ public class ZonalStatisticsCalculator {
                 }
             }
 
-            pctCellsGreaterThanZero = 100 * numCellsGreaterThanZero / count;
-            pctCellsGreaterThanFirstQuartile = 100 * numCellsGreaterThanFirstQuartile / count;
+            pctCellsGreaterThanZero = (float) (100 * numCellsGreaterThanZero) / count;
+            pctCellsGreaterThanFirstQuartile = (float) (100 * numCellsGreaterThanFirstQuartile) / count;
 
         }
 
