@@ -156,11 +156,11 @@ public class GridToPointConverter {
                         .build()
                         .getZonalStatistics();
 
-                zonalStatistics.forEach(zone -> {
+                zonalStatistics.forEach(zonalStatistic -> {
                     VortexPoint point = VortexPoint.builder()
-                            .id(zone.getId())
+                            .id(zonalStatistic.getId())
                             .units(grid.units())
-                            .data((float) zone.getAverage())
+                            .zonalStatistics(zonalStatistic)
                             .description(grid.description())
                             .startTime(grid.startTime())
                             .endTime(grid.endTime())

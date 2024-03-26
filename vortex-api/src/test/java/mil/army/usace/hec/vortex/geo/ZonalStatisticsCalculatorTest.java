@@ -49,6 +49,13 @@ class ZonalStatisticsCalculatorTest {
         ZonalStatistics zone = zonalStatistics.get(0);
         assertEquals("Truckee", zone.getId());
         assertEquals(0.0767, zone.getAverage(), 1E-4);
+        assertEquals(0.9000, zone.getMax(), 1E-4);
+        assertEquals(0.0, zone.getMin(), 1E-4);
+        assertEquals(0.0, zone.getMedian(), 1E-4);
+        assertEquals(0.0, zone.getFirstQuartile(), 1E-4);
+        assertEquals(0.1000, zone.getThirdQuartile(), 1E-4);
+        assertEquals(28.0, zone.getPctCellsGreaterThanZero(), 1E-1);
+        assertEquals(28.0, zone.getPctCellsGreaterThanFirstQuartile(), 1E-1);
     }
 
     @Test

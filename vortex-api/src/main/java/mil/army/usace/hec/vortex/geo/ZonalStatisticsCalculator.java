@@ -206,21 +206,68 @@ public class ZonalStatisticsCalculator {
 
         double noDataValue = grid.noDataValue();
 
-        int count = 0;
-        double sum = 0;
+        List<Double> validValues = new ArrayList<>();
+
+        // filter for masked and non no data values
         for (int i = 0; i < data.length; i++) {
             double value = data[i];
             if (mask[i] == 1 && Double.compare(value, noDataValue) != 0) {
-                sum += value;
-                count++;
+                validValues.add(value);
             }
         }
 
+        Collections.sort(validValues);
+
+        double sum = validValues.stream().mapToDouble(f -> f).sum();
+        int count = validValues.size();
+
         double average = sum / count;
+        double min = validValues.get(0);
+        double max = validValues.get(count - 1);
+        double median = Double.NaN;
+        double firstQuartile = Double.NaN;
+        double thirdQuartile = Double.NaN;
+        float pctCellsGreaterThanZero = (float) Double.NaN;
+        float pctCellsGreaterThanFirstQuartile = (float) Double.NaN;
+        int numCellsGreaterThanZero = 0;
+        int numCellsGreaterThanFirstQuartile = 0;
+
+        // can't compute median with less than 2 values
+        if (count >= 2) {
+            median = validValues.get((count + 1) / 2);
+        }
+
+        // if there are less than 4 valid values, don't compute additional statistics
+        if (count >= 4) {
+
+            firstQuartile = validValues.get((count + 1) / 4);
+            thirdQuartile = validValues.get(3 * (count + 1) / 4);
+
+            for (double value : validValues) {
+                if (value > 0) {
+                    numCellsGreaterThanZero++;
+                }
+
+                if (value > firstQuartile) {
+                    numCellsGreaterThanFirstQuartile++;
+                }
+            }
+
+            pctCellsGreaterThanZero = (float) (100 * numCellsGreaterThanZero) / count;
+            pctCellsGreaterThanFirstQuartile = (float) (100 * numCellsGreaterThanFirstQuartile) / count;
+
+        }
 
         return ZonalStatistics.builder()
                 .id(id)
                 .average(average)
+                .min(min)
+                .max(max)
+                .median(median)
+                .firstQuartile(firstQuartile)
+                .thirdQuartile(thirdQuartile)
+                .pctCellsGreaterThanZero(pctCellsGreaterThanZero)
+                .pctCellsGreaterThanFirstQuartile(pctCellsGreaterThanFirstQuartile)
                 .build();
     }
 }

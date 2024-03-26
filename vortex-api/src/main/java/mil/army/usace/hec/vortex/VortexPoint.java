@@ -1,15 +1,19 @@
 package mil.army.usace.hec.vortex;
 
+import mil.army.usace.hec.vortex.geo.ZonalStatistics;
+
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VortexPoint implements VortexData, Serializable {
     private double originX;
     private double originY;
     private String id;
     private String wkt;
-    private float data;
+    private ZonalStatistics zonalStatistics;
     private String units;
     private String fileName;
     private String shortName;
@@ -25,7 +29,7 @@ public class VortexPoint implements VortexData, Serializable {
         this.originY = builder.originY;
         this.id = builder.id;
         this.wkt = builder.wkt;
-        this.data = builder.data;
+        this.zonalStatistics = builder.zonalStatistics;
         this.units = builder.units;
         this.fileName = builder.fileName;
         this.shortName = builder.shortName;
@@ -34,7 +38,6 @@ public class VortexPoint implements VortexData, Serializable {
         this.startTime = builder.startTime;
         this.endTime = builder.endTime;
         this.interval = builder.interval;
-
     }
 
     public static class VortexPointBuilder {
@@ -42,7 +45,7 @@ public class VortexPoint implements VortexData, Serializable {
         private double originY;
         private String id;
         private String wkt;
-        private float data;
+        private ZonalStatistics zonalStatistics;
         private String units;
         private String fileName;
         private String shortName;
@@ -72,8 +75,8 @@ public class VortexPoint implements VortexData, Serializable {
             return this;
         }
 
-        public VortexPointBuilder data (final float data) {
-            this.data = data;
+        public VortexPointBuilder zonalStatistics(final ZonalStatistics zonalStatistics) {
+            this.zonalStatistics = zonalStatistics;
             return this;
         }
 
@@ -141,8 +144,8 @@ public class VortexPoint implements VortexData, Serializable {
         return wkt;
     }
 
-    public float data() {
-        return data;
+    public ZonalStatistics getZonalStatistics() {
+        return zonalStatistics;
     }
 
     public String units() {
