@@ -224,7 +224,7 @@ public class ZonalStatisticsCalculator {
         double average = sum / count;
         double min = validValues.get(0);
         double max = validValues.get(count - 1);
-        double median = validValues.get((count + 1) / 2);
+        double median = Double.NaN;
         double firstQuartile = Double.NaN;
         double thirdQuartile = Double.NaN;
         float pctCellsGreaterThanZero = (float) Double.NaN;
@@ -232,8 +232,13 @@ public class ZonalStatisticsCalculator {
         int numCellsGreaterThanZero = 0;
         int numCellsGreaterThanFirstQuartile = 0;
 
+        // can't compute median with less than 2 values
+        if (count >= 2) {
+            median = validValues.get((count + 1) / 2);
+        }
+
         // if there are less than 4 valid values, don't compute additional statistics
-        if (validValues.size() >= 4) {
+        if (count >= 4) {
 
             firstQuartile = validValues.get((count + 1) / 4);
             thirdQuartile = validValues.get(3 * (count + 1) / 4);
