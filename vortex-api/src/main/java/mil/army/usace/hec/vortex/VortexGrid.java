@@ -1,12 +1,9 @@
 package mil.army.usace.hec.vortex;
 
-import hec.heclib.dss.DssDataType;
 import hec.heclib.grid.GridInfo;
-import hec.heclib.util.HecTime;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
-import mil.army.usace.hec.vortex.geo.WktParser;
-import mil.army.usace.hec.vortex.util.TimeConverter;
+import mil.army.usace.hec.vortex.io.DssDataWriter;
 import mil.army.usace.hec.vortex.util.UnitUtil;
 
 import java.io.Serializable;
@@ -385,20 +382,7 @@ public class VortexGrid implements VortexData, Serializable {
     }
 
     public GridInfo getGridInfo() {
-        GridInfo info = WktParser.getGridInfo(wkt);
-
-        int lowerLeftCellX = (int) (originX / dx);
-        int lowerLeftCellY = dy < 0 ? (int) (-terminusY / dy) : (int) (originY / dy);
-        int cellSize = (int) Math.abs(dx);
-        int dssDataType = DssDataType.fromString(dataType.getDssString()).value();
-        HecTime start = TimeConverter.toHecTime(startTime);
-        HecTime end = TimeConverter.toHecTime(endTime);
-
-        info.setCellInfo(lowerLeftCellX, lowerLeftCellY, nx, ny, cellSize);
-        info.setParameterInfo(units, dssDataType);
-        info.setGridTimes(start, end);
-
-        return info;
+        return DssDataWriter.getGridInfo(this);
     }
 
     public boolean hasTime() {
