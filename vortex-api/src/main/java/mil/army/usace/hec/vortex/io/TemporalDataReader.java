@@ -33,6 +33,10 @@ public class TemporalDataReader {
         this(new BufferedDataReader(pathToFile, pathToData));
     }
 
+    public BufferedDataReader getBufferedReader() {
+        return bufferedReader;
+    }
+
     /**
      * Constructs a TemporalDataReader using an instance of BufferedDataReader.
      * @param bufferedReader Instance of BufferedDataReader to read data.
