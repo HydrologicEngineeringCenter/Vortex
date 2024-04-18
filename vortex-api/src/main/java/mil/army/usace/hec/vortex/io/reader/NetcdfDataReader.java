@@ -1,4 +1,4 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexDataType;
@@ -18,6 +18,7 @@ import ucar.nc2.ft.FeatureDatasetFactoryManager;
 import javax.measure.IncommensurableException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -26,8 +27,11 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class NetcdfDataReader extends DataReader {
+public abstract class NetcdfDataReader implements FileDataReader {
     private static final Logger logger = Logger.getLogger(NetcdfDataReader.class.getName());
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    final String path;
+    final String variableName;
     final NetcdfDataset ncd;
 
     /* Factory Method */
@@ -50,9 +54,10 @@ public abstract class NetcdfDataReader extends DataReader {
         return null;
     }
 
-    NetcdfDataReader(DataReaderBuilder builder) {
-        super(builder);
-        ncd = getNetcdfDataset(path);
+    NetcdfDataReader(String pathToFile, String pathToData) {
+        this.path = pathToFile;
+        this.variableName = pathToData;
+        ncd = getNetcdfDataset(pathToFile);
     }
 
     @Override
@@ -194,5 +199,10 @@ public abstract class NetcdfDataReader extends DataReader {
     static VortexDataType getVortexDataType(VariableDS variableDS) {
         String cellMethods = variableDS.findAttributeString(CF.CELL_METHODS, "");
         return VortexDataType.fromString(cellMethods);
+    }
+
+    @Override
+    public PropertyChangeSupport getPropertyChangeSupport() {
+        return support;
     }
 }

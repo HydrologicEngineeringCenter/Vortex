@@ -1,8 +1,10 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.io.VirtualFileSystem;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -10,6 +12,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.gdal.gdal.gdal;
 
+import java.beans.PropertyChangeSupport;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,9 +20,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
-    static {GdalRegister.getInstance();}
-    SnodasTarDataReader(DataReaderBuilder builder) {super(builder);}
+final class SnodasTarDataReader implements FileDataReader, VirtualFileSystem {
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final String path;
+    private final String variableName;
+
+    static {
+        GdalRegister.getInstance();
+    }
+
+    SnodasTarDataReader(String path, String variableName) {
+        this.path = path;
+        this.variableName = variableName;
+    }
 
     @Override
     // Return a list of data-transferable-objects for the specified variable (SWE/Liquid Precipitaion/etc...)
@@ -225,4 +238,9 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
 
         return headerFile;
     } // createHeader()
+
+    @Override
+    public PropertyChangeSupport getPropertyChangeSupport() {
+        return support;
+    }
 } // SnodasTarDataReader class

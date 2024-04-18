@@ -1,4 +1,4 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import static mil.army.usace.hec.vortex.io.GridDatasetReader.SpecialFileType.*;
+import static mil.army.usace.hec.vortex.io.reader.GridDatasetReader.SpecialFileType.*;
 
 public class GridDatasetReader extends NetcdfDataReader {
     private static final Logger logger = Logger.getLogger(GridDatasetReader.class.getName());
@@ -75,7 +75,7 @@ public class GridDatasetReader extends NetcdfDataReader {
 
     /* Constructor */
     public GridDatasetReader(GridDataset gridDataset, String variableName) {
-        super(new DataReaderBuilder().path(gridDataset.getLocation()).variable(variableName));
+        super(gridDataset.getLocation(), variableName);
         this.gridDataset = gridDataset;
         specialFileType = determineSpecialFileType(gridDataset.getLocation());
 
@@ -186,7 +186,7 @@ public class GridDatasetReader extends NetcdfDataReader {
         }
 
         IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gridCoordSystem);
-        indexSearcher.addPropertyChangeListener(support::firePropertyChange);
+        indexSearcher.addPropertyChangeListener(getPropertyChangeSupport()::firePropertyChange);
 
         Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
         indexSearcher.cacheCoordinates(coordinates);

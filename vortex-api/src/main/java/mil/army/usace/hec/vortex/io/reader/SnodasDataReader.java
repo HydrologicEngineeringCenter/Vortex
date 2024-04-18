@@ -1,9 +1,10 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.DataReader;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.gdal.gdal.Band;
@@ -12,6 +13,7 @@ import org.gdal.gdal.TranslateOptions;
 import org.gdal.gdal.gdal;
 import org.gdal.gdalconst.gdalconst;
 
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,9 +22,17 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-class SnodasDataReader extends DataReader {
-    static {GdalRegister.getInstance();}
-    SnodasDataReader(DataReaderBuilder builder) {super(builder);}
+final class SnodasDataReader implements FileDataReader {
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final String path;
+
+    static {
+        GdalRegister.getInstance();
+    }
+
+    SnodasDataReader(String path) {
+        this.path = path;
+    }
 
     @Override
     public List<VortexData> getDtos() {
@@ -297,4 +307,8 @@ class SnodasDataReader extends DataReader {
         return getName(parseFile(pathToDat.substring(0, pathToDat.lastIndexOf(".dat"))));
     }
 
+    @Override
+    public PropertyChangeSupport getPropertyChangeSupport() {
+        return support;
+    }
 } // SnodasDataReader class

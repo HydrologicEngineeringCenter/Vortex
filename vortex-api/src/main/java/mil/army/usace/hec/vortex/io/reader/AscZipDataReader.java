@@ -1,22 +1,31 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.io.VirtualFileSystem;
 import org.gdal.gdal.gdal;
 
-import java.io.File;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class AscZipDataReader extends DataReader implements VirtualFileSystem{
+final class AscZipDataReader implements FileDataReader, VirtualFileSystem {
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final String path;
+    private final String variableName;
+
     static {
         GdalRegister.getInstance();
     }
 
-    AscZipDataReader(DataReaderBuilder builder) { super(builder); }
+    AscZipDataReader(String path, String variableName) {
+        this.path = path;
+        this.variableName = variableName;
+    }
 
     @Override
     public List<VortexData> getDtos() {
@@ -83,4 +92,8 @@ public class AscZipDataReader extends DataReader implements VirtualFileSystem{
                 .toList();
     }
 
+    @Override
+    public PropertyChangeSupport getPropertyChangeSupport() {
+        return support;
+    }
 } // AscZipDataReader class

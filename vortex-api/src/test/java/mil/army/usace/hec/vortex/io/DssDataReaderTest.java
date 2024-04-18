@@ -21,14 +21,14 @@ class DssDataReaderTest {
     @Test
     void GetVariablesFromDss6ReturnsSetOfStrings() {
         String pathToDss = new File(getClass().getResource("/normalizer/prism.dss").getFile()).toString();
-        Set<String> variables = DssDataReader.getVariables(pathToDss);
+        Set<String> variables = DataReader.getVariables(pathToDss);
         assertEquals(2, variables.size());
     }
 
     @Test
     void GetVariablesFromDss7ReturnsSetOfStrings(){
         String pathToDss = new File(getClass().getResource("/normalizer/qpe.dss").getFile()).toString();
-        Set<String> variables = DssDataReader.getVariables(pathToDss);
+        Set<String> variables = DataReader.getVariables(pathToDss);
         assertEquals(49, variables.size());
     }
 

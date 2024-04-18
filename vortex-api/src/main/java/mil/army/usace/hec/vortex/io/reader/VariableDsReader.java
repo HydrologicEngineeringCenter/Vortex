@@ -1,4 +1,4 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
@@ -37,7 +37,7 @@ public class VariableDsReader extends NetcdfDataReader {
 
     /* Constructor */
     public VariableDsReader(VariableDS variableDS, String variableName) {
-        super(new DataReaderBuilder().path(variableDS.getDatasetLocation()).variable(variableName));
+        super(variableDS.getDatasetLocation(), variableName);
         this.variableDS = getVariableDS(ncd, variableName);
         CoordinateSystem coordinateSystem = getCoordinateSystem(variableDS);
         this.gridDefinition = getGridDefinition(ncd, coordinateSystem);

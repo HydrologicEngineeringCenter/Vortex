@@ -1,4 +1,4 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import hec.heclib.dss.DSSPathname;
 import hec.heclib.dss.DssDataType;
@@ -15,7 +15,9 @@ import mil.army.usace.hec.vortex.VortexTimeRecord;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.WktFactory;
+import mil.army.usace.hec.vortex.io.DataReader;
 
+import java.beans.PropertyChangeSupport;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -28,12 +30,17 @@ import java.util.stream.IntStream;
 
 import static hec.heclib.dss.HecDSSDataAttributes.*;
 
-class DssDataReader extends DataReader {
+final class DssDataReader implements FileDataReader {
     private static final Logger logger = Logger.getLogger(DssDataReader.class.getName());
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final String path;
+    private final String variableName;
+
     private List<DSSPathname> catalogPathnameList = null;
 
-    DssDataReader(DataReaderBuilder builder) {
-        super(builder);
+    DssDataReader(String path, String variableName) {
+        this.path = path;
+        this.variableName = variableName;
     }
 
     @Override
@@ -222,5 +229,10 @@ class DssDataReader extends DataReader {
         int startTimeComparison = Long.compare(startTime1, startTime2);
 
         return (startTimeComparison != 0) ? startTimeComparison : Long.compare(interval1, interval2);
+    }
+
+    @Override
+    public PropertyChangeSupport getPropertyChangeSupport() {
+        return support;
     }
 }

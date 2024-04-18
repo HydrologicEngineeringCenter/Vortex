@@ -94,7 +94,7 @@ public class ImportableUnit {
     public void process() {
         GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
 
-        reader.addPropertyChangeListener(support::firePropertyChange);
+        reader.addListener(support::firePropertyChange);
 
         int count = reader.getDtoCount();
 

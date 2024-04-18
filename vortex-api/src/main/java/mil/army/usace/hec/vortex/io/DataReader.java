@@ -2,29 +2,34 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.reader.*;
 
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
-public abstract class DataReader {
-    final PropertyChangeSupport support;
-
-    final String path;
-    final String variableName;
+public final class DataReader implements PropertyChangeNotifier {
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final String path;
+    private final String variableName;
+    private final FileDataReader fileDataReader;
 
     DataReader(DataReaderBuilder builder){
         this.path = builder.path;
         this.variableName = builder.variableName;
-
-        support = new PropertyChangeSupport(this);
+        this.fileDataReader = builder.fileDataReader;
     } // DataReader builder()
+
+    @Override
+    public PropertyChangeSupport getPropertyChangeSupport() {
+        return support;
+    }
 
     public static class DataReaderBuilder{
         private String path;
         private String variableName;
+        private FileDataReader fileDataReader;
 
         public DataReaderBuilder path (final String path){
             this.path = path;
@@ -41,81 +46,45 @@ public abstract class DataReader {
                 throw new IllegalStateException("DataReader requires a path to data source file.");
             }
 
-            if (path.matches(".*\\.(asc|tif|tiff)$")) {
-                return new AscDataReader(this);
-            }
-
-            if (path.toLowerCase().contains("snodas") && path.endsWith(".tar")) {
-                return new SnodasTarDataReader(this);
-            }
-
-            if (path.endsWith(".dat")) {
-                return new SnodasDataReader(this);
-            }
-
-            if (path.matches(".*\\.bil")) {
-                return new BilDataReader(this);
-            }
-
-            if (path.matches(".*bil.zip")) {
-                return new BilZipDataReader(this);
-            }
-
-            if (path.matches(".*asc.zip")) {
-                return new AscZipDataReader(this);
-            }
-
-            if (variableName == null){
-                throw new IllegalStateException("This DataReader requires a variableName.");
-            }
-
-            if (path.matches(".*\\.dss")) {
-                return new DssDataReader(this);
-            }
-
-            return NetcdfDataReader.createInstance(path, variableName);
+            fileDataReader = FileDataReaderPool.get(path, variableName);
+            return new DataReader(this);
         } // build()
     } // DataReaderBuilder class
 
-    public static DataReaderBuilder builder(){return new DataReaderBuilder();}
+    public static DataReaderBuilder builder(){
+        return new DataReaderBuilder();
+    }
 
-    public abstract List<VortexData> getDtos();
+    public List<VortexData> getDtos() {
+        return fileDataReader.getDtos();
+    }
 
     public static Set<String> getVariables(String path){
-        String fileName = new File(path).getName().toLowerCase();
-
-        if (fileName.matches(".*\\.(asc|tif|tiff)$") || fileName.endsWith("asc.zip")){
-            return AscDataReader.getVariables(path);
-        }
-        if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
-            return BilDataReader.getVariables(path);
-        }
-        if (fileName.matches(".*snodas.*\\.(dat|tar|tar.gz)")){
-            return SnodasDataReader.getVariables(path);
-        }
-        if (fileName.endsWith(".dss")){
-            return DssDataReader.getVariables(path);
-        }
-        return NetcdfDataReader.getVariables(path);
+        return FileDataReaderPool.getVariables(path);
     } // builder()
 
-    public abstract int getDtoCount();
+    public int getDtoCount() {
+        return fileDataReader.getDtoCount();
+    }
 
-    public abstract VortexData getDto(int idx);
+    public VortexData getDto(int idx) {
+        return fileDataReader.getDto(idx);
+    }
 
-    public abstract List<VortexTimeRecord> getTimeRecords();
+    public List<VortexTimeRecord> getTimeRecords() {
+        return fileDataReader.getTimeRecords();
+    }
 
     public static boolean isVariableRequired(String pathToFile) {
         String fileName = new File(pathToFile).getName().toLowerCase();
-
         return !fileName.matches(".*\\.(asc|tif|tiff|bil|bil.zip|asc.zip)$");
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        support.addPropertyChangeListener(pcl);
+    public String getPath() {
+        return path;
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        support.removePropertyChangeListener(pcl);
+    public String getVariableName() {
+        return variableName;
     }
-} // DataReader class
+}

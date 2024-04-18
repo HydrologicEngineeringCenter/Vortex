@@ -1,23 +1,31 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.io.reader;
 
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.io.VirtualFileSystem;
 import org.gdal.gdal.gdal;
 
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BilZipDataReader extends DataReader implements VirtualFileSystem{
+final class BilZipDataReader implements FileDataReader, VirtualFileSystem {
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final String path;
+    private final String variableName;
+
     static {
         GdalRegister.getInstance();
     }
 
-    BilZipDataReader(DataReaderBuilder builder) {
-        super(builder);
+    BilZipDataReader(String path, String variableName) {
+        this.path = path;
+        this.variableName = variableName;
     }
 
     @Override
@@ -86,4 +94,8 @@ public class BilZipDataReader extends DataReader implements VirtualFileSystem{
                 .toList();
     }
 
+    @Override
+    public PropertyChangeSupport getPropertyChangeSupport() {
+        return support;
+    }
 } // BilZipDataReader class

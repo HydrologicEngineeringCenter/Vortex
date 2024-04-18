@@ -71,10 +71,10 @@ public class BufferedDataReader {
     }
 
     public String getPathToFile() {
-        return dataReader.path;
+        return dataReader.getPath();
     }
 
     public String getPathToData() {
-        return dataReader.variableName;
+        return dataReader.getVariableName();
     }
 }
