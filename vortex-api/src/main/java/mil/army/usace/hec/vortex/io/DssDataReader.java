@@ -146,7 +146,14 @@ class DssDataReader extends DataReader {
 
     @Override
     public int getDtoCount() {
-        return getRecordPathnameList().size();
+        List<DSSPathname> pathnames = getRecordPathnameList();
+        if (variableName.contains("*")) {
+            return pathnames.size();
+        }
+
+        return (int) pathnames.stream()
+                .filter(p -> p.isSamePathname(variableName, false))
+                .count();
     }
 
     @Override
