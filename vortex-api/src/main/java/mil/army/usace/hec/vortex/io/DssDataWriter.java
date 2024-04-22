@@ -659,7 +659,7 @@ public class DssDataWriter extends DataWriter {
         };
     }
 
-    private static GridInfo getGridInfo(VortexGrid grid) {
+    public static GridInfo getGridInfo(VortexGrid grid) {
         GridInfo gridInfo;
 
         SpatialReference srs = new SpatialReference(grid.wkt());

@@ -98,23 +98,23 @@ public class ImportableUnit {
 
         int count = reader.getDtoCount();
 
+        List<VortexData> data = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             VortexGrid grid = (VortexGrid) reader.getDto(i);
             VortexGrid processed = geoProcessor.process(grid);
 
-            List<VortexData> data = new ArrayList<>();
             data.add(processed);
-
-            DataWriter writer = DataWriter.builder()
-                    .data(data)
-                    .destination(destination)
-                    .options(writeOptions)
-                    .build();
-
-            writer.write();
 
             support.firePropertyChange(VortexProperty.STATUS, null, ImportableUnit.IMPORT_COMPLETE);
         }
+
+        DataWriter writer = DataWriter.builder()
+                .data(data)
+                .destination(destination)
+                .options(writeOptions)
+                .build();
+
+        writer.write();
     }
 
     public int getDtoCount() {
