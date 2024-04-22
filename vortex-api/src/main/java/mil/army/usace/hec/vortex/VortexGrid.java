@@ -1,6 +1,9 @@
 package mil.army.usace.hec.vortex;
 
+import hec.heclib.grid.GridInfo;
+import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
+import mil.army.usace.hec.vortex.io.DssDataWriter;
 import mil.army.usace.hec.vortex.util.UnitUtil;
 
 import java.io.Serializable;
@@ -298,7 +301,7 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
-    VortexDataType dataType() {
+    public VortexDataType dataType() {
         return dataType != null ? dataType : inferDataType();
     }
 
@@ -332,13 +335,62 @@ public class VortexGrid implements VortexData, Serializable {
         };
     }
 
+    /**
+     * Retrieves the value from the data grid at the specified x and y coordinates,
+     * assuming the data grid is oriented with the origin at the top-left corner.
+     * @param x the x-coordinate of the point whose value is to be retrieved,
+     *          relative to the coordinate system defined by the grid's origin and cell size.
+     * @param y the y-coordinate of the point, adjusted to consider the grid's top-down orientation.
+     *          This value is calculated from the top of the data grid, with y values increasing downwards.
+     * @return the value at the specified x and y coordinates if within bounds and not a no-data value;
+     *         otherwise, returns {@code Double.NaN}.
+     */
+    public double getValueAt(int x, int y) {
+        if (isFlippedY()) return getValueAtFlippedY(x, y);
+
+        int scaledOriginX = (int) (originX / Math.abs(dx));
+        int scaledOriginY = (int) (originY / Math.abs(dy));
+
+        int relativeX = x - scaledOriginX;
+        int relativeY = y - scaledOriginY;
+        int k = Math.abs((relativeY * nx) + relativeX);
+
+        return data[k];
+    }
+
+    private double getValueAtFlippedY(int x, int y) {
+        int scaledOriginX = (int) (originX / Math.abs(dx));
+        int scaledTerminusY = (int) (terminusY / Math.abs(dy));
+
+        int relativeX = x - scaledOriginX;
+        int relativeY = y - scaledTerminusY;
+
+        int k = Math.abs((relativeY * nx) + relativeX);
+
+        float[] flippedData = RasterUtils.flipVertically(data, nx);
+        return flippedData[k];
+    }
+
+    private boolean isFlippedY() {
+        return terminusY < originY;
+    }
+
+    public boolean isNoDataValue(double value) {
+        return value == noDataValue;
+    }
+
+    public GridInfo getGridInfo() {
+        return DssDataWriter.getGridInfo(this);
+    }
+
+    public boolean hasTime() {
+        return startTime != null && endTime != null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VortexGrid)) return false;
-
-        VortexGrid that = (VortexGrid) o;
-
+        if (!(o instanceof VortexGrid that)) return false;
         if (Double.compare(that.dx, dx) != 0) return false;
         if (Double.compare(that.dy, dy) != 0) return false;
         if (nx != that.nx) return false;
@@ -379,6 +431,33 @@ public class VortexGrid implements VortexData, Serializable {
         result = 31 * result + (interval != null ? interval.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         return result;
+    }
+
+    // Add to help with debugging (when testing VortexGrid::equals)
+    @Override
+    public String toString() {
+        return "VortexGrid{" +
+                "dx=" + dx +
+                ", dy=" + dy +
+                ", nx=" + nx +
+                ", ny=" + ny +
+                ", originX=" + originX +
+                ", originY=" + originY +
+                ", wkt='" + wkt + '\'' +
+                ", data=" + Arrays.toString(data) +
+                ", noDataValue=" + noDataValue +
+                ", units='" + units + '\'' +
+                ", fileName='" + fileName + '\'' +
+                ", shortName='" + shortName + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", description='" + description + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", interval=" + interval +
+                ", dataType=" + dataType +
+                ", terminusX=" + terminusX +
+                ", terminusY=" + terminusY +
+                '}';
     }
 }
 
