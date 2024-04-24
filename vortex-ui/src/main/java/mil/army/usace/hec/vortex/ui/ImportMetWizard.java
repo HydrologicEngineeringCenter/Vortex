@@ -297,9 +297,13 @@ public class ImportMetWizard extends VortexWizard {
 
         /* Getting Available Variables using Vortex API's DataReader */
         /* Sorting Variables by Parts if Files were DSS files */
-        List<String> variables = fileList.stream()
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> variables = fileList.stream()
                 .map(DataReader::getVariables)
-                .flatMap(Collection::stream).distinct().sorted().collect(Collectors.toList());
+                .flatMap(Collection::stream)
+                .sorted()
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
         sortDssVariables(variables);
 
         /* Putting Available Variables to Step Two's Variable List */
@@ -441,7 +445,7 @@ public class ImportMetWizard extends VortexWizard {
         return false;
     }
 
-    private void sortDssVariables(List<String> variableList) {
+    private void sortDssVariables(Set<String> variableList) {
         DefaultListModel<String> defaultListModel = getDefaultListModel(addFilesList);
         if(defaultListModel == null) { return; }
         List<String> fileList = Collections.list(defaultListModel.elements());
@@ -772,8 +776,9 @@ public class ImportMetWizard extends VortexWizard {
                     return Collections.emptyMap();
                 }
 
-                Set<String> availableVariableSet = new HashSet<>(Collections.list(defaultLeftModel.elements()));
-                Set<String> selectedVariableSet = new HashSet<>(Collections.list(defaultRightModel.elements()));
+                /* MUST be a LinkedHashSet to preserve order */
+                Set<String> availableVariableSet = new LinkedHashSet<>(Collections.list(defaultLeftModel.elements()));
+                Set<String> selectedVariableSet = new LinkedHashSet<>(Collections.list(defaultRightModel.elements()));
 
                 if (action == VariableChooserAction.ADD) {
                     List<String> selectedVariables = leftVariablesList.getSelectedValuesList();
@@ -815,15 +820,13 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private Map<String, List<String>> generateSortedLists(Set<String> available, Set<String> selected) {
-        List<String> availableList = new ArrayList<>(available);
-        sortDssVariables(availableList);
 
-        List<String> selectedList = new ArrayList<>(selected);
-        sortDssVariables(selectedList);
+        sortDssVariables(available);
+        sortDssVariables(selected);
 
         Map<String, List<String>> resultMap = new HashMap<>();
-        resultMap.put("available", availableList);
-        resultMap.put("selected", selectedList);
+        resultMap.put("available", new ArrayList<>(available));
+        resultMap.put("selected", new ArrayList<>(selected));
 
         return resultMap;
     }
