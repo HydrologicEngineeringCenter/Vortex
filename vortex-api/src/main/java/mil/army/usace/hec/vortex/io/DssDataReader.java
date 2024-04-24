@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
@@ -75,18 +76,23 @@ class DssDataReader extends DataReader {
         ZonedDateTime endTime;
         Duration interval;
 
-        if (dssPathname.getDPart().isEmpty() && gridInfo.getStartTime().equals("31 December 1899, 00:00")) {
+        String dPart = dssPathname.getDPart();
+
+        if (dPart.isEmpty() && gridInfo.getStartTime().equals("31 December 1899, 00:00")) {
             startTime = null;
             endTime = null;
             interval = null;
         } else {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-            startTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getStartTime(), formatter), ZoneId.of("UTC"));
-            try {
-                endTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getEndTime(), formatter), ZoneId.of("UTC"));
-            } catch (DateTimeParseException e) {
+            DateTimeFormatter formatter = getDateTimeFormatter();
+
+            LocalDateTime ldtStart = LocalDateTime.parse(dPart, formatter);
+            startTime = ZonedDateTime.of(ldtStart, ZoneId.of("UTC"));
+
+            String ePart = dssPathname.getEPart();
+            endTime = getEndTime(ePart);
+            if (endTime == null)
                 endTime = startTime;
-            }
+
             interval = Duration.between(startTime, endTime);
         }
 
@@ -114,6 +120,34 @@ class DssDataReader extends DataReader {
                 .interval(interval)
                 .dataType(dataType)
                 .build();
+    }
+
+    private ZonedDateTime getEndTime(String ePart) {
+        if (ePart.isBlank())
+            return null;
+
+        DateTimeFormatter formatter = getDateTimeFormatter();
+
+        try {
+            LocalDateTime ldtEnd;
+            if (ePart.endsWith(":2400")) {
+                String ePart0000 = ePart.replaceAll(":2400", ":0000");
+                ldtEnd = LocalDateTime.parse(ePart0000, formatter);
+                return ZonedDateTime.of(ldtEnd.plusDays(1), ZoneId.of("UTC"));
+            } else {
+                ldtEnd = LocalDateTime.parse(ePart, formatter);
+                return ZonedDateTime.of(ldtEnd, ZoneId.of("UTC"));
+            }
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private DateTimeFormatter getDateTimeFormatter() {
+        return new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .appendPattern("ddMMMuuuu:HHmm")
+                .toFormatter();
     }
 
     public static Set<String> getVariables(String pathToDss){
