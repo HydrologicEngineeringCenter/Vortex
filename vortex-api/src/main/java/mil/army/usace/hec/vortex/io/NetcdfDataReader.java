@@ -5,6 +5,8 @@ import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 import org.locationtech.jts.geom.Coordinate;
 import ucar.ma2.Array;
+import ucar.ma2.DataType;
+import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
@@ -191,15 +193,11 @@ public class NetcdfDataReader extends DataReader {
     }
 
     private float[] getFloatArray(Array array) {
-        float[] data = new float[(int) array.getSize()];
-        for (int i = 0; i < array.getSize(); i++) {
-            data[i] = array.getFloat(i);
-        }
-        return data;
+        return (float[]) array.get1DJavaArray(DataType.FLOAT);
     }
 
-    private List<VortexData> getData(GridDataset dataset, String variable) {
-        GridDatatype gridDatatype = dataset.findGridDatatype(variable);
+    private List<VortexData> getData(GridDataset gridDataset, String variable) {
+        GridDatatype gridDatatype = gridDataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
 
         VariableDS variableDs = gridDatatype.getVariable();
@@ -210,7 +208,7 @@ public class NetcdfDataReader extends DataReader {
 
         VortexDataType vortexDataType = getVortexDataType(variableDs);
 
-        List<ZonedDateTime[]> times = getTimeBounds(gcs);
+        List<ZonedDateTime[]> times = getTimeBounds(gridDataset, variable);
 
         Dimension timeDim = gridDatatype.getTimeDimension();
         Dimension endDim = gridDatatype.getEnsembleDimension();
@@ -244,7 +242,7 @@ public class NetcdfDataReader extends DataReader {
                                             .data(data)
                                             .noDataValue(noDataValue)
                                             .units(gridDatatype.getUnitsString())
-                                            .fileName(dataset.getLocation())
+                                            .fileName(gridDataset.getLocation())
                                             .shortName(gridDatatype.getShortName())
                                             .fullName(gridDatatype.getFullName())
                                             .description(gridDatatype.getDescription())
@@ -280,7 +278,7 @@ public class NetcdfDataReader extends DataReader {
                             .data(data)
                             .noDataValue(noDataValue)
                             .units(gridDatatype.getUnitsString())
-                            .fileName(dataset.getLocation())
+                            .fileName(gridDataset.getLocation())
                             .shortName(gridDatatype.getShortName())
                             .fullName(gridDatatype.getFullName())
                             .description(gridDatatype.getDescription())
@@ -306,13 +304,6 @@ public class NetcdfDataReader extends DataReader {
                     startTime = times.get(0)[0];
                     endTime = times.get(0)[1];
                     interval = Duration.between(startTime, endTime);
-                } else if (gridDatatype.findAttributeIgnoreCase("start_date") != null
-                        && gridDatatype.findAttributeIgnoreCase("stop_date") != null) {
-                    String startTimeString = gridDatatype.findAttributeIgnoreCase("start_date").getStringValue();
-                    startTime = ZonedDateTime.parse(startTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
-                    String endTimeString = gridDatatype.findAttributeIgnoreCase("stop_date").getStringValue();
-                    endTime = ZonedDateTime.parse(endTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
-                    interval = Duration.between(startTime, endTime);
                 } else {
                     startTime = null;
                     endTime = null;
@@ -331,7 +322,7 @@ public class NetcdfDataReader extends DataReader {
                         .data(data)
                         .noDataValue(noDataValue)
                         .units(gridDatatype.getUnitsString())
-                        .fileName(dataset.getLocation())
+                        .fileName(gridDataset.getLocation())
                         .shortName(gridDatatype.getShortName())
                         .fullName(gridDatatype.getFullName())
                         .description(gridDatatype.getDescription())
@@ -351,7 +342,10 @@ public class NetcdfDataReader extends DataReader {
         return WktFactory.createWkt((ProjectionImpl) projection);
     }
 
-    private List<ZonedDateTime[]> getTimeBounds(GridCoordSystem gcs) {
+    private List<ZonedDateTime[]> getTimeBounds(GridDataset gridDataset, String variable) {
+        GridDatatype gridDatatype = gridDataset.findGridDatatype(variable);
+        GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
+
         List<ZonedDateTime[]> list = new ArrayList<>();
         if (gcs.hasTimeAxis1D()) {
             CoordinateAxis1DTime tAxis = gcs.getTimeAxis1D();
@@ -359,9 +353,9 @@ public class NetcdfDataReader extends DataReader {
             if (!tAxis.isInterval() && !isSpecialTimeBounds())
                 return getTimeInstants(tAxis);
 
-            IntStream.range(0, (int) tAxis.getSize()).forEach(time -> {
+            for (int i = 0; i < tAxis.getSize(); i++) {
                 ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
-                CalendarDate[] dates = tAxis.getCoordBoundsDate(time);
+                CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
 
                 String fileName = new File(path).getName().toLowerCase();
                 if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
@@ -373,31 +367,31 @@ public class NetcdfDataReader extends DataReader {
                 } else if (fileName.matches("preciprate_.*\\.grib2")) {
                     zonedDateTimes[0] = convert(dates[0]).minusMinutes(2);
                 } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
+                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
                 } else if (fileName.matches(".*aorc.*apcp.*nc4.*")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(time)).minusHours(1);
+                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i)).minusHours(1);
                 } else if (fileName.matches(".*aorc.*tmp.*nc4.*")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
+                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
                 } else if (fileName.matches("[0-9]{2}.nc")) {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(0));
                 } else if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
                 } else if (fileName.matches("prec.[0-9]{4}.nc")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(time));
+                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
                 } else if (fileName.matches("gfs.nc")) {
                     zonedDateTimes[0] = convert(dates[0]).plusMinutes(90);
                 } else {
                     zonedDateTimes[0] = convert(dates[0]);
                 }
 
-                if (fileName.matches("hrrr.*wrfsfcf.*")){
+                if (fileName.matches("hrrr.*wrfsfcf.*")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
                 } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusMinutes(30);
                 } else if (fileName.matches(".*aorc.*apcp.*nc4.*")) {
-                    zonedDateTimes[1] = convert(tAxis.getCalendarDate(time));
+                    zonedDateTimes[1] = convert(tAxis.getCalendarDate(i));
                 } else if (fileName.matches(".*aorc.*tmp.*nc4.*")) {
-                    zonedDateTimes[1] = convert(tAxis.getCalendarDate(time));
+                    zonedDateTimes[1] = convert(tAxis.getCalendarDate(i));
                 } else if (fileName.matches("[0-9]{2}.nc")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
                 } else if (fileName.matches(".*cmorph.*h.*ly.*")) {
@@ -413,9 +407,11 @@ public class NetcdfDataReader extends DataReader {
                 }
 
                 list.add(zonedDateTimes);
-            });
+            }
             return list;
-        } else if (gcs.hasTimeAxis()) {
+        }
+
+        if (gcs.hasTimeAxis()) {
             CoordinateAxis1D tAxis = (CoordinateAxis1D) gcs.getTimeAxis();
             String units = tAxis.getUnitsString();
 
@@ -439,10 +435,10 @@ public class NetcdfDataReader extends DataReader {
                     endTime = origin.plusSeconds((long) tAxis.getBound2()[time] * 86400);
                 } else if (units.toLowerCase().matches("^hour[s]? since.*$")) {
                     startTime = origin.plusSeconds((long) tAxis.getBound1()[time] * 3600);
-                        endTime = origin.plusSeconds((long) tAxis.getBound2()[time] * 3600);
+                    endTime = origin.plusSeconds((long) tAxis.getBound2()[time] * 3600);
                 } else if (units.toLowerCase().matches("^minute[s]? since.*$")) {
                     endTime = origin.plusSeconds((long) tAxis.getBound2()[time] * 60);
-                        startTime = origin.plusSeconds((long) tAxis.getBound1()[time] * 60);
+                    startTime = origin.plusSeconds((long) tAxis.getBound1()[time] * 60);
                 } else if (units.toLowerCase().matches("^second[s]? since.*$")) {
                     startTime = origin.plusSeconds((long) tAxis.getBound1()[time]);
                     endTime = origin.plusSeconds((long) tAxis.getBound2()[time]);
@@ -457,6 +453,46 @@ public class NetcdfDataReader extends DataReader {
             });
             return list;
         }
+
+        // No time axes found. Try reading times from attributes.
+        Attribute startDateAttribute = gridDatatype.findAttributeIgnoreCase("start_date");
+        Attribute endDateAttribute = gridDatatype.findAttributeIgnoreCase("stop_date");
+        if (startDateAttribute != null && endDateAttribute != null) {
+            String startTimeString = startDateAttribute.getStringValue();
+            if (startTimeString == null) return Collections.emptyList();
+            ZonedDateTime startTime = ZonedDateTime.parse(startTimeString,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+
+            String endTimeString = endDateAttribute.getStringValue();
+            if (endTimeString == null) return Collections.emptyList();
+            ZonedDateTime endTime = ZonedDateTime.parse(endTimeString,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
+
+            ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
+            zonedDateTimes[0] = startTime;
+            zonedDateTimes[1] = endTime;
+
+            list.add(zonedDateTimes);
+            return list;
+        }
+
+        Attribute nominalProductTimeAttribute = gridDataset.findGlobalAttributeIgnoreCase("nominal_product_time");
+        if (nominalProductTimeAttribute != null) {
+            String timeString = nominalProductTimeAttribute.getStringValue();
+            if (timeString == null) return Collections.emptyList();
+
+            CalendarDate calendarDate = CalendarDate.parseISOformat(null, timeString);
+            LocalDateTime ldt = LocalDateTime.parse(calendarDate.toString(), DateTimeFormatter.ISO_DATE_TIME);
+            ZonedDateTime time = ZonedDateTime.of(ldt, ZoneId.of("UTC"));
+
+            ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
+            zonedDateTimes[0] = time;
+            zonedDateTimes[1] = time;
+
+            list.add(zonedDateTimes);
+            return list;
+        }
+
         return Collections.emptyList();
     }
 
@@ -655,8 +691,8 @@ public class NetcdfDataReader extends DataReader {
         return 1;
     }
 
-    private VortexData getData(GridDataset dataset, String variable, int idx) {
-        GridDatatype gridDatatype = dataset.findGridDatatype(variable);
+    private VortexData getData(GridDataset gridDataset, String variable, int idx) {
+        GridDatatype gridDatatype = gridDataset.findGridDatatype(variable);
         GridCoordSystem gcs = gridDatatype.getCoordinateSystem();
 
         VariableDS variableDS = gridDatatype.getVariable();
@@ -665,7 +701,20 @@ public class NetcdfDataReader extends DataReader {
         Grid grid = getGrid(gcs);
         String wkt = getWkt(gcs.getProjection());
 
-        List<ZonedDateTime[]> times = getTimeBounds(gcs);
+        List<ZonedDateTime[]> times = getTimeBounds(gridDataset, variable);
+
+        ZonedDateTime startTime;
+        ZonedDateTime endTime;
+        Duration interval;
+        if (!times.isEmpty()) {
+            startTime = times.get(idx)[0];
+            endTime = times.get(idx)[1];
+            interval = Duration.between(startTime, endTime);
+        } else {
+            startTime = null;
+            endTime = null;
+            interval = null;
+        }
 
         float[] slice;
         try {
@@ -678,25 +727,6 @@ public class NetcdfDataReader extends DataReader {
 
         float[] data = getData(slice, gcs, grid, noDataValue);
 
-        ZonedDateTime startTime;
-        ZonedDateTime endTime;
-        Duration interval;
-        if (!times.isEmpty()) {
-            startTime = times.get(idx)[0];
-            endTime = times.get(idx)[1];
-            interval = Duration.between(startTime, endTime);
-        } else if (gridDatatype.findAttributeIgnoreCase("start_date") != null
-                && gridDatatype.findAttributeIgnoreCase("stop_date") != null) {
-            String startTimeString = gridDatatype.findAttributeIgnoreCase("start_date").getStringValue();
-            startTime = ZonedDateTime.parse(startTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
-            String endTimeString = gridDatatype.findAttributeIgnoreCase("stop_date").getStringValue();
-            endTime = ZonedDateTime.parse(endTimeString, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
-            interval = Duration.between(startTime, endTime);
-        } else {
-            startTime = null;
-            endTime = null;
-            interval = null;
-        }
         String units;
         if (variable.toLowerCase().contains("var209-6")) {
             units = "mm";
@@ -721,7 +751,7 @@ public class NetcdfDataReader extends DataReader {
                 .data(data)
                 .noDataValue(noDataValue)
                 .units(units)
-                .fileName(dataset.getLocation())
+                .fileName(gridDataset.getLocation())
                 .shortName(gridDatatype.getShortName())
                 .fullName(gridDatatype.getFullName())
                 .description(gridDatatype.getDescription())
@@ -736,18 +766,18 @@ public class NetcdfDataReader extends DataReader {
         if (gcs.isRegularSpatial())
             return slice;
 
-        support.firePropertyChange(VortexProperty.STATUS, null, "ReIndexing");
-
         IndexSearcher indexSearcher = IndexSearcherFactory.INSTANCE.getOrCreate(gcs);
+        indexSearcher.addPropertyChangeListener(support::firePropertyChange);
+
         Coordinate[] coordinates = gridDefinition.getGridCellCentroidCoords();
+        indexSearcher.cacheCoordinates(coordinates);
+
         float[] data = new float[coordinates.length];
         int count = data.length;
         for (int i = 0; i < count; i++) {
             Coordinate coordinate = coordinates[i];
             int index = indexSearcher.getIndex(coordinate.x, coordinate.y);
             data[i] = index >= 0 ? slice[index] : (float) noDataValue;
-            int progress = (int) (((float) i / count) * 100);
-            support.firePropertyChange(VortexProperty.PROGRESS, null, progress);
         }
 
         return data;

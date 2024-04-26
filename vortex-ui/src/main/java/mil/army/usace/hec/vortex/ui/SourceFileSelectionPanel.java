@@ -151,19 +151,28 @@ public class SourceFileSelectionPanel extends JPanel {
 
         /* Adding to Right Variables List */
         DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(chosenSourceGridsList);
-        if(defaultRightModel == null) { return; }
-        List<String> rightVariablesList = Collections.list(defaultRightModel.elements());
-        rightVariablesList.addAll(selectedVariables);
-        defaultRightModel.clear();
+        if (defaultRightModel == null) return;
+
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> rightVariables = new LinkedHashSet<>(Collections.list(defaultRightModel.elements()));
+        rightVariables.addAll(selectedVariables);
+
         String fileName = sourceFileTextField.getText();
         if (fileName.matches(".*\\.dss"))
-            Util.sortDssVariables(rightVariablesList);
-        defaultRightModel.addAll(rightVariablesList);
+            Util.sortDssVariables(rightVariables);
+
+        defaultRightModel.clear();
+        defaultRightModel.addAll(rightVariables);
 
         /* Removing from Left Variables List */
         DefaultListModel<String> defaultLeftModel = Util.getDefaultListModel(availableSourceGridsList);
-        if(defaultLeftModel == null) { return; }
-        selectedVariables.forEach(defaultLeftModel::removeElement);
+        if (defaultLeftModel == null) return;
+
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> leftVariables = new LinkedHashSet<>(Collections.list(defaultLeftModel.elements()));
+        selectedVariables.forEach(leftVariables::remove);
+        defaultLeftModel.clear();
+        defaultLeftModel.addAll(leftVariables);
     }
 
     private void removeSelectedVariables() {
@@ -171,17 +180,28 @@ public class SourceFileSelectionPanel extends JPanel {
 
         /* Adding to Left Variables List */
         DefaultListModel<String> defaultLeftModel = Util.getDefaultListModel(availableSourceGridsList);
-        if(defaultLeftModel == null) { return; }
-        List<String> leftVariablesList = Collections.list(defaultLeftModel.elements());
-        leftVariablesList.addAll(selectedVariables);
-        defaultLeftModel.clear();
-        leftVariablesList = Util.sortDssVariables(leftVariablesList);
-        defaultLeftModel.addAll(leftVariablesList);
+        if (defaultLeftModel == null) return;
 
-        /* Removing from Left Variables List */
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> leftVariables = new LinkedHashSet<>(Collections.list(defaultLeftModel.elements()));
+        leftVariables.addAll(selectedVariables);
+
+        String fileName = sourceFileTextField.getText();
+        if (fileName.matches(".*\\.dss"))
+            Util.sortDssVariables(leftVariables);
+
+        defaultLeftModel.clear();
+        defaultLeftModel.addAll(leftVariables);
+
+        /* Removing from Right Variables List */
         DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(chosenSourceGridsList);
-        if(defaultRightModel == null) { return; }
-        selectedVariables.forEach(defaultRightModel::removeElement);
+        if (defaultRightModel == null) return;
+
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> rightVariables = new LinkedHashSet<>(Collections.list(defaultRightModel.elements()));
+        selectedVariables.forEach(rightVariables::remove);
+        defaultRightModel.clear();
+        defaultRightModel.addAll(rightVariables);
     }
 
     private void sourceFileBrowseAction(FileBrowseButton fileBrowseButton) {
@@ -210,7 +230,8 @@ public class SourceFileSelectionPanel extends JPanel {
 
             if(defaultListModel != null) {
                 defaultListModel.clear();
-                List<String> sorted = new ArrayList<>(variables);
+                /* MUST be a LinkedHashSet to preserve order */
+                Set<String> sorted = new LinkedHashSet<>(variables);
                 if (selectedFile.toString().matches(".*\\.dss"))
                     Util.sortDssVariables(sorted);
                 defaultListModel.addAll(sorted);

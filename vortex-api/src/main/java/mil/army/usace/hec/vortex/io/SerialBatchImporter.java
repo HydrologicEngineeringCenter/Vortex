@@ -20,7 +20,9 @@ class SerialBatchImporter extends BatchImporter {
 
         List<ImportableUnit> importableUnits = getImportableUnits();
 
-        totalCount = importableUnits.size();
+        for (ImportableUnit importableUnit : importableUnits) {
+            totalCount += importableUnit.getDtoCount();
+        }
 
         importableUnits.forEach(importableUnit -> {
             importableUnit.addPropertyChangeListener(propertyChangeListener());

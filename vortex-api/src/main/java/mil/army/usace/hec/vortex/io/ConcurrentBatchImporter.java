@@ -20,7 +20,9 @@ class ConcurrentBatchImporter extends BatchImporter {
 
         List<ImportableUnit> importableUnits = getImportableUnits();
 
-        totalCount = importableUnits.size();
+        for (ImportableUnit importableUnit : importableUnits) {
+            totalCount += importableUnit.getDtoCount();
+        }
 
         importableUnits.parallelStream().forEach(importableUnit -> {
             importableUnit.addPropertyChangeListener(propertyChangeListener());

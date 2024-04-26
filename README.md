@@ -3,7 +3,7 @@
 
 [![DOI](https://zenodo.org/badge/193537999.svg)](https://zenodo.org/badge/latestdoi/193537999)
 
-Vortex is a collection of data processing utilities targeted for Hydrologic Engineering Center applications, e.g. HEC-HMS. The Vortex API uses [NetCDF Java](https://www.unidata.ucar.edu/software/thredds/current/netcdf-java/) and [GDAL](https://gdal.org/) libraries to perform operations on spatial data.
+Vortex is a collection of data processing utilities targeted for Hydrologic Engineering Center applications, e.g. HEC-HMS, HEC-RAS. The Vortex API uses [NetCDF Java](https://www.unidata.ucar.edu/software/thredds/current/netcdf-java/) and [GDAL](https://gdal.org/) libraries to perform operations on spatial data.
 
 The **importer** utility takes NetCDF, Grib, HDF, ASC, or HEC-DSS files as input, gives the user options for clipping, re-projecting, and resampling data, and writes to HEC-DSS format.
 

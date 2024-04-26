@@ -408,13 +408,14 @@ public class NormalizerWizard extends VortexWizard {
             fileBrowseButton.setPersistedBrowseLocation(selectedFile);
 
             /* Populate variables for available source grids list */
-            Set<String> variables = DataReader.getVariables(selectedFile.toString());
+            /* MUST be a LinkedHashSet to preserve order */
+            Set<String> variables = new LinkedHashSet<>(DataReader.getVariables(selectedFile.toString()));
             DefaultListModel<String> defaultListModel = Util.getDefaultListModel(availableNormalGridsList);
 
             if(defaultListModel != null) {
                 defaultListModel.clear();
-                List<String> sortedDssVariables = Util.sortDssVariables(new ArrayList<>(variables));
-                defaultListModel.addAll(sortedDssVariables);
+                Util.sortDssVariables(variables);
+                defaultListModel.addAll(variables);
             }
         } // If: User selected OK -> Populate Available Normal Grids
     }
@@ -452,17 +453,28 @@ public class NormalizerWizard extends VortexWizard {
 
         /* Adding to Right Variables List */
         DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(chosenNormalGridsList);
-        if(defaultRightModel == null) { return; }
-        List<String> rightVariablesList = Collections.list(defaultRightModel.elements());
-        rightVariablesList.addAll(selectedVariables);
+        if (defaultRightModel == null) return;
+
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> rightVariables = new LinkedHashSet<>(Collections.list(defaultRightModel.elements()));
+        rightVariables.addAll(selectedVariables);
+
+        String fileName = sourceFileTextField.getText();
+        if (fileName.matches(".*\\.dss"))
+            Util.sortDssVariables(rightVariables);
+
         defaultRightModel.clear();
-        rightVariablesList = Util.sortDssVariables(rightVariablesList);
-        defaultRightModel.addAll(rightVariablesList);
+        defaultRightModel.addAll(rightVariables);
 
         /* Removing from Left Variables List */
         DefaultListModel<String> defaultLeftModel = Util.getDefaultListModel(availableNormalGridsList);
-        if(defaultLeftModel == null) { return; }
-        selectedVariables.forEach(defaultLeftModel::removeElement);
+        if (defaultLeftModel == null) return;
+
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> leftVariables = new LinkedHashSet<>(Collections.list(defaultLeftModel.elements()));
+        selectedVariables.forEach(leftVariables::remove);
+        defaultLeftModel.clear();
+        defaultLeftModel.addAll(leftVariables);
     }
 
     private void stepTwoRemoveSelectedVariables() {
@@ -470,17 +482,28 @@ public class NormalizerWizard extends VortexWizard {
 
         /* Adding to Left Variables List */
         DefaultListModel<String> defaultLeftModel = Util.getDefaultListModel(availableNormalGridsList);
-        if(defaultLeftModel == null) { return; }
-        List<String> leftVariablesList = Collections.list(defaultLeftModel.elements());
-        leftVariablesList.addAll(selectedVariables);
-        defaultLeftModel.clear();
-        leftVariablesList = Util.sortDssVariables(leftVariablesList);
-        defaultLeftModel.addAll(leftVariablesList);
+        if (defaultLeftModel == null) return;
 
-        /* Removing from Left Variables List */
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> leftVariables = new LinkedHashSet<>(Collections.list(defaultLeftModel.elements()));
+        leftVariables.addAll(selectedVariables);
+
+        String fileName = sourceFileTextField.getText();
+        if (fileName.matches(".*\\.dss"))
+            Util.sortDssVariables(leftVariables);
+
+        defaultLeftModel.clear();
+        defaultLeftModel.addAll(leftVariables);
+
+        /* Removing from Right Variables List */
         DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(chosenNormalGridsList);
-        if(defaultRightModel == null) { return; }
-        selectedVariables.forEach(defaultRightModel::removeElement);
+        if (defaultRightModel == null) return;
+
+        /* MUST be a LinkedHashSet to preserve order */
+        Set<String> rightVariables = new LinkedHashSet<>(Collections.list(defaultRightModel.elements()));
+        selectedVariables.forEach(rightVariables::remove);
+        defaultRightModel.clear();
+        defaultRightModel.addAll(rightVariables);
     }
 
     private JPanel stepThreePanel() {

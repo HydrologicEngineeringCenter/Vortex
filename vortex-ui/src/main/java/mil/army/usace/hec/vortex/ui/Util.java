@@ -13,6 +13,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,33 +66,29 @@ public class Util {
         catch(IOException e) {logger.log(Level.WARNING, e.getMessage());}
     }
 
-    public static List<String> sortDssVariables(List<String> dssVariables) {
-        if(dssVariables == null || dssVariables.isEmpty()) { return null; }
+    public static void sortDssVariables(Set<String> dssVariables) {
+        if(dssVariables == null || dssVariables.isEmpty()) { return; }
 
-        List<String> datedRecords = new ArrayList<>();
-        List<String> nonDatedRecords = new ArrayList<>();
+        List<String[]> datedRecords = new ArrayList<>();
+        List<String[]> nonDatedRecords = new ArrayList<>();
 
         for (String dssPathname : dssVariables) {
             String[] split = dssPathname.split("/", -1);
             if (split[4].matches("[0-9]{2}[A-Za-z]{3}[0-9]{4}:[0-9]{4}")) {
-                datedRecords.add(dssPathname);
+                datedRecords.add(split);
             } else {
-                nonDatedRecords.add(dssPathname);
+                nonDatedRecords.add(split);
             }
         }
 
-        // Sort based on A part
-        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[1]));
-        // Sort based on B part
-        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[2]));
-        // Sort based on C part
-        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[3]));
-        // Sort based on D part
-        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[5]));
-        // Sort based on E part
-        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[5]));
-        // Sort based on F part
-        nonDatedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[6]));
+        // Sort based on A/B/C/D/E/F part
+        nonDatedRecords.sort(Comparator.comparing(s -> ((String[]) s)[1])
+                .thenComparing(s -> ((String[]) s)[2])
+                .thenComparing(s -> ((String[]) s)[3])
+                .thenComparing(s -> ((String[]) s)[4])
+                .thenComparing(s -> ((String[]) s)[5])
+                .thenComparing(s -> ((String[]) s)[6])
+        );
 
         try {
             DateTimeFormatter formatter = new DateTimeFormatterBuilder()
@@ -99,26 +96,29 @@ public class Util {
                     .appendPattern("ddMMMuuuu:HHmm")
                     .toFormatter();
 
-            // Sort based on D part
-            datedRecords.sort(Comparator.comparing(s -> LocalDateTime.parse(s.split("/")[4], formatter)));
-            // Sort based on A part
-            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[1]));
-            // Sort based on B part
-            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[2]));
-            // Sort based on C part
-            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[3]));
-            // Sort based on F part
-            datedRecords.sort(Comparator.comparing(s -> s.split("/", -1)[6]));
+            // Sort based on C/D/A/B/F part
+            datedRecords.sort(Comparator.comparing(s -> ((String[]) s)[3])
+                    .thenComparing(s -> LocalDateTime.parse(((String[]) s)[4], formatter))
+                    .thenComparing(s -> ((String[]) s)[1])
+                    .thenComparing(s -> ((String[]) s)[2])
+                    .thenComparing(s -> ((String[]) s)[6])
+            );
 
         } catch (DateTimeParseException e) {
             logger.log(Level.SEVERE, e, e::getMessage);
         }
 
         dssVariables.clear();
-        dssVariables.addAll(datedRecords);
-        dssVariables.addAll(nonDatedRecords);
 
-        return dssVariables;
+        for (String[] split : datedRecords) {
+            String joined = String.join("/", split);
+            dssVariables.add(joined);
+        }
+
+        for (String[] split : nonDatedRecords) {
+            String joined = String.join("/", split);
+            dssVariables.add(joined);
+        }
     }
 
     public static DefaultListModel<String> getDefaultListModel(JList<String> list) {
