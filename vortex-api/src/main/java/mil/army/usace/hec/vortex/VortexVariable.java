@@ -83,6 +83,7 @@ public enum VortexVariable {
                 || shortName.equals("pcp")
                 || shortName.equals("pr")
                 || shortName.equals("prec")
+                || shortName.equals("prcp")
                 || shortName.equals("total precipitation");
     }
 

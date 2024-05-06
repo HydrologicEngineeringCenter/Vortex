@@ -376,7 +376,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(0));
                 } else if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
                     zonedDateTimes[0] = convert(dates[0]).minusHours(1);
-                } else if (fileName.matches("prec.[0-9]{4}.nc")) {
+                } else if (fileName.matches("^prec.[0-9]{4}.nc$") || fileName.matches("^livneh_unsplit_precip.\\d{4}-\\d{2}-\\d{2}.\\d{4}.nc$")) {
+                    // Livneh and Livneh unsplit precipitation data
                     zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
                 } else if (fileName.matches("gfs.nc")) {
                     zonedDateTimes[0] = convert(dates[0]).plusMinutes(90);
@@ -398,7 +399,8 @@ public class NetcdfDataReader extends DataReader {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
                 } else if (fileName.matches("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*")) {
                     zonedDateTimes[1] = zonedDateTimes[0].plusHours(3);
-                } else if (fileName.matches("prec.[0-9]{4}.nc")) {
+                } else if (fileName.matches("^prec.[0-9]{4}.nc$") || fileName.matches("^livneh_unsplit_precip.\\d{4}-\\d{2}-\\d{2}.\\d{4}.nc$")) {
+                    // Livneh and Livneh Unsplit precipitation data
                     zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
                 } else if (fileName.matches("gfs.nc")) {
                     zonedDateTimes[1] = convert(dates[1]).plusMinutes(90);
@@ -513,7 +515,8 @@ public class NetcdfDataReader extends DataReader {
                 "hrrr.*wrfsfcf.*",
                 ".*cmorph.*h.*ly.*",
                 "ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*",
-                "prec.[0-9]{4}.nc"
+                "prec.[0-9]{4}.nc",
+                "livneh_unsplit_precip.\\d{4}-\\d{2}-\\d{2}.\\d{4}.nc"
         };
 
         if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")

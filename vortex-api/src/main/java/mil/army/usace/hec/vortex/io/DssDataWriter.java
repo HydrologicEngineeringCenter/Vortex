@@ -363,6 +363,7 @@ public class DssDataWriter extends DataWriter {
                 || descriptionLower.equals("pcp")
                 || descriptionLower.equals("pr")
                 || descriptionLower.equals("prec")
+                || descriptionLower.equals("prcp")
                 || descriptionLower.contains("precip") && descriptionLower.contains("rate")
                 || descriptionLower.contains("precipitable") && descriptionLower.contains("water")
                 || descriptionLower.contains("total") && descriptionLower.contains("precipitation")
