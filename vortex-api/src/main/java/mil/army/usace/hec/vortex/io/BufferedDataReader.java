@@ -12,8 +12,8 @@ public class BufferedDataReader {
     private static final Logger logger = Logger.getLogger(BufferedDataReader.class.getName());
 
     private final DataReader dataReader;
-    private final int numGrids;
-    private final VortexGrid baseGrid;
+    private Integer numGrids;
+    private VortexGrid baseGrid;
 
     private final List<VortexGrid> buffer = new ArrayList<>();
     private int bufferStartIndex = -1;
@@ -24,8 +24,6 @@ public class BufferedDataReader {
                 .path(pathToFile)
                 .variable(pathToData)
                 .build();
-        this.numGrids = dataReader.getDtoCount();
-        this.baseGrid = get(0);
     }
 
     /* Public Methods */
@@ -42,6 +40,10 @@ public class BufferedDataReader {
     }
 
     public int getCount() {
+        if (numGrids == null) {
+            numGrids = dataReader.getDtoCount();
+        }
+
         return numGrids;
     }
 
@@ -67,6 +69,10 @@ public class BufferedDataReader {
     }
 
     public VortexGrid getBaseGrid() {
+        if (baseGrid == null && getCount() > 0) {
+            baseGrid = get(0);
+        }
+
         return baseGrid;
     }
 
