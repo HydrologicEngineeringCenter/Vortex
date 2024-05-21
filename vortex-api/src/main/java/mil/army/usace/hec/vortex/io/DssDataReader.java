@@ -1,11 +1,9 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.heclib.dss.DSSPathname;
-import hec.heclib.dss.DssDataType;
-import hec.heclib.dss.HecDSSDataAttributes;
-import hec.heclib.dss.HecDataManager;
+import hec.heclib.dss.*;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
+import hec.heclib.grid.GridUtilities;
 import hec.heclib.grid.GriddedData;
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexData;
@@ -21,16 +19,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-import java.util.logging.Logger;
-import java.util.stream.IntStream;
 
 import static hec.heclib.dss.HecDSSDataAttributes.*;
 
 class DssDataReader extends DataReader {
-    private static final Logger logger = Logger.getLogger(DssDataReader.class.getName());
-    private List<DSSPathname> catalogPathnameList = null;
 
     DssDataReader(DataReaderBuilder builder) {
         super(builder);
@@ -38,11 +33,29 @@ class DssDataReader extends DataReader {
 
     @Override
     public List<VortexData> getDtos() {
-        List<DSSPathname> recordPathnameList = getRecordPathnameList();
-        return IntStream.range(0, recordPathnameList.size())
-                .filter(i -> recordPathnameList.get(i).isSamePathname(variableName, true))
-                .mapToObj(this::getDto)
-                .toList();
+        HecDSSFileAccess.setDefaultDSSFileName(path);
+        String[] paths;
+        if (variableName.contains("*")) {
+            HecDssCatalog catalog = new HecDssCatalog();
+            paths = catalog.getCatalog(true, variableName);
+        } else {
+            paths = new String[1];
+            paths[0] = variableName;
+        }
+        List<VortexData> dtos = new ArrayList<>();
+        Arrays.stream(paths).forEach(path -> {
+            int[] status = new int[1];
+            GriddedData griddedData = new GriddedData();
+            griddedData.setDSSFileName(this.path);
+            griddedData.setPathname(path);
+            GridData gridData = new GridData();
+            griddedData.retrieveGriddedData(true, gridData, status);
+            if (status[0] == 0) {
+                dtos.add(dssToDto(gridData, path));
+            }
+
+        });
+        return dtos;
     }
 
     private VortexGrid dssToDto(GridData gridData, String pathname){
@@ -64,28 +77,24 @@ class DssDataReader extends DataReader {
         ZonedDateTime endTime;
         Duration interval;
 
-        if (dssPathname.getDPart().isEmpty() && gridInfo.getStartTime().equals("31 December 1899, 00:00")) {
+        String dPart = dssPathname.getDPart();
+
+        if (dPart.isEmpty() && gridInfo.getStartTime().equals("31 December 1899, 00:00")) {
             startTime = null;
             endTime = null;
             interval = null;
         } else {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
-            startTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getStartTime(), formatter), ZoneId.of("UTC"));
-            try {
-                endTime = ZonedDateTime.of(LocalDateTime.parse(gridInfo.getEndTime(), formatter), ZoneId.of("UTC"));
-                if (endTime.isEqual(ZonedDateTime.parse("1899-12-31T00:00Z[UTC]"))) {
-                    endTime = startTime;
-                }
-            } catch (DateTimeParseException e) {
-                endTime = startTime;
-            }
-            interval = Duration.between(startTime, endTime);
-        }
+            DateTimeFormatter formatter = getDateTimeFormatter();
 
-        VortexTimeRecord timeRecord = VortexTimeRecord.of(dssPathname);
-        if (timeRecord != null) {
-            startTime = timeRecord.startTime();
-            endTime = timeRecord.endTime();
+            LocalDateTime ldtStart = LocalDateTime.parse(dPart, formatter);
+            startTime = ZonedDateTime.of(ldtStart, ZoneId.of("UTC"));
+
+            String ePart = dssPathname.getEPart();
+            endTime = getEndTime(ePart);
+            if (endTime == null)
+                endTime = startTime;
+
+            interval = Duration.between(startTime, endTime);
         }
 
         float[] data = RasterUtils.flipVertically(gridData.getData(), nx);
@@ -112,6 +121,34 @@ class DssDataReader extends DataReader {
                 .interval(interval)
                 .dataType(dataType)
                 .build();
+    }
+
+    private ZonedDateTime getEndTime(String ePart) {
+        if (ePart.isBlank())
+            return null;
+
+        DateTimeFormatter formatter = getDateTimeFormatter();
+
+        try {
+            LocalDateTime ldtEnd;
+            if (ePart.endsWith(":2400")) {
+                String ePart0000 = ePart.replaceAll(":2400", ":0000");
+                ldtEnd = LocalDateTime.parse(ePart0000, formatter);
+                return ZonedDateTime.of(ldtEnd.plusDays(1), ZoneId.of("UTC"));
+            } else {
+                ldtEnd = LocalDateTime.parse(ePart, formatter);
+                return ZonedDateTime.of(ldtEnd, ZoneId.of("UTC"));
+            }
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private DateTimeFormatter getDateTimeFormatter() {
+        return new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .appendPattern("ddMMMuuuu:HHmm")
+                .toFormatter();
     }
 
     public static Set<String> getVariables(String pathToDss){
@@ -146,81 +183,53 @@ class DssDataReader extends DataReader {
 
     @Override
     public int getDtoCount() {
-        List<DSSPathname> pathnames = getRecordPathnameList();
+        HecDSSFileAccess.setDefaultDSSFileName(path);
+        String[] paths;
         if (variableName.contains("*")) {
-            return pathnames.size();
+            HecDssCatalog catalog = new HecDssCatalog();
+            paths = catalog.getCatalog(true, variableName);
+        } else {
+            paths = new String[1];
+            paths[0] = variableName;
         }
-
-        return (int) pathnames.stream()
-                .filter(p -> p.isSamePathname(variableName, false))
-                .count();
+        return paths.length;
     }
 
     @Override
     public VortexData getDto(int idx) {
-        String pathname = getRecordPathnameList().get(idx).getPathname();
-        GriddedData griddedData = new GriddedData();
-        griddedData.setDSSFileName(path);
-        griddedData.setPathname(pathname);
-
-        GridData gridData = new GridData();
-        int[] status = new int[1];
-        griddedData.retrieveGriddedData(true, gridData, status);
-
-        if (status[0] == 0) {
-            return dssToDto(gridData, pathname);
+        HecDSSFileAccess.setDefaultDSSFileName(path);
+        String[] paths;
+        if (variableName.contains("*")) {
+            HecDssCatalog catalog = new HecDssCatalog();
+            paths = catalog.getCatalog(true, variableName);
         } else {
-            logger.warning("Failed to retrieve gridded data");
-            return null;
+            paths = new String[1];
+            paths[0] = variableName;
         }
+        String dssPath = paths[idx];
+        int[] status = new int[1];
+        GridData gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
+        if (gridData != null) {
+            return dssToDto(gridData, dssPath);
+        }
+        return null;
     }
 
     @Override
     public List<VortexTimeRecord> getTimeRecords() {
-        return getRecordPathnameList().stream()
-                .map(VortexTimeRecord::of)
-                .toList();
-    }
-
-    private List<DSSPathname> getRecordPathnameList() {
-        if (catalogPathnameList == null) {
-            HecDataManager dataManager = new HecDataManager(path);
-            String pathnameFilter = getPathnameFilter();
-            String[] paths = dataManager.getCatalog(true, pathnameFilter);
-            dataManager.done();
-
-            catalogPathnameList = Arrays.stream(paths)
-                    .sorted(this::comparePathname)
-                    .map(DSSPathname::new)
-                    .toList();
+        HecDSSFileAccess.setDefaultDSSFileName(path);
+        String[] paths;
+        if (variableName.contains("*")) {
+            HecDssCatalog catalog = new HecDssCatalog();
+            paths = catalog.getCatalog(true, variableName);
+        } else {
+            paths = new String[1];
+            paths[0] = variableName;
         }
 
-        return catalogPathnameList;
-    }
-
-    private String getPathnameFilter() {
-        if (variableName.equals("*")) return variableName;
-        DSSPathname dssPathname = new DSSPathname(variableName);
-        // Getting records for all times
-        dssPathname.setDPart("*");
-        dssPathname.setEPart("*");
-        return dssPathname.getPathname();
-    }
-
-    private int comparePathname(String pathname1, String pathname2) {
-        VortexTimeRecord record1 = VortexTimeRecord.of(new DSSPathname(pathname1));
-        VortexTimeRecord record2 = VortexTimeRecord.of(new DSSPathname(pathname2));
-
-        if (record1 == null || record2 == null) return 0;
-
-        long startTime1 = record1.startTime().toEpochSecond();
-        long startTime2 = record2.startTime().toEpochSecond();
-
-        long interval1 = record1.endTime().toEpochSecond() - startTime1;
-        long interval2 = record2.endTime().toEpochSecond() - startTime2;
-
-        int startTimeComparison = Long.compare(startTime1, startTime2);
-
-        return (startTimeComparison != 0) ? startTimeComparison : Long.compare(interval1, interval2);
+        return Arrays.stream(paths)
+                .map(DSSPathname::new)
+                .map(VortexTimeRecord::of)
+                .toList();
     }
 }
