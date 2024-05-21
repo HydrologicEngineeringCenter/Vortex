@@ -7,6 +7,7 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
 import ucar.unidata.geoloc.ProjectionImpl;
 import ucar.unidata.geoloc.projection.*;
+import ucar.unidata.geoloc.projection.proj4.AlbersEqualAreaEllipse;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
 import ucar.unidata.geoloc.projection.proj4.TransverseMercatorProjection;
 import ucar.unidata.util.Parameter;
@@ -40,6 +41,26 @@ public class WktFactory {
 
         } else if (projection instanceof AlbersEqualArea) {
             AlbersEqualArea in = (AlbersEqualArea) projection;
+            SpatialReference srs = new SpatialReference();
+            srs.SetProjCS("Albers Equal Area Conic");
+            setGcsParameters(in, srs);
+            srs.SetACEA(
+                    in.getParallelOne(),
+                    in.getParallelTwo(),
+                    in.getOriginLat(),
+                    in.getOriginLon(),
+                    in.getFalseEasting(),
+                    in.getFalseNorthing()
+            );
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
+
+        } else if (projection instanceof AlbersEqualAreaEllipse in) {
             SpatialReference srs = new SpatialReference();
             srs.SetProjCS("Albers Equal Area Conic");
             setGcsParameters(in, srs);
