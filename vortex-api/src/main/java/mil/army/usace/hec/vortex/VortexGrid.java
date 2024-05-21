@@ -307,15 +307,20 @@ public class VortexGrid implements VortexData, Serializable {
 
     public double[] xCoordinates() {
         double[] xCoordinates = new double[nx];
-        // xCoordinates[i] = midpoint of xEdges[i] and xEdges[i + 1]
-        for (int i = 0; i < nx; i++) xCoordinates[i] = originX + (i + 1) * dx - (dx / 2);
+        for (int i = 0; i < nx; i++) {
+            xCoordinates[i] = (originX + i * dx);
+        }
         return xCoordinates;
     }
 
     public double[] yCoordinates() {
         double[] yCoordinates = new double[ny];
-        // yCoordinates[i] = midpoint of yEdges[i] and yEdges[i + 1]
-        for (int i = 0; i < ny; i++) yCoordinates[i] = originY + (i + 1) * dy - (dy / 2);
+        double start = dy > 0 ? originY : terminusY;
+
+        for (int i = 0; i < ny; i++) {
+            yCoordinates[i] = start + i * Math.abs(dy);
+        }
+
         return yCoordinates;
     }
 

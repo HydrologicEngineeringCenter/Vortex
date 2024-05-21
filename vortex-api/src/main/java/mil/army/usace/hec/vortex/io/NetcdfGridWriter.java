@@ -124,11 +124,8 @@ public class NetcdfGridWriter {
     }
 
     private void writeDimensionsProjected(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        Map<String, double[][]> latLonMap = defaultCollection.getLatLonCoordinates();
         writer.write(yDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getYCoordinates()));
         writer.write(xDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getXCoordinates()));
-        writer.write(latDim.getShortName(), Array.makeFromJavaArray(latLonMap.get("lat")));
-        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(latLonMap.get("lon")));
     }
 
     private void writeVariableGrids(NetcdfFormatWriter writer, int startIndex) {
