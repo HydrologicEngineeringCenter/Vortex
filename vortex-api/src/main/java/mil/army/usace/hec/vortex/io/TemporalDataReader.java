@@ -257,7 +257,12 @@ public class TemporalDataReader {
             boolean isRelevant = recordEnd > coveredUntil && recordStart <= coveredUntil;
 
             if (isRelevant) {
-                relevantGrids.add(bufferedReader.get(index));
+                VortexGrid grid = bufferedReader.get(index);
+                if (grid == null) {
+                    logger.warning("Null grid with valid time record -- should not happen");
+                    continue;
+                }
+                relevantGrids.add(grid);
                 coveredUntil = recordEnd;
             }
 
