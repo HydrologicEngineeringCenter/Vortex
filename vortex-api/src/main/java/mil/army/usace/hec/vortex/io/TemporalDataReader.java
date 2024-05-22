@@ -210,7 +210,7 @@ public class TemporalDataReader {
     }
 
     private VortexGrid[] getMinMaxForPeriodGrids(long startTime, long endTime) {
-        List<VortexGrid> relevantGrids = getRelevantGrids(startTime, endTime);
+        List<VortexGrid> relevantGrids = getGridsWithinTime(startTime, endTime);
         return buildMinMaxGrids(relevantGrids, startTime, endTime);
     }
 
@@ -222,7 +222,14 @@ public class TemporalDataReader {
     }
 
     private VortexGrid[] buildMinMaxGrids(List<VortexGrid> grids, long startTime, long endTime) {
-        float[][] minMaxData = GridDataProcessor.getMinMaxForGrids(grids);
+        float[][] minMaxData;
+
+        if (grids.isEmpty()) {
+            minMaxData = new float[][] {new float[0], new float[0]};
+        } else {
+            minMaxData = GridDataProcessor.getMinMaxForGrids(grids);
+        }
+
         float[] minData = minMaxData[0];
         float[] maxData = minMaxData[1];
 
@@ -241,6 +248,22 @@ public class TemporalDataReader {
             long endTime = timeRecord.endTime().toEpochSecond();
             if (startTime == endTime) instantDataTree.put(startTime, i);
         }
+    }
+
+    private List<VortexGrid> getGridsWithinTime(long startTimeInclusive, long endTimeInclusive) {
+        List<VortexGrid> grids = new ArrayList<>();
+
+        for (int i = 0; i < recordList.size(); i++) {
+            VortexTimeRecord timeRecord = recordList.get(i);
+            long recordStart = timeRecord.startTime().toEpochSecond();
+            long recordEnd = timeRecord.endTime().toEpochSecond();
+            if (startTimeInclusive <= recordEnd && endTimeInclusive >= recordStart) {
+                VortexGrid grid = bufferedReader.get(i);
+                grids.add(grid);
+            }
+        }
+
+        return grids;
     }
 
     private List<VortexGrid> getRelevantGrids(long startTime, long endTime) {
