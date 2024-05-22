@@ -45,7 +45,6 @@ public class VortexGridCollection {
 
         if (shortName.isEmpty()) logger.warning("Short name not found");
         if (wkt.isEmpty()) logger.warning("Wkt not found");
-        if (interval.equals(Duration.ZERO)) logger.warning("Interval not found");
 
         vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
         vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
