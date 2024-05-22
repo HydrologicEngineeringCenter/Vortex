@@ -26,32 +26,36 @@ import java.util.*;
 import static hec.heclib.dss.HecDSSDataAttributes.*;
 
 class DssDataReader extends DataReader {
+    private final List<DSSPathname> catalogPathnameList;
 
     DssDataReader(DataReaderBuilder builder) {
         super(builder);
+        catalogPathnameList = getCatalogPathnames(path, variableName);
+    }
+
+    private static List<DSSPathname> getCatalogPathnames(String path, String variableName) {
+        if (!variableName.contains("*")) {
+            return List.of(new DSSPathname(variableName));
+        }
+
+        HecDSSDataAttributes attributes = new HecDSSDataAttributes();
+        attributes.setDSSFileName(path);
+        String[] dssPathnames = attributes.getCatalog(true, variableName);
+        return Arrays.stream(dssPathnames).map(DSSPathname::new).toList();
     }
 
     @Override
     public List<VortexData> getDtos() {
-        HecDSSFileAccess.setDefaultDSSFileName(path);
-        String[] paths;
-        if (variableName.contains("*")) {
-            HecDssCatalog catalog = new HecDssCatalog();
-            paths = catalog.getCatalog(true, variableName);
-        } else {
-            paths = new String[1];
-            paths[0] = variableName;
-        }
         List<VortexData> dtos = new ArrayList<>();
-        Arrays.stream(paths).forEach(path -> {
+        catalogPathnameList.forEach(path -> {
             int[] status = new int[1];
             GriddedData griddedData = new GriddedData();
             griddedData.setDSSFileName(this.path);
-            griddedData.setPathname(path);
+            griddedData.setPathname(path.getPathname());
             GridData gridData = new GridData();
             griddedData.retrieveGriddedData(true, gridData, status);
             if (status[0] == 0) {
-                dtos.add(dssToDto(gridData, path));
+                dtos.add(dssToDto(gridData, path.getPathname()));
             }
 
         });
@@ -183,30 +187,12 @@ class DssDataReader extends DataReader {
 
     @Override
     public int getDtoCount() {
-        HecDSSFileAccess.setDefaultDSSFileName(path);
-        String[] paths;
-        if (variableName.contains("*")) {
-            HecDssCatalog catalog = new HecDssCatalog();
-            paths = catalog.getCatalog(true, variableName);
-        } else {
-            paths = new String[1];
-            paths[0] = variableName;
-        }
-        return paths.length;
+        return catalogPathnameList.size();
     }
 
     @Override
     public VortexData getDto(int idx) {
-        HecDSSFileAccess.setDefaultDSSFileName(path);
-        String[] paths;
-        if (variableName.contains("*")) {
-            HecDssCatalog catalog = new HecDssCatalog();
-            paths = catalog.getCatalog(true, variableName);
-        } else {
-            paths = new String[1];
-            paths[0] = variableName;
-        }
-        String dssPath = paths[idx];
+        String dssPath = catalogPathnameList.get(idx).pathname();
         int[] status = new int[1];
         GridData gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
         if (gridData != null) {
@@ -217,18 +203,7 @@ class DssDataReader extends DataReader {
 
     @Override
     public List<VortexTimeRecord> getTimeRecords() {
-        HecDSSFileAccess.setDefaultDSSFileName(path);
-        String[] paths;
-        if (variableName.contains("*")) {
-            HecDssCatalog catalog = new HecDssCatalog();
-            paths = catalog.getCatalog(true, variableName);
-        } else {
-            paths = new String[1];
-            paths[0] = variableName;
-        }
-
-        return Arrays.stream(paths)
-                .map(DSSPathname::new)
+        return catalogPathnameList.stream()
                 .map(VortexTimeRecord::of)
                 .toList();
     }
