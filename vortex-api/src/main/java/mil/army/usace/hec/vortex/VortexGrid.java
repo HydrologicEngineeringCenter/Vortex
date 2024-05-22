@@ -306,22 +306,11 @@ public class VortexGrid implements VortexData, Serializable {
     }
 
     public double[] xCoordinates() {
-        double[] xCoordinates = new double[nx];
-        for (int i = 0; i < nx; i++) {
-            xCoordinates[i] = (originX + i * dx);
-        }
-        return xCoordinates;
+        return generateCoordinates(originX, terminusX, dx);
     }
 
     public double[] yCoordinates() {
-        double[] yCoordinates = new double[ny];
-        double start = dy > 0 ? originY : terminusY;
-
-        for (int i = 0; i < ny; i++) {
-            yCoordinates[i] = start + i * Math.abs(dy);
-        }
-
-        return yCoordinates;
+        return generateCoordinates(originY, terminusY, dy);
     }
 
     public float[][][] data3D() {
@@ -463,6 +452,27 @@ public class VortexGrid implements VortexData, Serializable {
                 ", terminusX=" + terminusX +
                 ", terminusY=" + terminusY +
                 '}';
+    }
+
+    private static double[] generateCoordinates(double origin, double terminus, double stepSize) {
+        double normalizedOrigin = origin;
+        double normalizedTerminus = terminus;
+        double normalizedStepSize = stepSize;
+
+        if (stepSize < 0) {
+            normalizedOrigin = terminus;
+            normalizedTerminus = origin;
+            normalizedStepSize = -stepSize;
+        }
+
+        int size = (int) Math.ceil((normalizedTerminus - normalizedOrigin) / normalizedStepSize);
+
+        double[] coordinates = new double[size];
+        for (int i = 0; i < size; i++) {
+            coordinates[i] = normalizedOrigin + (i + 1) * normalizedStepSize - (normalizedStepSize / 2);
+        }
+
+        return coordinates;
     }
 }
 
