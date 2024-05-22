@@ -19,6 +19,7 @@ public enum VortexVariable {
     COLD_CONTENT_ATI("cold content ati", "cold_content_ati", "COLD CONTENT ATI"),
     MELTRATE_ATI("meltrate ati", "meltrate_ati", "MELTRATE ATI"),
     SNOW_MELT("snow melt", "surface_snow_melt_amount", "SNOW MELT"),
+    HUMIDITY("humidity", "relative_humidity", "HUMIDITY"),
     UNDEFINED("", "", "");
 
     private final String shortName;
@@ -36,6 +37,10 @@ public enum VortexVariable {
                 .filter(n -> n.dssName.equals(dssName))
                 .findFirst()
                 .orElse(UNDEFINED);
+    }
+
+    public String getLowerCasedVariableName() {
+        return toString().toLowerCase();
     }
 
     public String getShortName() {
@@ -68,6 +73,7 @@ public enum VortexVariable {
         if (isValidColdContentATIName(name)) return COLD_CONTENT_ATI;
         if (isValidMeltrateATIName(name)) return MELTRATE_ATI;
         if (isValidSnowMeltName(name)) return SNOW_MELT;
+        if (isValidHumidityName(name)) return HUMIDITY;
         return UNDEFINED;
     }
 
@@ -148,5 +154,9 @@ public enum VortexVariable {
 
     private static boolean isValidSnowMeltName(String shortName) {
         return shortName.equals("snow melt");
+    }
+
+    private static boolean isValidHumidityName(String name) {
+        return name.toLowerCase().contains("humidity");
     }
 }

@@ -133,9 +133,9 @@ public class NetcdfGridWriter {
 
         for (VortexGridCollection collection : gridCollectionMap.values()) {
             VortexVariable meteorologicalVariable = getVortexVariable(collection);
-            Variable variable = writer.findVariable(meteorologicalVariable.getShortName());
+            Variable variable = writer.findVariable(meteorologicalVariable.getLowerCasedVariableName());
             if (variable == null) {
-                logger.severe("Failed to locate variable: " + meteorologicalVariable.getShortName());
+                logger.severe("Failed to locate variable: " + meteorologicalVariable.getLowerCasedVariableName());
                 hasErrors.set(true);
                 continue;
             }
@@ -262,10 +262,9 @@ public class NetcdfGridWriter {
         List<Dimension> dimensions = isGeographic ? List.of(timeDim, latDim, lonDim) : List.of(timeDim, yDim, xDim);
         for (VortexGridCollection collection : gridCollectionMap.values()) {
             VortexVariable variable = getVortexVariable(collection);
-            Unit<?> dataUnit = UnitUtil.getUnits(collection.getDataUnit());
-            writerBuilder.addVariable(variable.getShortName(), DataType.FLOAT, dimensions)
+            writerBuilder.addVariable(variable.getLowerCasedVariableName(), DataType.FLOAT, dimensions)
                     .addAttribute(new Attribute(CF.LONG_NAME, variable.getLongName()))
-                    .addAttribute(new Attribute(CF.UNITS, getUnitsString(dataUnit)))
+                    .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()))
                     .addAttribute(new Attribute(CF.GRID_MAPPING, defaultCollection.getProjectionName()))
                     .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
                     .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
