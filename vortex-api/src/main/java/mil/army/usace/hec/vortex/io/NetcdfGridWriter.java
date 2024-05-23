@@ -1,10 +1,9 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.VortexProperty;
-import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
-import mil.army.usace.hec.vortex.util.UnitUtil;
+import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.VortexVariable;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;

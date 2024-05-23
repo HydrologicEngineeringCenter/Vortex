@@ -34,6 +34,8 @@ public class VortexGrid implements VortexData, Serializable {
     private final VortexDataType dataType;
     private final double terminusX;
     private final double terminusY;
+    private final double[] xCoordinates;
+    private final double[] yCoordinates;
 
     private VortexGrid(VortexGridBuilder builder) {
 
@@ -58,6 +60,9 @@ public class VortexGrid implements VortexData, Serializable {
 
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
+
+        xCoordinates = generateCoordinates(originX, dx, nx);
+        yCoordinates = generateCoordinates(originY, dy, ny);
     }
 
     public static class VortexGridBuilder {
@@ -306,11 +311,15 @@ public class VortexGrid implements VortexData, Serializable {
     }
 
     public double[] xCoordinates() {
-        return generateCoordinates(originX, terminusX, dx);
+        double[] copy = new double[xCoordinates.length];
+        System.arraycopy(xCoordinates, 0, copy, 0, copy.length);
+        return copy;
     }
 
     public double[] yCoordinates() {
-        return generateCoordinates(originY, terminusY, dy);
+        double[] copy = new double[yCoordinates.length];
+        System.arraycopy(yCoordinates, 0, copy, 0, copy.length);
+        return copy;
     }
 
     public float[][][] data3D() {
@@ -454,22 +463,11 @@ public class VortexGrid implements VortexData, Serializable {
                 '}';
     }
 
-    private static double[] generateCoordinates(double origin, double terminus, double stepSize) {
-        double normalizedOrigin = origin;
-        double normalizedTerminus = terminus;
-        double normalizedStepSize = stepSize;
+    private static double[] generateCoordinates(double origin, double stepSize, int count) {
+        double[] coordinates = new double[count];
 
-        if (stepSize < 0) {
-            normalizedOrigin = terminus;
-            normalizedTerminus = origin;
-            normalizedStepSize = -stepSize;
-        }
-
-        int size = (int) Math.ceil((normalizedTerminus - normalizedOrigin) / normalizedStepSize);
-
-        double[] coordinates = new double[size];
-        for (int i = 0; i < size; i++) {
-            coordinates[i] = normalizedOrigin + (i + 1) * normalizedStepSize - (normalizedStepSize / 2);
+        for (int i = 0; i < count; i++) {
+            coordinates[i] = origin + (i + 1) * stepSize - (stepSize / 2);
         }
 
         return coordinates;
