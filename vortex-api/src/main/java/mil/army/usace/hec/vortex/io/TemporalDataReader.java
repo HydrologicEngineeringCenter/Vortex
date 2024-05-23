@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexTimeRecord;
@@ -270,21 +271,19 @@ public class TemporalDataReader {
         List<VortexGrid> relevantGrids = new ArrayList<>();
         long coveredUntil = startTime;
 
-        List<Integer> overlappedAndSortedIndices = getOverlappedAndSortedIndices(startTime, endTime);
+        List<VortexGrid> overlappingGrids = getOverlappedIndices(recordList, startTime, endTime).stream()
+                .map(bufferedReader::get)
+                .sorted(Comparator.comparing(VortexGrid::startTime).thenComparing(VortexGrid::endTime).thenComparing(dataComparator()))
+                .toList();
 
-        for (int index : overlappedAndSortedIndices) {
-            VortexTimeRecord timeRecord = recordList.get(index);
+        for (VortexGrid grid : overlappingGrids) {
+            VortexTimeRecord timeRecord = VortexTimeRecord.of(grid);
             long recordStart = timeRecord.startTime().toEpochSecond();
             long recordEnd = timeRecord.endTime().toEpochSecond();
 
             boolean isRelevant = recordEnd > coveredUntil && recordStart <= coveredUntil;
 
             if (isRelevant) {
-                VortexGrid grid = bufferedReader.get(index);
-                if (grid == null) {
-                    logger.warning("Null grid with valid time record -- should not happen");
-                    continue;
-                }
                 relevantGrids.add(grid);
                 coveredUntil = recordEnd;
             }
@@ -297,7 +296,7 @@ public class TemporalDataReader {
         return relevantGrids;
     }
 
-    private List<Integer> getOverlappedAndSortedIndices(long startTime, long endTime) {
+    private static List<Integer> getOverlappedIndices(List<VortexTimeRecord> recordList, long startTime, long endTime) {
         return IntStream.range(0, recordList.size())
                 .filter(i -> recordList.get(i).hasOverlap(startTime, endTime))
                 .boxed()
@@ -307,6 +306,30 @@ public class TemporalDataReader {
                     return duration1.compareTo(duration2);
                 })
                 .toList();
+    }
+
+    private static Comparator<VortexGrid> dataComparator() {
+        return (o1, o2) -> {
+            float[] o1DataArray = o1.data();
+            float[] o2DataArray = o2.data();
+            int o1Count = 0;
+            int o2Count = 0;
+
+            for (int i = 0; i < o1DataArray.length; i++) {
+                float o1Data = o1DataArray[i];
+                float o2Data = o2DataArray[i];
+
+                if (Float.isNaN(o1Data) || o1.isNoDataValue(o1Data) || o1Data == Heclib.UNDEFINED_FLOAT) {
+                    o1Count++;
+                }
+
+                if (Float.isNaN(o2Data) || o1.isNoDataValue(o2Data) || o2Data == Heclib.UNDEFINED_FLOAT) {
+                    o2Count++;
+                }
+            }
+
+            return Integer.compare(o1Count, o2Count);
+        };
     }
 
     private List<VortexGrid> queryPointInstantData(long time) {
