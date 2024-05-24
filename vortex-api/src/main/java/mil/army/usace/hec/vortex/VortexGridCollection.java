@@ -205,7 +205,7 @@ public class VortexGridCollection {
     private float getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
         ZonedDateTime zDateTime = dateTime.withZoneSameInstant(ZoneId.of("Z"));
         Duration durationBetween = Duration.between(baseTime, zDateTime);
-        Duration divisor = getBaseDuration();
+        Duration divisor = Duration.of(1, getDurationUnit(getBaseDuration()));
         return durationBetween.dividedBy(divisor);
     }
 
