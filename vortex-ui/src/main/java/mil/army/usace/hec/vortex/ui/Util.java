@@ -10,10 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -94,7 +91,7 @@ public class Util {
             DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                     .parseCaseInsensitive()
                     .appendPattern("ddMMMuuuu:HHmm")
-                    .toFormatter();
+                    .toFormatter(Locale.ENGLISH);
 
             // Sort based on C/D/A/B/F part
             datedRecords.sort(Comparator.comparing(s -> ((String[]) s)[3])

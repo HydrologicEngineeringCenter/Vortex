@@ -21,10 +21,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -97,7 +94,7 @@ public class DssDataWriter extends DataWriter {
                     && (units.equals(MILLI(METRE).divide(SECOND))
                     || units.equals(MILLI(METRE).divide(HOUR))
                     || units.equals(MILLI(METRE).divide(DAY)))) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm", Locale.ENGLISH);
                 LocalDateTime startTime = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
                 LocalDateTime endTime = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
                 Duration interval = Duration.between(startTime, endTime);
