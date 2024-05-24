@@ -58,4 +58,14 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) {
     public boolean hasOverlap(long start, long end) {
         return getOverlapDuration(start, end).toSeconds() > 0;
     }
+
+    /* Override to use ZonedDateTime::isEqual instead of ZonedDateTime::equals */
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof VortexTimeRecord that) {
+            return this.startTime().isEqual(that.startTime()) && this.endTime().isEqual(that.endTime());
+        }
+
+        return false;
+    }
 }
