@@ -65,8 +65,8 @@ public class VortexGridCollection {
         return IntStream.range(0, vortexGridList.size()).parallel().mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
     }
 
-    public float getNoDataValue() {
-        return (float) defaultGrid.noDataValue();
+    public double getNoDataValue() {
+        return defaultGrid.noDataValue();
     }
 
     public String getDataUnit() {
@@ -165,31 +165,31 @@ public class VortexGridCollection {
         return durationUnit + " since " + baseTime.format(dateTimeFormatter);
     }
 
-    public float[] getTimeData() {
+    public double[] getTimeData() {
         if (vortexGridList.size() == 1) {
-            return new float[] {getNumDurationsFromBaseTime(vortexGridList.get(0).endTime())};
+            return new double[] {getNumDurationsFromBaseTime(vortexGridList.get(0).endTime())};
         }
 
         int numData = vortexGridList.size();
-        float[] timeData = new float[numData];
+        double[] timeData = new double[numData];
         for (int i = 0; i < numData; i++) {
             VortexGrid grid = vortexGridList.get(i);
-            float startTime = getNumDurationsFromBaseTime(grid.startTime());
-            float endTime = getNumDurationsFromBaseTime(grid.endTime());
-            float midTime = (startTime + endTime) / 2;
+            long startTime = getNumDurationsFromBaseTime(grid.startTime());
+            long endTime = getNumDurationsFromBaseTime(grid.endTime());
+            long midTime = (startTime + endTime) / 2;
             timeData[i] = midTime;
         }
 
         return timeData;
     }
 
-    public float[][] getTimeBoundsArray() {
-        float[][] timeBoundArray = new float[getTimeLength()][NetcdfGridWriter.BOUNDS_LEN];
+    public double[][] getTimeBoundsArray() {
+        double[][] timeBoundArray = new double[getTimeLength()][NetcdfGridWriter.BOUNDS_LEN];
 
         for (int i = 0; i < vortexGridList.size(); i++) {
             VortexGrid grid = vortexGridList.get(i);
-            float startTime = getNumDurationsFromBaseTime(grid.startTime());
-            float endTime = getNumDurationsFromBaseTime(grid.endTime());
+            long startTime = getNumDurationsFromBaseTime(grid.startTime());
+            long endTime = getNumDurationsFromBaseTime(grid.endTime());
             timeBoundArray[i][0] = startTime;
             timeBoundArray[i][1] = endTime;
         }
@@ -202,7 +202,7 @@ public class VortexGridCollection {
     }
 
     /* Helpers */
-    private float getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
+    private long getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
         ZonedDateTime zDateTime = dateTime.withZoneSameInstant(ZoneId.of("Z"));
         Duration durationBetween = Duration.between(baseTime, zDateTime);
         Duration divisor = Duration.of(1, getDurationUnit(getBaseDuration()));

@@ -191,7 +191,7 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableTime(NetcdfFormatWriter.Builder writerBuilder) {
-        Variable.Builder<?> v = writerBuilder.addVariable(timeDim.getShortName(), DataType.FLOAT, List.of(timeDim));
+        Variable.Builder<?> v = writerBuilder.addVariable(timeDim.getShortName(), DataType.DOUBLE, List.of(timeDim));
         v.addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME));
         v.addAttribute(new Attribute(CF.CALENDAR, "standard"));
         v.addAttribute(new Attribute(CF.UNITS, defaultCollection.getTimeUnits()));
@@ -199,7 +199,7 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableTimeBounds(NetcdfFormatWriter.Builder writerBuilder) {
-        writerBuilder.addVariable(getBoundsName(timeDim), DataType.FLOAT, List.of(timeDim, boundsDim));
+        writerBuilder.addVariable(getBoundsName(timeDim), DataType.DOUBLE, List.of(timeDim, boundsDim));
     }
 
     private void addVariableLat(NetcdfFormatWriter.Builder writerBuilder) {
