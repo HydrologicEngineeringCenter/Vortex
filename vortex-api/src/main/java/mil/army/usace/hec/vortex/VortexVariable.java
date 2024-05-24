@@ -81,6 +81,7 @@ public enum VortexVariable {
         return shortName.equals("precipitation")
                 || shortName.equals("precip")
                 || shortName.contains("precip") && shortName.contains("rate")
+                || shortName.contains("precip") && shortName.contains("inc")
                 || shortName.contains("precipitable") && shortName.contains("water")
                 || shortName.contains("qpe")
                 || shortName.equals("var209-6")
