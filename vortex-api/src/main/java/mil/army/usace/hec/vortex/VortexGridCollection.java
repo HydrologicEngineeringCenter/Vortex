@@ -43,8 +43,11 @@ public class VortexGridCollection {
         String wkt = defaultGrid.wkt();
         Duration interval = defaultGrid.interval();
 
-        if (shortName.isEmpty()) logger.warning("Short name not found");
-        if (wkt.isEmpty()) logger.warning("Wkt not found");
+        if (shortName.isEmpty()) {
+            logger.warning("Short name not found");
+        } else if (wkt.isEmpty()) {
+            logger.warning("Wkt not found");
+        }
 
         vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
         vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
@@ -210,10 +213,13 @@ public class VortexGridCollection {
     }
 
     private ChronoUnit getDurationUnit(Duration duration) {
-        if (duration.toDays() > 0) return ChronoUnit.DAYS;
-        if (duration.toHours() > 0) return ChronoUnit.HOURS;
-        if (duration.toMinutes() > 0) return ChronoUnit.MINUTES;
-        return ChronoUnit.SECONDS;
+        if (duration.toHours() > 0) {
+            return ChronoUnit.HOURS;
+        } else if (duration.toMinutes() > 0) {
+            return ChronoUnit.MINUTES;
+        } else {
+            return ChronoUnit.SECONDS;
+        }
     }
 
     private Duration getBaseDuration() {
