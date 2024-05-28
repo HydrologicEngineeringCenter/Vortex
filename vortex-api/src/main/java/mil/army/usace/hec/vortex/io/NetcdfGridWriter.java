@@ -86,7 +86,9 @@ public class NetcdfGridWriter {
                 .map(o -> (o instanceof double[] || o instanceof float[]) ? Arrays.deepToString(new Object[] {o}) : o)
                 .distinct()
                 .count() == 1;
-        if (!isUnique) logger.severe("Data is not the same for all grids");
+        if (!isUnique) {
+            logger.severe("Data is not the same for all grids");
+        }
         return isUnique;
     }
 
@@ -110,11 +112,15 @@ public class NetcdfGridWriter {
     private void writeDimensions(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
         writer.write(timeDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getTimeData()));
 
-        if (defaultCollection.hasTimeBounds())
+        if (defaultCollection.hasTimeBounds()) {
             writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
+        }
 
-        if (defaultCollection.isGeographic()) writeDimensionsGeographic(writer);
-        else writeDimensionsProjected(writer);
+        if (defaultCollection.isGeographic()) {
+            writeDimensionsGeographic(writer);
+        } else {
+            writeDimensionsProjected(writer);
+        }
     }
 
     private void writeDimensionsGeographic(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
@@ -164,7 +170,9 @@ public class NetcdfGridWriter {
     /* Add Dimensions */
     private void addDimensions(NetcdfFormatWriter.Builder writerBuilder) {
         writerBuilder.addDimension(timeDim);
-        if (defaultCollection.hasTimeBounds()) writerBuilder.addDimension(boundsDim);
+        if (defaultCollection.hasTimeBounds()) {
+            writerBuilder.addDimension(boundsDim);
+        }
 
         if (defaultCollection.isGeographic()) {
             writerBuilder.addDimension(latDim);
@@ -178,7 +186,9 @@ public class NetcdfGridWriter {
     /* Add Variables */
     private void addVariables(NetcdfFormatWriter.Builder writerBuilder) {
         addVariableTime(writerBuilder);
-        if (defaultCollection.hasTimeBounds()) addVariableTimeBounds(writerBuilder);
+        if (defaultCollection.hasTimeBounds()) {
+            addVariableTimeBounds(writerBuilder);
+        }
         addVariableLat(writerBuilder);
         addVariableLon(writerBuilder);
         addVariableGridCollection(writerBuilder);
@@ -195,7 +205,9 @@ public class NetcdfGridWriter {
         v.addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME));
         v.addAttribute(new Attribute(CF.CALENDAR, "standard"));
         v.addAttribute(new Attribute(CF.UNITS, defaultCollection.getTimeUnits()));
-        if (defaultCollection.hasTimeBounds()) v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
+        if (defaultCollection.hasTimeBounds()) {
+            v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
+        }
     }
 
     private void addVariableTimeBounds(NetcdfFormatWriter.Builder writerBuilder) {
