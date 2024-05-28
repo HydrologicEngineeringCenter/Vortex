@@ -59,8 +59,13 @@ public class VortexGridCollection {
         return getProjection() instanceof LatLonProjection;
     }
 
+    public boolean hasTimeDimension() {
+        return vortexGridList.stream().allMatch(VortexGrid::hasTime);
+    }
+
     public boolean hasTimeBounds() {
-        return !getInterval().isZero();
+        Duration interval = getInterval();
+        return interval != null && !interval.isZero();
     }
 
     /* Data */

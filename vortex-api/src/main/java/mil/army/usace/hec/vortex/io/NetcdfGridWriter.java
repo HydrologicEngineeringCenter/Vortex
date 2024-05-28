@@ -76,8 +76,7 @@ public class NetcdfGridWriter {
         // No need to check lat & lon since they are generated from (x & y & projection)
         boolean yMatched = isUnique(VortexGridCollection::getYCoordinates, map);
         boolean xMatched = isUnique(VortexGridCollection::getXCoordinates, map);
-        boolean timeMatched = isUnique(VortexGridCollection::getTimeData, map);
-        return projectionMatched && yMatched && xMatched && timeMatched;
+        return projectionMatched && yMatched && xMatched;
     }
 
     private boolean isUnique(Function<VortexGridCollection, ?> propertyGetter, Map<String, VortexGridCollection> map) {
@@ -110,7 +109,9 @@ public class NetcdfGridWriter {
     }
 
     private void writeDimensions(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        writer.write(timeDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getTimeData()));
+        if (defaultCollection.hasTimeDimension()) {
+            writer.write(timeDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getTimeData()));
+        }
 
         if (defaultCollection.hasTimeBounds()) {
             writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
@@ -201,10 +202,15 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableTime(NetcdfFormatWriter.Builder writerBuilder) {
+        if (!defaultCollection.hasTimeDimension()) {
+            return;
+        }
+
         Variable.Builder<?> v = writerBuilder.addVariable(timeDim.getShortName(), DataType.DOUBLE, List.of(timeDim));
         v.addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME));
         v.addAttribute(new Attribute(CF.CALENDAR, "standard"));
         v.addAttribute(new Attribute(CF.UNITS, defaultCollection.getTimeUnits()));
+
         if (defaultCollection.hasTimeBounds()) {
             v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
         }
