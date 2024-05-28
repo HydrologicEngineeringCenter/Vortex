@@ -20,6 +20,7 @@ public enum VortexVariable {
     MELTRATE_ATI("meltrate ati", "meltrate_ati", "MELTRATE ATI"),
     SNOW_MELT("snow melt", "surface_snow_melt_amount", "SNOW MELT"),
     HUMIDITY("humidity", "relative_humidity", "HUMIDITY"),
+    MOISTURE_DEFICIT("moisture_deficit", "moisture_deficit_todo", "DEFICIT"),
     UNDEFINED("", "", "");
 
     private final String shortName;
@@ -74,7 +75,12 @@ public enum VortexVariable {
         if (isValidMeltrateATIName(name)) return MELTRATE_ATI;
         if (isValidSnowMeltName(name)) return SNOW_MELT;
         if (isValidHumidityName(name)) return HUMIDITY;
+        if (isValidMoistureDeficitName(name)) return MOISTURE_DEFICIT;
         return UNDEFINED;
+    }
+
+    private static boolean isValidMoistureDeficitName(String name) {
+        return name.contains("deficit");
     }
 
     private static boolean isValidPrecipitationName(String shortName) {
