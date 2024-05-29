@@ -26,6 +26,7 @@ public enum VortexVariable {
     SCS_CURVE_NUMBER("scs curve number", "scs_curve_number_todo", "CURVE"),
     STORAGE_CAPACITY("storage capacity", "storage_capacity_todo", "STOR-CAP"),
     STORAGE_COEFFICIENT("storage coefficient", "storage_coefficient_todo", "STOR-COEF"),
+    CROP_COEFFICIENT("crop coefficient", "crop_coefficient_todo", "CROP_COEFF"),
     UNDEFINED("", "", "");
 
     private final String name;
@@ -86,6 +87,7 @@ public enum VortexVariable {
         if (isValidScsCurveNumberName(name)) return SCS_CURVE_NUMBER;
         if (isValidStorageCapacityName(name)) return STORAGE_CAPACITY;
         if (isValidStorageCoefficientName(name)) return STORAGE_COEFFICIENT;
+        if (isValidCropCoefficientName(name)) return CROP_COEFFICIENT;
         return UNDEFINED;
     }
 
@@ -216,6 +218,11 @@ public enum VortexVariable {
     private static boolean isValidStorageCoefficientName(String name) {
         return matchesDssName(name, STORAGE_COEFFICIENT)
                 || equalsIgnoreCaseAndSpace(name, "storage coefficient");
+    }
+
+    private static boolean isValidCropCoefficientName(String name) {
+        return matchesDssName(name, CROP_COEFFICIENT)
+                || equalsIgnoreCaseAndSpace(name, "crop coefficient");
     }
 
     private static boolean matchesDssName(String name, VortexVariable variable) {
