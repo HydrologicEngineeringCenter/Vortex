@@ -21,6 +21,11 @@ public enum VortexVariable {
     SNOW_MELT("snow melt", "surface_snow_melt_amount", "SNOW MELT"),
     HUMIDITY("humidity", "relative_humidity", "HUMIDITY"),
     MOISTURE_DEFICIT("moisture_deficit", "moisture_deficit_todo", "DEFICIT"),
+    PERCOLATION_RATE("percolation rate", "percolation_todo", "PERCOLATION"),
+    IMPERVIOUS_AREA("impervious area", "impervious_area_todo", "IMPERVIOUS"),
+    SCS_CURVE_NUMBER("scs curve number", "scs_curve_number_todo", "CURVE"),
+    STORAGE_CAPACITY("storage capacity", "storage_capacity_todo", "STOR-CAP"),
+    STORAGE_COEFFICIENT("storage coefficient", "storage_coefficient_todo", "STOR-COEF"),
     UNDEFINED("", "", "");
 
     private final String name;
@@ -76,6 +81,11 @@ public enum VortexVariable {
         if (isValidSnowMeltName(name)) return SNOW_MELT;
         if (isValidHumidityName(name)) return HUMIDITY;
         if (isValidMoistureDeficitName(name)) return MOISTURE_DEFICIT;
+        if (isValidPercolationName(name)) return PERCOLATION_RATE;
+        if (isValidImperviousAreaName(name)) return IMPERVIOUS_AREA;
+        if (isValidScsCurveNumberName(name)) return SCS_CURVE_NUMBER;
+        if (isValidStorageCapacityName(name)) return STORAGE_CAPACITY;
+        if (isValidStorageCoefficientName(name)) return STORAGE_COEFFICIENT;
         return UNDEFINED;
     }
 
@@ -165,6 +175,26 @@ public enum VortexVariable {
 
     private static boolean isValidHumidityName(String name) {
         return equalsIgnoreCaseAndSpace(name, "humidity");
+    }
+
+    private static boolean isValidPercolationName(String name) {
+        return equalsIgnoreCaseAndSpace(name, "percolation rate");
+    }
+
+    private static boolean isValidImperviousAreaName(String name) {
+        return equalsIgnoreCaseAndSpace(name, "impervious area");
+    }
+
+    private static boolean isValidScsCurveNumberName(String name) {
+        return name.equals(SCS_CURVE_NUMBER.getDssName()) || equalsIgnoreCaseAndSpace(name, "scs curve number");
+    }
+
+    private static boolean isValidStorageCapacityName(String name) {
+        return name.equals(STORAGE_CAPACITY.getDssName()) || equalsIgnoreCaseAndSpace(name, "storage capacity");
+    }
+
+    private static boolean isValidStorageCoefficientName(String name) {
+        return name.equals(STORAGE_COEFFICIENT.getDssName()) || equalsIgnoreCaseAndSpace(name, "storage coefficient");
     }
 
     private static boolean equalsIgnoreCaseAndSpace(String one, String two) {
