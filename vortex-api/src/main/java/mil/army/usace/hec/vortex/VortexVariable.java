@@ -119,6 +119,7 @@ public enum VortexVariable {
                 || name.equals("airtemp")
                 || name.equals("tasmin")
                 || name.equals("tasmax")
+                || name.equals("temp")
                 || name.equals("temp-air");
     }
 
