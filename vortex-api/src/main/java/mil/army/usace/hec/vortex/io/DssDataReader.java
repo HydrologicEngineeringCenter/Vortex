@@ -48,18 +48,28 @@ class DssDataReader extends DataReader {
     public List<VortexData> getDtos() {
         List<VortexData> dtos = new ArrayList<>();
         catalogPathnameList.forEach(path -> {
-            int[] status = new int[1];
-            GriddedData griddedData = new GriddedData();
-            griddedData.setDSSFileName(this.path);
-            griddedData.setPathname(path.getPathname());
-            GridData gridData = new GridData();
-            griddedData.retrieveGriddedData(true, gridData, status);
-            if (status[0] == 0) {
+            GridData gridData = retrieveGriddedData(this.path, path.getPathname());
+            if (gridData != null) {
                 dtos.add(dssToDto(gridData, path.getPathname()));
             }
-
         });
         return dtos;
+    }
+
+    private static GridData retrieveGriddedData(String dssFileName, String dssPathname) {
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(dssFileName);
+        griddedData.setPathname(dssPathname);
+        GridData gridData = new GridData();
+
+        try {
+            griddedData.retrieveGriddedData(true, gridData, status);
+        } catch (Exception e) {
+            return null;
+        }
+
+        return gridData;
     }
 
     private VortexGrid dssToDto(GridData gridData, String pathname){
