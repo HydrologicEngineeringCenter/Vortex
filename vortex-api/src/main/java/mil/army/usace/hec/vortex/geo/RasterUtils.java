@@ -69,6 +69,10 @@ public class RasterUtils {
     }
 
     public static float[] flipVertically (float[] data, int nx) {
+        if (nx == 0) {
+            return data;
+        }
+
         int length = data.length;
         float[] flipped = new float[length];
         int ny = length / nx;
