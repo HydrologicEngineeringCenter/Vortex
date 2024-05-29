@@ -34,6 +34,10 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) {
         return new VortexTimeRecord(start, end);
     }
 
+    public static VortexTimeRecord undefinedRecord() {
+        return new VortexTimeRecord(null, null);
+    }
+
     public Duration getRecordDuration() {
         return this.startTime != null && this.endTime != null ? Duration.between(this.startTime, this.endTime) : Duration.ZERO;
     }

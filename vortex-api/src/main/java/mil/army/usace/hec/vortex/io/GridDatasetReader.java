@@ -167,7 +167,8 @@ public class GridDatasetReader extends NetcdfDataReader {
             Array array = gridDatatype.readDataSlice(rtIndex, endIndex, timeIndex, -1, -1, -1);
             float[] slice = getFloatArray(array);
             float[] data = getGridData(slice);
-            VortexTimeRecord timeRecord = timeBounds.get(timeIndex);
+            VortexTimeRecord undefined = VortexTimeRecord.undefinedRecord();
+            VortexTimeRecord timeRecord = (timeIndex < timeBounds.size()) ? timeBounds.get(timeIndex) : undefined;
             return buildGrid(data, timeRecord);
         } catch (IOException e) {
             logger.severe(e.getMessage());

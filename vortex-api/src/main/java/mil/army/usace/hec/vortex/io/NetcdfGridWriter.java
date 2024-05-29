@@ -19,10 +19,7 @@ import javax.measure.Unit;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -278,8 +275,19 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableGridCollection(NetcdfFormatWriter.Builder writerBuilder) {
-        boolean isGeographic = defaultCollection.isGeographic();
-        List<Dimension> dimensions = isGeographic ? List.of(timeDim, latDim, lonDim) : List.of(timeDim, yDim, xDim);
+        List<Dimension> dimensions = new ArrayList<>();
+        if (defaultCollection.hasTimeDimension()) {
+            dimensions.add(timeDim);
+        }
+
+        if (defaultCollection.isGeographic()) {
+            dimensions.add(latDim);
+            dimensions.add(lonDim);
+        } else {
+            dimensions.add(yDim);
+            dimensions.add(xDim);
+        }
+
         for (VortexGridCollection collection : gridCollectionMap.values()) {
             VortexVariable variable = getVortexVariable(collection);
             writerBuilder.addVariable(variable.getLowerCasedVariableName(), DataType.FLOAT, dimensions)

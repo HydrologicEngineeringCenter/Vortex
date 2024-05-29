@@ -63,7 +63,10 @@ public abstract class NetcdfDataReader extends DataReader {
 
     @Override
     public List<VortexTimeRecord> getTimeRecords() {
-        CoordinateAxis1D timeAxis = (CoordinateAxis1D) ncd.findCoordinateAxis(AxisType.Time);
+        if (! (ncd.findCoordinateAxis(AxisType.Time) instanceof CoordinateAxis1D timeAxis)) {
+            return Collections.emptyList();
+        }
+
         String timeAxisUnits = timeAxis.getUnitsString();
 
         if (!timeAxis.isInterval()) {
