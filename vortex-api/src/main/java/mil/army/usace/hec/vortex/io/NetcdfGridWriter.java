@@ -170,7 +170,10 @@ public class NetcdfGridWriter {
 
     /* Add Dimensions */
     private void addDimensions(NetcdfFormatWriter.Builder writerBuilder) {
-        writerBuilder.addDimension(timeDim);
+        if (defaultCollection.hasTimeDimension()) {
+            writerBuilder.addDimension(timeDim);
+        }
+
         if (defaultCollection.hasTimeBounds()) {
             writerBuilder.addDimension(boundsDim);
         }
