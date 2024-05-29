@@ -178,11 +178,11 @@ public enum VortexVariable {
     }
 
     private static boolean isValidPercolationName(String name) {
-        return equalsIgnoreCaseAndSpace(name, "percolation rate");
+        return name.equals(PERCOLATION_RATE.getDssName()) || equalsIgnoreCaseAndSpace(name, "percolation rate");
     }
 
     private static boolean isValidImperviousAreaName(String name) {
-        return equalsIgnoreCaseAndSpace(name, "impervious area");
+        return name.equals(IMPERVIOUS_AREA.getDssName()) || equalsIgnoreCaseAndSpace(name, "impervious area");
     }
 
     private static boolean isValidScsCurveNumberName(String name) {
