@@ -229,6 +229,6 @@ public class VortexGridCollection {
 
     private Duration getBaseDuration() {
         Duration interval = getInterval();
-        return interval.isZero() ? Duration.ofHours(1) : interval;
+        return interval.isZero() ? Duration.ofMinutes(1) : interval;
     }
 }

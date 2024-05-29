@@ -247,7 +247,9 @@ public class TemporalDataReader {
             if (timeRecord == null) continue;
             long startTime = timeRecord.startTime().toEpochSecond();
             long endTime = timeRecord.endTime().toEpochSecond();
-            if (startTime == endTime) instantDataTree.put(startTime, i);
+            if (startTime == endTime) {
+                instantDataTree.put(startTime, i);
+            }
         }
     }
 
