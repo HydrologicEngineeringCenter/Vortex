@@ -23,12 +23,12 @@ public enum VortexVariable {
     MOISTURE_DEFICIT("moisture_deficit", "moisture_deficit_todo", "DEFICIT"),
     UNDEFINED("", "", "");
 
-    private final String shortName;
+    private final String name;
     private final String longName;
     private final String dssName;
 
-    VortexVariable(String shortName, String longName, String dssName) {
-        this.shortName = shortName;
+    VortexVariable(String name, String longName, String dssName) {
+        this.name = name;
         this.longName = longName;
         this.dssName = dssName;
     }
@@ -44,8 +44,8 @@ public enum VortexVariable {
         return toString().toLowerCase();
     }
 
-    public String getShortName() {
-        return shortName;
+    public String getname() {
+        return name;
     }
 
     public String getLongName() {
@@ -83,87 +83,93 @@ public enum VortexVariable {
         return name.contains("deficit");
     }
 
-    private static boolean isValidPrecipitationName(String shortName) {
-        return shortName.equals("precipitation")
-                || shortName.equals("precip")
-                || shortName.contains("precip") && shortName.contains("rate")
-                || shortName.contains("precip") && shortName.contains("inc")
-                || shortName.contains("precipitable") && shortName.contains("water")
-                || shortName.contains("qpe")
-                || shortName.equals("var209-6")
-                || shortName.equals("cmorph")
-                || shortName.equals("rainfall")
-                || shortName.equals("pcp")
-                || shortName.equals("pr")
-                || shortName.equals("prec")
-                || shortName.equals("prcp")
-                || shortName.equals("total precipitation");
+    private static boolean isValidPrecipitationName(String name) {
+        return name.equals("precipitation")
+                || name.equals("precip")
+                || name.contains("precip") && name.contains("rate")
+                || name.contains("precip") && name.contains("inc")
+                || name.contains("precipitable") && name.contains("water")
+                || name.contains("qpe")
+                || name.equals("var209-6")
+                || name.equals("cmorph")
+                || name.equals("rainfall")
+                || name.equals("pcp")
+                || name.equals("pr")
+                || name.equals("prec")
+                || name.equals("prcp")
+                || name.equals("total precipitation");
     }
 
-    private static boolean isValidPressureName(String shortName) {
-        return shortName.contains("pressure") && shortName.contains("surface");
+    private static boolean isValidPressureName(String name) {
+        return name.contains("pressure") && name.contains("surface");
     }
 
-    private static boolean isValidTemperatureName(String shortName) {
-        return shortName.contains("temperature")
-                || shortName.equals("airtemp")
-                || shortName.equals("tasmin")
-                || shortName.equals("tasmax")
-                || shortName.equals("temp-air");
+    private static boolean isValidTemperatureName(String name) {
+        return name.contains("temperature")
+                || name.equals("airtemp")
+                || name.equals("tasmin")
+                || name.equals("tasmax")
+                || name.equals("temp-air");
     }
 
-    private static boolean isValidSolarRadiationName(String shortName) {
-        return (shortName.contains("short") && shortName.contains("wave") || shortName.contains("solar"))
-                && shortName.contains("radiation");
+    private static boolean isValidSolarRadiationName(String name) {
+        return (name.contains("short") && name.contains("wave") || name.contains("solar"))
+                && name.contains("radiation");
     }
 
-    private static boolean isValidWindSpeedName(String shortName) {
-        return shortName.contains("wind") && shortName.contains("speed");
+    private static boolean isValidWindSpeedName(String name) {
+        return name.contains("wind") && name.contains("speed");
     }
 
-    private static boolean isValidSWEName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("water") && shortName.contains("equivalent")
-                || shortName.equals("swe") || shortName.equals("weasd");
+    private static boolean isValidSWEName(String name) {
+        return name.contains("snow") && name.contains("water") && name.contains("equivalent")
+                || name.equals("swe") || name.equals("weasd");
     }
 
-    private static boolean isValidSnowfallAccumulationName(String shortName) {
-        return shortName.contains("snowfall") && shortName.contains("accumulation");
+    private static boolean isValidSnowfallAccumulationName(String name) {
+        return name.contains("snowfall") && name.contains("accumulation");
     }
 
-    private static boolean isValidAlbedoName(String shortName) {
-        return shortName.contains("albedo");
+    private static boolean isValidAlbedoName(String name) {
+        return name.contains("albedo");
     }
 
-    private static boolean isValidSnowDepthName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("depth");
+    private static boolean isValidSnowDepthName(String name) {
+        return name.contains("snow") && name.contains("depth");
     }
 
-    private static boolean isValidLiquidWaterName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("melt") && shortName.contains("runoff")
-                || shortName.equals("liquid water");
+    private static boolean isValidLiquidWaterName(String name) {
+        return name.contains("snow") && name.contains("melt") && name.contains("runoff")
+                || equalsIgnoreCaseAndSpace(name, "liquid water");
     }
 
-    private static boolean isValidSnowSublimationName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("sublimation");
+    private static boolean isValidSnowSublimationName(String name) {
+        return name.contains("snow") && name.contains("sublimation");
     }
 
-    private static boolean isValidColdContentName(String shortName) {
-        return shortName.contains("cold") && shortName.contains("content");
+    private static boolean isValidColdContentName(String name) {
+        return equalsIgnoreCaseAndSpace(name, "cold content");
     }
 
-    private static boolean isValidColdContentATIName(String shortName) {
-        return shortName.equals("cold content ati");
+    private static boolean isValidColdContentATIName(String name) {
+        return equalsIgnoreCaseAndSpace(name, "cold content ati");
     }
 
-    private static boolean isValidMeltrateATIName(String shortName) {
-        return shortName.equals("meltrate ati");
+    private static boolean isValidMeltrateATIName(String name) {
+        return equalsIgnoreCaseAndSpace(name, "meltrate ati");
     }
 
-    private static boolean isValidSnowMeltName(String shortName) {
-        return shortName.equals("snow melt");
+    private static boolean isValidSnowMeltName(String name) {
+        return equalsIgnoreCaseAndSpace(name, "snow melt");
     }
 
     private static boolean isValidHumidityName(String name) {
-        return name.toLowerCase().contains("humidity");
+        return equalsIgnoreCaseAndSpace(name, "humidity");
+    }
+
+    private static boolean equalsIgnoreCaseAndSpace(String one, String two) {
+        String normalizedLeft = one.toLowerCase().replaceAll("\\s+", "");
+        String normalizedRight = two.toLowerCase().replaceAll("\\s+", "");
+        return normalizedLeft.equals(normalizedRight);
     }
 }
