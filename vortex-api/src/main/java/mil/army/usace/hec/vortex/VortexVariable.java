@@ -148,7 +148,7 @@ public enum VortexVariable {
     }
 
     private static boolean isValidColdContentName(String shortName) {
-        return shortName.equals("cold content");
+        return shortName.contains("cold") && shortName.contains("content");
     }
 
     private static boolean isValidColdContentATIName(String shortName) {
