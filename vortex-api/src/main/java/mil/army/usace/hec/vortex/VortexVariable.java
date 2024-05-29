@@ -89,12 +89,9 @@ public enum VortexVariable {
         return UNDEFINED;
     }
 
-    private static boolean isValidMoistureDeficitName(String name) {
-        return name.contains("deficit");
-    }
-
     private static boolean isValidPrecipitationName(String name) {
-        return name.equals("precipitation")
+        return matchesDssName(name, PRECIPITATION)
+                || name.equals("precipitation")
                 || name.equals("precip")
                 || name.contains("precip") && name.contains("rate")
                 || name.contains("precip") && name.contains("inc")
@@ -111,11 +108,12 @@ public enum VortexVariable {
     }
 
     private static boolean isValidPressureName(String name) {
-        return name.contains("pressure") && name.contains("surface");
+        return matchesDssName(name, PRESSURE) || (name.contains("pressure") && name.contains("surface"));
     }
 
     private static boolean isValidTemperatureName(String name) {
-        return name.contains("temperature")
+        return matchesDssName(name, TEMPERATURE)
+                || name.contains("temperature")
                 || name.equals("airtemp")
                 || name.equals("tasmin")
                 || name.equals("tasmax")
@@ -123,78 +121,105 @@ public enum VortexVariable {
     }
 
     private static boolean isValidSolarRadiationName(String name) {
-        return (name.contains("short") && name.contains("wave") || name.contains("solar"))
-                && name.contains("radiation");
+        return matchesDssName(name, SOLAR_RADIATION)
+                || ((name.contains("short") && name.contains("wave") || name.contains("solar")) && name.contains("radiation"));
     }
 
     private static boolean isValidWindSpeedName(String name) {
-        return name.contains("wind") && name.contains("speed");
+        return matchesDssName(name, WINDSPEED)
+                || (name.contains("wind") && name.contains("speed"));
     }
 
     private static boolean isValidSWEName(String name) {
-        return name.contains("snow") && name.contains("water") && name.contains("equivalent")
-                || name.equals("swe") || name.equals("weasd");
+        return matchesDssName(name, SWE)
+                || (name.contains("snow") && name.contains("water") && name.contains("equivalent"))
+                || name.equals("swe")
+                || name.equals("weasd");
     }
 
     private static boolean isValidSnowfallAccumulationName(String name) {
-        return name.contains("snowfall") && name.contains("accumulation");
+        return matchesDssName(name, SNOWFALL_ACCUMULATION)
+                || (name.contains("snowfall") && name.contains("accumulation"));
     }
 
     private static boolean isValidAlbedoName(String name) {
-        return name.contains("albedo");
+        return matchesDssName(name, ALBEDO)
+                || name.contains("albedo");
     }
 
     private static boolean isValidSnowDepthName(String name) {
-        return name.contains("snow") && name.contains("depth");
+        return matchesDssName(name, SNOW_DEPTH)
+                || (name.contains("snow") && name.contains("depth"));
     }
 
     private static boolean isValidLiquidWaterName(String name) {
-        return name.contains("snow") && name.contains("melt") && name.contains("runoff")
+        return matchesDssName(name, LIQUID_WATER)
+                || (name.contains("snow") && name.contains("melt") && name.contains("runoff"))
                 || equalsIgnoreCaseAndSpace(name, "liquid water");
     }
 
     private static boolean isValidSnowSublimationName(String name) {
-        return name.contains("snow") && name.contains("sublimation");
+        return matchesDssName(name, SNOW_SUBLIMATION)
+                || (name.contains("snow") && name.contains("sublimation"));
     }
 
     private static boolean isValidColdContentName(String name) {
-        return equalsIgnoreCaseAndSpace(name, "cold content");
+        return matchesDssName(name, COLD_CONTENT)
+                || equalsIgnoreCaseAndSpace(name, "cold content");
     }
 
     private static boolean isValidColdContentATIName(String name) {
-        return equalsIgnoreCaseAndSpace(name, "cold content ati");
+        return matchesDssName(name, COLD_CONTENT_ATI)
+                || equalsIgnoreCaseAndSpace(name, "cold content ati");
     }
 
     private static boolean isValidMeltrateATIName(String name) {
-        return equalsIgnoreCaseAndSpace(name, "meltrate ati");
+        return matchesDssName(name, MELTRATE_ATI)
+                || equalsIgnoreCaseAndSpace(name, "meltrate ati");
     }
 
     private static boolean isValidSnowMeltName(String name) {
-        return equalsIgnoreCaseAndSpace(name, "snow melt");
+        return matchesDssName(name, SNOW_MELT)
+                || equalsIgnoreCaseAndSpace(name, "snow melt");
     }
 
     private static boolean isValidHumidityName(String name) {
-        return equalsIgnoreCaseAndSpace(name, "humidity");
+        return matchesDssName(name, HUMIDITY)
+                || equalsIgnoreCaseAndSpace(name, "humidity");
+    }
+
+    private static boolean isValidMoistureDeficitName(String name) {
+        return matchesDssName(name, MOISTURE_DEFICIT)
+                || name.contains("deficit");
     }
 
     private static boolean isValidPercolationName(String name) {
-        return name.equals(PERCOLATION_RATE.getDssName()) || equalsIgnoreCaseAndSpace(name, "percolation rate");
+        return matchesDssName(name, PERCOLATION_RATE)
+                || equalsIgnoreCaseAndSpace(name, "percolation rate");
     }
 
     private static boolean isValidImperviousAreaName(String name) {
-        return name.equals(IMPERVIOUS_AREA.getDssName()) || equalsIgnoreCaseAndSpace(name, "impervious area");
+        return matchesDssName(name, IMPERVIOUS_AREA)
+                || equalsIgnoreCaseAndSpace(name, "impervious area");
     }
 
     private static boolean isValidScsCurveNumberName(String name) {
-        return name.equals(SCS_CURVE_NUMBER.getDssName()) || equalsIgnoreCaseAndSpace(name, "scs curve number");
+        return matchesDssName(name, SCS_CURVE_NUMBER)
+                || equalsIgnoreCaseAndSpace(name, "scs curve number");
     }
 
     private static boolean isValidStorageCapacityName(String name) {
-        return name.equals(STORAGE_CAPACITY.getDssName()) || equalsIgnoreCaseAndSpace(name, "storage capacity");
+        return matchesDssName(name, STORAGE_CAPACITY)
+                || equalsIgnoreCaseAndSpace(name, "storage capacity");
     }
 
     private static boolean isValidStorageCoefficientName(String name) {
-        return name.equals(STORAGE_COEFFICIENT.getDssName()) || equalsIgnoreCaseAndSpace(name, "storage coefficient");
+        return matchesDssName(name, STORAGE_COEFFICIENT)
+                || equalsIgnoreCaseAndSpace(name, "storage coefficient");
+    }
+
+    private static boolean matchesDssName(String name, VortexVariable variable) {
+        return name.equalsIgnoreCase(variable.getDssName());
     }
 
     private static boolean equalsIgnoreCaseAndSpace(String one, String two) {
