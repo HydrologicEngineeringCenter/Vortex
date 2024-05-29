@@ -205,7 +205,7 @@ public enum VortexVariable {
 
     private static boolean isValidScsCurveNumberName(String name) {
         return matchesDssName(name, SCS_CURVE_NUMBER)
-                || equalsIgnoreCaseAndSpace(name, "scs curve number");
+                || equalsIgnoreCaseAndSpace(name, "curve number");
     }
 
     private static boolean isValidStorageCapacityName(String name) {
@@ -219,12 +219,20 @@ public enum VortexVariable {
     }
 
     private static boolean matchesDssName(String name, VortexVariable variable) {
-        return name.equalsIgnoreCase(variable.getDssName());
+        String normalizedName = normalizeString(name);
+        String normalizedDSS = normalizeString(variable.getDssName());
+        return normalizedName.equals(normalizedDSS);
     }
 
     private static boolean equalsIgnoreCaseAndSpace(String one, String two) {
-        String normalizedLeft = one.toLowerCase().replaceAll("\\s+", "");
-        String normalizedRight = two.toLowerCase().replaceAll("\\s+", "");
+        String normalizedLeft = normalizeString(one);
+        String normalizedRight = normalizeString(two);
         return normalizedLeft.equals(normalizedRight);
+    }
+
+    private static String normalizeString(String name) {
+        return name.toLowerCase()
+                .replaceAll("\\s+", "")
+                .replace("_", "");
     }
 }
