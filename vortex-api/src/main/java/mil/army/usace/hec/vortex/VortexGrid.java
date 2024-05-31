@@ -34,8 +34,6 @@ public class VortexGrid implements VortexData, Serializable {
     private final VortexDataType dataType;
     private final double terminusX;
     private final double terminusY;
-    private final double[] xCoordinates;
-    private final double[] yCoordinates;
 
     private VortexGrid(VortexGridBuilder builder) {
 
@@ -61,8 +59,6 @@ public class VortexGrid implements VortexData, Serializable {
         terminusX = originX + dx * nx;
         terminusY = originY + dy * ny;
 
-        xCoordinates = generateCoordinates(originX, dx, nx);
-        yCoordinates = generateCoordinates(originY, dy, ny);
     }
 
     public static class VortexGridBuilder {
@@ -310,18 +306,6 @@ public class VortexGrid implements VortexData, Serializable {
         return dataType != null ? dataType : inferDataType();
     }
 
-    public double[] xCoordinates() {
-        double[] copy = new double[xCoordinates.length];
-        System.arraycopy(xCoordinates, 0, copy, 0, copy.length);
-        return copy;
-    }
-
-    public double[] yCoordinates() {
-        double[] copy = new double[yCoordinates.length];
-        System.arraycopy(yCoordinates, 0, copy, 0, copy.length);
-        return copy;
-    }
-
     public float[][][] data3D() {
         float[][][] data3D = new float[1][ny][nx];
         for (int y = 0; y < ny; y++) System.arraycopy(data, y * nx, data3D[0][y], 0, nx);
@@ -461,16 +445,6 @@ public class VortexGrid implements VortexData, Serializable {
                 ", terminusX=" + terminusX +
                 ", terminusY=" + terminusY +
                 '}';
-    }
-
-    private static double[] generateCoordinates(double origin, double stepSize, int count) {
-        double[] coordinates = new double[count];
-
-        for (int i = 0; i < count; i++) {
-            coordinates[i] = origin + (i + 1) * stepSize - (stepSize / 2);
-        }
-
-        return coordinates;
     }
 }
 

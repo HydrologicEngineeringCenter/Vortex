@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -24,13 +25,23 @@ public class VortexGridCollection {
 
     private final List<VortexGrid> vortexGridList;
     private final VortexGrid defaultGrid;
+    private final double[] xCoordinates;
+    private final double[] yCoordinates;
     private final ZonedDateTime baseTime;
 
     public VortexGridCollection(List<VortexGrid> vortexGrids) {
-        vortexGridList = vortexGrids;
-        defaultGrid = !vortexGridList.isEmpty() ? vortexGrids.get(0) : null;
         baseTime = initBaseTime();
-        cleanCollection();
+
+        vortexGridList = sanitizeCollection(vortexGrids);
+        if (!vortexGridList.isEmpty()) {
+            defaultGrid = vortexGrids.get(0);
+            xCoordinates = generateCoordinates(defaultGrid.originX(), defaultGrid.dx(), defaultGrid.nx());
+            yCoordinates = generateCoordinates(defaultGrid.originY(), defaultGrid.dy(), defaultGrid.ny());
+        } else {
+            defaultGrid = null;
+            xCoordinates = null;
+            yCoordinates = null;
+        }
     }
 
     /* Init */
@@ -38,18 +49,36 @@ public class VortexGridCollection {
         return ZonedDateTime.of(1900,1,1,0,0,0,0, ZoneId.of("UTC"));
     }
 
-    private void cleanCollection() {
-        String shortName = defaultGrid.shortName();
-        String wkt = defaultGrid.wkt();
+    private static List<VortexGrid> sanitizeCollection(List<VortexGrid> vortexGrids) {
+        VortexGrid baseGrid = vortexGrids.get(0);
+        String baseShortName = baseGrid.shortName();
+        String baseWkt = baseGrid.wkt();
 
-        if (shortName.isEmpty()) {
-            logger.warning("Short name not found");
-        } else if (wkt.isEmpty()) {
-            logger.warning("Wkt not found");
+        Predicate<VortexGrid> predicate = vortexGrid -> {
+            boolean sameShortName = Objects.equals(baseShortName, vortexGrid.shortName());
+            boolean sameWkt = Objects.equals(baseWkt, vortexGrid.wkt());
+
+            if (sameShortName && sameWkt) {
+                return true;
+            } else {
+                logger.info(() -> "Filtered from collection: " + vortexGrid);
+                return false;
+            }
+        };
+
+        return vortexGrids.stream()
+                .filter(predicate)
+                .toList();
+    }
+
+    private static double[] generateCoordinates(double origin, double stepSize, int count) {
+        double[] coordinates = new double[count];
+
+        for (int i = 0; i < count; i++) {
+            coordinates[i] = origin + (i + 1) * stepSize - (stepSize / 2);
         }
 
-        vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
-        vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
+        return coordinates;
     }
 
     /* Conditionals */
@@ -117,11 +146,11 @@ public class VortexGridCollection {
 
     /* Y and X */
     public double[] getYCoordinates() {
-        return defaultGrid.yCoordinates();
+        return yCoordinates.clone();
     }
 
     public double[] getXCoordinates() {
-        return defaultGrid.xCoordinates();
+        return xCoordinates.clone();
     }
 
     public int getNy() {
