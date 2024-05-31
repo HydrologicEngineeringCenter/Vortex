@@ -390,6 +390,29 @@ public class VortexGrid implements VortexData, Serializable {
         return startTime != null && endTime != null;
     }
 
+    public boolean hasSameData(VortexGrid that) {
+        float[] thisData = this.data();
+        float[] thatData = that.data();
+
+        if (thisData.length != thatData.length) {
+            return false;
+        }
+
+        for (int i = 0; i < thisData.length; i++) {
+            float thisValue = thisData[i];
+            float thatValue = thatData[i];
+
+            boolean sameFloatValue = thisValue == thatValue;
+            boolean bothAreNoData = this.isNoDataValue(thisValue) && that.isNoDataValue(thatValue);
+
+            if (!sameFloatValue && !bothAreNoData) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -400,9 +423,8 @@ public class VortexGrid implements VortexData, Serializable {
         if (ny != that.ny) return false;
         if (Double.compare(that.originX, originX) != 0) return false;
         if (Double.compare(that.originY, originY) != 0) return false;
-        if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
         if (!ReferenceUtils.equals(wkt, that.wkt)) return false;
-        if (!Arrays.equals(data, that.data)) return false;
+        if (!this.hasSameData(that)) return false;
         if (!UnitUtil.equals(units, that.units)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
@@ -425,8 +447,6 @@ public class VortexGrid implements VortexData, Serializable {
         temp = Double.doubleToLongBits(originY);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (wkt != null ? wkt.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(data);
-        temp = Double.doubleToLongBits(noDataValue);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (units != null ? units.hashCode() : 0);
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
