@@ -55,7 +55,7 @@ public class GridDataProcessor {
             double[] avgData = calculateAverageOfTwoGrids(grid1, grid2, remainingStart, end);
 
             for (int j = 0; j < avgData.length; j++) {
-                result[j] += avgData[j];
+                result[j] += (float) avgData[j];
             }
 
             remainingStart = avgEnd;
@@ -148,7 +148,7 @@ public class GridDataProcessor {
 
                 if (!isNaN) {
                     double weightedData = gridData[dataIndex] * weights[gridIndex];
-                    result[dataIndex] += weightedData;
+                    result[dataIndex] += (float) weightedData;
                 } else {
                     result[dataIndex] = (float) grid.noDataValue();
                 }
