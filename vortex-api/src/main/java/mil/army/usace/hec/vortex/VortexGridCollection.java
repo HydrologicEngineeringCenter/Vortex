@@ -38,9 +38,9 @@ public class VortexGridCollection {
             xCoordinates = generateCoordinates(defaultGrid.originX(), defaultGrid.dx(), defaultGrid.nx());
             yCoordinates = generateCoordinates(defaultGrid.originY(), defaultGrid.dy(), defaultGrid.ny());
         } else {
-            defaultGrid = null;
-            xCoordinates = null;
-            yCoordinates = null;
+            defaultGrid = VortexGrid.noDataGrid();
+            xCoordinates = new double[0];
+            yCoordinates = new double[0];
         }
     }
 
@@ -133,7 +133,7 @@ public class VortexGridCollection {
                 return parameter.getStringValue();
             }
         }
-        return null;
+        return "Unknown Projection Name";
     }
 
     public String getProjectionUnit() {

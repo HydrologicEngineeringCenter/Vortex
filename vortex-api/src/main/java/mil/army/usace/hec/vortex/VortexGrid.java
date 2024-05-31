@@ -218,6 +218,22 @@ public class VortexGrid implements VortexData, Serializable {
         return new VortexGridBuilder();
     }
 
+    public static VortexGrid noDataGrid() {
+        return VortexGrid.builder()
+                .shortName("")
+                .fullName("")
+                .description("")
+                .fileName("")
+                .nx(0).ny(0)
+                .dx(0).dy(0)
+                .wkt("")
+                .data(new float[0])
+                .noDataValue(Double.NaN)
+                .units("")
+                .dataType(VortexDataType.UNDEFINED)
+                .build();
+    }
+
     public double dx() {
         return dx;
     }

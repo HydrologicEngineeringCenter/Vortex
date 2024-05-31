@@ -48,14 +48,20 @@ public class NetcdfGridWriter {
 
     public NetcdfGridWriter(List<VortexGrid> vortexGridList) {
         gridCollectionMap = initGridCollectionMap(vortexGridList);
-        defaultCollection = getAnyCollection();
+        defaultCollection = gridCollectionMap.values().stream()
+                .findAny()
+                .orElse(new VortexGridCollection(Collections.emptyList()));
+
         // Dimensions
         timeDim = Dimension.builder().setName(CF.TIME).setIsUnlimited(true).build();
-        latDim = Dimension.builder().setName(CF.LATITUDE).setLength(defaultCollection.getNy()).build();
-        lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(defaultCollection.getNx()).build();
-        yDim = Dimension.builder().setName("y").setLength(defaultCollection.getNy()).build();
-        xDim = Dimension.builder().setName("x").setLength(defaultCollection.getNx()).build();
         boundsDim = Dimension.builder().setName("nv").setIsUnlimited(true).build();
+
+        int ny = defaultCollection.getNy();
+        int nx = defaultCollection.getNx();
+        latDim = Dimension.builder().setName(CF.LATITUDE).setLength(ny).build();
+        lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(nx).build();
+        yDim = Dimension.builder().setName("y").setLength(ny).build();
+        xDim = Dimension.builder().setName("x").setLength(nx).build();
     }
 
     private Map<String, VortexGridCollection> initGridCollectionMap(List<VortexGrid> vortexGridList) {
@@ -86,10 +92,6 @@ public class NetcdfGridWriter {
             logger.severe("Data is not the same for all grids");
         }
         return isUnique;
-    }
-
-    private VortexGridCollection getAnyCollection() {
-        return gridCollectionMap.values().stream().findAny().orElse(null);
     }
 
     /* Write Methods */
