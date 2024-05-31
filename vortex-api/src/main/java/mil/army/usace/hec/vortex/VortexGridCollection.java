@@ -50,6 +50,10 @@ public class VortexGridCollection {
     }
 
     private static List<VortexGrid> sanitizeCollection(List<VortexGrid> vortexGrids) {
+        if (vortexGrids == null || vortexGrids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         VortexGrid baseGrid = vortexGrids.get(0);
         String baseShortName = baseGrid.shortName();
         String baseWkt = baseGrid.wkt();
