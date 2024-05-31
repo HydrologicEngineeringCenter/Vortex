@@ -41,7 +41,6 @@ public class VortexGridCollection {
     private void cleanCollection() {
         String shortName = defaultGrid.shortName();
         String wkt = defaultGrid.wkt();
-        Duration interval = defaultGrid.interval();
 
         if (shortName.isEmpty()) {
             logger.warning("Short name not found");
@@ -51,7 +50,6 @@ public class VortexGridCollection {
 
         vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
         vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
-        vortexGridList.removeIf(g -> !Objects.equals(interval, g.interval()));
     }
 
     /* Conditionals */
