@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex;
 
+import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.util.UnitUtil;
 
@@ -214,6 +215,22 @@ public class VortexGrid implements VortexData, Serializable {
         return new VortexGridBuilder();
     }
 
+    public static VortexGrid noDataGrid() {
+        return VortexGrid.builder()
+                .shortName("")
+                .fullName("")
+                .description("")
+                .fileName("")
+                .nx(0).ny(0)
+                .dx(0).dy(0)
+                .wkt("")
+                .data(new float[0])
+                .noDataValue(Double.NaN)
+                .units("")
+                .dataType(VortexDataType.UNDEFINED)
+                .build();
+    }
+
     public double dx() {
         return dx;
     }
@@ -298,22 +315,8 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
-    VortexDataType dataType() {
+    public VortexDataType dataType() {
         return dataType != null ? dataType : inferDataType();
-    }
-
-    public double[] xCoordinates() {
-        double[] xCoordinates = new double[nx];
-        // xCoordinates[i] = midpoint of xEdges[i] and xEdges[i + 1]
-        for (int i = 0; i < nx; i++) xCoordinates[i] = originX + (i + 1) * dx - (dx / 2);
-        return xCoordinates;
-    }
-
-    public double[] yCoordinates() {
-        double[] yCoordinates = new double[ny];
-        // yCoordinates[i] = midpoint of yEdges[i] and yEdges[i + 1]
-        for (int i = 0; i < ny; i++) yCoordinates[i] = originY + (i + 1) * dy - (dy / 2);
-        return yCoordinates;
     }
 
     public float[][][] data3D() {
@@ -332,22 +335,89 @@ public class VortexGrid implements VortexData, Serializable {
         };
     }
 
+    /**
+     * Retrieves the value from the data grid at the specified x and y coordinates,
+     * assuming the data grid is oriented with the origin at the top-left corner.
+     * @param x the x-coordinate of the point whose value is to be retrieved,
+     *          relative to the coordinate system defined by the grid's origin and cell size.
+     * @param y the y-coordinate of the point, adjusted to consider the grid's top-down orientation.
+     *          This value is calculated from the top of the data grid, with y values increasing downwards.
+     * @return the value at the specified x and y coordinates if within bounds and not a no-data value;
+     *         otherwise, returns {@code Double.NaN}.
+     */
+    public double getValueAt(int x, int y) {
+        if (isFlippedY()) return getValueAtFlippedY(x, y);
+
+        int scaledOriginX = (int) (originX / Math.abs(dx));
+        int scaledOriginY = (int) (originY / Math.abs(dy));
+
+        int relativeX = x - scaledOriginX;
+        int relativeY = y - scaledOriginY;
+        int k = Math.abs((relativeY * nx) + relativeX);
+
+        return data[k];
+    }
+
+    private double getValueAtFlippedY(int x, int y) {
+        int scaledOriginX = (int) (originX / Math.abs(dx));
+        int scaledTerminusY = (int) (terminusY / Math.abs(dy));
+
+        int relativeX = x - scaledOriginX;
+        int relativeY = y - scaledTerminusY;
+
+        int k = Math.abs((relativeY * nx) + relativeX);
+
+        float[] flippedData = RasterUtils.flipVertically(data, nx);
+        return flippedData[k];
+    }
+
+    private boolean isFlippedY() {
+        return terminusY < originY;
+    }
+
+    public boolean isNoDataValue(double value) {
+        return value == noDataValue || Double.isNaN(value);
+    }
+
+    public boolean hasTime() {
+        return startTime != null && endTime != null;
+    }
+
+    public boolean hasSameData(VortexGrid that) {
+        float[] thisData = this.data();
+        float[] thatData = that.data();
+
+        if (thisData.length != thatData.length) {
+            return false;
+        }
+
+        for (int i = 0; i < thisData.length; i++) {
+            float thisValue = thisData[i];
+            float thatValue = thatData[i];
+
+            boolean sameFloatValue = thisValue == thatValue;
+            boolean bothAreNoData = this.isNoDataValue(thisValue) && that.isNoDataValue(thatValue);
+
+            if (!sameFloatValue && !bothAreNoData) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VortexGrid)) return false;
-
-        VortexGrid that = (VortexGrid) o;
-
+        if (!(o instanceof VortexGrid that)) return false;
         if (Double.compare(that.dx, dx) != 0) return false;
         if (Double.compare(that.dy, dy) != 0) return false;
         if (nx != that.nx) return false;
         if (ny != that.ny) return false;
         if (Double.compare(that.originX, originX) != 0) return false;
         if (Double.compare(that.originY, originY) != 0) return false;
-        if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
         if (!ReferenceUtils.equals(wkt, that.wkt)) return false;
-        if (!Arrays.equals(data, that.data)) return false;
+        if (!this.hasSameData(that)) return false;
         if (!UnitUtil.equals(units, that.units)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
@@ -370,8 +440,6 @@ public class VortexGrid implements VortexData, Serializable {
         temp = Double.doubleToLongBits(originY);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (wkt != null ? wkt.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(data);
-        temp = Double.doubleToLongBits(noDataValue);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (units != null ? units.hashCode() : 0);
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
@@ -379,6 +447,33 @@ public class VortexGrid implements VortexData, Serializable {
         result = 31 * result + (interval != null ? interval.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         return result;
+    }
+
+    // Add to help with debugging (when testing VortexGrid::equals)
+    @Override
+    public String toString() {
+        return "VortexGrid{" +
+                "dx=" + dx +
+                ", dy=" + dy +
+                ", nx=" + nx +
+                ", ny=" + ny +
+                ", originX=" + originX +
+                ", originY=" + originY +
+                ", wkt='" + wkt + '\'' +
+                ", data=" + Arrays.toString(data) +
+                ", noDataValue=" + noDataValue +
+                ", units='" + units + '\'' +
+                ", fileName='" + fileName + '\'' +
+                ", shortName='" + shortName + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", description='" + description + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", interval=" + interval +
+                ", dataType=" + dataType +
+                ", terminusX=" + terminusX +
+                ", terminusY=" + terminusY +
+                '}';
     }
 }
 
