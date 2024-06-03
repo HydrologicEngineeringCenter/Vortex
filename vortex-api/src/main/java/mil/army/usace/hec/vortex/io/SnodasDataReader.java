@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexTimeRecord;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.gdal.gdal.Band;
@@ -57,6 +58,13 @@ class SnodasDataReader extends DataReader {
         else
             return null;
     } // getDto()
+
+    @Override
+    public List<VortexTimeRecord> getTimeRecords() {
+        return getDtos().stream()
+                .map(VortexTimeRecord::of)
+                .toList();
+    }
 
     private static Map<String,String> parseFile(String fileName) {
         Map<String,String> info = new HashMap<>();
