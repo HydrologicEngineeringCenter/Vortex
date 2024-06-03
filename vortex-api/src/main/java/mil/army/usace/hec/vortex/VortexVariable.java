@@ -19,6 +19,14 @@ public enum VortexVariable {
     COLD_CONTENT_ATI("cold content ati", "cold_content_ati", "COLD CONTENT ATI"),
     MELTRATE_ATI("meltrate ati", "meltrate_ati", "MELTRATE ATI"),
     SNOW_MELT("snow melt", "surface_snow_melt_amount", "SNOW MELT"),
+    HUMIDITY("humidity", "relative_humidity", "HUMIDITY"),
+    MOISTURE_DEFICIT("moisture_deficit", "moisture_deficit_todo", "DEFICIT"),
+    PERCOLATION_RATE("percolation rate", "percolation_todo", "PERCOLATION"),
+    IMPERVIOUS_AREA("impervious area", "impervious_area_todo", "IMPERVIOUS"),
+    SCS_CURVE_NUMBER("scs curve number", "scs_curve_number_todo", "CURVE"),
+    STORAGE_CAPACITY("storage capacity", "storage_capacity_todo", "STOR-CAP"),
+    STORAGE_COEFFICIENT("storage coefficient", "storage_coefficient_todo", "STOR-COEF"),
+    CROP_COEFFICIENT("crop coefficient", "crop_coefficient_todo", "CROP_COEFF"),
     UNDEFINED("", "", "");
 
     private final String shortName;
@@ -39,7 +47,7 @@ public enum VortexVariable {
     }
 
     public String getShortName() {
-        return shortName;
+        return normalizeString(shortName);
     }
 
     public String getLongName() {
@@ -68,85 +76,167 @@ public enum VortexVariable {
         if (isValidColdContentATIName(name)) return COLD_CONTENT_ATI;
         if (isValidMeltrateATIName(name)) return MELTRATE_ATI;
         if (isValidSnowMeltName(name)) return SNOW_MELT;
+        if (isValidHumidityName(name)) return HUMIDITY;
+        if (isValidMoistureDeficitName(name)) return MOISTURE_DEFICIT;
+        if (isValidPercolationName(name)) return PERCOLATION_RATE;
+        if (isValidImperviousAreaName(name)) return IMPERVIOUS_AREA;
+        if (isValidScsCurveNumberName(name)) return SCS_CURVE_NUMBER;
+        if (isValidStorageCapacityName(name)) return STORAGE_CAPACITY;
+        if (isValidStorageCoefficientName(name)) return STORAGE_COEFFICIENT;
+        if (isValidCropCoefficientName(name)) return CROP_COEFFICIENT;
         return UNDEFINED;
     }
 
-    private static boolean isValidPrecipitationName(String shortName) {
-        return shortName.equals("precipitation")
-                || shortName.equals("precip")
-                || shortName.contains("precip") && shortName.contains("rate")
-                || shortName.contains("precipitable") && shortName.contains("water")
-                || shortName.contains("qpe")
-                || shortName.equals("var209-6")
-                || shortName.equals("cmorph")
-                || shortName.equals("rainfall")
-                || shortName.equals("pcp")
-                || shortName.equals("pr")
-                || shortName.equals("prec")
-                || shortName.equals("prcp")
-                || shortName.equals("total precipitation");
+    private static boolean isValidPrecipitationName(String name) {
+        return matchesDssName(name, PRECIPITATION)
+                || name.equals("precipitation")
+                || name.equals("precip")
+                || name.contains("precip") && name.contains("rate")
+                || name.contains("precip") && name.contains("inc")
+                || name.contains("precipitable") && name.contains("water")
+                || name.contains("qpe")
+                || name.equals("var209-6")
+                || name.equals("cmorph")
+                || name.equals("rainfall")
+                || name.equals("pcp")
+                || name.equals("pr")
+                || name.equals("prec")
+                || name.equals("prcp")
+                || name.equals("total precipitation");
     }
 
-    private static boolean isValidPressureName(String shortName) {
-        return shortName.contains("pressure") && shortName.contains("surface");
+    private static boolean isValidPressureName(String name) {
+        return matchesDssName(name, PRESSURE) || (name.contains("pressure") && name.contains("surface"));
     }
 
-    private static boolean isValidTemperatureName(String shortName) {
-        return shortName.contains("temperature")
-                || shortName.equals("airtemp")
-                || shortName.equals("tasmin")
-                || shortName.equals("tasmax")
-                || shortName.equals("temp-air");
+    private static boolean isValidTemperatureName(String name) {
+        return matchesDssName(name, TEMPERATURE)
+                || name.contains("temperature")
+                || name.equals("airtemp")
+                || name.equals("tasmin")
+                || name.equals("tasmax")
+                || name.equals("temp")
+                || name.equals("temp-air");
     }
 
-    private static boolean isValidSolarRadiationName(String shortName) {
-        return (shortName.contains("short") && shortName.contains("wave") || shortName.contains("solar"))
-                && shortName.contains("radiation");
+    private static boolean isValidSolarRadiationName(String name) {
+        return matchesDssName(name, SOLAR_RADIATION)
+                || ((name.contains("short") && name.contains("wave") || name.contains("solar")) && name.contains("radiation"));
     }
 
-    private static boolean isValidWindSpeedName(String shortName) {
-        return shortName.contains("wind") && shortName.contains("speed");
+    private static boolean isValidWindSpeedName(String name) {
+        return matchesDssName(name, WINDSPEED)
+                || (name.contains("wind") && name.contains("speed"));
     }
 
-    private static boolean isValidSWEName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("water") && shortName.contains("equivalent")
-                || shortName.equals("swe") || shortName.equals("weasd");
+    private static boolean isValidSWEName(String name) {
+        return matchesDssName(name, SWE)
+                || (name.contains("snow") && name.contains("water") && name.contains("equivalent"))
+                || name.equals("swe")
+                || name.equals("weasd");
     }
 
-    private static boolean isValidSnowfallAccumulationName(String shortName) {
-        return shortName.contains("snowfall") && shortName.contains("accumulation");
+    private static boolean isValidSnowfallAccumulationName(String name) {
+        return matchesDssName(name, SNOWFALL_ACCUMULATION)
+                || (name.contains("snowfall") && name.contains("accumulation"));
     }
 
-    private static boolean isValidAlbedoName(String shortName) {
-        return shortName.contains("albedo");
+    private static boolean isValidAlbedoName(String name) {
+        return matchesDssName(name, ALBEDO)
+                || name.contains("albedo");
     }
 
-    private static boolean isValidSnowDepthName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("depth");
+    private static boolean isValidSnowDepthName(String name) {
+        return matchesDssName(name, SNOW_DEPTH)
+                || (name.contains("snow") && name.contains("depth"));
     }
 
-    private static boolean isValidLiquidWaterName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("melt") && shortName.contains("runoff")
-                || shortName.equals("liquid water");
+    private static boolean isValidLiquidWaterName(String name) {
+        return matchesDssName(name, LIQUID_WATER)
+                || (name.contains("snow") && name.contains("melt") && name.contains("runoff"))
+                || equalsIgnoreCaseAndSpace(name, "liquid water");
     }
 
-    private static boolean isValidSnowSublimationName(String shortName) {
-        return shortName.contains("snow") && shortName.contains("sublimation");
+    private static boolean isValidSnowSublimationName(String name) {
+        return matchesDssName(name, SNOW_SUBLIMATION)
+                || (name.contains("snow") && name.contains("sublimation"));
     }
 
-    private static boolean isValidColdContentName(String shortName) {
-        return shortName.equals("cold content");
+    private static boolean isValidColdContentName(String name) {
+        return matchesDssName(name, COLD_CONTENT)
+                || equalsIgnoreCaseAndSpace(name, "cold content");
     }
 
-    private static boolean isValidColdContentATIName(String shortName) {
-        return shortName.equals("cold content ati");
+    private static boolean isValidColdContentATIName(String name) {
+        return matchesDssName(name, COLD_CONTENT_ATI)
+                || equalsIgnoreCaseAndSpace(name, "cold content ati");
     }
 
-    private static boolean isValidMeltrateATIName(String shortName) {
-        return shortName.equals("meltrate ati");
+    private static boolean isValidMeltrateATIName(String name) {
+        return matchesDssName(name, MELTRATE_ATI)
+                || equalsIgnoreCaseAndSpace(name, "meltrate ati");
     }
 
-    private static boolean isValidSnowMeltName(String shortName) {
-        return shortName.equals("snow melt");
+    private static boolean isValidSnowMeltName(String name) {
+        return matchesDssName(name, SNOW_MELT)
+                || equalsIgnoreCaseAndSpace(name, "snow melt");
+    }
+
+    private static boolean isValidHumidityName(String name) {
+        return matchesDssName(name, HUMIDITY)
+                || equalsIgnoreCaseAndSpace(name, "humidity");
+    }
+
+    private static boolean isValidMoistureDeficitName(String name) {
+        return matchesDssName(name, MOISTURE_DEFICIT)
+                || name.contains("deficit");
+    }
+
+    private static boolean isValidPercolationName(String name) {
+        return matchesDssName(name, PERCOLATION_RATE)
+                || equalsIgnoreCaseAndSpace(name, "percolation rate");
+    }
+
+    private static boolean isValidImperviousAreaName(String name) {
+        return matchesDssName(name, IMPERVIOUS_AREA)
+                || equalsIgnoreCaseAndSpace(name, "impervious area");
+    }
+
+    private static boolean isValidScsCurveNumberName(String name) {
+        return matchesDssName(name, SCS_CURVE_NUMBER)
+                || equalsIgnoreCaseAndSpace(name, "curve number");
+    }
+
+    private static boolean isValidStorageCapacityName(String name) {
+        return matchesDssName(name, STORAGE_CAPACITY)
+                || equalsIgnoreCaseAndSpace(name, "storage capacity");
+    }
+
+    private static boolean isValidStorageCoefficientName(String name) {
+        return matchesDssName(name, STORAGE_COEFFICIENT)
+                || equalsIgnoreCaseAndSpace(name, "storage coefficient");
+    }
+
+    private static boolean isValidCropCoefficientName(String name) {
+        return matchesDssName(name, CROP_COEFFICIENT)
+                || equalsIgnoreCaseAndSpace(name, "crop coefficient");
+    }
+
+    private static boolean matchesDssName(String name, VortexVariable variable) {
+        String normalizedName = normalizeString(name);
+        String normalizedDSS = normalizeString(variable.getDssName());
+        return normalizedName.equals(normalizedDSS);
+    }
+
+    private static boolean equalsIgnoreCaseAndSpace(String one, String two) {
+        String normalizedLeft = normalizeString(one);
+        String normalizedRight = normalizeString(two);
+        return normalizedLeft.equals(normalizedRight);
+    }
+
+    private static String normalizeString(String name) {
+        return name.toLowerCase()
+                .replaceAll("\\s+", "")
+                .replace("_", "");
     }
 }
