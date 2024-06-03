@@ -37,6 +37,20 @@ public class Grid {
         private int ny;
         private String crs;
 
+        public Builder() {
+            // Empty constructor
+        }
+
+        public Builder(Grid copyGrid) {
+            this.originX = copyGrid.getOriginX();
+            this.originY = copyGrid.getOriginY();
+            this.dx = copyGrid.getDx();
+            this.dy = copyGrid.getDy();
+            this.nx = copyGrid.getNx();
+            this.ny = copyGrid.getNy();
+            this.crs = copyGrid.getCrs();
+        }
+
         public Builder originX(double originX) {
             this.originX = originX;
             return this;
@@ -79,6 +93,10 @@ public class Grid {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static Builder toBuilder(Grid grid) {
+        return new Builder(grid);
     }
 
     public List<GridCell> getGridCells() {
