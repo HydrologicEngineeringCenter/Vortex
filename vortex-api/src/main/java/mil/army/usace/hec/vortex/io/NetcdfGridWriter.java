@@ -1,10 +1,9 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.VortexProperty;
-import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
-import mil.army.usace.hec.vortex.util.UnitUtil;
+import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.VortexVariable;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
@@ -20,10 +19,7 @@ import javax.measure.Unit;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -52,14 +48,20 @@ public class NetcdfGridWriter {
 
     public NetcdfGridWriter(List<VortexGrid> vortexGridList) {
         gridCollectionMap = initGridCollectionMap(vortexGridList);
-        defaultCollection = getAnyCollection();
+        defaultCollection = gridCollectionMap.values().stream()
+                .findAny()
+                .orElse(new VortexGridCollection(Collections.emptyList()));
+
         // Dimensions
         timeDim = Dimension.builder().setName(CF.TIME).setIsUnlimited(true).build();
-        latDim = Dimension.builder().setName(CF.LATITUDE).setLength(defaultCollection.getNy()).build();
-        lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(defaultCollection.getNx()).build();
-        yDim = Dimension.builder().setName("y").setLength(defaultCollection.getNy()).build();
-        xDim = Dimension.builder().setName("x").setLength(defaultCollection.getNx()).build();
         boundsDim = Dimension.builder().setName("nv").setIsUnlimited(true).build();
+
+        int ny = defaultCollection.getNy();
+        int nx = defaultCollection.getNx();
+        latDim = Dimension.builder().setName(CF.LATITUDE).setLength(ny).build();
+        lonDim = Dimension.builder().setName(CF.LONGITUDE).setLength(nx).build();
+        yDim = Dimension.builder().setName("y").setLength(ny).build();
+        xDim = Dimension.builder().setName("x").setLength(nx).build();
     }
 
     private Map<String, VortexGridCollection> initGridCollectionMap(List<VortexGrid> vortexGridList) {
@@ -77,8 +79,7 @@ public class NetcdfGridWriter {
         // No need to check lat & lon since they are generated from (x & y & projection)
         boolean yMatched = isUnique(VortexGridCollection::getYCoordinates, map);
         boolean xMatched = isUnique(VortexGridCollection::getXCoordinates, map);
-        boolean timeMatched = isUnique(VortexGridCollection::getTimeData, map);
-        return projectionMatched && yMatched && xMatched && timeMatched;
+        return projectionMatched && yMatched && xMatched;
     }
 
     private boolean isUnique(Function<VortexGridCollection, ?> propertyGetter, Map<String, VortexGridCollection> map) {
@@ -87,12 +88,10 @@ public class NetcdfGridWriter {
                 .map(o -> (o instanceof double[] || o instanceof float[]) ? Arrays.deepToString(new Object[] {o}) : o)
                 .distinct()
                 .count() == 1;
-        if (!isUnique) logger.severe("Data is not the same for all grids");
+        if (!isUnique) {
+            logger.severe("Data is not the same for all grids");
+        }
         return isUnique;
-    }
-
-    private VortexGridCollection getAnyCollection() {
-        return gridCollectionMap.values().stream().findAny().orElse(null);
     }
 
     /* Write Methods */
@@ -109,13 +108,19 @@ public class NetcdfGridWriter {
     }
 
     private void writeDimensions(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        writer.write(timeDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getTimeData()));
+        if (defaultCollection.hasTimeDimension()) {
+            writer.write(timeDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getTimeData()));
+        }
 
-        if (defaultCollection.hasTimeBounds())
+        if (defaultCollection.hasTimeBounds()) {
             writer.write(getBoundsName(timeDim), Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
+        }
 
-        if (defaultCollection.isGeographic()) writeDimensionsGeographic(writer);
-        else writeDimensionsProjected(writer);
+        if (defaultCollection.isGeographic()) {
+            writeDimensionsGeographic(writer);
+        } else {
+            writeDimensionsProjected(writer);
+        }
     }
 
     private void writeDimensionsGeographic(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
@@ -124,11 +129,8 @@ public class NetcdfGridWriter {
     }
 
     private void writeDimensionsProjected(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
-        Map<String, double[][]> latLonMap = defaultCollection.getLatLonCoordinates();
         writer.write(yDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getYCoordinates()));
         writer.write(xDim.getShortName(), Array.makeFromJavaArray(defaultCollection.getXCoordinates()));
-        writer.write(latDim.getShortName(), Array.makeFromJavaArray(latLonMap.get("lat")));
-        writer.write(lonDim.getShortName(), Array.makeFromJavaArray(latLonMap.get("lon")));
     }
 
     private void writeVariableGrids(NetcdfFormatWriter writer, int startIndex) {
@@ -167,8 +169,13 @@ public class NetcdfGridWriter {
 
     /* Add Dimensions */
     private void addDimensions(NetcdfFormatWriter.Builder writerBuilder) {
-        writerBuilder.addDimension(timeDim);
-        if (defaultCollection.hasTimeBounds()) writerBuilder.addDimension(boundsDim);
+        if (defaultCollection.hasTimeDimension()) {
+            writerBuilder.addDimension(timeDim);
+        }
+
+        if (defaultCollection.hasTimeBounds()) {
+            writerBuilder.addDimension(boundsDim);
+        }
 
         if (defaultCollection.isGeographic()) {
             writerBuilder.addDimension(latDim);
@@ -182,7 +189,9 @@ public class NetcdfGridWriter {
     /* Add Variables */
     private void addVariables(NetcdfFormatWriter.Builder writerBuilder) {
         addVariableTime(writerBuilder);
-        if (defaultCollection.hasTimeBounds()) addVariableTimeBounds(writerBuilder);
+        if (defaultCollection.hasTimeBounds()) {
+            addVariableTimeBounds(writerBuilder);
+        }
         addVariableLat(writerBuilder);
         addVariableLon(writerBuilder);
         addVariableGridCollection(writerBuilder);
@@ -195,15 +204,22 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableTime(NetcdfFormatWriter.Builder writerBuilder) {
-        Variable.Builder<?> v = writerBuilder.addVariable(timeDim.getShortName(), DataType.FLOAT, List.of(timeDim));
+        if (!defaultCollection.hasTimeDimension()) {
+            return;
+        }
+
+        Variable.Builder<?> v = writerBuilder.addVariable(timeDim.getShortName(), DataType.ULONG, List.of(timeDim));
         v.addAttribute(new Attribute(CF.STANDARD_NAME, CF.TIME));
         v.addAttribute(new Attribute(CF.CALENDAR, "standard"));
         v.addAttribute(new Attribute(CF.UNITS, defaultCollection.getTimeUnits()));
-        if (defaultCollection.hasTimeBounds()) v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
+
+        if (defaultCollection.hasTimeBounds()) {
+            v.addAttribute(new Attribute(CF.BOUNDS, getBoundsName(timeDim)));
+        }
     }
 
     private void addVariableTimeBounds(NetcdfFormatWriter.Builder writerBuilder) {
-        writerBuilder.addVariable(getBoundsName(timeDim), DataType.FLOAT, List.of(timeDim, boundsDim));
+        writerBuilder.addVariable(getBoundsName(timeDim), DataType.ULONG, List.of(timeDim, boundsDim));
     }
 
     private void addVariableLat(NetcdfFormatWriter.Builder writerBuilder) {
@@ -261,14 +277,24 @@ public class NetcdfGridWriter {
     }
 
     private void addVariableGridCollection(NetcdfFormatWriter.Builder writerBuilder) {
-        boolean isGeographic = defaultCollection.isGeographic();
-        List<Dimension> dimensions = isGeographic ? List.of(timeDim, latDim, lonDim) : List.of(timeDim, yDim, xDim);
+        List<Dimension> dimensions = new ArrayList<>();
+        if (defaultCollection.hasTimeDimension()) {
+            dimensions.add(timeDim);
+        }
+
+        if (defaultCollection.isGeographic()) {
+            dimensions.add(latDim);
+            dimensions.add(lonDim);
+        } else {
+            dimensions.add(yDim);
+            dimensions.add(xDim);
+        }
+
         for (VortexGridCollection collection : gridCollectionMap.values()) {
             VortexVariable variable = getVortexVariable(collection);
-            Unit<?> dataUnit = UnitUtil.getUnits(collection.getDataUnit());
             writerBuilder.addVariable(variable.getShortName(), DataType.FLOAT, dimensions)
                     .addAttribute(new Attribute(CF.LONG_NAME, variable.getLongName()))
-                    .addAttribute(new Attribute(CF.UNITS, getUnitsString(dataUnit)))
+                    .addAttribute(new Attribute(CF.UNITS, collection.getDataUnit()))
                     .addAttribute(new Attribute(CF.GRID_MAPPING, defaultCollection.getProjectionName()))
                     .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
                     .addAttribute(new Attribute(CF.MISSING_VALUE, collection.getNoDataValue()))
