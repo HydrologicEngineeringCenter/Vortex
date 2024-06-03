@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -24,13 +25,23 @@ public class VortexGridCollection {
 
     private final List<VortexGrid> vortexGridList;
     private final VortexGrid defaultGrid;
+    private final double[] xCoordinates;
+    private final double[] yCoordinates;
     private final ZonedDateTime baseTime;
 
     public VortexGridCollection(List<VortexGrid> vortexGrids) {
-        vortexGridList = vortexGrids;
-        defaultGrid = !vortexGridList.isEmpty() ? vortexGrids.get(0) : null;
         baseTime = initBaseTime();
-        cleanCollection();
+
+        vortexGridList = sanitizeCollection(vortexGrids);
+        if (!vortexGridList.isEmpty()) {
+            defaultGrid = vortexGrids.get(0);
+            xCoordinates = generateCoordinates(defaultGrid.originX(), defaultGrid.dx(), defaultGrid.nx());
+            yCoordinates = generateCoordinates(defaultGrid.originY(), defaultGrid.dy(), defaultGrid.ny());
+        } else {
+            defaultGrid = VortexGrid.noDataGrid();
+            xCoordinates = new double[0];
+            yCoordinates = new double[0];
+        }
     }
 
     /* Init */
@@ -38,18 +49,40 @@ public class VortexGridCollection {
         return ZonedDateTime.of(1900,1,1,0,0,0,0, ZoneId.of("UTC"));
     }
 
-    private void cleanCollection() {
-        String shortName = defaultGrid.shortName();
-        String wkt = defaultGrid.wkt();
-        Duration interval = defaultGrid.interval();
+    private static List<VortexGrid> sanitizeCollection(List<VortexGrid> vortexGrids) {
+        if (vortexGrids == null || vortexGrids.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-        if (shortName.isEmpty()) logger.warning("Short name not found");
-        if (wkt.isEmpty()) logger.warning("Wkt not found");
-        if (interval.equals(Duration.ZERO)) logger.warning("Interval not found");
+        VortexGrid baseGrid = vortexGrids.get(0);
+        String baseShortName = baseGrid.shortName();
+        String baseWkt = baseGrid.wkt();
 
-        vortexGridList.removeIf(g -> !Objects.equals(shortName, g.shortName()));
-        vortexGridList.removeIf(g -> !Objects.equals(wkt, g.wkt()));
-        vortexGridList.removeIf(g -> !Objects.equals(interval, g.interval()));
+        Predicate<VortexGrid> predicate = vortexGrid -> {
+            boolean sameShortName = Objects.equals(baseShortName, vortexGrid.shortName());
+            boolean sameWkt = Objects.equals(baseWkt, vortexGrid.wkt());
+
+            if (sameShortName && sameWkt) {
+                return true;
+            } else {
+                logger.info(() -> "Filtered from collection: " + vortexGrid);
+                return false;
+            }
+        };
+
+        return vortexGrids.stream()
+                .filter(predicate)
+                .toList();
+    }
+
+    private static double[] generateCoordinates(double origin, double stepSize, int count) {
+        double[] coordinates = new double[count];
+
+        for (int i = 0; i < count; i++) {
+            coordinates[i] = origin + (i + 1) * stepSize - (stepSize / 2);
+        }
+
+        return coordinates;
     }
 
     /* Conditionals */
@@ -57,8 +90,13 @@ public class VortexGridCollection {
         return getProjection() instanceof LatLonProjection;
     }
 
+    public boolean hasTimeDimension() {
+        return vortexGridList.stream().allMatch(VortexGrid::hasTime);
+    }
+
     public boolean hasTimeBounds() {
-        return !getInterval().isZero();
+        Duration interval = getInterval();
+        return interval != null && !interval.isZero();
     }
 
     /* Data */
@@ -66,8 +104,8 @@ public class VortexGridCollection {
         return IntStream.range(0, vortexGridList.size()).parallel().mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
     }
 
-    public float getNoDataValue() {
-        return (float) defaultGrid.noDataValue();
+    public double getNoDataValue() {
+        return defaultGrid.noDataValue();
     }
 
     public String getDataUnit() {
@@ -99,7 +137,7 @@ public class VortexGridCollection {
                 return parameter.getStringValue();
             }
         }
-        return null;
+        return "Unknown Projection Name";
     }
 
     public String getProjectionUnit() {
@@ -112,11 +150,11 @@ public class VortexGridCollection {
 
     /* Y and X */
     public double[] getYCoordinates() {
-        return defaultGrid.yCoordinates();
+        return yCoordinates.clone();
     }
 
     public double[] getXCoordinates() {
-        return defaultGrid.xCoordinates();
+        return xCoordinates.clone();
     }
 
     public int getNy() {
@@ -166,31 +204,31 @@ public class VortexGridCollection {
         return durationUnit + " since " + baseTime.format(dateTimeFormatter);
     }
 
-    public float[] getTimeData() {
+    public long[] getTimeData() {
         if (vortexGridList.size() == 1) {
-            return new float[] {getNumDurationsFromBaseTime(vortexGridList.get(0).endTime())};
+            return new long[] {getNumDurationsFromBaseTime(vortexGridList.get(0).endTime())};
         }
 
         int numData = vortexGridList.size();
-        float[] timeData = new float[numData];
+        long[] timeData = new long[numData];
         for (int i = 0; i < numData; i++) {
             VortexGrid grid = vortexGridList.get(i);
-            float startTime = getNumDurationsFromBaseTime(grid.startTime());
-            float endTime = getNumDurationsFromBaseTime(grid.endTime());
-            float midTime = (startTime + endTime) / 2;
+            long startTime = getNumDurationsFromBaseTime(grid.startTime());
+            long endTime = getNumDurationsFromBaseTime(grid.endTime());
+            long midTime = (startTime + endTime) / 2;
             timeData[i] = midTime;
         }
 
         return timeData;
     }
 
-    public float[][] getTimeBoundsArray() {
-        float[][] timeBoundArray = new float[getTimeLength()][NetcdfGridWriter.BOUNDS_LEN];
+    public long[][] getTimeBoundsArray() {
+        long[][] timeBoundArray = new long[getTimeLength()][NetcdfGridWriter.BOUNDS_LEN];
 
         for (int i = 0; i < vortexGridList.size(); i++) {
             VortexGrid grid = vortexGridList.get(i);
-            float startTime = getNumDurationsFromBaseTime(grid.startTime());
-            float endTime = getNumDurationsFromBaseTime(grid.endTime());
+            long startTime = getNumDurationsFromBaseTime(grid.startTime());
+            long endTime = getNumDurationsFromBaseTime(grid.endTime());
             timeBoundArray[i][0] = startTime;
             timeBoundArray[i][1] = endTime;
         }
@@ -203,22 +241,25 @@ public class VortexGridCollection {
     }
 
     /* Helpers */
-    private float getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
+    private long getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
         ZonedDateTime zDateTime = dateTime.withZoneSameInstant(ZoneId.of("Z"));
         Duration durationBetween = Duration.between(baseTime, zDateTime);
-        Duration divisor = getBaseDuration();
+        Duration divisor = Duration.of(1, getDurationUnit(getBaseDuration()));
         return durationBetween.dividedBy(divisor);
     }
 
     private ChronoUnit getDurationUnit(Duration duration) {
-        if (duration.toDays() > 0) return ChronoUnit.DAYS;
-        if (duration.toHours() > 0) return ChronoUnit.HOURS;
-        if (duration.toMinutes() > 0) return ChronoUnit.MINUTES;
-        return ChronoUnit.SECONDS;
+        if (duration.toHours() > 0) {
+            return ChronoUnit.HOURS;
+        } else if (duration.toMinutes() > 0) {
+            return ChronoUnit.MINUTES;
+        } else {
+            return ChronoUnit.SECONDS;
+        }
     }
 
     private Duration getBaseDuration() {
         Duration interval = getInterval();
-        return interval.isZero() ? Duration.ofHours(1) : interval;
+        return interval.isZero() ? Duration.ofMinutes(1) : interval;
     }
 }
