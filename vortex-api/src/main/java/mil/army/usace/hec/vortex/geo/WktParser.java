@@ -4,6 +4,7 @@ import org.gdal.osr.SpatialReference;
 import ucar.unidata.geoloc.Earth;
 import ucar.unidata.geoloc.Projection;
 import ucar.unidata.geoloc.projection.*;
+import ucar.unidata.geoloc.projection.proj4.AlbersEqualAreaEllipse;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
 
 public class WktParser {
@@ -20,7 +21,7 @@ public class WktParser {
             if (srs.IsGeographic() == 1) return parseLatLong(srs);
             String projectionType = srs.GetAttrValue("PROJECTION");
             if (projectionType.matches("(?i).*albers.*conic.*equal.*area.*"))
-                return parseAlbersEqualArea(srs);
+                return parseAlbersConicEqualArea(srs);
             if (projectionType.matches("(?i).*lambert.*conformal.*conic.*"))
                 return parseLambertConformalConic(srs);
             if (projectionType.matches("(?i).*lambert.*conformal.*"))
@@ -74,6 +75,18 @@ public class WktParser {
                 getFalseEasting(srs),
                 getFalseNorthing(srs),
                 getRadiusKm(srs)
+        );
+    }
+
+    private static Projection parseAlbersConicEqualArea(SpatialReference srs) {
+        return new AlbersEqualAreaEllipse(
+                getCenterLatitude(srs),
+                getCenterLongitude(srs),
+                getStandardParallel1(srs),
+                getStandardParallel2(srs),
+                getFalseEasting(srs),
+                getFalseNorthing(srs),
+                getEarth(srs)
         );
     }
 
