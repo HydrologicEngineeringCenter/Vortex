@@ -277,7 +277,10 @@ public class TemporalDataReader {
 
         List<VortexGrid> overlappingGrids = getOverlappedIndices(recordList, startTime, endTime).stream()
                 .map(bufferedReader::get)
-                .sorted(Comparator.comparing(VortexGrid::startTime).thenComparing(VortexGrid::endTime).thenComparing(dataComparator()))
+                .sorted(Comparator.comparing(VortexGrid::endTime)
+                        .thenComparing(prioritizeHigherResolutionDataComparator())
+                        .thenComparing(prioritizeLessNoDataComparator())
+                )
                 .toList();
 
         for (VortexGrid grid : overlappingGrids) {
@@ -304,15 +307,18 @@ public class TemporalDataReader {
         return IntStream.range(0, recordList.size())
                 .filter(i -> recordList.get(i).hasOverlap(startTime, endTime))
                 .boxed()
-                .sorted((i1, i2) -> {
-                    Duration duration1 = recordList.get(i1).getRecordDuration();
-                    Duration duration2 = recordList.get(i2).getRecordDuration();
-                    return duration1.compareTo(duration2);
-                })
                 .toList();
     }
 
-    private static Comparator<VortexGrid> dataComparator() {
+    private static Comparator<VortexGrid> prioritizeHigherResolutionDataComparator() {
+        return (o1, o2) -> {
+            Duration duration1 = VortexTimeRecord.of(o1).getRecordDuration();
+            Duration duration2 = VortexTimeRecord.of(o2).getRecordDuration();
+            return duration1.compareTo(duration2);
+        };
+    }
+
+    private static Comparator<VortexGrid> prioritizeLessNoDataComparator() {
         return (o1, o2) -> {
             float[] o1DataArray = o1.data();
             float[] o2DataArray = o2.data();
