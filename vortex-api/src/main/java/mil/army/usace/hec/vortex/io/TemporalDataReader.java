@@ -22,8 +22,8 @@ public class TemporalDataReader {
     private static final Logger logger = Logger.getLogger(TemporalDataReader.class.getName());
 
     private final BufferedDataReader bufferedReader;
-    public final List<VortexTimeRecord> recordList;
-    private final TreeMap<Long, Integer> instantDataTree = new TreeMap<>();
+    private final List<VortexTimeRecord> recordList;
+    private final NavigableMap<Long, Integer> instantDataTree;
 
     /**
      * Constructs a TemporalDataReader using file paths for the data file and data.
@@ -44,8 +44,27 @@ public class TemporalDataReader {
      */
     public TemporalDataReader(BufferedDataReader bufferedReader) {
         this.bufferedReader = bufferedReader;
-        this.recordList = bufferedReader.getTimeRecords();
-        initDataTree();
+        this.recordList = initRecordList(this.bufferedReader);
+        this.instantDataTree = initInstantDataTree(this.recordList);
+    }
+
+    /* Init */
+    private static List<VortexTimeRecord> initRecordList(BufferedDataReader bufferedReader) {
+        return List.copyOf(bufferedReader.getTimeRecords());
+    }
+
+    private static NavigableMap<Long, Integer> initInstantDataTree(List<VortexTimeRecord> recordList) {
+        TreeMap<Long, Integer> treeMap = new TreeMap<>();
+
+        for (int i = 0; i < recordList.size(); i++) {
+            VortexTimeRecord timeRecord = recordList.get(i);
+            if (timeRecord == null || !timeRecord.startTime().isEqual(timeRecord.endTime())) {
+                continue;
+            }
+            treeMap.put(timeRecord.startTime().toEpochSecond(), i);
+        }
+
+        return Collections.unmodifiableNavigableMap(treeMap);
     }
 
     /**
@@ -243,18 +262,6 @@ public class TemporalDataReader {
     }
 
     /* Helpers */
-    private void initDataTree() {
-        for (int i = 0; i < recordList.size(); i++) {
-            VortexTimeRecord timeRecord = recordList.get(i);
-            if (timeRecord == null) continue;
-            long startTime = timeRecord.startTime().toEpochSecond();
-            long endTime = timeRecord.endTime().toEpochSecond();
-            if (startTime == endTime) {
-                instantDataTree.put(startTime, i);
-            }
-        }
-    }
-
     private List<VortexGrid> getGridsWithinTime(long startTimeInclusive, long endTimeInclusive) {
         List<VortexGrid> grids = new ArrayList<>();
 
