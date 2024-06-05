@@ -244,7 +244,7 @@ class TemporalDataReaderTest {
                 buildTestGrid(ACCUMULATION, 5, 6, 2.5f)
         );
 
-        return new TemporalDataReader(mockDataReader(accumulationGrids));
+        return TemporalDataReader.create(mockDataReader(accumulationGrids));
     }
 
     private TemporalDataReader setupMixedAccumulationReader() {
@@ -253,7 +253,7 @@ class TemporalDataReaderTest {
                 buildTestGrid(ACCUMULATION, 10, 11, 5)
         );
 
-        return new TemporalDataReader(mockDataReader(accumulationGrids));
+        return TemporalDataReader.create(mockDataReader(accumulationGrids));
     }
 
     private TemporalDataReader setupAverageReader() {
@@ -265,7 +265,7 @@ class TemporalDataReaderTest {
                 buildTestGrid(AVERAGE, 5, 6, 7.6f)
         );
 
-        return new TemporalDataReader(mockDataReader(averageGrids));
+        return TemporalDataReader.create(mockDataReader(averageGrids));
     }
 
     private TemporalDataReader setupInstantReader() {
@@ -277,7 +277,7 @@ class TemporalDataReaderTest {
                 buildTestGrid(INSTANTANEOUS, 5, 5, 15)
         );
 
-        return new TemporalDataReader(mockDataReader(instantGrids));
+        return TemporalDataReader.create(mockDataReader(instantGrids));
     }
 
     private BufferedDataReader mockDataReader(List<VortexData> gridList) {
