@@ -25,27 +25,21 @@ public class TemporalDataReader {
     private final List<VortexTimeRecord> recordList;
     private final NavigableMap<Long, Integer> instantDataTree;
 
-    /**
-     * Constructs a TemporalDataReader using file paths for the data file and data.
-     * @param pathToFile Path to the data file.
-     * @param pathToData Path to the data.
-     */
-    public TemporalDataReader(String pathToFile, String pathToData) {
-        this(new BufferedDataReader(pathToFile, pathToData));
-    }
-
-    public TemporalDataReader(DataReader dataReader) {
-        this(new BufferedDataReader(dataReader));
-    }
-
-    /**
-     * Constructs a TemporalDataReader using an instance of BufferedDataReader.
-     * @param bufferedReader Instance of BufferedDataReader to read data.
-     */
-    public TemporalDataReader(BufferedDataReader bufferedReader) {
+    /* Constructor */
+    private TemporalDataReader(BufferedDataReader bufferedReader) {
         this.bufferedReader = bufferedReader;
         this.recordList = initRecordList(this.bufferedReader);
         this.instantDataTree = initInstantDataTree(this.recordList);
+    }
+
+    /* Factory */
+    public static TemporalDataReader create(String pathToFile, String pathToData) {
+        BufferedDataReader bufferedDataReader = new BufferedDataReader(pathToFile, pathToData);
+        return new TemporalDataReader(bufferedDataReader);
+    }
+
+    public static TemporalDataReader create(BufferedDataReader bufferedDataReader) {
+        return new TemporalDataReader(bufferedDataReader);
     }
 
     /* Init */
