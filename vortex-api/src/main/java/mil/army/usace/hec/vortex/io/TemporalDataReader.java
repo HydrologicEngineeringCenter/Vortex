@@ -44,7 +44,7 @@ public class TemporalDataReader {
 
     /* Init */
     private static List<VortexTimeRecord> initRecordList(BufferedDataReader bufferedReader) {
-        return List.copyOf(bufferedReader.getTimeRecords());
+        return Collections.unmodifiableList(bufferedReader.getTimeRecords());
     }
 
     private static NavigableMap<Long, Integer> initInstantDataTree(List<VortexTimeRecord> recordList) {
