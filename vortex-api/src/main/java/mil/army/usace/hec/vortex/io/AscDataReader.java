@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexTimeRecord;
 import mil.army.usace.hec.vortex.util.FilenameUtil;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
@@ -301,5 +302,13 @@ class AscDataReader extends DataReader {
         else {
             return null;
         }
+    }
+
+    @Override
+    public List<VortexTimeRecord> getTimeRecords() {
+        return getDtos()
+                .stream()
+                .map(VortexTimeRecord::of)
+                .toList();
     }
 }
