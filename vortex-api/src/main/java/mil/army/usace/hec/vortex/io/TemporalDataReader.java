@@ -170,7 +170,7 @@ public class TemporalDataReader {
 
     /* Read Methods */
     private VortexGrid read(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) {
-        if (startTime == null && endTime == null) {
+        if (startTime == null || endTime == null) {
             return bufferedReader.getBaseGrid();
         }
 
