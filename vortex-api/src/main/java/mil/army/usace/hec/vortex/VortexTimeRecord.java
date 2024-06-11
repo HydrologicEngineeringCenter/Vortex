@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) {
     private static final Logger logger = Logger.getLogger(VortexTimeRecord.class.getName());
+    public static final VortexTimeRecord UNDEFINED = new VortexTimeRecord(null, null);
 
     public static VortexTimeRecord of(DSSPathname dssPathname) {
         HecTime hecStart = new HecTime(dssPathname.dPart());
@@ -34,8 +35,8 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) {
         return new VortexTimeRecord(start, end);
     }
 
-    public static VortexTimeRecord undefinedRecord() {
-        return new VortexTimeRecord(null, null);
+    public static boolean isUndefined(VortexTimeRecord vortexTimeRecord) {
+        return vortexTimeRecord == null || vortexTimeRecord.equals(UNDEFINED);
     }
 
     public Duration getRecordDuration() {
@@ -61,15 +62,5 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) {
 
     public boolean hasOverlap(long start, long end) {
         return getOverlapDuration(start, end).toSeconds() > 0;
-    }
-
-    /* Override to use ZonedDateTime::isEqual instead of ZonedDateTime::equals */
-    @Override
-    public boolean equals(Object object) {
-        if (object instanceof VortexTimeRecord that) {
-            return this.startTime().isEqual(that.startTime()) && this.endTime().isEqual(that.endTime());
-        }
-
-        return false;
     }
 }

@@ -52,7 +52,8 @@ public class TemporalDataReader {
 
         for (int i = 0; i < recordList.size(); i++) {
             VortexTimeRecord timeRecord = recordList.get(i);
-            if (timeRecord == null || !timeRecord.startTime().isEqual(timeRecord.endTime())) {
+            boolean isUndefined = VortexTimeRecord.isUndefined(timeRecord);
+            if (isUndefined || !timeRecord.startTime().isEqual(timeRecord.endTime())) {
                 continue;
             }
             treeMap.put(timeRecord.startTime().toEpochSecond(), i);
