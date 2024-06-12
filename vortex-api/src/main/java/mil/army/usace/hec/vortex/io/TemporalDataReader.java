@@ -166,7 +166,9 @@ public class TemporalDataReader {
      * @return A string representing the units of the data.
      */
     public String getDataUnits() {
-        return bufferedReader.getBaseGrid().units();
+        return Optional.ofNullable(bufferedReader.getBaseGrid())
+                .map(VortexGrid::units)
+                .orElse(null);
     }
 
     /* Read Methods */
