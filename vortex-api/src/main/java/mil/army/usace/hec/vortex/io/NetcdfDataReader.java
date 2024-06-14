@@ -535,7 +535,7 @@ public class NetcdfDataReader extends DataReader {
     }
 
     private static ZonedDateTime convert(CalendarDate date) {
-        return ZonedDateTime.parse(date.toString(), DateTimeFormatter.ISO_DATE_TIME);
+        return ZonedDateTime.ofInstant(date.toDate().toInstant(), ZoneId.of("Z"));
     }
 
     private static Grid getGrid(GridCoordSystem coordinateSystem) {
