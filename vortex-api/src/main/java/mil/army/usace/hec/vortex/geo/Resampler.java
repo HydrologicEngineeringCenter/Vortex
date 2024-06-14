@@ -8,10 +8,7 @@ import org.gdal.gdal.gdal;
 import org.gdal.osr.SpatialReference;
 import org.locationtech.jts.geom.Envelope;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Float32;
@@ -24,6 +21,8 @@ public class Resampler {
     private final String targetWkt;
     private final Double cellSize;
     private final ResamplingMethod method;
+
+    private static final Map<EnvelopeReprojection, Envelope> envelopeReprojections = new HashMap<>();
 
     private Resampler(ResamplerBuilder builder){
         this.grid = builder.grid;
@@ -152,12 +151,14 @@ public class Resampler {
         Map<String,Double> envelope = new HashMap<>();
 
         if (env != null) {
-            Reprojector reprojector = Reprojector.builder()
-                    .from(envSrs.ExportToWkt())
-                    .to(targetSrs.ExportToWkt())
-                    .build();
+            String envWkt = envSrs.ExportToWkt();
+            String toWkt = targetSrs.ExportToWkt();
 
-            Envelope reprojected = reprojector.reproject(env);
+            EnvelopeReprojection envelopeReprojection = EnvelopeReprojection.of(env, envWkt, toWkt);
+
+            Envelope reprojected = envelopeReprojections.computeIfAbsent(
+                    envelopeReprojection, r -> envelopeReprojection.reproject()
+            );
 
             double maxX = reprojected.getMaxX();
             double minX = reprojected.getMinX();
@@ -225,6 +226,11 @@ public class Resampler {
         Dataset warped = gdal.Warp("warped", datasets, warpOptions);
         warped.FlushCache();
 
+        if (envSrs != null)
+            envSrs.delete();
+
+        sourceSrs.delete();
+        targetSrs.delete();
         warpOptions.delete();
 
         return warped;
