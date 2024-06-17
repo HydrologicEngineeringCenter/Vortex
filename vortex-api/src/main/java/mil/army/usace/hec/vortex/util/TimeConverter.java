@@ -42,7 +42,7 @@ public class TimeConverter {
     }
 
     public static ZonedDateTime toZonedDateTime(CalendarDate calendarDate){
-        return ZonedDateTime.parse(calendarDate.toString());
+        return ZonedDateTime.ofInstant(calendarDate.toDate().toInstant(), ZoneId.of("Z"));
     }
 
     public static ZonedDateTime toZonedDateTime(long epochSeconds, ZoneId zoneId) {
