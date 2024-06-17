@@ -96,14 +96,15 @@ public class NetcdfGridWriter {
     }
 
     /* Write Methods */
-    public void write(NetcdfFormatWriter.Builder writerBuilder) {
+    public void write(NetcdfFormatWriterManager.WriterKey key, NetcdfFormatWriter.Builder writerBuilder) {
         addDimensions(writerBuilder);
         addVariables(writerBuilder);
 
-        try (NetcdfFormatWriter writer = writerBuilder.build()) {
+        NetcdfFormatWriter writer = NetcdfFormatWriterManager.getOrCompute(key, writerBuilder);
+        try {
             writeDimensions(writer);
             writeVariableGrids(writer, 0);
-        } catch (IOException | InvalidRangeException e) {
+        } catch (Exception e) {
             logger.severe(e.getMessage());
         }
     }
@@ -329,8 +330,9 @@ public class NetcdfGridWriter {
     }
 
     /* Append Data */
-    public void appendData(NetcdfFormatWriter.Builder writerBuilder) {
-        try (NetcdfFormatWriter writer = writerBuilder.build()) {
+    public void appendData(NetcdfFormatWriterManager.WriterKey key, NetcdfFormatWriter.Builder writerBuilder) {
+        try {
+            NetcdfFormatWriter writer = NetcdfFormatWriterManager.getOrCompute(key, writerBuilder);
             Variable timeVar = writer.findVariable(CF.TIME);
             if (timeVar == null) {
                 logger.severe("Time variable not found");

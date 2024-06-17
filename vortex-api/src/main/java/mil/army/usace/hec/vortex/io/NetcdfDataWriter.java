@@ -73,7 +73,7 @@ public class NetcdfDataWriter extends DataWriter {
 
         NetcdfGridWriter gridWriter = new NetcdfGridWriter(vortexGridList);
         gridWriter.addListener(writerPropertyListener());
-        gridWriter.write(writerBuilder);
+        gridWriter.write(writerKey(), writerBuilder);
     }
 
     public void appendData() {
@@ -81,7 +81,7 @@ public class NetcdfDataWriter extends DataWriter {
 
         NetcdfGridWriter gridWriter = new NetcdfGridWriter(vortexGridList);
         gridWriter.addListener(writerPropertyListener());
-        gridWriter.appendData(writerBuilder);
+        gridWriter.appendData(writerKey(), writerBuilder);
     }
 
     private NetcdfFormatWriter.Builder initWriterBuilder() {
@@ -91,6 +91,10 @@ public class NetcdfDataWriter extends DataWriter {
                 .setFormat(NETCDF_FORMAT)
                 .setLocation(destination.toString())
                 .setChunker(chunker);
+    }
+
+    private NetcdfFormatWriterManager.WriterKey writerKey() {
+        return new NetcdfFormatWriterManager.WriterKey(destination.toString(), overwriteExistingFile);
     }
 
     private PropertyChangeListener writerPropertyListener() {
