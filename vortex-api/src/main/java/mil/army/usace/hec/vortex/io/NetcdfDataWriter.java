@@ -74,7 +74,7 @@ public class NetcdfDataWriter extends DataWriter {
         NetcdfFormatWriter.Builder writerBuilder = initWriterBuilder();
         addGlobalAttributes(writerBuilder);
 
-        NetcdfGridWriter gridWriter = new NetcdfGridWriter(vortexGridList);
+        NetcdfGridWriter gridWriter = new NetcdfGridWriter(destination.toString(), vortexGridList);
         gridWriter.addListener(writerPropertyListener());
         gridWriter.write(writerBuilder);
     }
@@ -82,7 +82,7 @@ public class NetcdfDataWriter extends DataWriter {
     public void appendData() {
         NetcdfFormatWriter.Builder writerBuilder = initWriterBuilder();
 
-        NetcdfGridWriter gridWriter = new NetcdfGridWriter(vortexGridList);
+        NetcdfGridWriter gridWriter = new NetcdfGridWriter(destination.toString(), vortexGridList);
         gridWriter.addListener(writerPropertyListener());
         gridWriter.appendData(writerBuilder);
     }

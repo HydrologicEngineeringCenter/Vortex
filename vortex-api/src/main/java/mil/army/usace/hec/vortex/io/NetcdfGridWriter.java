@@ -21,6 +21,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -31,11 +32,14 @@ import static tech.units.indriya.unit.Units.HOUR;
 import static tech.units.indriya.unit.Units.*;
 
 public class NetcdfGridWriter {
+    private static final AtomicInteger appendStartIndex = new AtomicInteger(0);
+
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
     public static final int BOUNDS_LEN = 2;
     public static final String CRS_WKT = "crs_wkt";
 
+    private final String ncDestination;
     private final Map<String, VortexGridCollection> gridCollectionMap;
     private final VortexGridCollection defaultCollection;
     // Dimensions
@@ -46,7 +50,8 @@ public class NetcdfGridWriter {
     private final Dimension xDim;
     private final Dimension boundsDim; // For all axis that has bounds (interval data)
 
-    public NetcdfGridWriter(List<VortexGrid> vortexGridList) {
+    public NetcdfGridWriter(String ncDestination, List<VortexGrid> vortexGridList) {
+        this.ncDestination = ncDestination;
         gridCollectionMap = initGridCollectionMap(vortexGridList);
         defaultCollection = gridCollectionMap.values().stream()
                 .findAny()
@@ -99,12 +104,23 @@ public class NetcdfGridWriter {
         addDimensions(writerBuilder);
         addVariables(writerBuilder);
 
-        try (NetcdfFormatWriter writer = writerBuilder.build()) {
+        NetcdfWriterCache.WriterKey key = NetcdfWriterCache.WriterKey.writeKey(ncDestination);
+        NetcdfFormatWriter writer = NetcdfWriterCache.getOrCompute(key, writerBuilder);
+
+        try {
             writeDimensions(writer);
             writeVariableGrids(writer, 0);
+            int count = appendStartIndex.addAndGet(getObjectsWrittenCount());
+            System.out.println(count);
         } catch (IOException | InvalidRangeException e) {
             logger.severe(e.getMessage());
         }
+    }
+
+    private int getObjectsWrittenCount() {
+        return gridCollectionMap.values().stream()
+                .mapToInt(VortexGridCollection::getTimeLength)
+                .sum();
     }
 
     private void writeDimensions(NetcdfFormatWriter writer) throws InvalidRangeException, IOException {
@@ -356,16 +372,22 @@ public class NetcdfGridWriter {
 
     /* Append Data */
     public void appendData(NetcdfFormatWriter.Builder writerBuilder) {
-        try (NetcdfFormatWriter writer = writerBuilder.build()) {
+        NetcdfWriterCache.WriterKey key = NetcdfWriterCache.WriterKey.appendKey(ncDestination);
+        NetcdfFormatWriter writer = NetcdfWriterCache.getOrCompute(key, writerBuilder);
+
+        try {
             Variable timeVar = writer.findVariable(CF.TIME);
             if (timeVar == null) {
                 logger.severe("Time variable not found");
                 return;
             }
 
-            int startIndex = timeVar.getShape(0);
+            int startIndex = appendStartIndex.get();
             writeVariableGrids(writer, startIndex);
             writer.write(timeVar, new int[] {startIndex}, Array.makeFromJavaArray(defaultCollection.getTimeData()));
+
+            int count = appendStartIndex.addAndGet(getObjectsWrittenCount());
+            System.out.println(count);
 
             if (defaultCollection.hasTimeBounds()) {
                 writer.write(getBoundsName(timeDim), new int[] {startIndex, 0}, Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
