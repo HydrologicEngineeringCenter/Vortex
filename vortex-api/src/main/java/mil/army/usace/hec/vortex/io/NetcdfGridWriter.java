@@ -112,6 +112,7 @@ public class NetcdfGridWriter {
             writeVariableGrids(writer, 0);
             int count = appendStartIndex.addAndGet(getObjectsWrittenCount());
             System.out.println(count);
+            writer.close();
         } catch (IOException | InvalidRangeException e) {
             logger.severe(e.getMessage());
         }
