@@ -104,8 +104,8 @@ public class VortexGridCollection {
         return IntStream.range(0, vortexGridList.size()).parallel().mapToObj(i -> Map.entry(i, vortexGridList.get(i)));
     }
 
-    public double getNoDataValue() {
-        return defaultGrid.noDataValue();
+    public float getNoDataValue() {
+        return (float) defaultGrid.noDataValue();
     }
 
     public String getDataUnit() {
