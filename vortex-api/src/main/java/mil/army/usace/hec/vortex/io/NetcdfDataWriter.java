@@ -2,7 +2,6 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
-import ucar.nc2.Attribute;
 import ucar.nc2.write.Nc4Chunking;
 import ucar.nc2.write.Nc4ChunkingStrategy;
 import ucar.nc2.write.NetcdfFileFormat;
@@ -66,30 +65,12 @@ public class NetcdfDataWriter extends DataWriter {
         appendData();
     }
 
-    private void overwriteData() {
-        NetcdfFormatWriter.Builder writerBuilder = initWriterBuilder();
-        addGlobalAttributes(writerBuilder);
-
-        NetcdfGridWriter gridWriter = new NetcdfGridWriter(destination.toString(), vortexGridList);
-        gridWriter.addListener(writerPropertyListener());
-        gridWriter.write(writerBuilder);
-    }
-
     public void appendData() {
         NetcdfFormatWriter.Builder writerBuilder = initAppendWriterBuilder(destination.toString());
 
         NetcdfGridWriter gridWriter = new NetcdfGridWriter(destination.toString(), vortexGridList);
         gridWriter.addListener(writerPropertyListener());
         gridWriter.appendData(writerBuilder);
-    }
-
-    private NetcdfFormatWriter.Builder initWriterBuilder() {
-        Nc4Chunking chunker = Nc4ChunkingStrategy.factory(CHUNKING_STRATEGY, DEFLATE_LEVEL, SHUFFLE);
-        return NetcdfFormatWriter.builder()
-                .setNewFile(overwriteExistingFile)
-                .setFormat(NETCDF_FORMAT)
-                .setLocation(destination.toString())
-                .setChunker(chunker);
     }
 
     private static NetcdfFormatWriter.Builder initAppendWriterBuilder(String ncDestination) {
@@ -112,8 +93,4 @@ public class NetcdfDataWriter extends DataWriter {
         };
     }
 
-    /* Add Global Attributes */
-    private void addGlobalAttributes(NetcdfFormatWriter.Builder writerBuilder) {
-        writerBuilder.addAttribute(new Attribute("Conventions", "CF-1.10"));
-    }
 }

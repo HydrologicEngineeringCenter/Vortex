@@ -62,6 +62,7 @@ public final class NetcdfWriterPrep {
                     .setChunker(chunker);
             addDimensions(builder, gridCollection);
             addVariables(builder, gridCollection);
+            addGlobalAttributes(builder);
             return builder;
         } catch (Exception e) {
             logger.warning("Failed to create builder");
@@ -265,5 +266,9 @@ public final class NetcdfWriterPrep {
         }
 
         return writerBuilder;
+    }
+
+    private static void addGlobalAttributes(NetcdfFormatWriter.Builder writerBuilder) {
+        writerBuilder.addAttribute(new Attribute("Conventions", "CF-1.10"));
     }
 }
