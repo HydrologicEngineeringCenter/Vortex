@@ -131,8 +131,7 @@ public class NetcdfGridWriter {
     /* Append Data */
     public void appendData(NetcdfFormatWriter.Builder writerBuilder) {
         try {
-            String variableName = getVortexVariable(defaultCollection).getShortName();
-            NetcdfWriterCache.WriterKey key = NetcdfWriterCache.WriterKey.appendKey(ncDestination, variableName);
+            NetcdfWriterCache.WriterKey key = NetcdfWriterCache.WriterKey.appendKey(ncDestination);
             NetcdfFormatWriter writer = NetcdfWriterCache.getOrCompute(key, writerBuilder);
 
             Variable timeVar = writer.findVariable(CF.TIME);
@@ -147,7 +146,7 @@ public class NetcdfGridWriter {
 
             int count = appendStartIndexMap.computeIfAbsent(key, k -> new AtomicInteger(0))
                     .addAndGet(getObjectsWrittenCount());
-            System.out.println(key + "|" + count);
+//            System.out.println(key + "|" + count);
 
             if (defaultCollection.hasTimeBounds()) {
                 writer.write("time_bnds", new int[] {startIndex, 0}, Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));

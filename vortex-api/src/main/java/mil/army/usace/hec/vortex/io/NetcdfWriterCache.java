@@ -14,13 +14,9 @@ public final class NetcdfWriterCache {
     }
 
     public enum WriteOption {WRITE, APPEND}
-    public record WriterKey(String ncDestination, String variableName, WriteOption writeOption) {
-        public static WriterKey writeKey(String ncDestination, String variableName) {
-            return new WriterKey(ncDestination, variableName, WriteOption.WRITE);
-        }
-
-        public static WriterKey appendKey(String ncDestination, String variableName) {
-            return new WriterKey(ncDestination, variableName, WriteOption.APPEND);
+    public record WriterKey(String ncDestination, WriteOption writeOption) {
+        public static WriterKey appendKey(String ncDestination) {
+            return new WriterKey(ncDestination, WriteOption.APPEND);
         }
     }
 
