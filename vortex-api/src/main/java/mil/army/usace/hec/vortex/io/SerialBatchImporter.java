@@ -23,7 +23,7 @@ class SerialBatchImporter extends BatchImporter {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        NetcdfWriterPrep.prepFile(destination.toString(), representativeCollection(getDataReaders(), geoOptions));
+        NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(getDataReaders(), geoOptions));
 
         List<ImportableUnit> importableUnits = getImportableUnits();
 
