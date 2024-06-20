@@ -1,6 +1,9 @@
 package mil.army.usace.hec.vortex;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 // long names taken from https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html
 public enum VortexVariable {
@@ -33,6 +36,8 @@ public enum VortexVariable {
     private final String longName;
     private final String dssName;
 
+    private static final Logger logger = Logger.getLogger(VortexVariable.class.getName());
+
     VortexVariable(String shortName, String longName, String dssName) {
         this.shortName = shortName;
         this.longName = longName;
@@ -56,6 +61,23 @@ public enum VortexVariable {
 
     public String getDssName() {
         return dssName;
+    }
+
+    public static boolean isUndefined(VortexVariable variable) {
+        return variable.equals(UNDEFINED);
+    }
+
+    public static VortexVariable fromNames(String... names) {
+        Set<VortexVariable> matchedSet = Arrays.stream(names)
+                .map(VortexVariable::fromName)
+                .filter(v -> !isUndefined(v))
+                .collect(Collectors.toSet());
+
+        if (matchedSet.size() > 1) {
+            logger.warning("More than 1 variable matched with names");
+        }
+
+        return matchedSet.stream().findFirst().orElse(UNDEFINED);
     }
 
     public static VortexVariable fromName(String name) {
@@ -127,7 +149,7 @@ public enum VortexVariable {
 
     private static boolean isValidWindSpeedName(String name) {
         return matchesDssName(name, WINDSPEED)
-                || (name.contains("wind") && name.contains("speed"));
+                || (name.contains("wind") && name.contains("sp"));
     }
 
     private static boolean isValidSWEName(String name) {
@@ -185,7 +207,7 @@ public enum VortexVariable {
 
     private static boolean isValidHumidityName(String name) {
         return matchesDssName(name, HUMIDITY)
-                || equalsIgnoreCaseAndSpace(name, "humidity");
+                || name.contains("humidity");
     }
 
     private static boolean isValidMoistureDeficitName(String name) {

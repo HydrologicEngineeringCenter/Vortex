@@ -17,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -55,14 +56,12 @@ public class VortexGridCollection {
         }
 
         VortexGrid baseGrid = vortexGrids.get(0);
-        String baseShortName = baseGrid.shortName();
         String baseWkt = baseGrid.wkt();
 
         Predicate<VortexGrid> predicate = vortexGrid -> {
-            boolean sameShortName = Objects.equals(baseShortName, vortexGrid.shortName());
             boolean sameWkt = Objects.equals(baseWkt, vortexGrid.wkt());
 
-            if (sameShortName && sameWkt) {
+            if (sameWkt) {
                 return true;
             } else {
                 logger.info(() -> "Filtered from collection: " + vortexGrid);
@@ -117,6 +116,10 @@ public class VortexGridCollection {
     }
 
     /* Name & Description */
+    public Map<String, VortexGrid> getRepresentativeGridNameMap() {
+        return vortexGridList.stream().collect(Collectors.toMap(VortexGrid::shortName, g -> g, (existing, replacement) -> existing));
+    }
+
     public String getShortName() {
         return defaultGrid.shortName();
     }

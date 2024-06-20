@@ -15,7 +15,6 @@ import ucar.nc2.constants.CF;
 import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.util.Parameter;
 
-import javax.measure.Unit;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -26,11 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import static javax.measure.MetricPrefix.*;
-import static systems.uom.common.USCustomary.*;
-import static tech.units.indriya.unit.Units.HOUR;
-import static tech.units.indriya.unit.Units.*;
 
 public class NetcdfGridWriter {
     private static final Map<NetcdfWriterCache.WriterKey, AtomicInteger> appendStartIndexMap = new ConcurrentHashMap<>();
@@ -331,38 +325,6 @@ public class NetcdfGridWriter {
     private static VortexVariable getVortexVariable(VortexGridCollection collection) {
         VortexVariable name = VortexVariable.fromName(collection.getShortName());
         return name.equals(VortexVariable.UNDEFINED) ? VortexVariable.fromName(collection.getDescription()) : name;
-    }
-
-    private static String getUnitsString(Unit<?> unit){
-        if (unit.equals(MILLI(METRE).divide(SECOND))) return "mm/s";
-        if (unit.equals(MILLI(METRE).divide(HOUR))) return "mm/hr";
-        if (unit.equals(MILLI(METRE).divide(DAY))) return "mm/day";
-        if (unit.equals(MILLI(METRE))) return "mm";
-        if (unit.equals(INCH)) return "in";
-        if (unit.equals(CELSIUS)) return "degC";
-        if (unit.equals(CELSIUS.multiply(DAY))) return "degC-d";
-        if (unit.equals(FAHRENHEIT)) return "degF";
-        if (unit.equals(KELVIN)) return "K";
-        if (unit.equals(WATT.divide(SQUARE_METRE))) return "W m-2";
-        if (unit.equals(JOULE.divide(SQUARE_METRE))) return "J m-2";
-        if (unit.equals(KILO(METRE).divide(HOUR))) return "kph";
-        if (unit.equals(KILOMETRE_PER_HOUR)) return "km h-1";
-        if (unit.equals(PERCENT)) return "%";
-        if (unit.equals(HECTO(PASCAL))) return "hPa";
-        if (unit.equals(PASCAL)) return "Pa";
-        if (unit.equals(METRE)) return "m";
-        if (unit.equals(CUBIC_METRE.divide(SECOND))) return "m3 s-1";
-        if (unit.equals(CUBIC_FOOT.divide(SECOND))) return "cfs";
-        if (unit.equals(FOOT)) return "ft";
-        if (unit.equals(METRE_PER_SECOND)) return "m/s";
-        if (unit.equals(MILE_PER_HOUR)) return "mph";
-        if (unit.equals(FOOT_PER_SECOND)) return "ft/s";
-        if (unit.equals(KILO(PASCAL))) return "kPa";
-        if (unit.equals(KILO(METRE))) return "km";
-        if (unit.equals(MILE)) return "mi";
-        if (unit.equals(TON)) return "ton";
-        if (unit.equals(MILLI(GRAM).divide(LITRE))) return "mg L-1";
-        return "Unspecified";
     }
 
     /* Property Change */

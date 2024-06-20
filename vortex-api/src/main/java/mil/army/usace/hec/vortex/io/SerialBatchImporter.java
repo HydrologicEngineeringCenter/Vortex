@@ -2,14 +2,13 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexGridCollection;
 import mil.army.usace.hec.vortex.VortexProperty;
-import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 class SerialBatchImporter extends BatchImporter {
@@ -24,15 +23,7 @@ class SerialBatchImporter extends BatchImporter {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        List<VortexData> firstProcessedGridsFromReaders = firstProcessedDataFromReaders(getDataReaders(), geoOptions);
-
-        DataWriter dataWriter = DataWriter.builder()
-                .data(firstProcessedGridsFromReaders)
-                .destination(destination)
-                .options(writeOptions)
-                .build();
-
-        dataWriter.write();
+        NetcdfWriterPrep.prepFile(destination.toString(), representativeCollection(getDataReaders(), geoOptions));
 
         List<ImportableUnit> importableUnits = getImportableUnits();
 
@@ -61,5 +52,18 @@ class SerialBatchImporter extends BatchImporter {
                 .map(geoProcessor::process)
                 .map(VortexData.class::cast)
                 .toList();
+    }
+
+    private static VortexGridCollection representativeCollection(List<DataReader> readers, Map<String, String> geoOptions) {
+        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
+        List<VortexGrid> processedFirstGrids = readers.stream()
+                .map(r -> r.getDto(0))
+                .filter(VortexGrid.class::isInstance)
+                .map(VortexGrid.class::cast)
+                .map(geoProcessor::process)
+                .toList();
+        VortexGridCollection vortexGridCollection = new VortexGridCollection(processedFirstGrids);
+        List<VortexGrid> uniqueGrids = List.copyOf(vortexGridCollection.getRepresentativeGridNameMap().values());
+        return new VortexGridCollection(uniqueGrids);
     }
 }

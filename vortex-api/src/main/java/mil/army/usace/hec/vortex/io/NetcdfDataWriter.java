@@ -63,11 +63,7 @@ public class NetcdfDataWriter extends DataWriter {
     /* Write */
     @Override
     public void write() {
-        if (overwriteExistingFile) {
-            overwriteData();
-        } else {
-            appendData();
-        }
+        appendData();
     }
 
     private void overwriteData() {
