@@ -11,6 +11,8 @@ public enum VortexVariable {
     PRESSURE("pressure", "air_pressure", "PRESSURE"),
     TEMPERATURE("temperature", "air_temperature", "TEMPERATURE"),
     SOLAR_RADIATION("solar radiation", "surface_downwelling_shortwave_flux_in_air", "SOLAR RADIATION"),
+    LONGWAVE_RADIATION("longwave", "", "RADIATION-LONG"),
+    SHORTWAVE_RADIATION("shortwave", "net_downward_shortwave_flux_in_air", "RADIATION-SHORT"),
     WINDSPEED("windspeed", "wind_speed", "WINDSPEED"),
     SWE("swe", "lwe_thickness_of_surface_snow_amount", "SWE"),
     SNOWFALL_ACCUMULATION("snowfall accumulation", "lwe_thickness_of_snowfall_amount", "SNOWFALL ACCUMULATION"),
@@ -87,6 +89,8 @@ public enum VortexVariable {
         if (isValidPressureName(name)) return PRESSURE;
         if (isValidTemperatureName(name)) return TEMPERATURE;
         if (isValidSolarRadiationName(name)) return SOLAR_RADIATION;
+        if (isValidLongwaveRadiationName(name)) return LONGWAVE_RADIATION;
+        if (isValidShortwaveRadiationName(name)) return SHORTWAVE_RADIATION;
         if (isValidWindSpeedName(name)) return WINDSPEED;
         if (isValidSWEName(name)) return SWE;
         if (isValidSnowfallAccumulationName(name)) return SNOWFALL_ACCUMULATION;
@@ -145,6 +149,18 @@ public enum VortexVariable {
     private static boolean isValidSolarRadiationName(String name) {
         return matchesDssName(name, SOLAR_RADIATION)
                 || ((name.contains("short") && name.contains("wave") || name.contains("solar")) && name.contains("radiation"));
+    }
+
+
+    private static boolean isValidLongwaveRadiationName(String name) {
+        return matchesDssName(name, LONGWAVE_RADIATION)
+                || (name.contains("longwave") && name.contains("radiation"));
+    }
+
+
+    private static boolean isValidShortwaveRadiationName(String name) {
+        return matchesDssName(name, SHORTWAVE_RADIATION)
+                || (name.contains("shortwave") && name.contains("radiation"));
     }
 
     private static boolean isValidWindSpeedName(String name) {
