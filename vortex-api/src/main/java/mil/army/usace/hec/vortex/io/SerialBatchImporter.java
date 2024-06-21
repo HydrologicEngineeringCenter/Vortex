@@ -5,15 +5,20 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
+import mil.army.usace.hec.vortex.io.buffer.DataBuffer;
+import mil.army.usace.hec.vortex.io.buffer.DataBufferConfig;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 class SerialBatchImporter extends BatchImporter {
     private static final Logger logger = Logger.getLogger(SerialBatchImporter.class.getName());
 
+    // Netcdf Batch Importer
     SerialBatchImporter(Builder builder) {
         super(builder);
     }
@@ -23,7 +28,31 @@ class SerialBatchImporter extends BatchImporter {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(getDataReaders(), geoOptions));
+        // Geoprocessor
+        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
+
+        // Prepare NetCDF file to append
+        List<DataReader> dataReaders = getDataReaders();
+        NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(dataReaders, geoOptions));
+
+        // Buffered Data Writer
+        DataBufferConfig config = DataBufferConfig.create().withAutoProcess();
+        Consumer<List<VortexData>> writeFunction = data -> DataWriter.builder()
+                .destination(destination)
+                .options(writeOptions)
+                .data(data)
+                .build()
+                .write();
+        DataBuffer<VortexData> bufferedDataWriter = DataBuffer.of(DataBuffer.Type.MEMORY_DYNAMIC, config, writeFunction);
+
+        // Buffered Read and Process
+        dataReaders.parallelStream()
+                .map(DataReader::getDtos)
+                .flatMap(Collection::stream)
+                .filter(VortexGrid.class::isInstance)
+                .map(VortexGrid.class::cast)
+                .map(geoProcessor::process)
+                .forEachOrdered(bufferedDataWriter::add);
 
         List<ImportableUnit> importableUnits = getImportableUnits();
 
