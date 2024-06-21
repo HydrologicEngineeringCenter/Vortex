@@ -9,6 +9,7 @@ import mil.army.usace.hec.vortex.io.buffer.DataBuffer;
 import mil.army.usace.hec.vortex.io.buffer.DataBufferConfig;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -37,23 +38,10 @@ class SerialBatchImporter extends BatchImporter {
         NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(dataReaders, geoOptions));
 
         // Buffered Data Writer
-        DataBufferConfig config = DataBufferConfig.create().withAutoProcess();
-        Consumer<List<VortexData>> writeFunction = data -> DataWriter.builder()
-                .destination(destination)
-                .options(writeOptions)
-                .data(data)
-                .build()
-                .write();
-        DataBuffer<VortexData> bufferedDataWriter = DataBuffer.of(DataBuffer.Type.MEMORY_DYNAMIC, config, writeFunction);
-
-        Consumer<Stream<VortexData>> bufferProcessFunction = data -> DataWriter.builder()
-                .destination(destination)
-                .options(writeOptions)
-                .data(data.toList())
-                .build()
-                .write();
+        DataBuffer<VortexData> bufferedDataWriter = DataBuffer.of(DataBuffer.Type.MEMORY_DYNAMIC);
 
         // Buffered Read and Process
+        Consumer<Stream<VortexData>> bufferProcessFunction = stream -> writeBufferedData(destination, writeOptions, stream);
         dataReaders.parallelStream()
                 .map(DataReader::getDtos)
                 .flatMap(Collection::stream)
@@ -61,17 +49,7 @@ class SerialBatchImporter extends BatchImporter {
                 .map(VortexGrid.class::cast)
                 .map(geoProcessor::process)
                 .forEachOrdered(grid -> bufferedDataWriter.addAndProcessWhenFull(grid, bufferProcessFunction));
-
-//        List<ImportableUnit> importableUnits = getImportableUnits();
-//
-//        for (ImportableUnit importableUnit : importableUnits) {
-//            totalCount += importableUnit.getDtoCount();
-//        }
-//
-//        importableUnits.forEach(importableUnit -> {
-//            importableUnit.addPropertyChangeListener(propertyChangeListener());
-//            importableUnit.process();
-//        });
+        bufferedDataWriter.processBufferAndClear(bufferProcessFunction);
 
         stopwatch.end();
         String timeMessage = "Batch import time: " + stopwatch;
@@ -80,15 +58,16 @@ class SerialBatchImporter extends BatchImporter {
         support.firePropertyChange(VortexProperty.STATUS, null, null);
     }
 
-    private static List<VortexData> firstProcessedDataFromReaders(List<DataReader> readers, Map<String, String> geoOptions) {
-        GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
-        return readers.stream()
-                .map(r -> r.getDto(0))
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
-                .map(geoProcessor::process)
-                .map(VortexData.class::cast)
-                .toList();
+    private void writeBufferedData(Path destination, Map<String, String> writeOptions, Stream<VortexData> bufferedData) {
+        List<VortexData> bufferedDataList = bufferedData.toList();
+        DataWriter dataWriter = DataWriter.builder()
+                .destination(destination)
+                .options(writeOptions)
+                .data(bufferedDataList)
+                .build();
+
+        dataWriter.write();
+        logger.info("Completed Buffered Write Count: " + bufferedDataList.size());
     }
 
     private static VortexGridCollection representativeCollection(List<DataReader> readers, Map<String, String> geoOptions) {
