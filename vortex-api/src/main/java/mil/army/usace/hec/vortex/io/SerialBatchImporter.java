@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 class SerialBatchImporter extends BatchImporter {
     private static final Logger logger = Logger.getLogger(SerialBatchImporter.class.getName());
@@ -45,6 +46,13 @@ class SerialBatchImporter extends BatchImporter {
                 .write();
         DataBuffer<VortexData> bufferedDataWriter = DataBuffer.of(DataBuffer.Type.MEMORY_DYNAMIC, config, writeFunction);
 
+        Consumer<Stream<VortexData>> bufferProcessFunction = data -> DataWriter.builder()
+                .destination(destination)
+                .options(writeOptions)
+                .data(data.toList())
+                .build()
+                .write();
+
         // Buffered Read and Process
         dataReaders.parallelStream()
                 .map(DataReader::getDtos)
@@ -52,18 +60,18 @@ class SerialBatchImporter extends BatchImporter {
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .map(geoProcessor::process)
-                .forEachOrdered(bufferedDataWriter::add);
+                .forEachOrdered(grid -> bufferedDataWriter.addAndProcessWhenFull(grid, bufferProcessFunction));
 
-        List<ImportableUnit> importableUnits = getImportableUnits();
-
-        for (ImportableUnit importableUnit : importableUnits) {
-            totalCount += importableUnit.getDtoCount();
-        }
-
-        importableUnits.forEach(importableUnit -> {
-            importableUnit.addPropertyChangeListener(propertyChangeListener());
-            importableUnit.process();
-        });
+//        List<ImportableUnit> importableUnits = getImportableUnits();
+//
+//        for (ImportableUnit importableUnit : importableUnits) {
+//            totalCount += importableUnit.getDtoCount();
+//        }
+//
+//        importableUnits.forEach(importableUnit -> {
+//            importableUnit.addPropertyChangeListener(propertyChangeListener());
+//            importableUnit.process();
+//        });
 
         stopwatch.end();
         String timeMessage = "Batch import time: " + stopwatch;
