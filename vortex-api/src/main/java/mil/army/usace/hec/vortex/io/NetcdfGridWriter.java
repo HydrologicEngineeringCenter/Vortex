@@ -17,26 +17,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class NetcdfGridWriter {
-    private static final Map<NetcdfWriterCache.WriterKey, AtomicInteger> appendStartIndexMap = new ConcurrentHashMap<>();
-
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
     public static final int BOUNDS_LEN = 2;
 
-    private final String ncDestination;
     private final Map<String, VortexGridCollection> gridCollectionMap;
     private final VortexGridCollection defaultCollection;
 
-    public NetcdfGridWriter(String ncDestination, List<VortexGrid> vortexGridList) {
-        this.ncDestination = ncDestination;
+    public NetcdfGridWriter(List<VortexGrid> vortexGridList) {
         gridCollectionMap = initGridCollectionMap(vortexGridList);
         defaultCollection = gridCollectionMap.values().stream()
                 .findAny()
@@ -71,12 +65,6 @@ public class NetcdfGridWriter {
             logger.severe("Data is not the same for all grids");
         }
         return isUnique;
-    }
-
-    private int getObjectsWrittenCount() {
-        return gridCollectionMap.values().stream()
-                .mapToInt(VortexGridCollection::getTimeLength)
-                .sum();
     }
 
     private void writeVariableGrids(NetcdfFormatWriter writer, int startIndex) {
@@ -130,23 +118,16 @@ public class NetcdfGridWriter {
 
     /* Append Data */
     public void appendData(NetcdfFormatWriter.Builder writerBuilder) {
-        try {
-            NetcdfWriterCache.WriterKey key = NetcdfWriterCache.WriterKey.appendKey(ncDestination);
-            NetcdfFormatWriter writer = NetcdfWriterCache.getOrCompute(key, writerBuilder);
-
+        try (NetcdfFormatWriter writer = writerBuilder.build()) {
             Variable timeVar = writer.findVariable(CF.TIME);
             if (timeVar == null) {
                 logger.severe("Time variable not found");
                 return;
             }
 
-            int startIndex = appendStartIndexMap.computeIfAbsent(key, k -> new AtomicInteger(0)).get();
+            int startIndex = (int) timeVar.getSize();
             writeVariableGrids(writer, startIndex);
             writer.write(timeVar, new int[] {startIndex}, Array.makeFromJavaArray(defaultCollection.getTimeData()));
-
-            int count = appendStartIndexMap.computeIfAbsent(key, k -> new AtomicInteger(0))
-                    .addAndGet(getObjectsWrittenCount());
-//            System.out.println(key + "|" + count);
 
             if (defaultCollection.hasTimeBounds()) {
                 writer.write("time_bnds", new int[] {startIndex, 0}, Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
