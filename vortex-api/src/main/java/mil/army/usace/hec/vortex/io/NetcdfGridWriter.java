@@ -127,11 +127,11 @@ public class NetcdfGridWriter {
 
             int startIndex = (int) timeVar.getSize();
             writeVariableGrids(writer, startIndex);
-            writer.write(timeVar, new int[] {startIndex}, Array.makeFromJavaArray(defaultCollection.getTimeData()));
+//            writer.write(timeVar, new int[] {startIndex}, Array.makeFromJavaArray(defaultCollection.getTimeData()));
 
-            if (defaultCollection.hasTimeBounds()) {
-                writer.write("time_bnds", new int[] {startIndex, 0}, Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
-            }
+//            if (defaultCollection.hasTimeBounds()) {
+//                writer.write("time_bnds", new int[] {startIndex, 0}, Array.makeFromJavaArray(defaultCollection.getTimeBoundsArray()));
+//            }
         } catch (Exception e) {
             logger.severe(e.getMessage());
         }

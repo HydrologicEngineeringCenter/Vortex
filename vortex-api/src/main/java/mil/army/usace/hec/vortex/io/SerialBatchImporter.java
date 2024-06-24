@@ -1,17 +1,16 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.VortexGridCollection;
-import mil.army.usace.hec.vortex.VortexProperty;
+    import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 import mil.army.usace.hec.vortex.io.buffer.DataBuffer;
-import mil.army.usace.hec.vortex.io.buffer.DataBufferConfig;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.List;
+    import java.util.Comparator;
+    import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -35,7 +34,15 @@ class SerialBatchImporter extends BatchImporter {
 
         // Prepare NetCDF file to append
         List<DataReader> dataReaders = getDataReaders();
-        NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(dataReaders, geoOptions));
+
+        List<VortexTimeRecord> timeRecords = dataReaders.stream()
+                .map(DataReader::getTimeRecords)
+                .flatMap(Collection::stream)
+                .distinct()
+                .sorted(Comparator.comparing(VortexTimeRecord::startTime))
+                .toList();
+
+        NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(dataReaders, geoOptions), timeRecords);
 
         // Buffered Data Writer
         DataBuffer<VortexData> bufferedDataWriter = DataBuffer.of(DataBuffer.Type.MEMORY_DYNAMIC);
@@ -48,8 +55,8 @@ class SerialBatchImporter extends BatchImporter {
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .map(geoProcessor::process)
-                .forEachOrdered(grid -> bufferedDataWriter.addAndProcessWhenFull(grid, bufferProcessFunction));
-        bufferedDataWriter.processBufferAndClear(bufferProcessFunction);
+                .forEachOrdered(grid -> bufferedDataWriter.addAndProcessWhenFull(grid, bufferProcessFunction, false));
+        bufferedDataWriter.processBufferAndClear(bufferProcessFunction, true);
 
         stopwatch.end();
         String timeMessage = "Batch import time: " + stopwatch;
@@ -60,6 +67,16 @@ class SerialBatchImporter extends BatchImporter {
 
     private void writeBufferedData(Path destination, Map<String, String> writeOptions, Stream<VortexData> bufferedData) {
         List<VortexData> bufferedDataList = bufferedData.toList();
+
+        List<VortexTimeRecord> x = bufferedDataList.stream()
+                .map(VortexTimeRecord::of)
+                .filter(r -> r.startTime().isAfter(ZonedDateTime.of(1951, 12, 31, 21, 0, 0, 0, ZoneId.of("UTC"))))
+                .toList();
+
+        if (!x.isEmpty()) {
+            System.out.println("Here");
+        }
+
         DataWriter dataWriter = DataWriter.builder()
                 .destination(destination)
                 .options(writeOptions)

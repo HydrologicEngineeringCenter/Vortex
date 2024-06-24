@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
+import mil.army.usace.hec.vortex.VortexTimeRecord;
 import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.util.VortexGridUtils;
 import ucar.ma2.Array;
@@ -19,6 +20,10 @@ import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.util.Parameter;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +43,7 @@ public final class NetcdfWriterPrep {
         // Utility Class
     }
 
-    public static void initializeForAppend(String destination, VortexGridCollection gridCollection) {
+    public static void initializeForAppend(String destination, VortexGridCollection gridCollection, List<VortexTimeRecord> records) {
         NetcdfFormatWriter.Builder builder = overwriteWriterBuilder(destination, gridCollection);
         if (builder == null) {
             logger.warning("Failed to create writer builder to prep file");
@@ -47,6 +52,7 @@ public final class NetcdfWriterPrep {
         
         try (NetcdfFormatWriter writer = builder.build()) {
             writeProjectionDimensions(writer, gridCollection);
+            writeTimeDimension(writer, records);
             logger.info("Generated NetCDF File. Ready for Append.");
         } catch (Exception e) {
             logger.warning("Failed to prep file");
@@ -274,5 +280,44 @@ public final class NetcdfWriterPrep {
             writer.write("y", Array.makeFromJavaArray(gridCollection.getYCoordinates()));
             writer.write("x", Array.makeFromJavaArray(gridCollection.getXCoordinates()));
         }
+    }
+
+    private static void writeTimeDimension(NetcdfFormatWriter writer, List<VortexTimeRecord> timeRecords) throws InvalidRangeException, IOException {
+        int numData = timeRecords.size();
+        long[] timeData = new long[numData];
+
+        for (int i = 0; i < numData; i++) {
+            VortexTimeRecord grid = timeRecords.get(i);
+            long startTime = getNumDurationsFromBaseTime(grid.startTime(), grid);
+            long endTime = getNumDurationsFromBaseTime(grid.endTime(), grid);
+            long midTime = (startTime + endTime) / 2;
+            timeData[i] = midTime;
+        }
+
+        Variable timeVar = writer.findVariable(CF.TIME);
+        writer.write(timeVar, new int[] {0}, Array.makeFromJavaArray(timeData));
+    }
+
+    private static long getNumDurationsFromBaseTime(ZonedDateTime dateTime, VortexTimeRecord timeRecord) {
+        ZonedDateTime baseTime = ZonedDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime zDateTime = dateTime.withZoneSameInstant(ZoneId.of("Z"));
+        Duration durationBetween = Duration.between(baseTime, zDateTime);
+        Duration divisor = Duration.of(1, getDurationUnit(getBaseDuration(timeRecord)));
+        return durationBetween.dividedBy(divisor);
+    }
+
+    private static ChronoUnit getDurationUnit(Duration duration) {
+        if (duration.toHours() > 0) {
+            return ChronoUnit.HOURS;
+        } else if (duration.toMinutes() > 0) {
+            return ChronoUnit.MINUTES;
+        } else {
+            return ChronoUnit.SECONDS;
+        }
+    }
+
+    private static Duration getBaseDuration(VortexTimeRecord timeRecord) {
+        Duration interval = timeRecord.getRecordDuration();
+        return interval.isZero() ? Duration.ofMinutes(1) : interval;
     }
 }
