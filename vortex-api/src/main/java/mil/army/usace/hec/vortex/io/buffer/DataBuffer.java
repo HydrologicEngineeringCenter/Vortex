@@ -11,14 +11,14 @@ public interface DataBuffer<T> {
     boolean isFull();
     Stream<T> getBufferAsStream();
 
-    default void processBufferAndClear(Consumer<Stream<T>> bufferProcessFunction) {
+    default void processBufferAndClear(Consumer<Stream<T>> bufferProcessFunction, boolean isForced) {
         bufferProcessFunction.accept(getBufferAsStream());
         clear();
     }
 
-    default void addAndProcessWhenFull(T data, Consumer<Stream<T>> bufferProcessFunction) {
-        if (isFull()) {
-            processBufferAndClear(bufferProcessFunction);
+    default void addAndProcessWhenFull(T data, Consumer<Stream<T>> bufferProcessFunction, boolean isForced) {
+        if (isFull() || isForced) {
+            processBufferAndClear(bufferProcessFunction, isForced);
         }
 
         add(data);
