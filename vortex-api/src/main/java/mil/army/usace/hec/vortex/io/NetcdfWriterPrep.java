@@ -46,7 +46,7 @@ public final class NetcdfWriterPrep {
         }
         
         try (NetcdfFormatWriter writer = builder.build()) {
-            writeDimensions(writer, gridCollection);
+            writeProjectionDimensions(writer, gridCollection);
             logger.info("Generated NetCDF File. Ready for Append.");
         } catch (Exception e) {
             logger.warning("Failed to prep file");
@@ -266,27 +266,13 @@ public final class NetcdfWriterPrep {
     }
     
     /* Write Dimensions */
-    private static void writeDimensions(NetcdfFormatWriter writer, VortexGridCollection gridCollection) throws InvalidRangeException, IOException {
-        writer.write(CF.TIME, Array.makeFromJavaArray(gridCollection.getTimeData()));
-
-        if (gridCollection.hasTimeBounds()) {
-            writer.write("time_bnds", Array.makeFromJavaArray(gridCollection.getTimeBoundsArray()));
-        }
-
+    private static void writeProjectionDimensions(NetcdfFormatWriter writer, VortexGridCollection gridCollection) throws InvalidRangeException, IOException {
         if (gridCollection.isGeographic()) {
-            writeDimensionsGeographic(writer, gridCollection);
+            writer.write(CF.LATITUDE, Array.makeFromJavaArray(gridCollection.getYCoordinates()));
+            writer.write(CF.LONGITUDE, Array.makeFromJavaArray(gridCollection.getXCoordinates()));
         } else {
-            writeDimensionsProjected(writer, gridCollection);
+            writer.write("y", Array.makeFromJavaArray(gridCollection.getYCoordinates()));
+            writer.write("x", Array.makeFromJavaArray(gridCollection.getXCoordinates()));
         }
-    }
-
-    private static void writeDimensionsGeographic(NetcdfFormatWriter writer, VortexGridCollection gridCollection) throws InvalidRangeException, IOException {
-        writer.write(CF.LATITUDE, Array.makeFromJavaArray(gridCollection.getYCoordinates()));
-        writer.write(CF.LONGITUDE, Array.makeFromJavaArray(gridCollection.getXCoordinates()));
-    }
-
-    private static void writeDimensionsProjected(NetcdfFormatWriter writer, VortexGridCollection gridCollection) throws InvalidRangeException, IOException {
-        writer.write("y", Array.makeFromJavaArray(gridCollection.getYCoordinates()));
-        writer.write("x", Array.makeFromJavaArray(gridCollection.getXCoordinates()));
     }
 }
