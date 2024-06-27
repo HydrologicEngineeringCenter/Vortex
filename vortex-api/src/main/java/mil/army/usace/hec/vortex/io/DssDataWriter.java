@@ -84,10 +84,12 @@ public class DssDataWriter extends DataWriter {
                 options.put("partF", grid.description());
             }
 
-            if (!cPart.equals("PRECIPITATION")
-                    && options.getOrDefault("dataType", "").isEmpty()
-                    && !grid.interval().equals(Duration.ZERO)) {
-                options.put("dataType", "PER-AVER");
+            if (!cPart.equals("PRECIPITATION") && options.get("dataType") == null) {
+                if (!Duration.ZERO.equals(grid.interval()))
+                    options.put("dataType", "PER-AVER");
+
+                if (grid.interval() == null || Duration.ZERO.equals(grid.interval()))
+                    options.put("dataType", "INST-VAL");
             }
 
             if (cPart.equals("PRECIPITATION") && !grid.interval().isZero()

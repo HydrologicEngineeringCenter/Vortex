@@ -381,4 +381,62 @@ class BatchImporterTest {
             Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
         }
     }
+
+    @Test
+    void tifToDss() {
+        URL inUrl = Objects.requireNonNull(getClass().getResource("/tif_to_dss/hms_cn_grid.tif"));
+
+        String inFile = new File(inUrl.getFile()).toString();
+
+        List<String> inFiles = new ArrayList<>();
+        inFiles.add(inFile);
+
+        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "hms_cn_grid.dss");
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+
+        List<String> variables = new ArrayList<>();
+        variables.add("hms_cn_grid");
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(inFiles)
+                .variables(variables)
+                .destination(pathToDestination.toString())
+                .build();
+
+        importer.process();
+
+        int[] status = new int[1];
+        GriddedData griddedData = new GriddedData();
+        griddedData.setDSSFileName(pathToDestination.toString());
+        griddedData.setPathname("///////");
+        GridData gridData = new GridData();
+        griddedData.retrieveGriddedData(true, gridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
+        }
+
+        GridInfo gridInfo = gridData.getGridInfo();
+        Assertions.assertEquals("", gridInfo.getStartTime());
+        Assertions.assertEquals("", gridInfo.getEndTime());
+        Assertions.assertEquals("UNSPECIF", gridInfo.getDataUnits());
+        Assertions.assertEquals(DssDataType.INST_VAL.value(), gridInfo.getDataType());
+        Assertions.assertEquals(98, gridInfo.getMaxValue());
+        Assertions.assertEquals(21, gridInfo.getMinValue());
+        Assertions.assertEquals(70.09265, gridInfo.getMeanValue(), 1E-5);
+
+        griddedData.done();
+
+        try {
+            HecDataManager.close(pathToDestination.toString(), false);
+            Files.deleteIfExists(pathToDestination);
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
 }
