@@ -13,7 +13,10 @@ import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Envelope;
+import tech.units.indriya.quantity.Quantities;
 
+import javax.measure.Quantity;
+import javax.measure.quantity.Length;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static tech.units.indriya.unit.Units.METRE;
 
 class NetcdfDataReaderTest {
 
@@ -391,12 +395,14 @@ class NetcdfDataReaderTest {
 
         String wkt = WktFactory.create("UTM17N");
 
+        Quantity<Length> cellSize = Quantities.getQuantity(2000, METRE);
+
         VortexGrid resampled = Resampler.builder()
                 .grid(grid)
                 .envelope(envelope)
                 .envelopeWkt(wkt)
                 .targetWkt(WktFactory.create("UTM17N"))
-                .cellSize(2000.0)
+                .cellSize(cellSize)
                 .method("Bilinear")
                 .build()
                 .resample();

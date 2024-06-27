@@ -633,40 +633,20 @@ public class NetcdfDataReader extends DataReader {
 
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();
 
-        Unit<?> cellUnits;
-        switch (xAxisUnits.toLowerCase()) {
-            case "m":
-            case "meter":
-            case "metre":
-                cellUnits = METRE;
-                break;
-            case "km":
-                cellUnits = KILO(METRE);
-                break;
-            case "degrees":
-            case "degrees_east":
-            case "degrees_north":
-                cellUnits = DEGREE_ANGLE;
-                break;
-            default:
-                cellUnits = ONE;
-        }
+        Unit<?> cellUnits = switch (xAxisUnits.toLowerCase()) {
+            case "m", "meter", "metre" -> METRE;
+            case "km" -> KILO(METRE);
+            case "degrees", "degrees_east", "degrees_north" -> DEGREE_ANGLE;
+            default -> ONE;
+        };
 
-        Unit<?> csUnits;
-        switch (ReferenceUtils.getMapUnits(wkt).toLowerCase()) {
-            case "m":
-            case "meter":
-            case "metre":
-                csUnits = METRE;
-                break;
-            case "km":
-                csUnits = KILO(METRE);
-                break;
-            default:
-                csUnits = ONE;
-        }
+        Unit<?> csUnits = ReferenceUtils.getLinearUnits(wkt);
 
-        if (cellUnits.isCompatible(csUnits) && !cellUnits.equals(csUnits)) {
+        // This will scale the grid if cellUnits and csUnits do not align
+        // e.g. cellUnits are in meters but csUnits are in kilometers
+        // isCompatible is simply checking if the units are of type length so that no scaling is attempted
+        // between DEGREE_ANGLE and ONE
+        if (cellUnits.isCompatible(METRE) && csUnits.isCompatible(METRE) && !cellUnits.equals(csUnits)) {
             grid.set(scaleGrid(grid.get(), cellUnits, csUnits));
         }
 

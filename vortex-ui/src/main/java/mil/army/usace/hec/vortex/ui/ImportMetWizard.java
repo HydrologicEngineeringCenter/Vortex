@@ -37,7 +37,9 @@ public class ImportMetWizard extends VortexWizard {
     private int cardNumber;
 
     private JList<String> addFilesList, leftVariablesList, rightVariablesList;
-    private JTextField dataSourceTextField, targetCellSizeTextField;
+    private JTextField dataSourceTextField;
+    private JTextField targetCellSizeTextField;
+    private CellSizeUnitsComboBox targetCellSizeUnitsComboBox;
     private JTextArea targetWktTextArea;
     private ResamplingMethodSelectionPanel resamplingPanel;
     private JLabel importStatusMessageLabel;
@@ -350,15 +352,27 @@ public class ImportMetWizard extends VortexWizard {
 
         /* Getting geoOptions */
         Map<String, String> geoOptions = new HashMap<>();
+
         // Clipping Datasource
         String clippingDatasource = dataSourceTextField.getText();
-        if(!clippingDatasource.isEmpty()) { geoOptions.put("pathToShp", clippingDatasource); }
+        if (!clippingDatasource.isEmpty()) {
+            geoOptions.put("pathToShp", clippingDatasource);
+        }
+
         // Target Wkt
         String targetWkt = targetWktTextArea.getText();
-        if(!targetWkt.isEmpty()) { geoOptions.put("targetWkt", targetWkt); }
+        if (!targetWkt.isEmpty()) {
+            geoOptions.put("targetWkt", targetWkt);
+        }
+
         // Target Cell Size
         String targetCellSize = targetCellSizeTextField.getText();
-        if(!targetCellSize.isEmpty()) { geoOptions.put("targetCellSize", targetCellSize); }
+        if (!targetCellSize.isEmpty()) {
+            geoOptions.put("targetCellSize", targetCellSize);
+            String targetCellSizeUnits = String.valueOf(targetCellSizeUnitsComboBox.getSelectedItem());
+            geoOptions.put("targetCellSizeUnits", targetCellSizeUnits);
+        }
+
         // Resampling Method
         geoOptions.put("resamplingMethod", resamplingPanel.getSelected().toString());
 
@@ -739,11 +753,12 @@ public class ImportMetWizard extends VortexWizard {
         targetCellSizeTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
 
         targetCellSizeTextField = new JTextField();
-        targetCellSizeTextField.setColumns(0);
-        targetCellSizeTextField.setBorder(null);
-        JScrollPane layerPanel = new JScrollPane(targetCellSizeTextField);
-        targetCellSizeTextFieldPanel.add(layerPanel);
-        targetCellSizeTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
+        targetCellSizeTextFieldPanel.add(targetCellSizeTextField);
+        targetCellSizeTextFieldPanel.add(Box.createRigidArea(new Dimension(8, 0)));
+
+        targetCellSizeUnitsComboBox = new CellSizeUnitsComboBox();
+        targetCellSizeTextFieldPanel.add(targetCellSizeUnitsComboBox);
+        targetCellSizeTextFieldPanel.add(Box.createRigidArea(new Dimension(8, 0)));
 
         JButton selectCellSizeButton = new JButton(IconResources.loadIcon("images/grid-16.png"));
         selectCellSizeButton.setPreferredSize(new Dimension(22,22));

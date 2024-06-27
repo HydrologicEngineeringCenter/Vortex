@@ -6,8 +6,14 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.osr.SpatialReference;
 
+import javax.measure.Unit;
 import java.util.Objects;
 import java.util.logging.Logger;
+
+import static javax.measure.MetricPrefix.KILO;
+import static systems.uom.common.USCustomary.DEGREE_ANGLE;
+import static systems.uom.common.USCustomary.FOOT;
+import static tech.units.indriya.unit.Units.METRE;
 
 public class ReferenceUtils {
     private static final Logger logger = Logger.getLogger(ReferenceUtils.class.getName());
@@ -18,17 +24,28 @@ public class ReferenceUtils {
 
     private ReferenceUtils(){}
 
-    public static String getMapUnits(String crs) {
-        SpatialReference srs = new SpatialReference();
+    public static Unit<?> getLinearUnits(String wkt) {
+        if (wkt == null)
+            throw new IllegalArgumentException("wkt must not be null");
 
-        srs.ImportFromWkt(crs);
-        srs.MorphFromESRI();
+        SpatialReference srs = new SpatialReference(wkt);
+        try {
+            srs.MorphFromESRI();
 
-        String linearUnitsName = srs.GetLinearUnitsName();
+            if (srs.IsGeographic() == 1)
+                return DEGREE_ANGLE;
 
-        srs.delete();
+            String linearUnitsName = srs.GetLinearUnitsName().toLowerCase();
 
-        return linearUnitsName;
+            return switch (linearUnitsName) {
+                case "m", "meter", "meters", "metre" -> METRE;
+                case "km" -> KILO(METRE);
+                case "ft", "feet", "foot", "us foot", "us survey foot" -> FOOT;
+                default -> throw new IllegalArgumentException("Linear Units not recognized");
+            };
+        } finally {
+            srs.delete();
+        }
     }
 
     public static int getUlyDirection(String wkt, double llx, double lly){
