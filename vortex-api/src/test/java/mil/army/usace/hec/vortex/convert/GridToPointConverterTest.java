@@ -29,12 +29,16 @@ class GridToPointConverterTest {
         String destination = new File(getClass().getResource(
                 "/truckee/truckee_river_qpe_ts.dss").getFile()).toString();
 
+        Map<String, String> options = new HashMap<>();
+        options.put("Average", "true");
+
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)
                 .variables(variables)
                 .pathToFeatures(pathToShp)
                 .field("Name")
                 .destination(destination)
+                .writeOptions(options)
                 .build();
 
         converter.convert();
@@ -73,12 +77,16 @@ class GridToPointConverterTest {
         String destination = new File(getClass().getResource(
                 "/canyon/canyon_ts.dss").getFile()).toString();
 
+        Map<String, String> options = new HashMap<>();
+        options.put("Average", "true");
+
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)
                 .variables(variables)
                 .pathToFeatures(pathToShp)
                 .field("Name")
                 .destination(destination)
+                .writeOptions(options)
                 .build();
 
         converter.convert();
@@ -119,6 +127,7 @@ class GridToPointConverterTest {
 
         Map<String, String> options = new HashMap<>();
         options.put("partF", "test");
+        options.put("Average", "true");
 
         GridToPointConverter converter = GridToPointConverter.builder()
                 .pathToGrids(pathToGrids)

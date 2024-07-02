@@ -13,6 +13,7 @@ import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
+import mil.army.usace.hec.vortex.geo.ZonalStatistics;
 import mil.army.usace.hec.vortex.util.UnitUtil;
 import org.gdal.osr.SpatialReference;
 
@@ -215,63 +216,27 @@ public class DssDataWriter extends DataWriter {
                     .sorted(Comparator.comparing(VortexPoint::startTime))
                     .toList();
 
-            List<ZonedDateTime> startTimes = filtered.stream()
-                    .map(VortexPoint::startTime)
-                    .sorted()
-                    .toList();
+            VortexPoints vortexPoints = new VortexPoints(filtered);
 
-            List<ZonedDateTime> endTimes = filtered.stream()
-                    .map(VortexPoint::endTime)
-                    .sorted()
-                    .toList();
+            List<TimeSeriesContainer> tscs = vortexPoints.getTscs();
+            writeDssTimeSeries(tscs);
+        }));
+    }
 
-            boolean isRegular = true;
-            Duration diff;
-            if (startTimes.size() == 1) {
-                isRegular = false;
-                diff = Duration.ZERO;
-            } else {
-                diff = Duration.between(startTimes.get(0), startTimes.get(1));
-                for (int t = 1; t < startTimes.size(); t++) {
-                    if (!Duration.between(startTimes.get(t - 1), startTimes.get(t)).equals(diff)) {
-                        isRegular = false;
-                        break;
-                    }
-                }
-            }
+    private void writeDssTimeSeries(List<TimeSeriesContainer> tscs){
+        HecTimeSeries dssTimeSeries = new HecTimeSeries();
+        dssTimeSeries.setDSSFileName(destination.toString());
+        for (TimeSeriesContainer tsc : tscs) {
+            int status = dssTimeSeries.write(tsc);
+            if (status != 0) logger.severe("Dss write error");
+        }
 
-            double[] values = filtered.stream()
-                    .mapToDouble(VortexPoint::data)
-                    .toArray();
+        dssTimeSeries.done();
+    }
 
-            String units = filtered.get(0).units();
-            DssDataType type = getDssDataType(description, diff);
-
-            DSSPathname pathname = new DSSPathname();
-            pathname.setBPart(id);
-            String cPart = getCPartForTimeSeries(description, type);
-            pathname.setCPart(cPart);
-
-            TimeSeriesContainer tsc = new TimeSeriesContainer();
-            tsc.setUnits(units);
-            tsc.setType(type.toString());
-            tsc.setValues(values);
-
-            if (isRegular) {
-                int seconds = (int) diff.abs().getSeconds();
-                String ePart = getEPart(seconds);
-                pathname.setEPart(ePart);
-
-                HecTime startTime = getHecTime(startTimes.get(0));
-                if (type.equals(DssDataType.PER_CUM) || type.equals(DssDataType.PER_AVER)) {
-                    startTime.addSeconds(seconds);
-                }
-
-                tsc.setStartTime(startTime);
-            } else {
-                logger.info(() -> "Inconsistent time-interval in record. Data will be stored as irregular interval.");
-                pathname.setEPart("Ir-Day");
-
+    private TimeSeriesContainer computePrecipAccum(TimeSeriesContainer tsc, List<ZonedDateTime> endTimes) {
+        try {
+            if (tsc.getTimes() == null) {
                 int[] times = new int[endTimes.size()];
                 for (int i = 0; i < endTimes.size(); i++) {
                     ZonedDateTime zdtEndTime = endTimes.get(i);
@@ -283,47 +248,22 @@ public class DssDataWriter extends DataWriter {
                 tsc.setTimes(hecTimeArray);
             }
 
-            tsc.setName(updatePathname(pathname, options).toString());
+            HecMath math = HecMath.createInstance(tsc).accumulation();
+            DataContainer container = math.getData();
+            TimeSeriesContainer tscAccum = (TimeSeriesContainer) container;
+            DSSPathname dssPathname = new DSSPathname(tscAccum.getFullName());
 
-            HecTimeSeries dssTimeSeries = new HecTimeSeries();
-            dssTimeSeries.setDSSFileName(destination.toString());
+            dssPathname.setCPart("PRECIP-CUM");
+            tscAccum.setType(DssDataType.INST_CUM.toString());
 
-            int status = dssTimeSeries.write(tsc);
+            tscAccum.setFullName(dssPathname.toString());
 
-            if (options.getOrDefault("isAccumulate", "false").equalsIgnoreCase("true")
-                    && cPart.toLowerCase().contains("precip")) {
-                try {
-                    if (tsc.getTimes() == null) {
-                        int[] times = new int[endTimes.size()];
-                        for (int i = 0; i < endTimes.size(); i++) {
-                            ZonedDateTime zdtEndTime = endTimes.get(i);
-                            HecTime endTime = getHecTime(zdtEndTime);
-                            times[i] = endTime.value();
-                        }
+            return tscAccum;
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, e, e::getMessage);
+        }
 
-                        HecTimeArray hecTimeArray = new HecTimeArray(times);
-                        tsc.setTimes(hecTimeArray);
-                    }
-                    HecMath math = HecMath.createInstance(tsc).accumulation();
-                    DataContainer container = math.getData();
-                    TimeSeriesContainer tscAccum = (TimeSeriesContainer) container;
-                    DSSPathname dssPathname = new DSSPathname(tscAccum.getFullName());
-
-                    dssPathname.setCPart("PRECIP-CUM");
-                    tscAccum.setType(DssDataType.INST_CUM.toString());
-
-                    tscAccum.setFullName(dssPathname.getPathname());
-                    if (dssTimeSeries.write(tscAccum) != 0) {
-                        logger.severe("Dss write error");
-                    }
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, e, e::getMessage);
-                }
-            }
-
-            dssTimeSeries.done();
-            if (status != 0) logger.severe("Dss write error");
-        }));
+        return new TimeSeriesContainer();
     }
 
     private static String getCPart(VortexGrid vortexGrid) {
@@ -796,5 +736,215 @@ public class DssDataWriter extends DataWriter {
         griddedData.done();
     }
 
+    private class VortexPoints {
+        private final List<VortexPoint> vortexPoints = new ArrayList<>();
+
+        private final String id;
+        private final String units;
+        private final String description;
+
+        private VortexPoints(List<VortexPoint> points) {
+            vortexPoints.addAll(points);
+
+            VortexPoint point0 = points.get(0);
+            id = point0.id();
+            units = point0.units();
+            description = point0.description();
+        }
+
+        private List<TimeSeriesContainer> getTscs() {
+
+            List<ZonedDateTime> startTimes = vortexPoints.stream()
+                    .map(VortexPoint::startTime)
+                    .sorted()
+                    .toList();
+
+            List<ZonedDateTime> endTimes = vortexPoints.stream()
+                    .map(VortexPoint::endTime)
+                    .sorted()
+                    .toList();
+
+            List<ZonalStatistics> zonalStatistics = vortexPoints.stream()
+                    .map(VortexPoint::getZonalStatistics)
+                    .toList();
+
+            boolean isRegular = true;
+            Duration diff;
+            if (startTimes.size() == 1) {
+                isRegular = false;
+                diff = Duration.ZERO;
+            } else {
+                diff = Duration.between(startTimes.get(0), startTimes.get(1));
+                for (int t = 1; t < startTimes.size(); t++) {
+                    if (!Duration.between(startTimes.get(t - 1), startTimes.get(t)).equals(diff)) {
+                        isRegular = false;
+                        break;
+                    }
+                }
+            }
+
+            DssDataType type = getDssDataType(description, diff);
+
+            List<TimeSeriesContainer> tscs = new ArrayList<>();
+
+            if (options.getOrDefault("Average", "").equalsIgnoreCase("true")) {
+                double[] averages = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getAverage)
+                        .toArray();
+
+                TimeSeriesContainer tscAvg = initTsc("", averages, type);
+
+                tscs.add(tscAvg);
+            }
+
+            if (options.getOrDefault("Min", "").equalsIgnoreCase("true")) {
+                double[] mins = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getMin)
+                        .toArray();
+
+                TimeSeriesContainer tscMin = initTsc("-MIN", mins, type);
+
+                tscs.add(tscMin);
+            }
+
+            if (options.getOrDefault("Max", "").equalsIgnoreCase("true")) {
+                double[] maxes = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getMax)
+                        .toArray();
+
+                TimeSeriesContainer tscMax = initTsc("-MAX", maxes, type);
+
+                tscs.add(tscMax);
+            }
+
+            if (options.getOrDefault("Median", "").equalsIgnoreCase("true")) {
+                double[] medians = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getMedian)
+                        .toArray();
+
+                TimeSeriesContainer tscMedian = initTsc("-MEDIAN", medians, type);
+
+                tscs.add(tscMedian);
+            }
+
+            if (options.getOrDefault("1Q", "").equalsIgnoreCase("true")) {
+                double[] firstQuartiles = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getFirstQuartile)
+                        .toArray();
+
+                TimeSeriesContainer tsc1Q = initTsc("-Q1", firstQuartiles, type);
+
+                tscs.add(tsc1Q);
+            }
+
+            if (options.getOrDefault("3Q", "").equalsIgnoreCase("true")) {
+                double[] thirdQuartiles = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getThirdQuartile)
+                        .toArray();
+
+                TimeSeriesContainer tsc3Q = initTsc("-Q3", thirdQuartiles, type);
+
+                tscs.add(tsc3Q);
+            }
+
+            if (options.getOrDefault("Pct>0", "").equalsIgnoreCase("true")) {
+                double[] pctCellsGreaterThanZero = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getPctCellsGreaterThanZero)
+                        .toArray();
+
+                TimeSeriesContainer tscGreaterThanZero = initTsc("-PCT>0", pctCellsGreaterThanZero, type);
+                tscGreaterThanZero.setUnits("%");
+
+                tscs.add(tscGreaterThanZero);
+            }
+
+            if (options.getOrDefault("Pct>1Q", "").equalsIgnoreCase("true")) {
+                double[] pctCellsGreaterThan1Q = zonalStatistics.stream()
+                        .mapToDouble(ZonalStatistics::getPctCellsGreaterThanFirstQuartile)
+                        .toArray();
+
+                TimeSeriesContainer tscGreaterThan1Q = initTsc("-PCT>Q1", pctCellsGreaterThan1Q, type);
+                tscGreaterThan1Q.setUnits("%");
+
+                tscs.add(tscGreaterThan1Q);
+            }
+
+            // Set times for each TimeSeriesContainer
+            for (TimeSeriesContainer tsc : tscs) {
+                if (isRegular) {
+                    setRegularTscTimes(tsc, diff, startTimes.get(0), type);
+                } else {
+                    setIrregularTscTimes(tsc, endTimes);
+                }
+            }
+
+            // Add an accumulation cumulative precipitation TimeSeriesContainer
+            if (options.getOrDefault("isAccumulate", "false").equalsIgnoreCase("true")) {
+                tscs.stream()
+                        .filter(tsc -> tsc.getFullName().split("/", 8)[3].equalsIgnoreCase("PRECIP-INC"))
+                        .findAny()
+                        .ifPresent(tsc -> tscs.add(computePrecipAccum(tsc, endTimes)));
+            }
+
+            // Set pathname for each TimeSeriesContainer
+            for (TimeSeriesContainer tsc : tscs) {
+                DSSPathname dssPathname = new DSSPathname(tsc.getFullName());
+                dssPathname.setBPart(id);
+                DSSPathname updated = updatePathname(dssPathname, options);
+                tsc.setName(updated.toString());
+            }
+
+            return tscs;
+        }
+
+        private TimeSeriesContainer initTsc(String cPartSuffix, double[] values, DssDataType type) {
+            TimeSeriesContainer tsc = new TimeSeriesContainer();
+            tsc.setUnits(units);
+            tsc.setType(type.toString());
+            tsc.setValues(values);
+
+            String cPart = getCPartForTimeSeries(description, type) + cPartSuffix;
+            DSSPathname dssPathname = new DSSPathname(tsc.getFullName());
+            dssPathname.setCPart(cPart);
+
+            tsc.setName(dssPathname.toString());
+
+            return tsc;
+        }
+
+        private void setRegularTscTimes(TimeSeriesContainer tsc, Duration diff, ZonedDateTime zdtStartTime, DssDataType type) {
+            int seconds = (int) diff.abs().getSeconds();
+            String ePart = getEPart(seconds);
+            DSSPathname dssPathname = new DSSPathname(tsc.getFullName());
+            dssPathname.setEPart(ePart);
+
+            tsc.setName(dssPathname.toString());
+
+            HecTime startTime = getHecTime(zdtStartTime);
+            if (type.equals(DssDataType.PER_CUM) || type.equals(DssDataType.PER_AVER)) {
+                startTime.addSeconds(seconds);
+            }
+
+            tsc.setStartTime(startTime);
+        }
+
+        private void setIrregularTscTimes(TimeSeriesContainer tsc, List<ZonedDateTime> endTimes) {
+            logger.info(() -> "Inconsistent time-interval in record. Data will be stored as irregular interval.");
+
+            DSSPathname dssPathname = new DSSPathname(tsc.getFullName());
+            dssPathname.setEPart("Ir-Day");
+            tsc.setName(dssPathname.toString());
+
+            int[] times = new int[endTimes.size()];
+            for (int i = 0; i < endTimes.size(); i++) {
+                ZonedDateTime zdtEndTime = endTimes.get(i);
+                HecTime endTime = getHecTime(zdtEndTime);
+                times[i] = endTime.value();
+            }
+
+            HecTimeArray hecTimeArray = new HecTimeArray(times);
+            tsc.setTimes(hecTimeArray);
+        }
+    }
 }
 
