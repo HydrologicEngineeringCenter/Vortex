@@ -5,7 +5,7 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.SpecifiedGridInfo;
 import mil.army.usace.hec.vortex.GdalRegister;
 import org.gdal.osr.SpatialReference;
-import ucar.unidata.geoloc.ProjectionImpl;
+import ucar.unidata.geoloc.Projection;
 import ucar.unidata.geoloc.projection.*;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
 import ucar.unidata.geoloc.projection.proj4.StereographicAzimuthalProjection;
@@ -30,9 +30,8 @@ public class WktFactory {
     private WktFactory() {
     }
 
-    public static String createWkt(ProjectionImpl projection) {
-        if (projection instanceof LatLonProjection) {
-            LatLonProjection in = (LatLonProjection) projection;
+    public static String createWkt(Projection projection) {
+        if (projection instanceof LatLonProjection in) {
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
 
@@ -42,8 +41,7 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof AlbersEqualArea) {
-            AlbersEqualArea in = (AlbersEqualArea) projection;
+        } else if (projection instanceof AlbersEqualArea in) {
             SpatialReference srs = new SpatialReference();
             srs.SetProjCS("Albers Equal Area Conic");
             setGcsParameters(in, srs);
@@ -63,8 +61,7 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof LambertConformal) {
-            LambertConformal in = (LambertConformal) projection;
+        } else if (projection instanceof LambertConformal in) {
             SpatialReference srs = new SpatialReference();
             srs.SetProjCS("Lambert Conformal Conic 2SP");
             setGcsParameters(in, srs);
@@ -84,8 +81,7 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof LambertConformalConicEllipse) {
-            LambertConformalConicEllipse in = (LambertConformalConicEllipse) projection;
+        } else if (projection instanceof LambertConformalConicEllipse in) {
             SpatialReference srs = new SpatialReference();
             srs.SetProjCS("Lambert Conformal Conic 2SP");
             setGcsParameters(in, srs);
@@ -105,8 +101,7 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof Mercator) {
-            Mercator in = (Mercator) projection;
+        } else if (projection instanceof Mercator in) {
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
             srs.SetMercator(
@@ -124,8 +119,7 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof Orthographic) {
-            Orthographic in = (Orthographic) projection;
+        } else if (projection instanceof Orthographic in) {
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
             srs.SetOrthographic(
@@ -142,8 +136,7 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof Sinusoidal) {
-            Sinusoidal in = (Sinusoidal) projection;
+        } else if (projection instanceof Sinusoidal in) {
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
             srs.SetSinusoidal(
@@ -159,8 +152,7 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof Stereographic) {
-            Stereographic in = (Stereographic) projection;
+        } else if (projection instanceof Stereographic in) {
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
             srs.SetStereographic(
@@ -214,12 +206,9 @@ public class WktFactory {
         } else if (projection instanceof RotatedPole) {
             List<Parameter> parameters = projection.getProjectionParameters();
 
-            Map<String, Double> numericParameters = new HashMap<>();
-            parameters.forEach(parameter -> {
-                if (!parameter.isString()) {
-                    numericParameters.put(parameter.getName(), parameter.getNumericValue());
-                }
-            });
+            Map<String, Double> numericParameters = parameters.stream()
+                    .filter(p -> !p.isString())
+                    .collect(Collectors.toMap(Parameter::getName, Parameter::getNumericValue));
 
             double gridNorthPoleLon = numericParameters.get("grid_north_pole_longitude");
             double gridNorthPoleLat = numericParameters.get("grid_north_pole_latitude");
@@ -227,7 +216,7 @@ public class WktFactory {
             SpatialReference srs = new SpatialReference();
 
             String proj4 = String.format("+proj=ob_tran +o_proj=longlat +lon_0=%.18g +o_lon_p=%.18g " +
-                    "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
+                            "+o_lat_p=%.18g +a=%.18g +b=%.18g +to_meter=0.0174532925199 +wktext",
                     180.0 + gridNorthPoleLon, 0.0,
                     gridNorthPoleLat, srs.GetSemiMajor(),
                     srs.GetSemiMinor());
@@ -240,25 +229,19 @@ public class WktFactory {
 
             return wkt;
 
-        } else if (projection instanceof TransverseMercatorProjection) {
-            TransverseMercatorProjection in = (TransverseMercatorProjection) projection;
+        } else if (projection instanceof TransverseMercatorProjection in) {
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
             List<Parameter> parameters = projection.getProjectionParameters();
 
-            Map<String, Double> numericParameters = new HashMap<>();
-            parameters.forEach(parameter -> {
-                if (!parameter.isString()) {
-                    numericParameters.put(parameter.getName(), parameter.getNumericValue());
-                }
-            });
+            Map<String, Double> numericParameters = parameters.stream()
+                    .filter(p -> !p.isString())
+                    .collect(Collectors.toMap(Parameter::getName, Parameter::getNumericValue));
 
-            Map<String, String> stringParameters = new HashMap<>();
-            parameters.forEach(parameter -> {
-                if (parameter.isString()) {
-                    stringParameters.put(parameter.getName(), parameter.getStringValue());
-                }
-            });
+            Map<String, String> stringParameters = parameters.stream()
+                    .filter(Parameter::isString)
+                    .filter(p -> Objects.nonNull(p.getStringValue()))
+                    .collect(Collectors.toMap(Parameter::getName, Parameter::getStringValue));
 
             int factor = Objects.equals(stringParameters.get("units"), "km") ? 1000 : 1;
 
@@ -290,7 +273,7 @@ public class WktFactory {
 
     }
 
-    private static void setGcsParameters(ProjectionImpl projection, SpatialReference srs) {
+    private static void setGcsParameters(Projection projection, SpatialReference srs) {
         List<Parameter> parameters = projection.getProjectionParameters();
         Optional<Parameter> semiMajor = parameters.stream()
                 .filter(parameter -> parameter.getName().equalsIgnoreCase("semi_major_axis"))
@@ -340,7 +323,7 @@ public class WktFactory {
         if (name.startsWith("UTM")) {
             int zone = Integer.parseInt(name.substring(3, name.length() - 1));
             int hemisphere;
-            if (name.substring(name.length() - 1).equals("N")) {
+            if (name.endsWith("N")) {
                 hemisphere = 1;
             } else {
                 hemisphere = 0;
@@ -385,7 +368,7 @@ public class WktFactory {
                 "UNIT[\"Meter\",1.0]]";
     }
 
-    public static String fromEpsg (int epsg) {
+    public static String fromEpsg(int epsg) {
         SpatialReference srs = new SpatialReference();
         srs.ImportFromEPSG(epsg);
         String wkt = srs.ExportToPrettyWkt();
@@ -393,28 +376,12 @@ public class WktFactory {
         return wkt;
     }
 
-    public static String fromGridInfo (GridInfo gridInfo) {
+    public static String fromGridInfo(GridInfo gridInfo) {
         if (ReferenceUtils.isShg(gridInfo)) {
             return getShg();
         }
-        if (gridInfo instanceof AlbersInfo) {
-            AlbersInfo albersInfo = (AlbersInfo) gridInfo;
-            SpatialReference srs = new SpatialReference();
-
-            int datum = albersInfo.getProjectionDatum();
-            if (datum == GridInfo.getNad83()) {
-                srs.SetWellKnownGeogCS("NAD83");
-            } else if (datum == GridInfo.getNad27()) {
-                srs.SetWellKnownGeogCS("NAD27");
-            }
-
-            double parallel1 = albersInfo.getFirstStandardParallel();
-            double parallel2 = albersInfo.getSecondStandardParallel();
-            double originLat = albersInfo.getLatitudeOfProjectionOrigin();
-            double originLon = albersInfo.getCentralMeridian();
-            double falseEasting = albersInfo.getFalseEasting();
-            double falseNorthing = albersInfo.getFalseNorthing();
-            srs.SetACEA(parallel1, parallel2, originLat, originLon, falseEasting, falseNorthing);
+        if (gridInfo instanceof AlbersInfo albersInfo) {
+            SpatialReference srs = getSpatialReference(albersInfo);
 
             String units = albersInfo.getProjectionUnits().toLowerCase();
             if (units.contains("foot") || units.contains("us")) {
@@ -427,8 +394,7 @@ public class WktFactory {
             srs.delete();
             return wkt;
         }
-        if (gridInfo instanceof SpecifiedGridInfo) {
-            SpecifiedGridInfo specifiedGridInfo = (SpecifiedGridInfo) gridInfo;
+        if (gridInfo instanceof SpecifiedGridInfo specifiedGridInfo) {
             SpatialReference srs = new SpatialReference(specifiedGridInfo.getSpatialReferenceSystem());
             String wkt = srs.ExportToWkt();
             srs.delete();
@@ -438,5 +404,25 @@ public class WktFactory {
         String wkt = srs.ExportToWkt();
         srs.delete();
         return wkt;
+    }
+
+    private static SpatialReference getSpatialReference(AlbersInfo albersInfo) {
+        SpatialReference srs = new SpatialReference();
+
+        int datum = albersInfo.getProjectionDatum();
+        if (datum == GridInfo.getNad83()) {
+            srs.SetWellKnownGeogCS("NAD83");
+        } else if (datum == GridInfo.getNad27()) {
+            srs.SetWellKnownGeogCS("NAD27");
+        }
+
+        double parallel1 = albersInfo.getFirstStandardParallel();
+        double parallel2 = albersInfo.getSecondStandardParallel();
+        double originLat = albersInfo.getLatitudeOfProjectionOrigin();
+        double originLon = albersInfo.getCentralMeridian();
+        double falseEasting = albersInfo.getFalseEasting();
+        double falseNorthing = albersInfo.getFalseNorthing();
+        srs.SetACEA(parallel1, parallel2, originLat, originLon, falseEasting, falseNorthing);
+        return srs;
     }
 }
