@@ -8,14 +8,18 @@ import org.gdal.osr.SpatialReference;
 import ucar.unidata.geoloc.ProjectionImpl;
 import ucar.unidata.geoloc.projection.*;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
+import ucar.unidata.geoloc.projection.proj4.StereographicAzimuthalProjection;
 import ucar.unidata.geoloc.projection.proj4.TransverseMercatorProjection;
 import ucar.unidata.util.Parameter;
 
 import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static org.gdal.osr.osrConstants.*;
 
 public class WktFactory {
+    private static final Logger logger = Logger.getLogger(WktFactory.class.getName());
 
     static {
         GdalRegister.getInstance();
@@ -174,6 +178,39 @@ public class WktFactory {
 
             return wkt;
 
+        } else if (projection instanceof StereographicAzimuthalProjection in) {
+            SpatialReference srs = new SpatialReference();
+
+            setGcsParameters(in, srs);
+
+            List<Parameter> parameters = projection.getProjectionParameters();
+
+            Map<String, Double> numericParameters = parameters.stream()
+                    .filter(p -> !p.isString())
+                    .collect(Collectors.toMap(Parameter::getName, Parameter::getNumericValue));
+
+            double centerLat = numericParameters.get("latitude_of_projection_origin");
+            double centerLon = numericParameters.get("longitude_of_projection_origin");
+            double scale = numericParameters.get("scale_factor_at_projection_origin");
+            double falseEasting = numericParameters.getOrDefault("false_easting", 0.0);
+            double falseNorthing = numericParameters.getOrDefault("false_northing", 0.0);
+
+            srs.SetPS(
+                    centerLat,
+                    centerLon,
+                    scale,
+                    falseEasting,
+                    falseNorthing
+            );
+
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
+
         } else if (projection instanceof RotatedPole) {
             List<Parameter> parameters = projection.getProjectionParameters();
 
@@ -247,6 +284,7 @@ public class WktFactory {
             return wkt;
 
         } else {
+            logger.severe(() -> "Projection " + projection + " not supported");
             return "";
         }
 
@@ -275,12 +313,14 @@ public class WktFactory {
                     semiMajor.get().getNumericValue(),
                     invFlattening);
         } else if (semiMajor.isPresent() && inverseFlattening.isPresent()) {
+            double invFlatteningValue = inverseFlattening.get().getNumericValue();
+            double invFlatteningValueNonInf = Double.isInfinite(invFlatteningValue) ? 0 : invFlatteningValue;
             srs.SetGeogCS(
                     "unknown",
                     "unknown",
                     "spheroid",
                     semiMajor.get().getNumericValue(),
-                    inverseFlattening.get().getNumericValue());
+                    invFlatteningValueNonInf);
         } else if (radius.isPresent()) {
             srs.SetGeogCS(
                     "unknown",
