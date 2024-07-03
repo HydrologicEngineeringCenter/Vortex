@@ -249,10 +249,7 @@ public class ClipperWizard extends VortexWizard {
         dataSourceTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
 
         dataSourceTextField = new JTextField();
-        dataSourceTextField.setColumns(0);
-        dataSourceTextField.setBorder(null);
-        JScrollPane layerPanel = new JScrollPane(dataSourceTextField);
-        dataSourceTextFieldPanel.add(layerPanel);
+        dataSourceTextFieldPanel.add(dataSourceTextField);
 
         dataSourceTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
