@@ -272,10 +272,7 @@ public class GridToPointWizard extends VortexWizard {
         dataSourceTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
 
         zonesShapefile = new JTextField();
-        zonesShapefile.setColumns(0);
-        zonesShapefile.setBorder(null);
-        JScrollPane layerPanel = new JScrollPane(zonesShapefile);
-        dataSourceTextFieldPanel.add(layerPanel);
+        dataSourceTextFieldPanel.add(zonesShapefile);
 
         dataSourceTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
