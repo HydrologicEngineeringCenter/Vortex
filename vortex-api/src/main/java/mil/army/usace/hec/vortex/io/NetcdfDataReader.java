@@ -350,64 +350,26 @@ public class NetcdfDataReader extends DataReader {
         if (gcs.hasTimeAxis1D()) {
             CoordinateAxis1DTime tAxis = gcs.getTimeAxis1D();
 
-            if (!tAxis.isInterval() && !isSpecialTimeBounds())
+            boolean isSpecialTimeBounds = isSpecialTimeBounds();
+
+            if (!tAxis.isInterval() && !isSpecialTimeBounds)
                 return getTimeInstants(tAxis);
 
-            for (int i = 0; i < tAxis.getSize(); i++) {
-                ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
-                CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
-
-                String fileName = new File(path).getName().toLowerCase();
-                if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
-                        || fileName.matches(".*radaronly.*qpe.*01h.*grib2")
-                        || fileName.matches(".*multisensor.*qpe.*01h.*grib2")) {
-                    zonedDateTimes[0] = convert(dates[0]).minusHours(1);
-                } else if (fileName.matches("mrms_preciprate.*")) {
-                    zonedDateTimes[0] = convert(dates[0]).minusMinutes(5);
-                } else if (fileName.matches("preciprate_.*\\.grib2")) {
-                    zonedDateTimes[0] = convert(dates[0]).minusMinutes(2);
-                } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
-                } else if (fileName.matches(".*aorc.*apcp.*nc4.*")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i)).minusHours(1);
-                } else if (fileName.matches(".*aorc.*tmp.*nc4.*")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
-                } else if (fileName.matches("[0-9]{2}.nc")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(0));
-                } else if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")) {
-                    zonedDateTimes[0] = convert(dates[0]).minusHours(1);
-                } else if (fileName.matches("prec.[0-9]{4}.nc")) {
-                    zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
-                } else if (fileName.matches("gfs.nc")) {
-                    zonedDateTimes[0] = convert(dates[0]).plusMinutes(90);
-                } else {
-                    zonedDateTimes[0] = convert(dates[0]);
+            if (isSpecialTimeBounds) {
+                for (int i = 0; i < tAxis.getSize(); i++) {
+                    ZonedDateTime[] zonedDateTimes = getSpecialTimeBounds(tAxis, i);
+                    list.add(zonedDateTimes);
                 }
-
-                if (fileName.matches("hrrr.*wrfsfcf.*")) {
-                    zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
-                } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
-                    zonedDateTimes[1] = zonedDateTimes[0].plusMinutes(30);
-                } else if (fileName.matches(".*aorc.*apcp.*nc4.*")) {
-                    zonedDateTimes[1] = convert(tAxis.getCalendarDate(i));
-                } else if (fileName.matches(".*aorc.*tmp.*nc4.*")) {
-                    zonedDateTimes[1] = convert(tAxis.getCalendarDate(i));
-                } else if (fileName.matches("[0-9]{2}.nc")) {
-                    zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
-                } else if (fileName.matches(".*cmorph.*h.*ly.*")) {
-                    zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
-                } else if (fileName.matches("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*")) {
-                    zonedDateTimes[1] = zonedDateTimes[0].plusHours(3);
-                } else if (fileName.matches("prec.[0-9]{4}.nc")) {
-                    zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
-                } else if (fileName.matches("gfs.nc")) {
-                    zonedDateTimes[1] = convert(dates[1]).plusMinutes(90);
-                } else {
-                    zonedDateTimes[1] = convert(dates[1]);
+            } else {
+                for (int i = 0; i < tAxis.getSize(); i++) {
+                    CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+                    ZonedDateTime zdt0 = convert(dates[0]);
+                    ZonedDateTime zdt1 = convert(dates[1]);
+                    ZonedDateTime[] zonedDateTimes = new ZonedDateTime[]{zdt0, zdt1};
+                    list.add(zonedDateTimes);
                 }
-
-                list.add(zonedDateTimes);
             }
+
             return list;
         }
 
@@ -513,7 +475,8 @@ public class NetcdfDataReader extends DataReader {
                 "hrrr.*wrfsfcf.*",
                 ".*cmorph.*h.*ly.*",
                 "ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*",
-                "prec.[0-9]{4}.nc"
+                "prec.[0-9]{4}.nc",
+                "livneh_unsplit_precip.\\d{4}-\\d{2}-\\d{2}.\\d{4}.nc"
         };
 
         if (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP")
@@ -524,6 +487,71 @@ public class NetcdfDataReader extends DataReader {
         return Arrays.stream(regexPatterns).anyMatch(fileName::matches);
     }
 
+    private ZonedDateTime[] getSpecialTimeBounds(CoordinateAxis1DTime tAxis, int i) {
+        ZonedDateTime[] zonedDateTimes = new ZonedDateTime[2];
+
+        String fileName = new File(path).getName().toLowerCase();
+
+        if (fileName.matches(".*gaugecorr.*qpe.*01h.*grib2")
+                || fileName.matches(".*radaronly.*qpe.*01h.*grib2")
+                || fileName.matches(".*multisensor.*qpe.*01h.*grib2")
+                || (fileName.matches("nldas_fora0125_h.a.*") && variableName.equals("APCP"))) {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            zonedDateTimes[0] = convert(dates[0]).minusHours(1);
+            zonedDateTimes[1] = convert(dates[1]);
+        } else if (fileName.matches("mrms_preciprate.*")) {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            zonedDateTimes[0] = convert(dates[0]).minusMinutes(5);
+            zonedDateTimes[1] = convert(dates[1]);
+        } else if (fileName.matches("preciprate_.*\\.grib2")) {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            zonedDateTimes[0] = convert(dates[0]).minusMinutes(2);
+            zonedDateTimes[1] = convert(dates[1]);
+        } else if (fileName.matches(".*hhr\\.ms\\.mrg.*hdf.*")) {
+            zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
+            zonedDateTimes[1] = zonedDateTimes[0].plusMinutes(30);
+        } else if (fileName.matches(".*aorc.*apcp.*nc4.*")) {
+            ZonedDateTime zdt = convert(tAxis.getCalendarDate(i));
+            zonedDateTimes[0] = zdt.minusHours(1);
+            zonedDateTimes[1] = zdt;
+        } else if (fileName.matches(".*aorc.*tmp.*nc4.*")) {
+            ZonedDateTime zdt = convert(tAxis.getCalendarDate(i));
+            zonedDateTimes[0] = zdt;
+            zonedDateTimes[1] = zdt;
+        } else if (fileName.matches("[0-9]{2}.nc")) {
+            zonedDateTimes[0] = convert(tAxis.getCalendarDate(0));
+            zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
+        } else if (fileName.matches("hrrr.*wrfsfcf.*")) {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            zonedDateTimes[0] = convert(dates[0]);
+            zonedDateTimes[1] = zonedDateTimes[0].plusHours(1);
+        } else if (fileName.matches(".*cmorph.*h.*ly.*")) {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            ZonedDateTime zdt0 = convert(dates[0]);
+            zonedDateTimes[0] = zdt0;
+            zonedDateTimes[1] = zdt0.plusHours(1);
+        } else if (fileName.matches("ge.*\\.pgrb2.*\\.0p.*\\.f.*\\..*")) {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            zonedDateTimes[0] = convert(dates[0]);
+            zonedDateTimes[1] = zonedDateTimes[0].plusHours(3);
+        } else if (fileName.matches("^prec.[0-9]{4}.nc$")
+                || fileName.matches("^livneh_unsplit_precip.\\d{4}-\\d{2}-\\d{2}.\\d{4}.nc$")) {
+            // Livneh and Livneh unsplit precipitation data
+            zonedDateTimes[0] = convert(tAxis.getCalendarDate(i));
+            zonedDateTimes[1] = zonedDateTimes[0].plusDays(1);
+        } else if (fileName.matches("gfs.nc")) {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            zonedDateTimes[0] = convert(dates[0]).plusMinutes(90);
+            zonedDateTimes[1] = convert(dates[1]).plusMinutes(90);
+        } else {
+            CalendarDate[] dates = tAxis.getCoordBoundsDate(i);
+            zonedDateTimes[0] = convert(dates[0]);
+            zonedDateTimes[1] = convert(dates[1]);
+        }
+
+        return zonedDateTimes;
+    }
+
     private List<ZonedDateTime[]> getTimeInstants(CoordinateAxis1DTime timeAxis) {
         return timeAxis.getCalendarDates().stream()
                 .map(TimeConverter::toZonedDateTime)
@@ -532,7 +560,7 @@ public class NetcdfDataReader extends DataReader {
     }
 
     private static ZonedDateTime convert(CalendarDate date) {
-        return ZonedDateTime.parse(date.toString(), DateTimeFormatter.ISO_DATE_TIME);
+        return ZonedDateTime.ofInstant(date.toDate().toInstant(), ZoneId.of("Z"));
     }
 
     private static Grid getGrid(GridCoordSystem coordinateSystem) {
@@ -605,40 +633,20 @@ public class NetcdfDataReader extends DataReader {
 
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();
 
-        Unit<?> cellUnits;
-        switch (xAxisUnits.toLowerCase()) {
-            case "m":
-            case "meter":
-            case "metre":
-                cellUnits = METRE;
-                break;
-            case "km":
-                cellUnits = KILO(METRE);
-                break;
-            case "degrees":
-            case "degrees_east":
-            case "degrees_north":
-                cellUnits = DEGREE_ANGLE;
-                break;
-            default:
-                cellUnits = ONE;
-        }
+        Unit<?> cellUnits = switch (xAxisUnits.toLowerCase()) {
+            case "m", "meter", "metre" -> METRE;
+            case "km" -> KILO(METRE);
+            case "degrees", "degrees_east", "degrees_north" -> DEGREE_ANGLE;
+            default -> ONE;
+        };
 
-        Unit<?> csUnits;
-        switch (ReferenceUtils.getMapUnits(wkt).toLowerCase()) {
-            case "m":
-            case "meter":
-            case "metre":
-                csUnits = METRE;
-                break;
-            case "km":
-                csUnits = KILO(METRE);
-                break;
-            default:
-                csUnits = ONE;
-        }
+        Unit<?> csUnits = ReferenceUtils.getLinearUnits(wkt);
 
-        if (cellUnits.isCompatible(csUnits) && !cellUnits.equals(csUnits)) {
+        // This will scale the grid if cellUnits and csUnits do not align
+        // e.g. cellUnits are in meters but csUnits are in kilometers
+        // isCompatible is simply checking if the units are of type length so that no scaling is attempted
+        // between DEGREE_ANGLE and ONE
+        if (cellUnits.isCompatible(METRE) && csUnits.isCompatible(METRE) && !cellUnits.equals(csUnits)) {
             grid.set(scaleGrid(grid.get(), cellUnits, csUnits));
         }
 

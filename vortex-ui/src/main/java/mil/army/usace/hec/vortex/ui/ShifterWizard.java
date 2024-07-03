@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.ui;
 
+import mil.army.usace.hec.vortex.math.ShiftTimeUnit;
 import mil.army.usace.hec.vortex.math.TimeShiftMethod;
 import mil.army.usace.hec.vortex.math.Shifter;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
@@ -28,7 +29,7 @@ public class ShifterWizard extends VortexWizard {
     private JCheckBox startTimeCheckBox;
     private JCheckBox endTimeCheckBox;
     private JTextField intervalTextField;
-    private JComboBox<String> intervalComboBox;
+    private ShiftTimeUnitComboBox shiftTimeUnitComboBox;
     private JList<String> chosenSourceGridsList;
     private JProgressBar progressBar;
 
@@ -246,8 +247,6 @@ public class ShifterWizard extends VortexWizard {
     }
 
     private boolean validateStepTwo() {
-        String intervalText = intervalTextField.getText();
-
         /* Check that start time, end time, or both are selected */
         if (!startTimeCheckBox.isSelected() && !endTimeCheckBox.isSelected()) {
             String message = "Start time, end time, or both start time and end time must be selected.";
@@ -257,11 +256,30 @@ public class ShifterWizard extends VortexWizard {
         }
 
         /* Check for at least one entry */
+        String intervalText = intervalTextField.getText();
         if (intervalText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Shift value required.",
                     "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
+
+        double interval;
+        try {
+            interval = Double.parseDouble(intervalText);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Could not parse interval.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        ShiftTimeUnit timeUnit = shiftTimeUnitComboBox.getSelected();
+        if (!validateInterval(interval, timeUnit)) {
+            String message = "Specified interval is cannot be converted to an even number of seconds.";
+            JOptionPane.showMessageDialog(this, message,
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
         return true;
     }
 
@@ -288,18 +306,15 @@ public class ShifterWizard extends VortexWizard {
         /* Interval Panel */
         JLabel shiftLabel = new JLabel(TextProperties.getInstance().getProperty("ShifterWiz_TimeShift_L"));
         intervalTextField = new JTextField(25);
-        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-        model.addAll(Arrays.asList("Days", "Hours", "Minutes", "Seconds"));
-        intervalComboBox = new JComboBox<>(model);
-        intervalComboBox.setEnabled(true);
-        intervalComboBox.setSelectedIndex(1);
+        shiftTimeUnitComboBox = new ShiftTimeUnitComboBox();
+        shiftTimeUnitComboBox.setEnabled(true);
 
         JPanel setIntervalPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         setIntervalPanel.add(shiftLabel);
         setIntervalPanel.add(Box.createRigidArea(new Dimension(2,0)));
         setIntervalPanel.add(intervalTextField);
         setIntervalPanel.add(Box.createRigidArea(new Dimension(2,0)));
-        setIntervalPanel.add(intervalComboBox);
+        setIntervalPanel.add(shiftTimeUnitComboBox);
 
         /* Adding everything together */
         JPanel intervalPanel = new JPanel();
@@ -355,26 +370,16 @@ public class ShifterWizard extends VortexWizard {
         if (startTimeCheckBox.isSelected()) methods.add(TimeShiftMethod.START);
         if (endTimeCheckBox.isSelected()) methods.add(TimeShiftMethod.END);
 
-        Object selectedTimeUnit = intervalComboBox.getSelectedItem();
-        if(selectedTimeUnit == null) return;
-        String intervalType = selectedTimeUnit.toString();
-        String intervalAmount = intervalTextField.getText();
+        String intervalText = intervalTextField.getText();
+        double value = Float.parseFloat(intervalText);
 
-        Duration interval;
-        switch (intervalType) {
-            case "Days":
-                interval = Duration.ofDays(Integer.parseInt(intervalAmount));
-                break;
-            case "Hours":
-                interval = Duration.ofHours(Integer.parseInt(intervalAmount));
-                break;
-            case "Seconds":
-                interval = Duration.ofSeconds(Integer.parseInt(intervalAmount));
-                break;
-            default:
-                interval = Duration.ofMinutes(Integer.parseInt(intervalAmount));
-                break;
-        }
+        ShiftTimeUnit timeUnit = shiftTimeUnitComboBox.getSelected();
+        int toSeconds = timeUnit.toSeconds();
+
+        // Cast is validated on step 2 of the wizard
+        long seconds = (long) value * toSeconds;
+        
+        Duration interval = Duration.ofSeconds(seconds);
 
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
@@ -480,6 +485,15 @@ public class ShifterWizard extends VortexWizard {
         ShifterWizard.this.dispose();
         String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
         FileSaveUtil.showFileLocation(ShifterWizard.this, Path.of(savedFile));
+    }
+
+    private boolean validateInterval(double value, ShiftTimeUnit timeUnit) {
+        int toSeconds = timeUnit.toSeconds();
+        double doubleValue = value * toSeconds;
+        long longValue = (long) doubleValue;
+
+        // Check if there is any remainder after casting
+        return Double.compare(longValue, doubleValue) == 0;
     }
 
     /* Add main for quick UI Testing */

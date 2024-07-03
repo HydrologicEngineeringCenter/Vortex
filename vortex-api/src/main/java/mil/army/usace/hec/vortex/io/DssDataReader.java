@@ -147,7 +147,7 @@ class DssDataReader extends DataReader {
         return new DateTimeFormatterBuilder()
                 .parseCaseInsensitive()
                 .appendPattern("ddMMMuuuu:HHmm")
-                .toFormatter();
+                .toFormatter(Locale.ENGLISH);
     }
 
     public static Set<String> getVariables(String pathToDss){

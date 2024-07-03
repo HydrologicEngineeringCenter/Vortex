@@ -8,10 +8,13 @@ import org.gdal.gdal.gdal;
 import org.gdal.osr.SpatialReference;
 import org.locationtech.jts.geom.Envelope;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import javax.measure.IncommensurableException;
+import javax.measure.Quantity;
+import javax.measure.Unit;
+import javax.measure.UnitConverter;
+import javax.measure.quantity.Length;
+import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Float32;
@@ -22,8 +25,10 @@ public class Resampler {
     private final Envelope env;
     private final String envWkt;
     private final String targetWkt;
-    private final Double cellSize;
+    private final Quantity<Length> cellSize;
     private final ResamplingMethod method;
+
+    private static final Map<EnvelopeReprojection, Envelope> envelopeReprojections = new HashMap<>();
 
     private Resampler(ResamplerBuilder builder){
         this.grid = builder.grid;
@@ -39,7 +44,7 @@ public class Resampler {
         private Envelope env;
         private String envWkt;
         private String targetWkt;
-        private double cellSize = Double.NaN;
+        private Quantity<Length> cellSize;
         private ResamplingMethod method = ResamplingMethod.BILINEAR;
 
         public ResamplerBuilder grid(VortexGrid grid){
@@ -62,7 +67,7 @@ public class Resampler {
             return this;
         }
 
-        public ResamplerBuilder cellSize (Double cellSize){
+        public ResamplerBuilder cellSize (Quantity<Length> cellSize){
             this.cellSize = cellSize;
             return this;
         }
@@ -81,14 +86,7 @@ public class Resampler {
             if(grid == null){
                 throw new IllegalArgumentException("Resampler requires input grid");
             }
-            if (Double.isNaN(cellSize)) {
-                // If cell size is the same between dx and dy, as is the case with DSS, set cell size
-                double dx = Math.abs(grid.dx());
-                double dy = Math.abs(grid.dy());
-                if (dx == dy) {
-                    cellSize = grid.dx();
-                }
-            }
+
             if (envWkt == null) {
                 // If envelope WKT is not provided, assume it is the same as the grid WKT
                 envWkt = grid.wkt();
@@ -116,7 +114,9 @@ public class Resampler {
             destSrs.ImportFromWkt(dataset.GetProjection());
         }
 
-        Dataset resampled = resample(dataset, env, envSrs, destSrs, cellSize, method);
+        double targetCellSize = getTargetCellSize();
+
+        Dataset resampled = resample(dataset, env, envSrs, destSrs, targetCellSize, method);
 
         double[] geoTransform = resampled.GetGeoTransform();
         double dx = geoTransform[1];
@@ -152,12 +152,14 @@ public class Resampler {
         Map<String,Double> envelope = new HashMap<>();
 
         if (env != null) {
-            Reprojector reprojector = Reprojector.builder()
-                    .from(envSrs.ExportToWkt())
-                    .to(targetSrs.ExportToWkt())
-                    .build();
+            String envWkt = envSrs.ExportToWkt();
+            String toWkt = targetSrs.ExportToWkt();
 
-            Envelope reprojected = reprojector.reproject(env);
+            EnvelopeReprojection envelopeReprojection = EnvelopeReprojection.of(env, envWkt, toWkt);
+
+            Envelope reprojected = envelopeReprojections.computeIfAbsent(
+                    envelopeReprojection, r -> envelopeReprojection.reproject()
+            );
 
             double maxX = reprojected.getMaxX();
             double minX = reprojected.getMinX();
@@ -225,6 +227,11 @@ public class Resampler {
         Dataset warped = gdal.Warp("warped", datasets, warpOptions);
         warped.FlushCache();
 
+        if (envSrs != null)
+            envSrs.delete();
+
+        sourceSrs.delete();
+        targetSrs.delete();
         warpOptions.delete();
 
         return warped;
@@ -240,4 +247,29 @@ public class Resampler {
         return value[0];
     }
 
+    private double getTargetCellSize() {
+        // If no cell size is specified but dx/dy and linear units are the same, preserve cell size
+        if (cellSize == null && grid.dx() == grid.dy()
+                && ReferenceUtils.getLinearUnits(grid.wkt()).equals(ReferenceUtils.getLinearUnits(targetWkt)))
+            return grid.dx();
+
+        if (cellSize == null)
+            return Double.NaN;
+
+        Unit<?> targetUnit = ReferenceUtils.getLinearUnits(targetWkt);
+
+        Unit<Length> cellSizeUnit = cellSize.getUnit();
+
+        if (!cellSizeUnit.isCompatible(targetUnit))
+            return Double.NaN;
+
+        try {
+            UnitConverter converter = cellSizeUnit.getConverterToAny(targetUnit);
+            double cellSizeValue = cellSize.getValue().doubleValue();
+            return converter.convert(cellSizeValue);
+        } catch (IncommensurableException e) {
+            logger.log(Level.SEVERE, e, e::getMessage);
+            return Double.NaN;
+        }
+    }
 }

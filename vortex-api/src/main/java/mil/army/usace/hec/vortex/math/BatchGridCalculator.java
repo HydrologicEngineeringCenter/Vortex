@@ -183,7 +183,6 @@ public class BatchGridCalculator {
                 .envelope(envelope)
                 .envelopeWkt(input.wkt())
                 .targetWkt(input.wkt())
-                .cellSize(input.dx())
                 .method(resamplingMethod)
                 .build()
                 .resample();

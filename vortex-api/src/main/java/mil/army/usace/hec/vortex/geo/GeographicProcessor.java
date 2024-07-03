@@ -2,19 +2,25 @@ package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.locationtech.jts.geom.Envelope;
+import tech.units.indriya.quantity.Quantities;
 
+import javax.measure.Quantity;
+import javax.measure.Unit;
+import javax.measure.quantity.Length;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static tech.units.indriya.unit.Units.METRE;
+
 public class GeographicProcessor {
     private final boolean isEmpty;
     private final Envelope env;
     private final String envWkt;
     private final String destWkt;
-    private final double cellSize;
+    private final Quantity<Length> cellSize;
     private final ResamplingMethod resamplingMethod;
 
     public GeographicProcessor(Map<String, String> geoOptions) {
@@ -51,9 +57,16 @@ public class GeographicProcessor {
         }
 
         if (geoOptions.containsKey("targetCellSize")) {
-            cellSize = Double.parseDouble(geoOptions.get("targetCellSize"));
+            String cellSizeString = geoOptions.get("targetCellSize");
+            double cellSizeValue = Double.parseDouble(cellSizeString);
+
+            // Cell size units defaults to meters
+            String unitsString = geoOptions.get("targetCellSizeUnits");
+            Unit<Length> cellSizeUnits = unitsString != null ? CellSizeUnits.of(unitsString).getUnits() : METRE;
+
+            cellSize = Quantities.getQuantity(cellSizeValue, cellSizeUnits);
         } else {
-            cellSize = Double.NaN;
+            cellSize = null;
         }
     }
 

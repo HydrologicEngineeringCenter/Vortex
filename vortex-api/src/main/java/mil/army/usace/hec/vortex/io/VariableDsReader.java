@@ -317,11 +317,7 @@ public class VariableDsReader {
             ulx = ulx - 360;
         }
 
-        Unit<?> csUnits = switch (ReferenceUtils.getMapUnits(wkt).toLowerCase()) {
-            case "m", "meter", "metre" -> Units.METRE;
-            case "km" -> KILO(Units.METRE);
-            default -> AbstractUnit.ONE;
-        };
+        Unit<?> csUnits = ReferenceUtils.getLinearUnits(wkt);
 
         if (cellUnits.isCompatible(csUnits)) {
             try {

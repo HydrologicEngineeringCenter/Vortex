@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.util.Locale;
 
 public class ImageUtils {
 
@@ -39,7 +40,7 @@ public class ImageUtils {
                 DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                         .parseCaseInsensitive()
                         .appendPattern("ddMMMuuuu:HHmm")
-                        .toFormatter();
+                        .toFormatter(Locale.ENGLISH);
                 LocalDateTime date = LocalDateTime.parse(dateString, formatter);
                 fileNameBuilder.append(date.toString().replace(":", ""));
                 fileNameBuilder.append("_");
@@ -49,7 +50,7 @@ public class ImageUtils {
                 DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                         .parseCaseInsensitive()
                         .appendPattern("ddMMMuuuu:HHmm")
-                        .toFormatter();
+                        .toFormatter(Locale.ENGLISH);
                 LocalDateTime date = LocalDateTime.parse(dateString, formatter);
                 fileNameBuilder.append(date.toString().replace(":", ""));
                 fileNameBuilder.append("_");

@@ -108,7 +108,6 @@ public class SubsettableUnit {
                     .grid(grid)
                     .envelope(envelope)
                     .envelopeWkt(envelopeWkt)
-                    .cellSize(Double.NaN)
                     .method(resamplingMethod)
                     .build();
 
