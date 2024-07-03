@@ -78,7 +78,7 @@ class DssDataReader extends DataReader {
 
         String dPart = dssPathname.getDPart();
 
-        if (dPart.isEmpty() && gridInfo.getStartTime().equals("31 December 1899, 00:00")) {
+        if (dPart.isEmpty() && (gridInfo.getStartTime().isBlank() || gridInfo.getStartTime().equals("31 December 1899, 00:00"))) {
             startTime = null;
             endTime = null;
             interval = null;
