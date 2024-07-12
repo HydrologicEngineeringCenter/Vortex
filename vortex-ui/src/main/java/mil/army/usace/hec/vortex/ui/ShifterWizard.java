@@ -377,7 +377,7 @@ public class ShifterWizard extends VortexWizard {
         int toSeconds = timeUnit.toSeconds();
 
         // Cast is validated on step 2 of the wizard
-        long seconds = (long) value * toSeconds;
+        long seconds = (long) (value * toSeconds);
         
         Duration interval = Duration.ofSeconds(seconds);
 
