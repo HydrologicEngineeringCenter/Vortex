@@ -12,6 +12,7 @@ import hec.io.DataContainer;
 import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
+import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ZonalStatistics;
 import mil.army.usace.hec.vortex.util.UnitUtil;
@@ -30,6 +31,7 @@ import java.util.stream.IntStream;
 
 import static javax.measure.MetricPrefix.KILO;
 import static javax.measure.MetricPrefix.MILLI;
+import static mil.army.usace.hec.vortex.VortexVariable.*;
 import static systems.uom.common.USCustomary.*;
 import static tech.units.indriya.AbstractUnit.ONE;
 import static tech.units.indriya.unit.Units.HOUR;
@@ -283,172 +285,62 @@ public class DssDataWriter extends DataWriter {
     }
 
     private static String getCPartForGrid(String description) {
-        if (description == null) return "";
-
-        String descriptionLower = description.toLowerCase();
-
-        if (descriptionLower.contains("precipitation")
-                && descriptionLower.contains("frequency")) {
-            return "PRECIPITATION-FREQUENCY";
-        } else if (descriptionLower.contains("pressure")) {
-            return "PRESSURE";
-        } else if (descriptionLower.equals("precipitation")
-                || descriptionLower.equals("precip")
-                || descriptionLower.equals("precipitationcal")
-                || descriptionLower.contains("qpe")
-                || descriptionLower.equals("var209-6")
-                || descriptionLower.equals("cmorph")
-                || descriptionLower.equals("rainfall")
-                || descriptionLower.equals("pcp")
-                || descriptionLower.equals("pr")
-                || descriptionLower.equals("prec")
-                || descriptionLower.equals("prcp")
-                || descriptionLower.contains("precip") && descriptionLower.contains("rate")
-                || descriptionLower.contains("precipitable") && descriptionLower.contains("water")
-                || descriptionLower.contains("total") && descriptionLower.contains("precipitation")
-                || descriptionLower.contains("convective") && descriptionLower.contains("rainfall")) {
-            return "PRECIPITATION";
-        } else if (descriptionLower.contains("temperature")
-                || descriptionLower.equals("airtemp")
-                || descriptionLower.equals("tasmin")
-                || descriptionLower.equals("tasmax")
-                || descriptionLower.equals("temp-air")) {
-            return "TEMPERATURE";
-        } else if ((descriptionLower.contains("short")
-                && descriptionLower.contains("wave")
-                || descriptionLower.contains("solar"))
-                && descriptionLower.contains("radiation")) {
-            return "SOLAR RADIATION";
-        } else if (descriptionLower.matches("long.*radiation")) {
-            return "LONGWAVE RADIATION";
-        } else if ((descriptionLower.contains("wind"))
-                && (descriptionLower.contains("speed"))) {
-            return "WINDSPEED";
-        } else if (descriptionLower.contains("snow")
-                && descriptionLower.contains("water")
-                && descriptionLower.contains("equivalent")
-                || descriptionLower.equals("swe")
-                || descriptionLower.equals("weasd")) {
-            return "SWE";
-        } else if ((descriptionLower.contains("snowfall"))
-                && (descriptionLower.contains("accumulation"))) {
-            return "SNOWFALL ACCUMULATION";
-        } else if (descriptionLower.contains("albedo")) {
-            return "ALBEDO";
-        } else if (descriptionLower.contains("snow")
-                && descriptionLower.contains("depth")) {
-            return "SNOW DEPTH";
-        } else if (descriptionLower.contains("snow")
-                && descriptionLower.contains("melt")
-                && descriptionLower.contains("runoff")) {
-            return "LIQUID WATER";
-        } else if (descriptionLower.contains("snow")
-                && descriptionLower.contains("sublimation")) {
-            return "SNOW SUBLIMATION";
-        } else if (descriptionLower.equals("cold content")) {
-            return "COLD CONTENT";
-        } else if (descriptionLower.equals("cold content ati")) {
-            return "COLD CONTENT ATI";
-        } else if (descriptionLower.equals("liquid water")) {
-            return "LIQUID WATER";
-        } else if (descriptionLower.equals("meltrate ati")) {
-            return "MELTRATE ATI";
-        } else if (descriptionLower.equals("snow depth")) {
-            return "SNOW DEPTH";
-        } else if (descriptionLower.equals("snow melt")) {
-            return "SNOW MELT";
-        } else if (descriptionLower.matches("moisture\\s?deficit")) {
-            return "MOISTURE DEFICIT";
-        } else if (descriptionLower.matches("impervious\\s?area")) {
-            return "IMPERVIOUS AREA";
-        } else if (descriptionLower.equals("percolation") || descriptionLower.matches("percolation\\s?rate")) {
-            return "PERCOLATION";
-        } else if (descriptionLower.matches("curve\\s?number")) {
-            return "CURVE NUMBER";
-        } else if (descriptionLower.contains("humidity")) {
-            return "HUMIDITY";
-        } else if (!descriptionLower.isEmpty()) {
-            return descriptionLower.toUpperCase();
-        } else {
+        if (description == null)
             return "";
-        }
+
+        VortexVariable vortexVariable = VortexVariable.fromName(description);
+        if (vortexVariable != VortexVariable.UNDEFINED)
+            return vortexVariable.getDssCPart();
+
+        if (!description.isEmpty())
+            return description.toUpperCase();
+
+        return "";
     }
 
     private static boolean isStandardCPart(String cPart) {
-        return cPart.equals("PRECIPITATION-FREQUENCY")
-                || cPart.equals("PRESSURE")
-                || cPart.equals("PRECIPITATION")
-                || cPart.equals("TEMPERATURE")
-                || cPart.equals("SOLAR RADIATION")
-                || cPart.equals("LONGWAVE RADIATION")
-                || cPart.equals("RADIATION")
-                || cPart.equals("WINDSPEED")
-                || cPart.equals("SWE")
-                || cPart.equals("SNOWFALL ACCUMULATION")
-                || cPart.equals("ALBEDO")
-                || cPart.equals("SNOW DEPTH")
-                || cPart.equals("LIQUID WATER")
-                || cPart.equals("SNOW SUBLIMATION")
-                || cPart.equals("COLD CONTENT")
-                || cPart.equals("COLD CONTENT ATI")
-                || cPart.equals("MELTRATE ATI")
-                || cPart.equals("SNOW MELT")
-                || cPart.equals("MOISTURE DEFICIT")
-                || cPart.equals("IMPERVIOUS AREA")
-                || cPart.equals("PERCOLATION")
-                || cPart.equals("CURVE NUMBER")
-                || cPart.equals("HUMIDITY");
+        return Arrays.stream(VortexVariable.values())
+                .map(VortexVariable::getDssCPart)
+                .anyMatch(s -> s.equals(cPart));
     }
 
     private static String getCPartForTimeSeries(String description, DssDataType type) {
-        String desc;
-        if (description != null) {
-            desc = description.toLowerCase();
-        } else {
+        if (description == null)
             return "";
-        }
 
-        if (desc.contains("precipitation")
-                || desc.contains("precip")
-                || desc.contains("precip") && desc.contains("rate")
-                || desc.contains("qpe01h")
-                || desc.contains("var209-6")
-                || desc.contains("rainfall")
-                || desc.equals("pr")) {
+        VortexVariable vortexVariable = VortexVariable.fromName(description);
+
+        if (vortexVariable == PRECIPITATION) {
             if (type.equals(DssDataType.INST_CUM)) {
                 return "PRECIP-CUM";
             } else {
                 return "PRECIP-INC";
             }
-        } else {
-            return getCPartForGrid(description);
         }
+
+        return getCPartForGrid(description);
     }
 
     private static DssDataType getDssDataType(String description, Duration interval) {
-        String desc = description.toLowerCase();
-        if (desc.contains("precipitation") && desc.contains("frequency")) {
-            return DssDataType.INST_VAL;
-        } else if (desc.contains("precipitation")
-                || desc.contains("precip")
-                || desc.contains("qpe01h")
-                || desc.contains("var209-6")) {
+        VortexVariable variable = VortexVariable.fromName(description);
+        if (variable == PRECIPITATION)
             return DssDataType.PER_CUM;
-        } else if (desc.contains("temperature")
-                || desc.equals("temp-air")) {
+        if (variable == TEMPERATURE)
             return DssDataType.INST_VAL;
-        } else if ((desc.contains("short") && desc.contains("wave") || desc.contains("solar"))
-                && desc.contains("radiation")) {
+        if (variable == SHORTWAVE_RADIATION)
             return DssDataType.PER_AVER;
-        } else if ((desc.contains("wind")) && (desc.contains("speed"))) {
+        if (variable == WINDSPEED)
             return DssDataType.INST_VAL;
-        } else if (desc.matches("(snow.*water.*equivalent|swe|snow.*depth)")) {
+        if (variable == SNOW_WATER_EQUIVALENT) {
             if (interval.equals(Duration.ZERO)) {
                 return DssDataType.INST_VAL;
             } else {
                 return DssDataType.PER_AVER;
             }
-        } else if (desc.contains("albedo")) {
+        }
+        if (variable == PRECIPITATION_FREQUENCY) {
+            return DssDataType.INST_VAL;
+        } else if (variable == ALBEDO) {
             return DssDataType.INST_VAL;
         } else {
             return DssDataType.INVAL;

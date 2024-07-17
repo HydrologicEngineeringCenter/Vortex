@@ -327,7 +327,7 @@ public class VortexGrid implements VortexData, Serializable {
 
         return switch (VortexVariable.fromName(shortName)) {
             case PRECIPITATION -> VortexDataType.ACCUMULATION;
-            case TEMPERATURE, SOLAR_RADIATION, WINDSPEED, PRESSURE -> VortexDataType.AVERAGE;
+            case TEMPERATURE, SHORTWAVE_RADIATION, WINDSPEED, PRESSURE -> VortexDataType.AVERAGE;
             default -> VortexDataType.INSTANTANEOUS;
         };
     }
