@@ -1,15 +1,13 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.dss.DSSPathname;
 import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 import mil.army.usace.hec.vortex.io.buffer.DataBuffer;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -88,7 +86,10 @@ class SerialBatchImporter extends BatchImporter {
 
     private static VortexGridCollection representativeCollection(List<DataReader> readers, Map<String, String> geoOptions) {
         GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
+        Set<String> seenVariables = new HashSet<>();
+
         List<VortexGrid> processedFirstGrids = readers.stream()
+                .filter(reader -> isUniqueVariableReader(seenVariables, reader))
                 .map(r -> r.getDto(0))
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
@@ -97,5 +98,26 @@ class SerialBatchImporter extends BatchImporter {
         VortexGridCollection vortexGridCollection = new VortexGridCollection(processedFirstGrids);
         List<VortexGrid> uniqueGrids = List.copyOf(vortexGridCollection.getRepresentativeGridNameMap().values());
         return new VortexGridCollection(uniqueGrids);
+    }
+
+    private static boolean isUniqueVariableReader(Set<String> seenVariables, DataReader dataReader) {
+        String pathToFile = dataReader.path;
+        String variableName = dataReader.variableName;
+
+        if (pathToFile.toLowerCase().endsWith(".dss")) {
+            variableName = retrieveDssVariableName(variableName);
+        }
+
+        if (seenVariables.contains(variableName)) {
+            return false;
+        } else {
+            seenVariables.add(variableName);
+            return true;
+        }
+    }
+
+    private static String retrieveDssVariableName(String variableName) {
+        DSSPathname dssPathname = new DSSPathname(variableName);
+        return dssPathname.cPart();
     }
 }

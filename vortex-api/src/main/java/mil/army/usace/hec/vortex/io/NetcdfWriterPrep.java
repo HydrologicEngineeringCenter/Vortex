@@ -6,6 +6,7 @@ import mil.army.usace.hec.vortex.VortexTimeRecord;
 import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.util.IndexMap;
 import mil.army.usace.hec.vortex.util.VortexGridUtils;
+import mil.army.usace.hec.vortex.util.VortexTimeUtils;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
@@ -22,7 +23,6 @@ import ucar.unidata.util.Parameter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -296,8 +296,8 @@ public final class NetcdfWriterPrep {
 
         for (int i = 0; i < numData; i++) {
             VortexTimeRecord grid = timeRecords.get(i);
-            long startTime = getNumDurationsFromBaseTime(grid.startTime(), grid);
-            long endTime = getNumDurationsFromBaseTime(grid.endTime(), grid);
+            long startTime = VortexTimeUtils.getNumDurationsFromBaseTime(grid.startTime(), grid);
+            long endTime = VortexTimeUtils.getNumDurationsFromBaseTime(grid.endTime(), grid);
             long midTime = (startTime + endTime) / 2;
             timeData[i] = midTime;
         }
@@ -307,8 +307,8 @@ public final class NetcdfWriterPrep {
     }
 
     private static long getNumDurationsFromBaseTime(ZonedDateTime dateTime, VortexTimeRecord timeRecord) {
-        ZonedDateTime baseTime = ZonedDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
-        ZonedDateTime zDateTime = dateTime.withZoneSameInstant(ZoneId.of("Z"));
+        ZonedDateTime baseTime = VortexTimeUtils.BASE_TIME;
+        ZonedDateTime zDateTime = dateTime.withZoneSameInstant(VortexTimeUtils.BASE_ZONE_ID);
         Duration durationBetween = Duration.between(baseTime, zDateTime);
         Duration divisor = Duration.of(1, getDurationUnit(getBaseDuration(timeRecord)));
         return durationBetween.dividedBy(divisor);
