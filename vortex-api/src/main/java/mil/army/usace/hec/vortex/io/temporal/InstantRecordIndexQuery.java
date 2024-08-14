@@ -80,7 +80,7 @@ public class InstantRecordIndexQuery implements RecordIndexQuery {
 
         for (int i = 0; i < recordList.size(); i++) {
             VortexTimeRecord timeRecord = recordList.get(i);
-            boolean isUndefined = VortexTimeRecord.isUndefined(timeRecord);
+            boolean isUndefined = !VortexTimeRecord.isDefined(timeRecord);
 
             if (isUndefined || !timeRecord.isInstantaneous()) {
                 continue;

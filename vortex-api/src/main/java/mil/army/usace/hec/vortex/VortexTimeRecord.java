@@ -40,12 +40,12 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) i
         return VortexTimeRecord.of(start, end);
     }
 
-    public static boolean isUndefined(VortexTimeRecord vortexTimeRecord) {
-        return vortexTimeRecord == null || vortexTimeRecord.equals(UNDEFINED);
+    public static boolean isDefined(VortexTimeRecord timeRecord) {
+        return timeRecord != null && timeRecord.startTime != null && timeRecord.endTime != null;
     }
 
     public Duration getRecordDuration() {
-        return this.startTime != null && this.endTime != null ? Duration.between(this.startTime, this.endTime) : Duration.ZERO;
+        return isDefined(this) ? Duration.between(this.startTime, this.endTime) : Duration.ZERO;
     }
 
     public double getPercentOverlapped(VortexTimeRecord other) {
