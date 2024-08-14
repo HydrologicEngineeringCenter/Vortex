@@ -79,4 +79,26 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) i
     public long end() {
         return endTime.toEpochSecond();
     }
+
+    /* Override equals and hashCode to be the same for time with the same offset but different IDs */
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof VortexTimeRecord that)) {
+            return false;
+        }
+
+        return startTime.toEpochSecond() == that.startTime.toEpochSecond() &&
+                endTime.toEpochSecond() == that.endTime.toEpochSecond() &&
+                startTime.getOffset().equals(that.startTime.getOffset()) &&
+                endTime.getOffset().equals(that.endTime.getOffset());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Long.hashCode(startTime.toEpochSecond());
+        result = 31 * result + startTime.getOffset().hashCode();
+        result = 31 * result + Long.hashCode(endTime.toEpochSecond());
+        result = 31 * result + endTime.getOffset().hashCode();
+        return result;
+    }
 }
