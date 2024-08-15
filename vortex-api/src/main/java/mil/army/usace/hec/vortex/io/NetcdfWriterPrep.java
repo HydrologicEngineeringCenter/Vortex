@@ -21,6 +21,7 @@ import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.util.Parameter;
 
 import java.io.IOException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -291,9 +292,10 @@ final class NetcdfWriterPrep {
         long[] timeData = new long[numData];
 
         for (int i = 0; i < numData; i++) {
-            VortexTimeRecord grid = timeRecords.get(i);
-            long startTime = VortexTimeUtils.getNumDurationsFromBaseTime(grid.startTime(), grid);
-            long endTime = VortexTimeUtils.getNumDurationsFromBaseTime(grid.endTime(), grid);
+            VortexTimeRecord timeRecord = timeRecords.get(i);
+            ChronoUnit minimumUnit = VortexTimeUtils.getDurationUnit(timeRecord.getRecordDuration());
+            long startTime = VortexTimeUtils.getNumDurationsFromBaseTime(timeRecord.startTime(), minimumUnit);
+            long endTime = VortexTimeUtils.getNumDurationsFromBaseTime(timeRecord.endTime(), minimumUnit);
             long midTime = (startTime + endTime) / 2;
             timeData[i] = midTime;
         }

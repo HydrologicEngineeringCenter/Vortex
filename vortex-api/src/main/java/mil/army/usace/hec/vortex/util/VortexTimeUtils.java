@@ -10,13 +10,9 @@ import java.time.temporal.ChronoUnit;
 public class VortexTimeUtils {
     public static final ZoneId BASE_ZONE_ID = ZoneId.of("UTC");
     public static final ZonedDateTime BASE_TIME = ZonedDateTime.of(1900, 1, 1, 0, 0, 0, 0, BASE_ZONE_ID);
-    private static final long BASE_TIME_EPOCH_SECONDS = BASE_TIME.toEpochSecond();
 
-    public static long getNumDurationsFromBaseTime(ZonedDateTime dateTime, VortexTimeRecord timeRecord) {
-        long zDateTimeEpochSeconds = dateTime.withZoneSameInstant(BASE_ZONE_ID).toEpochSecond();
-        long durationBetweenSeconds = zDateTimeEpochSeconds - BASE_TIME_EPOCH_SECONDS;
-        long divisorSeconds = getBaseDuration(timeRecord).toSeconds();
-        return durationBetweenSeconds / divisorSeconds;
+    public static long getNumDurationsFromBaseTime(ZonedDateTime dateTime, ChronoUnit minimumUnit) {
+        return minimumUnit.between(BASE_TIME, dateTime);
     }
 
     public static ChronoUnit getDurationUnit(Duration duration) {
