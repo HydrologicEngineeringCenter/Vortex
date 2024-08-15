@@ -19,13 +19,6 @@ final class BufferedDataReader {
     private int bufferStartIndex = -1;
     private static final int MAX_BUFFER_SIZE = 10;
 
-    BufferedDataReader(String pathToFile, String pathToData) {
-        dataReader = DataReader.builder()
-                .path(pathToFile)
-                .variable(pathToData)
-                .build();
-    }
-
     BufferedDataReader(DataReader dataReader) {
         this.dataReader = dataReader;
     }

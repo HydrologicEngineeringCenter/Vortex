@@ -4,6 +4,7 @@ import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Grid;
+import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.math.GridDataProcessor;
 
 import java.time.Duration;
@@ -28,12 +29,8 @@ public class TemporalDataReader {
     }
 
     /* Factory */
-    public static TemporalDataReader create(String pathToFile, String pathToData) {
-        BufferedDataReader bufferedDataReader = new BufferedDataReader(pathToFile, pathToData);
-        return new TemporalDataReader(bufferedDataReader);
-    }
-
-    public static TemporalDataReader create(BufferedDataReader bufferedDataReader) {
+    public static TemporalDataReader create(DataReader dataReader) {
+        BufferedDataReader bufferedDataReader = new BufferedDataReader(dataReader);
         return new TemporalDataReader(bufferedDataReader);
     }
 
