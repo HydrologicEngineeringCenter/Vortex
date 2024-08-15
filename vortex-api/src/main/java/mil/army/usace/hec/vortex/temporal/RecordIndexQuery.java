@@ -5,7 +5,7 @@ import mil.army.usace.hec.vortex.VortexDataType;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-public interface RecordIndexQuery {
+interface RecordIndexQuery {
     List<Integer> query(ZonedDateTime startTime, ZonedDateTime endTime);
     ZonedDateTime getEarliestStartTime();
     ZonedDateTime getLatestEndTime();

@@ -3,7 +3,7 @@ package mil.army.usace.hec.vortex.temporal;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-public class PeriodRecordIndexQuery implements RecordIndexQuery {
+final class PeriodRecordIndexQuery implements RecordIndexQuery {
     private final Map<VortexTimeRecord, Integer> originalIndexMap;
     private final StaticIntervalTree<VortexTimeRecord> intervalTree;
 

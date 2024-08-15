@@ -3,7 +3,7 @@ package mil.army.usace.hec.vortex.temporal;
 /**
  * Closed-open, [), interval on the integer number line.
  */
-public interface Interval extends Comparable<Interval> {
+interface Interval extends Comparable<Interval> {
 
     /**
      * Returns the starting point of this.

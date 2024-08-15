@@ -16,11 +16,11 @@ import java.util.List;
  *
  * @param <T> The type of Interval this tree contains, must implement the Interval interface.
  */
-public class StaticIntervalTree<T extends Interval> {
+final class StaticIntervalTree<T extends Interval> {
     private final Node root;
 
     /* Constructor */
-    public StaticIntervalTree(List<T> intervals) {
+    StaticIntervalTree(List<T> intervals) {
         List<T> sortedByStart = new ArrayList<>(intervals);
         sortedByStart.sort(Comparator.comparingLong(T::start));
         root = buildTree(intervals, 0, intervals.size() - 1);

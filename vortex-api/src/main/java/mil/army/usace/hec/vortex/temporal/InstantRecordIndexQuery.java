@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class InstantRecordIndexQuery implements RecordIndexQuery {
+final class InstantRecordIndexQuery implements RecordIndexQuery {
     private static final Logger logger = Logger.getLogger(InstantRecordIndexQuery.class.getName());
     private final NavigableMap<ZonedDateTime, Integer> instantDataTree;
 
