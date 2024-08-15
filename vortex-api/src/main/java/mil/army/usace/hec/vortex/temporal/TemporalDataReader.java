@@ -91,26 +91,6 @@ public class TemporalDataReader {
                 .build();
     }
 
-    public VortexGrid getBaseGrid() {
-        return bufferedReader.getBaseGrid();
-    }
-
-    /**
-     * Returns the file path to the data source.
-     * @return A string representing the path to the data file.
-     */
-    public String getPathToFile() {
-        return bufferedReader.getPathToFile();
-    }
-
-    /**
-     * Returns the path to the data within the data source.
-     * @return A string representing the path to the data file.
-     */
-    public String getPathToData() {
-        return bufferedReader.getPathToData();
-    }
-
     /**
      * Retrieves the start time of the data records.
      * @return The ZonedDateTime representing the earliest start time in the record list.
