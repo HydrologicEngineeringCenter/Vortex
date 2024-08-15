@@ -1,7 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

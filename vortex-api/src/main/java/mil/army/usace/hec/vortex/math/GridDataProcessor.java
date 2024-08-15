@@ -2,7 +2,7 @@ package mil.army.usace.hec.vortex.math;
 
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;

@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.util;
 
-import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
 
 import java.time.Duration;
 import java.time.ZoneId;

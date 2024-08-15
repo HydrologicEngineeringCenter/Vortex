@@ -2,7 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexGridCollection;
-import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
 import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.util.IndexMap;
 import mil.army.usace.hec.vortex.util.VortexGridUtils;

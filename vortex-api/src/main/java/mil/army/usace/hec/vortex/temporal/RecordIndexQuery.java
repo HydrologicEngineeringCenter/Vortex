@@ -1,7 +1,6 @@
-package mil.army.usace.hec.vortex.io.temporal;
+package mil.army.usace.hec.vortex.temporal;
 
 import mil.army.usace.hec.vortex.VortexDataType;
-import mil.army.usace.hec.vortex.VortexTimeRecord;
 
 import java.time.ZonedDateTime;
 import java.util.List;

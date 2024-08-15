@@ -2,7 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.VortexTimeRecord;
+import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
 import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 import mil.army.usace.hec.vortex.util.UnitUtil;

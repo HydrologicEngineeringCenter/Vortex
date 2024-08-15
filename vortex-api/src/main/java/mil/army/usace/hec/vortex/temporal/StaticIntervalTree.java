@@ -1,4 +1,4 @@
-package mil.army.usace.hec.vortex.io.temporal;
+package mil.army.usace.hec.vortex.temporal;
 
 import java.util.ArrayList;
 import java.util.Comparator;

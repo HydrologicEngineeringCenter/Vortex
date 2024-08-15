@@ -1,4 +1,4 @@
-package mil.army.usace.hec.vortex.io.temporal;
+package mil.army.usace.hec.vortex.temporal;
 
 /**
  * Closed-open, [), interval on the integer number line.

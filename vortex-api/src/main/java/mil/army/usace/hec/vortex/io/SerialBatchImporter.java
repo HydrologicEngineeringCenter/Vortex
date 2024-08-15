@@ -4,6 +4,7 @@ import hec.heclib.dss.DSSPathname;
 import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 import mil.army.usace.hec.vortex.io.buffer.DataBuffer;
+import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.nio.file.Path;

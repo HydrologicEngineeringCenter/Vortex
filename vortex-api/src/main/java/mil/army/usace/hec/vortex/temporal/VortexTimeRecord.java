@@ -1,8 +1,8 @@
-package mil.army.usace.hec.vortex;
+package mil.army.usace.hec.vortex.temporal;
 
 import hec.heclib.dss.DSSPathname;
 import hec.heclib.util.HecTime;
-import mil.army.usace.hec.vortex.io.temporal.Interval;
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.util.TimeConverter;
 
 import java.time.Duration;
