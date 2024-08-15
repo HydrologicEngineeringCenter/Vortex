@@ -1,9 +1,8 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.temporal;
 
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.*;
-import mil.army.usace.hec.vortex.temporal.TemporalDataReader;
-import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.DataReader;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -282,12 +281,12 @@ class TemporalDataReaderTest {
         return TemporalDataReader.create(mockDataReader(instantGrids));
     }
 
-    private BufferedDataReader mockDataReader(List<VortexData> gridList) {
-        BufferedDataReader dataReader = Mockito.mock(BufferedDataReader.class);
+    private DataReader mockDataReader(List<VortexData> gridList) {
+        DataReader dataReader = Mockito.mock(DataReader.class);
         Mockito.when(dataReader.getTimeRecords()).thenReturn(gridList.stream().map(VortexTimeRecord::of).toList());
-        Mockito.when(dataReader.getBaseGrid()).thenReturn((VortexGrid) gridList.get(0));
         for (int i = 0; i < gridList.size(); i++)
-            Mockito.when(dataReader.get(i)).thenReturn((VortexGrid) gridList.get(i));
+            Mockito.when(dataReader.getDto(i)).thenReturn(gridList.get(i));
+        Mockito.when(dataReader.getDtoCount()).thenReturn(gridList.size());
         return dataReader;
     }
 
