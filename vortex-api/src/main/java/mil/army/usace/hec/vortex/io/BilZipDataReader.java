@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BilZipDataReader extends DataReader implements VirtualFileSystem{
+class BilZipDataReader extends DataReader implements VirtualFileSystem{
     static {
         GdalRegister.getInstance();
     }

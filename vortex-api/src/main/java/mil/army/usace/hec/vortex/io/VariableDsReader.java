@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
 
-public class VariableDsReader extends NetcdfDataReader {
+class VariableDsReader extends NetcdfDataReader {
     private static final Logger logger = Logger.getLogger(VariableDsReader.class.getName());
 
     private final VariableDS variableDS;

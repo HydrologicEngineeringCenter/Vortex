@@ -10,7 +10,7 @@ import ucar.nc2.write.NetcdfFormatWriter;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
-public class NetcdfDataWriter extends DataWriter {
+class NetcdfDataWriter extends DataWriter {
     private final List<VortexGrid> vortexGridList;
 
     // NetCDF4 Settings

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class AscZipDataReader extends DataReader implements VirtualFileSystem{
+class AscZipDataReader extends DataReader implements VirtualFileSystem{
     static {
         GdalRegister.getInstance();
     }

@@ -20,7 +20,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class NetcdfGridWriter {
+class NetcdfGridWriter {
     private static final Logger logger = Logger.getLogger(NetcdfGridWriter.class.getName());
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
     public static final int BOUNDS_LEN = 2;

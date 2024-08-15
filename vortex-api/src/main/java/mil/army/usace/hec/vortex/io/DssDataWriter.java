@@ -39,7 +39,7 @@ import static tech.units.indriya.unit.Units.HOUR;
 import static tech.units.indriya.unit.Units.MINUTE;
 import static tech.units.indriya.unit.Units.*;
 
-public class DssDataWriter extends DataWriter {
+class DssDataWriter extends DataWriter {
 
     private static final Logger logger = Logger.getLogger(DssDataWriter.class.getName());
 

@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-public final class NetcdfWriterPrep {
+final class NetcdfWriterPrep {
     private static final Logger logger = Logger.getLogger(NetcdfWriterPrep.class.getName());
 
     // NetCDF4 Settings

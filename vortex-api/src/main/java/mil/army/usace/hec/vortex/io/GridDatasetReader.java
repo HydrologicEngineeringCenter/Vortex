@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import static mil.army.usace.hec.vortex.io.GridDatasetReader.SpecialFileType.*;
 import static tech.units.indriya.unit.Units.METRE;
 
-public class GridDatasetReader extends NetcdfDataReader {
+class GridDatasetReader extends NetcdfDataReader {
     private static final Logger logger = Logger.getLogger(GridDatasetReader.class.getName());
 
     private final GridDataset gridDataset;
@@ -75,7 +75,7 @@ public class GridDatasetReader extends NetcdfDataReader {
     }
 
     /* Constructor */
-    public GridDatasetReader(GridDataset gridDataset, String variableName) {
+    GridDatasetReader(GridDataset gridDataset, String variableName) {
         super(new DataReaderBuilder().path(gridDataset.getLocation()).variable(variableName));
         this.gridDataset = gridDataset;
         specialFileType = determineSpecialFileType(gridDataset.getLocation());

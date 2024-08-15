@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class Hdf5RasPrecipDataWriter extends DataWriter {
+class Hdf5RasPrecipDataWriter extends DataWriter {
 
     private static final Logger logger = Logger.getLogger(Hdf5RasPrecipDataWriter.class.getName());
 
