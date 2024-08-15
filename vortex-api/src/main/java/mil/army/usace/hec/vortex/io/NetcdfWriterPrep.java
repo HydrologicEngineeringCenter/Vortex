@@ -21,9 +21,6 @@ import ucar.nc2.write.NetcdfFormatWriter;
 import ucar.unidata.util.Parameter;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -303,28 +300,5 @@ final class NetcdfWriterPrep {
 
         Variable timeVar = writer.findVariable(CF.TIME);
         writer.write(timeVar, new int[] {0}, Array.makeFromJavaArray(timeData));
-    }
-
-    private static long getNumDurationsFromBaseTime(ZonedDateTime dateTime, VortexTimeRecord timeRecord) {
-        ZonedDateTime baseTime = VortexTimeUtils.BASE_TIME;
-        ZonedDateTime zDateTime = dateTime.withZoneSameInstant(VortexTimeUtils.BASE_ZONE_ID);
-        Duration durationBetween = Duration.between(baseTime, zDateTime);
-        Duration divisor = Duration.of(1, getDurationUnit(getBaseDuration(timeRecord)));
-        return durationBetween.dividedBy(divisor);
-    }
-
-    private static ChronoUnit getDurationUnit(Duration duration) {
-        if (duration.toHours() > 0) {
-            return ChronoUnit.HOURS;
-        } else if (duration.toMinutes() > 0) {
-            return ChronoUnit.MINUTES;
-        } else {
-            return ChronoUnit.SECONDS;
-        }
-    }
-
-    private static Duration getBaseDuration(VortexTimeRecord timeRecord) {
-        Duration interval = timeRecord.getRecordDuration();
-        return interval.isZero() ? Duration.ofMinutes(1) : interval;
     }
 }

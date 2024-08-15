@@ -3,18 +3,15 @@ package mil.army.usace.hec.vortex.io;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.WktParser;
+import mil.army.usace.hec.vortex.util.VortexTimeUtils;
 import ucar.nc2.constants.CF;
-import ucar.unidata.geoloc.LatLonPoint;
 import ucar.unidata.geoloc.Projection;
-import ucar.unidata.geoloc.ProjectionPoint;
 import ucar.unidata.geoloc.projection.LatLonProjection;
 import ucar.unidata.util.Parameter;
 
 import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -22,7 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class VortexGridCollection {
+class VortexGridCollection {
     private static final Logger logger = Logger.getLogger(VortexGridCollection.class.getName());
 
     private final List<VortexGrid> vortexGridList;
@@ -32,7 +29,7 @@ public class VortexGridCollection {
     private final ZonedDateTime baseTime;
 
     public VortexGridCollection(List<VortexGrid> vortexGrids) {
-        baseTime = initBaseTime();
+        baseTime = VortexTimeUtils.BASE_TIME;
 
         vortexGridList = sanitizeCollection(vortexGrids);
         if (!vortexGridList.isEmpty()) {
@@ -47,10 +44,6 @@ public class VortexGridCollection {
     }
 
     /* Init */
-    private ZonedDateTime initBaseTime() {
-        return ZonedDateTime.of(1900,1,1,0,0,0,0, ZoneId.of("UTC"));
-    }
-
     private static List<VortexGrid> sanitizeCollection(List<VortexGrid> vortexGrids) {
         if (vortexGrids == null || vortexGrids.isEmpty()) {
             return Collections.emptyList();
@@ -106,10 +99,6 @@ public class VortexGridCollection {
 
     public float getNoDataValue() {
         return (float) defaultGrid.noDataValue();
-    }
-
-    public String getDataUnit() {
-        return defaultGrid.units();
     }
 
     public VortexDataType getDataType() {
@@ -169,97 +158,14 @@ public class VortexGridCollection {
         return defaultGrid.nx();
     }
 
-    /* Lat & Lon */
-    public Map<String, double[][]> getLatLonCoordinates() {
-        Map<String, double[][]> latLonMap = new HashMap<>();
-
-        int ny = getNy();
-        int nx = getNx();
-        double[] yCoordinates = getYCoordinates();
-        double[] xCoordinates = getXCoordinates();
-        Projection projection = getProjection();
-
-        double[][] latData = new double[ny][nx];
-        double[][] lonData = new double[ny][nx];
-
-        for (int y = 0; y < ny; y++) {
-            for (int x = 0; x < nx; x++) {
-                ProjectionPoint point = ProjectionPoint.create(xCoordinates[x], yCoordinates[y]);
-                LatLonPoint latlonPoint = projection.projToLatLon(point);
-                latData[y][x] = latlonPoint.getLatitude();
-                lonData[y][x] = latlonPoint.getLongitude();
-            }
-        }
-
-        latLonMap.put("lat", latData);
-        latLonMap.put("lon", lonData);
-
-        return latLonMap;
-    }
-
-    /* Time */
-    public int getTimeLength() {
-        return vortexGridList.size();
-    }
-
     public String getTimeUnits() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX");
-        String durationUnit = getDurationUnit(getBaseDuration()).toString();
+        String durationUnit = VortexTimeUtils.getDurationUnit(getBaseDuration()).toString();
         return durationUnit + " since " + baseTime.format(dateTimeFormatter);
-    }
-
-    public long[] getTimeData() {
-        if (vortexGridList.size() == 1) {
-            return new long[] {getNumDurationsFromBaseTime(vortexGridList.get(0).endTime())};
-        }
-
-        int numData = vortexGridList.size();
-        long[] timeData = new long[numData];
-        for (int i = 0; i < numData; i++) {
-            VortexGrid grid = vortexGridList.get(i);
-            long startTime = getNumDurationsFromBaseTime(grid.startTime());
-            long endTime = getNumDurationsFromBaseTime(grid.endTime());
-            long midTime = (startTime + endTime) / 2;
-            timeData[i] = midTime;
-        }
-
-        return timeData;
-    }
-
-    public long[][] getTimeBoundsArray() {
-        long[][] timeBoundArray = new long[getTimeLength()][NetcdfGridWriter.BOUNDS_LEN];
-
-        for (int i = 0; i < vortexGridList.size(); i++) {
-            VortexGrid grid = vortexGridList.get(i);
-            long startTime = getNumDurationsFromBaseTime(grid.startTime());
-            long endTime = getNumDurationsFromBaseTime(grid.endTime());
-            timeBoundArray[i][0] = startTime;
-            timeBoundArray[i][1] = endTime;
-        }
-
-        return timeBoundArray;
     }
 
     public Duration getInterval() {
         return defaultGrid.interval();
-    }
-
-    /* Helpers */
-    private long getNumDurationsFromBaseTime(ZonedDateTime dateTime) {
-        ZonedDateTime zDateTime = dateTime.withZoneSameInstant(ZoneId.of("Z"));
-        Duration durationBetween = Duration.between(baseTime, zDateTime);
-        Duration divisor = Duration.of(1, getDurationUnit(getBaseDuration()));
-        return durationBetween.dividedBy(divisor);
-    }
-
-    private ChronoUnit getDurationUnit(Duration duration) {
-        if (duration.toHours() > 0) {
-            return ChronoUnit.HOURS;
-        } else if (duration.toMinutes() > 0) {
-            return ChronoUnit.MINUTES;
-        } else {
-            return ChronoUnit.SECONDS;
-        }
     }
 
     private Duration getBaseDuration() {
