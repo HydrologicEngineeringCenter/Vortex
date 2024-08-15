@@ -1,14 +1,14 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.temporal;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.DataReader;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class BufferedDataReader {
+final class BufferedDataReader {
     private static final Logger logger = Logger.getLogger(BufferedDataReader.class.getName());
 
     private final DataReader dataReader;
@@ -19,14 +19,14 @@ public class BufferedDataReader {
     private int bufferStartIndex = -1;
     private static final int MAX_BUFFER_SIZE = 10;
 
-    public BufferedDataReader(String pathToFile, String pathToData) {
+    BufferedDataReader(String pathToFile, String pathToData) {
         dataReader = DataReader.builder()
                 .path(pathToFile)
                 .variable(pathToData)
                 .build();
     }
 
-    public BufferedDataReader(DataReader dataReader) {
+    BufferedDataReader(DataReader dataReader) {
         this.dataReader = dataReader;
     }
 
@@ -78,13 +78,5 @@ public class BufferedDataReader {
         }
 
         return baseGrid;
-    }
-
-    public String getPathToFile() {
-        return dataReader.path;
-    }
-
-    public String getPathToData() {
-        return dataReader.variableName;
     }
 }
