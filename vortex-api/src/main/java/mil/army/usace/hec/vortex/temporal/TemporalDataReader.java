@@ -1,11 +1,10 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.temporal;
 
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
+import mil.army.usace.hec.vortex.io.BufferedDataReader;
 import mil.army.usace.hec.vortex.geo.Grid;
-import mil.army.usace.hec.vortex.temporal.RecordIndexQuery;
 import mil.army.usace.hec.vortex.math.GridDataProcessor;
 
 import java.time.Duration;
