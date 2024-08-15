@@ -1,6 +1,7 @@
-package mil.army.usace.hec.vortex;
+package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.io.NetcdfGridWriter;
+import mil.army.usace.hec.vortex.VortexDataType;
+import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.WktParser;
 import ucar.nc2.constants.CF;
 import ucar.unidata.geoloc.LatLonPoint;
