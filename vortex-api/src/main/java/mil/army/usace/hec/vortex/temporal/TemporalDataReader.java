@@ -5,7 +5,6 @@ import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Grid;
 import mil.army.usace.hec.vortex.io.DataReader;
-import mil.army.usace.hec.vortex.math.GridDataProcessor;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -131,14 +130,14 @@ public class TemporalDataReader {
 
     private VortexGrid readAccumulationData(ZonedDateTime startTime, ZonedDateTime endTime) {
         List<VortexGrid> relevantGrids = getRelevantGrids(startTime, endTime);
-        float[] data = GridDataProcessor.calculateWeightedAccumulation(relevantGrids, startTime, endTime);
-        return GridDataProcessor.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, data);
+        float[] data = TemporalDataCalculator.calculateWeightedAccumulation(relevantGrids, startTime, endTime);
+        return TemporalDataCalculator.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, data);
     }
 
     private VortexGrid readAverageData(ZonedDateTime startTime, ZonedDateTime endTime) {
         List<VortexGrid> relevantGrids = getRelevantGrids(startTime, endTime);
-        float[] data = GridDataProcessor.calculateWeightedAverage(relevantGrids, startTime, endTime);
-        return GridDataProcessor.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, data);
+        float[] data = TemporalDataCalculator.calculateWeightedAverage(relevantGrids, startTime, endTime);
+        return TemporalDataCalculator.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, data);
     }
 
     private VortexGrid readInstantaneousDataWithRecordQuery(ZonedDateTime startTime, ZonedDateTime endTime) {
@@ -148,11 +147,11 @@ public class TemporalDataReader {
                 .toList();
 
         if (startTime.isEqual(endTime)) {
-            float[] data = GridDataProcessor.calculatePointInstant(relevantGrids, startTime);
-            return GridDataProcessor.buildGrid(bufferedReader.getBaseGrid(), startTime, startTime, data);
+            float[] data = TemporalDataCalculator.calculatePointInstant(relevantGrids, startTime);
+            return TemporalDataCalculator.buildGrid(bufferedReader.getBaseGrid(), startTime, startTime, data);
         } else {
-            float[] data = GridDataProcessor.calculatePeriodInstant(relevantGrids, startTime, endTime);
-            return GridDataProcessor.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, data);
+            float[] data = TemporalDataCalculator.calculatePeriodInstant(relevantGrids, startTime, endTime);
+            return TemporalDataCalculator.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, data);
         }
     }
 
@@ -188,14 +187,14 @@ public class TemporalDataReader {
         if (grids.isEmpty()) {
             minMaxData = new float[][] {new float[0], new float[0]};
         } else {
-            minMaxData = GridDataProcessor.getMinMaxForGrids(grids);
+            minMaxData = TemporalDataCalculator.getMinMaxForGrids(grids);
         }
 
         float[] minData = minMaxData[0];
         float[] maxData = minMaxData[1];
 
-        VortexGrid minGrid = GridDataProcessor.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, minData);
-        VortexGrid maxGrid = GridDataProcessor.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, maxData);
+        VortexGrid minGrid = TemporalDataCalculator.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, minData);
+        VortexGrid maxGrid = TemporalDataCalculator.buildGrid(bufferedReader.getBaseGrid(), startTime, endTime, maxData);
 
         return new VortexGrid[] {minGrid, maxGrid};
     }

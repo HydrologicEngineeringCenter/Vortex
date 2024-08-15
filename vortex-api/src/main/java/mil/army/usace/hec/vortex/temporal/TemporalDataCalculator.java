@@ -1,8 +1,7 @@
-package mil.army.usace.hec.vortex.math;
+package mil.army.usace.hec.vortex.temporal;
 
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -10,10 +9,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class GridDataProcessor {
-    private static final Logger logger = Logger.getLogger(GridDataProcessor.class.getName());
+class TemporalDataCalculator {
+    private static final Logger logger = Logger.getLogger(TemporalDataCalculator.class.getName());
 
-    private GridDataProcessor() {
+    private TemporalDataCalculator() {
         // Utility Class
     }
 
