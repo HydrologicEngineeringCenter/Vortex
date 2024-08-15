@@ -1,6 +1,7 @@
-package mil.army.usace.hec.vortex.io;
+package mil.army.usace.hec.vortex.temporal;
 
 import mil.army.usace.hec.vortex.TestUtil;
+import mil.army.usace.hec.vortex.io.DataReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -20,7 +21,7 @@ class BufferedDataReaderTest {
                 .path(pathToFile)
                 .variable(variableName)
                 .build();
-        BufferedDataReader bufferedReader = new BufferedDataReader(pathToFile, variableName);
+        BufferedDataReader bufferedReader = new BufferedDataReader(dataReader);
 
         assertEquals(dataReader.getDto(20), bufferedReader.get(20));
         assertEquals(dataReader.getDto(29), bufferedReader.get(29));
@@ -37,7 +38,8 @@ class BufferedDataReaderTest {
         String pathToFile = file.getAbsolutePath();
         String variableName = "*";
 
-        BufferedDataReader bufferedReader = new BufferedDataReader(pathToFile, variableName);
+        DataReader dataReader = DataReader.builder().path(pathToFile).variable(variableName).build();
+        BufferedDataReader bufferedReader = new BufferedDataReader(dataReader);
         assertEquals(49, bufferedReader.getCount());
     }
 }
