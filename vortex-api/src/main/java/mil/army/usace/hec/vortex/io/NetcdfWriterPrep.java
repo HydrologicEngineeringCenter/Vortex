@@ -110,7 +110,7 @@ final class NetcdfWriterPrep {
     }
 
     private static Dimension getTimeBoundsDimension() {
-        return Dimension.builder().setName("nv").setIsUnlimited(true).build();
+        return Dimension.builder().setName("nv").setLength(2).build();
     }
 
     private static Dimension getLatitudeDimension(int ny) {
@@ -289,7 +289,9 @@ final class NetcdfWriterPrep {
 
     private static void writeTimeDimension(NetcdfFormatWriter writer, List<VortexTimeRecord> timeRecords) throws InvalidRangeException, IOException {
         int numData = timeRecords.size();
-        long[] timeData = new long[numData];
+        long[] startTimeData = new long[numData];
+        long[] endTimeData = new long[numData];
+        long[] midTimeData = new long[numData];
 
         for (int i = 0; i < numData; i++) {
             VortexTimeRecord timeRecord = timeRecords.get(i);
@@ -297,10 +299,19 @@ final class NetcdfWriterPrep {
             long startTime = VortexTimeUtils.getNumDurationsFromBaseTime(timeRecord.startTime(), minimumUnit);
             long endTime = VortexTimeUtils.getNumDurationsFromBaseTime(timeRecord.endTime(), minimumUnit);
             long midTime = (startTime + endTime) / 2;
-            timeData[i] = midTime;
+
+            startTimeData[i] = startTime;
+            endTimeData[i] = endTime;
+            midTimeData[i] = midTime;
         }
 
         Variable timeVar = writer.findVariable(CF.TIME);
-        writer.write(timeVar, new int[] {0}, Array.makeFromJavaArray(timeData));
+        writer.write(timeVar, new int[] {0}, Array.makeFromJavaArray(midTimeData));
+
+        Variable timeBoundsVar = writer.findVariable("time_bnds");
+        long[][] timeBoundsData = new long[2][numData];
+        timeBoundsData[0] = startTimeData;
+        timeBoundsData[1] = endTimeData;
+        writer.write(timeBoundsVar, Array.makeFromJavaArray(timeBoundsData));
     }
 }
