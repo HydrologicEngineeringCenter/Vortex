@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.temporal.VortexTimeRecord;
+import mil.army.usace.hec.vortex.util.FilenameUtil;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -84,19 +85,19 @@ public abstract class DataReader {
     public static Set<String> getVariables(String path){
         String fileName = new File(path).getName().toLowerCase();
 
-        if (fileName.matches(".*\\.(asc|tif|tiff)$") || fileName.endsWith("asc.zip")){
+        if (FilenameUtil.endsWithExtensions(fileName, ".asc", ".tif", ".tiff", "asc.zip")) {
             return AscDataReader.getVariables(path);
-        }
-        if (fileName.endsWith(".bil") || fileName.endsWith("bil.zip")){
+        } else if (FilenameUtil.endsWithExtensions(fileName, ".bil", "bil.zip")) {
             return BilDataReader.getVariables(path);
-        }
-        if (fileName.matches(".*snodas.*\\.(dat|tar|tar.gz)")){
+        } else if (fileName.contains("snodas") && FilenameUtil.endsWithExtensions(fileName, ".dat", ".tar", ".tar.gz")) {
             return SnodasDataReader.getVariables(path);
-        }
-        if (fileName.endsWith(".dss")){
+        } else if (FilenameUtil.endsWithExtensions(fileName, ".dss")) {
             return DssDataReader.getVariables(path);
+        } else if (FilenameUtil.endsWithExtensions(fileName, ".nc", ".nc3", ".nc4")) {
+            return NetcdfDataReader.getVariables(path);
+        } else {
+            throw new IllegalArgumentException("Unsupported data path: " + path);
         }
-        return NetcdfDataReader.getVariables(path);
     } // builder()
 
     public abstract int getDtoCount();

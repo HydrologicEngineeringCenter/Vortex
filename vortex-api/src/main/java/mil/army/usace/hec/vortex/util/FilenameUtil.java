@@ -12,4 +12,13 @@ public class FilenameUtil {
         String extPattern = "(?<!^)[.]" + (removeAllExtensions ? ".*" : "[^.]*$");
         return filename.replaceAll(extPattern, "");
     }
+
+    public static boolean endsWithExtensions(String filename, String... extensions) {
+        for (String extension : extensions) {
+            if (filename.endsWith(extension)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
