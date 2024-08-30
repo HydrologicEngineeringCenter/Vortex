@@ -197,9 +197,6 @@ class TemporalDataCalculator {
         int overlapInterval = (int) timeRecord.getOverlapDuration(queryRecord).toMinutes();
         int wholeInterval = (int) timeRecord.getRecordDuration().toMinutes();
 
-        double percentOverlapped = timeRecord.getPercentOverlapped(queryRecord);
-        if (Double.isNaN(percentOverlapped) || percentOverlapped == 0) logger.severe("Invalid Overlap Ratio");
-
         float[] data1 = firstGrid.data();
         float[] data2 = secondGrid.data();
         double[] result = new double[data1.length];
