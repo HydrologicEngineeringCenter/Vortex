@@ -2,7 +2,7 @@ import org.gradle.internal.os.OperatingSystem
 
 plugins {
     java
-    id("nebula.release") version "13.1.1"
+    id("nebula.release") version "19.0.10"
 }
 
 val windows_x64 by configurations.creating
