@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.temporal;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.io.buffer.MemoryManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ final class BufferedDataReader {
 
     private final List<VortexGrid> buffer = new ArrayList<>();
     private int bufferStartIndex = -1;
-    private static final int MAX_BUFFER_SIZE = 10;
 
     BufferedDataReader(DataReader dataReader) {
         this.dataReader = dataReader;
@@ -52,10 +52,7 @@ final class BufferedDataReader {
 
         // Load buffer
         int maxDataIndex = getCount();
-        int maxBufferIndex = index + MAX_BUFFER_SIZE;
-        int endIndex = Math.min(maxBufferIndex, maxDataIndex);
-
-        for (int i = index; i < endIndex; i++) {
+        for (int i = index; i < maxDataIndex && MemoryManager.isMemoryAvailable(); i++) {
             VortexData data = dataReader.getDto(i);
             buffer.add(data instanceof VortexGrid grid ? grid : null);
         }
