@@ -238,7 +238,6 @@ class TemporalDataCalculator {
     }
 
     private static float[] undefinedGridData() {
-        logger.info("Has undefined grid data");
         return new float[0];
     }
 }
