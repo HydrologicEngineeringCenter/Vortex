@@ -22,7 +22,6 @@ public record VortexTimeRecord(ZonedDateTime startTime, ZonedDateTime endTime) i
         HecTime hecEnd = new HecTime(dssPathname.ePart());
 
         if (!hecStart.isDefined()) {
-            logger.warning("No start time found");
             return null;
         }
 
