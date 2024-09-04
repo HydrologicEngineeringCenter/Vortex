@@ -1,9 +1,6 @@
 package mil.army.usace.hec.vortex.temporal;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,6 +71,10 @@ final class StaticIntervalTree<T extends Interval> {
      * @return A list of overlapping intervals.
      */
     public List<T> findOverlaps(T target) {
+        if (root == null) {
+            return Collections.emptyList();
+        }
+
         List<T> overlaps = new ArrayList<>();
         collectOverlaps(root, target, overlaps);
         return overlaps;
@@ -85,6 +86,10 @@ final class StaticIntervalTree<T extends Interval> {
      * @return The interval with the earliest start.
      */
     public T findMinimum() {
+        if (root == null) {
+            return null;
+        }
+
         Node current = root;
         while (current.left != null) {
             current = current.left;
@@ -98,6 +103,10 @@ final class StaticIntervalTree<T extends Interval> {
      * @return The interval with the latest end.
      */
     public T findMaximum() {
+        if (root == null) {
+            return null;
+        }
+
         Node current = root;
         long maxEnd = current.maxEnd; // Start with the maxEnd of the root
         while (current != null) {
