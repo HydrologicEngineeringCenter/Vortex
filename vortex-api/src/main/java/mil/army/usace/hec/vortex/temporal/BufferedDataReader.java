@@ -18,7 +18,9 @@ final class BufferedDataReader {
 
     private final List<VortexGrid> buffer = new ArrayList<>();
     private int bufferStartIndex = -1;
-    private static final int MAX_BUFFER_SIZE = 50;
+    private int currentBufferSize = 1; // Start with 1 item
+    private int totalItemsRead = 0;
+    private int readOperations = 0;
 
     BufferedDataReader(DataReader dataReader) {
         this.dataReader = dataReader;
@@ -55,12 +57,25 @@ final class BufferedDataReader {
 
         // Load buffer
         int maxDataIndex = getCount();
-        int maxBufferIndex = index + MAX_BUFFER_SIZE;
-        int endIndex = Math.min(maxBufferIndex, maxDataIndex);
+        int endIndex = Math.min(index + currentBufferSize, maxDataIndex);
 
         for (int i = index; i < endIndex && MemoryManager.isMemoryAvailable(); i++) {
             VortexData data = dataReader.getDto(i);
             buffer.add(data instanceof VortexGrid grid ? grid : null);
+            totalItemsRead++;
+        }
+
+        readOperations++;
+        adjustBufferSize();
+    }
+
+    private void adjustBufferSize() {
+        // Calculate average items per operation
+        int averageItemCount = (readOperations > 0) ? (totalItemsRead / readOperations) : 1;
+
+        // Adjust buffer size, increase gradually until reaching the average
+        if (currentBufferSize < averageItemCount) {
+            currentBufferSize *= 2;
         }
     }
 
