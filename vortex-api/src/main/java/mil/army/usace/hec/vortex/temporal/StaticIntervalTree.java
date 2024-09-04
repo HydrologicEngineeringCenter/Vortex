@@ -3,6 +3,8 @@ package mil.army.usace.hec.vortex.temporal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Implements a static interval tree for efficiently querying overlapping intervals.
@@ -21,9 +23,11 @@ final class StaticIntervalTree<T extends Interval> {
 
     /* Constructor */
     StaticIntervalTree(List<T> intervals) {
-        List<T> sortedByStart = new ArrayList<>(intervals);
-        sortedByStart.sort(Comparator.comparingLong(T::start));
-        root = buildTree(intervals, 0, intervals.size() - 1);
+        List<T> sortedByStart = intervals.stream()
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(T::start))
+                .toList();
+        root = buildTree(sortedByStart, 0, intervals.size() - 1);
     }
 
     /* Tree's Node (includes maxEnd for IntervalTree algorithm) */
@@ -40,7 +44,7 @@ final class StaticIntervalTree<T extends Interval> {
 
     /* Tree Initialization */
     private Node buildTree(List<T> intervals, int start, int end) {
-        if (start > end) {
+        if (intervals.isEmpty() || start > end) {
             return null;
         }
 
