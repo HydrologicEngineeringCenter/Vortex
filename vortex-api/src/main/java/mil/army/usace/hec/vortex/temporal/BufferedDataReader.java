@@ -18,7 +18,7 @@ final class BufferedDataReader {
 
     private final List<VortexGrid> buffer = new ArrayList<>();
     private int bufferStartIndex = -1;
-    private static final int MAX_BUFFER_SIZE = 50;
+    private static final int MAX_BUFFER_SIZE = 1;
 
     BufferedDataReader(DataReader dataReader) {
         this.dataReader = dataReader;
