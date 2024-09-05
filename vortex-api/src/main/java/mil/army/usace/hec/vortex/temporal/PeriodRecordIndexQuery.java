@@ -29,7 +29,7 @@ final class PeriodRecordIndexQuery implements RecordIndexQuery {
     @Override
     public ZonedDateTime getLatestEndTime() {
         return Optional.ofNullable(intervalTree.findMaximum())
-                .map(VortexTimeRecord::startTime)
+                .map(VortexTimeRecord::endTime)
                 .orElse(null);
     }
 
