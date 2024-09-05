@@ -21,14 +21,14 @@ final class PeriodRecordIndexQuery implements RecordIndexQuery {
 
     @Override
     public ZonedDateTime getEarliestStartTime() {
-        return Optional.ofNullable(intervalTree.findMaximum())
+        return Optional.ofNullable(intervalTree.findMinimum())
                 .map(VortexTimeRecord::startTime)
                 .orElse(null);
     }
 
     @Override
     public ZonedDateTime getLatestEndTime() {
-        return Optional.ofNullable(intervalTree.findMinimum())
+        return Optional.ofNullable(intervalTree.findMaximum())
                 .map(VortexTimeRecord::startTime)
                 .orElse(null);
     }
