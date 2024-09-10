@@ -22,7 +22,9 @@ public class TemporalDataReader {
     /* Constructor */
     private TemporalDataReader(BufferedDataReader bufferedReader) {
         this.bufferedReader = bufferedReader;
-        VortexDataType dataType = this.bufferedReader.getBaseGrid().dataType();
+        VortexDataType dataType = Optional.ofNullable(bufferedReader.getBaseGrid())
+                .map(VortexGrid::dataType)
+                .orElse(VortexDataType.UNDEFINED);
         List<VortexTimeRecord> timeRecords = this.bufferedReader.getTimeRecords();
         this.recordIndexQuery = RecordIndexQuery.of(dataType, timeRecords);
     }

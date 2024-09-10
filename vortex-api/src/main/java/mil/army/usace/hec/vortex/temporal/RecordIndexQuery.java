@@ -14,7 +14,7 @@ interface RecordIndexQuery {
         return switch (dataType) {
             case AVERAGE, ACCUMULATION -> new PeriodRecordIndexQuery(indexedRecords);
             case INSTANTANEOUS -> new InstantRecordIndexQuery(indexedRecords);
-            default -> throw new IllegalArgumentException("Unsupported data type: " + dataType);
+            default -> new NoRecordIndexQuery();
         };
     }
 }
