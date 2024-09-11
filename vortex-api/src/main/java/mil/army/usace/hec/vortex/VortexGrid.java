@@ -335,44 +335,8 @@ public class VortexGrid implements VortexData, Serializable {
         };
     }
 
-    /**
-     * Retrieves the value from the data grid at the specified x and y coordinates,
-     * assuming the data grid is oriented with the origin at the top-left corner.
-     * @param x the x-coordinate of the point whose value is to be retrieved,
-     *          relative to the coordinate system defined by the grid's origin and cell size.
-     * @param y the y-coordinate of the point, adjusted to consider the grid's top-down orientation.
-     *          This value is calculated from the top of the data grid, with y values increasing downwards.
-     * @return the value at the specified x and y coordinates if within bounds and not a no-data value;
-     *         otherwise, returns {@code Double.NaN}.
-     */
-    public double getValueAt(int x, int y) {
-        if (isFlippedY()) return getValueAtFlippedY(x, y);
-
-        int scaledOriginX = (int) (originX / Math.abs(dx));
-        int scaledOriginY = (int) (originY / Math.abs(dy));
-
-        int relativeX = x - scaledOriginX;
-        int relativeY = y - scaledOriginY;
-        int k = Math.abs((relativeY * nx) + relativeX);
-
-        return data[k];
-    }
-
-    private double getValueAtFlippedY(int x, int y) {
-        int scaledOriginX = (int) (originX / Math.abs(dx));
-        int scaledTerminusY = (int) (terminusY / Math.abs(dy));
-
-        int relativeX = x - scaledOriginX;
-        int relativeY = y - scaledTerminusY;
-
-        int k = Math.abs((relativeY * nx) + relativeX);
-
-        float[] flippedData = RasterUtils.flipVertically(data, nx);
-        return flippedData[k];
-    }
-
-    private boolean isFlippedY() {
-        return terminusY < originY;
+    public double getValue(int index) {
+        return data[index];
     }
 
     public boolean isNoDataValue(double value) {
