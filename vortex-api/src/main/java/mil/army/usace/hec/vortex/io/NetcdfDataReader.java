@@ -17,16 +17,12 @@ import javax.measure.IncommensurableException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import java.io.IOException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 abstract class NetcdfDataReader extends DataReader {
     private static final Logger logger = Logger.getLogger(NetcdfDataReader.class.getName());
-    final NetcdfDataset ncd;
 
     /* Factory Method */
     public static NetcdfDataReader createInstance(String pathToFile, String pathToData) {
@@ -42,7 +38,7 @@ abstract class NetcdfDataReader extends DataReader {
 
         VariableDS variableDS = getVariableDataset(dataset, pathToData);
         if (variableDS != null) {
-            return new VariableDsReader(variableDS, pathToData);
+            return new VariableDsReader(dataset, variableDS, pathToData);
         }
 
         return null;
@@ -50,7 +46,6 @@ abstract class NetcdfDataReader extends DataReader {
 
     NetcdfDataReader(DataReaderBuilder builder) {
         super(builder);
-        ncd = getNetcdfDataset(path);
     }
 
     @Override
@@ -58,29 +53,6 @@ abstract class NetcdfDataReader extends DataReader {
 
     @Override
     public abstract VortexData getDto(int idx);
-
-    @Override
-    public List<VortexDataInterval> getDataIntervals() {
-        if (!(ncd.findCoordinateAxis(AxisType.Time) instanceof CoordinateAxis1D timeAxis)) {
-            return Collections.emptyList();
-        }
-
-        String timeAxisUnits = timeAxis.getUnitsString();
-
-        int count = (int) timeAxis.getSize();
-        double[] startTimes = timeAxis.getBound1();
-        double[] endTimes = timeAxis.getBound2();
-
-        List<VortexDataInterval> timeRecords = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            ZonedDateTime startTime = parseTime(timeAxisUnits, startTimes[i]);
-            ZonedDateTime endTime = parseTime(timeAxisUnits, endTimes[i]);
-            VortexDataInterval timeRecord = VortexDataInterval.of(startTime, endTime);
-            timeRecords.add(timeRecord);
-        }
-
-        return timeRecords;
-    }
 
     @Override
     public abstract int getDtoCount();
@@ -143,20 +115,6 @@ abstract class NetcdfDataReader extends DataReader {
 
     private static boolean isLatLon(NetcdfDataset ncd) {
         return ncd.findCoordinateAxis(AxisType.Lon) != null && ncd.findCoordinateAxis(AxisType.Lat) != null;
-    }
-
-    private ZonedDateTime parseTime(String timeAxisUnits, double timeValue) {
-        String[] split = timeAxisUnits.split("since");
-        String chronoUnitStr = split[0].trim().toUpperCase(Locale.ROOT);
-        String dateTimeStr = split[1].trim();
-        ChronoUnit chronoUnit = ChronoUnit.valueOf(chronoUnitStr);
-        ZonedDateTime origin = TimeConverter.toZonedDateTime(dateTimeStr);
-        if (origin == null) return undefinedTime();
-        return origin.plus((long) timeValue, chronoUnit);
-    }
-
-    private ZonedDateTime undefinedTime() {
-        return ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
     }
 
     private static boolean isSelectableVariable(Variable variable) {

@@ -84,4 +84,8 @@ class BilZipDataReader extends DataReader implements VirtualFileSystem {
                 .toList();
     }
 
+    @Override
+    public void close() throws Exception {
+        // No op
+    }
 } // BilZipDataReader class

@@ -296,4 +296,8 @@ class SnodasDataReader extends DataReader {
         return getName(parseFile(pathToDat.substring(0, pathToDat.lastIndexOf(".dat"))));
     }
 
+    @Override
+    public void close() throws Exception {
+        // No op
+    }
 } // SnodasDataReader class

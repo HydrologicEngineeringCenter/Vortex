@@ -129,6 +129,11 @@ class GridDatasetReader extends NetcdfDataReader {
         return timeBounds;
     }
 
+    @Override
+    public void close() throws Exception {
+        gridDataset.close();
+    }
+
     /* Grid Data Helpers */
     private List<VortexData> getMultiDimensionGrids(Dimension timeDim, Dimension endDim, Dimension rtDim) {
         List<VortexData> gridList = new ArrayList<>();

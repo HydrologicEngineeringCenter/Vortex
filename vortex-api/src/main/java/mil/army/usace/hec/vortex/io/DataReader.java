@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 
-public abstract class DataReader {
+public abstract class DataReader implements AutoCloseable {
     final PropertyChangeSupport support;
 
     final String path;
