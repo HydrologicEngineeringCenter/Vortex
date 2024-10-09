@@ -171,8 +171,8 @@ class NetcdfDataReaderTest {
 
         VortexData vortexData = reader.getDto(0);
         VortexGrid vortexGrid = (VortexGrid) vortexData;
-        assertEquals(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
-        assertEquals(ZonedDateTime.of(2020, 3, 2, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+        assertEquals(ZonedDateTime.of(2020, 3, 1, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2020, 3, 2, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.endTime());
     }
 
     @Test
@@ -197,8 +197,8 @@ class NetcdfDataReaderTest {
 
         VortexData vortexData = reader.getDto(0);
         VortexGrid vortexGrid = (VortexGrid) vortexData;
-        assertEquals(ZonedDateTime.of(1981, 12, 31, 23, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
-        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+        assertEquals(ZonedDateTime.of(1981, 12, 31, 23, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.endTime());
     }
 
     @Test
@@ -212,8 +212,8 @@ class NetcdfDataReaderTest {
 
         VortexData vortexData = reader.getDto(0);
         VortexGrid vortexGrid = (VortexGrid) vortexData;
-        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
-        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(1982, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.endTime());
     }
 
     @Test
@@ -227,8 +227,8 @@ class NetcdfDataReaderTest {
 
         VortexData vortexData = reader.getDto(0);
         VortexGrid vortexGrid = (VortexGrid) vortexData;
-        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
-        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.endTime());
     }
 
     @Test
@@ -242,8 +242,8 @@ class NetcdfDataReaderTest {
 
         VortexData vortexData = reader.getDto(0);
         VortexGrid vortexGrid = (VortexGrid) vortexData;
-        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 0, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
-        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.endTime());
     }
 
     @Test
@@ -259,8 +259,8 @@ class NetcdfDataReaderTest {
 
         VortexData vortexData = reader.getDto(0);
         VortexGrid vortexGrid = (VortexGrid) vortexData;
-        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 58, 0, 0, ZoneId.of("Z")), vortexGrid.startTime());
-        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("Z")), vortexGrid.endTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 58, 0, 0, ZoneId.of("UTC")), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneId.of("UTC")), vortexGrid.endTime());
     }
 
     @Test

@@ -1,10 +1,10 @@
 package mil.army.usace.hec.vortex.io;
 
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
 import hdf.hdf5lib.exceptions.HDF5Exception;
 import hdf.hdf5lib.exceptions.HDF5LibraryException;
 import mil.army.usace.hec.vortex.VortexGrid;
-import hdf.hdf5lib.H5;
-import hdf.hdf5lib.HDF5Constants;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class Hdf5RasPrecipDataWriter extends DataWriter {
+class Hdf5RasPrecipDataWriter extends DataWriter {
 
     private static final Logger logger = Logger.getLogger(Hdf5RasPrecipDataWriter.class.getName());
 

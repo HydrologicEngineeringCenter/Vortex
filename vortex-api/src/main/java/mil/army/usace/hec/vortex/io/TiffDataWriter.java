@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-public class TiffDataWriter extends DataWriter {
+class TiffDataWriter extends DataWriter {
     private static final double NO_DATA_VALUE = -9999;
 
     TiffDataWriter(Builder builder) {
