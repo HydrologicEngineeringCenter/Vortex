@@ -4,12 +4,14 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.gdal.gdal.gdal;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,6 +84,13 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         return null;
     } // getDto()
 
+    @Override
+    public List<VortexDataInterval> getDataIntervals() {
+        return getDtos().stream()
+                .map(VortexDataInterval::of)
+                .toList();
+    }
+
     private void updateTar(String pathToFile) throws IOException {
         // Get DirectoryPath, TarFilePath, and TarFileName
         String directoryPath = Paths.get(pathToFile).getParent().toString();
@@ -138,28 +147,6 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
         else
             return false;
     } // matchedVariable() returns true if fileName matches with the variableName
-
-
-    private File tarFolder(String directoryPath, File inputFolder) throws IOException {
-        // File tempTarFile = tarFolder(directoryPath, gzFolder);
-        // ^ Use that line in updateTar to compress the zip folder into a tar
-        // Create a temp Tar File
-        File tempTarFile = new File(directoryPath, "tempTar.tar");
-        tempTarFile.createNewFile();
-        TarArchiveOutputStream newStream = new TarArchiveOutputStream(new FileOutputStream(tempTarFile));
-
-        for(File currentFile : inputFolder.listFiles()) {
-            ArchiveEntry entry = newStream.createArchiveEntry(currentFile, currentFile.getName());
-            newStream.putArchiveEntry(entry);
-            InputStream folderStream = Files.newInputStream(currentFile.toPath());
-            IOUtils.copy(folderStream, newStream);
-            folderStream.close();
-            newStream.closeArchiveEntry();
-        }
-        newStream.close();
-
-        return tempTarFile;
-    } // tarFolder
 
     private File unTarFile(String directoryPath, TarArchiveInputStream iStream, String tarName) throws IOException {
         String fileSeparator = File.separator;

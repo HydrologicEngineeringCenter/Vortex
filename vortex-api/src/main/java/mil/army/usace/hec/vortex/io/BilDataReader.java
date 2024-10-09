@@ -272,4 +272,11 @@ class BilDataReader extends DataReader {
             return null;
         }
     }
+
+    @Override
+    public List<VortexDataInterval> getDataIntervals() {
+        return getDtos().stream()
+                .map(VortexDataInterval::of)
+                .toList();
+    }
 } // BilDataReader class

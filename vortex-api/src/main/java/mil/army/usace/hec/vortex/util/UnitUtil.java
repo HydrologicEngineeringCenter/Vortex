@@ -1,7 +1,8 @@
 package mil.army.usace.hec.vortex.util;
 
-import javax.measure.Unit;
+import systems.uom.common.USCustomary;
 
+import javax.measure.Unit;
 import java.util.Optional;
 
 import static javax.measure.MetricPrefix.*;
@@ -32,8 +33,10 @@ public class UnitUtil {
             case "%" -> PERCENT;
             case "hpa" -> HECTO(PASCAL);
             case "pa" -> PASCAL;
-            case "m" -> METRE;
+            case "m", "meter", "metre" -> METRE;
             case "min" -> MINUTE;
+            case "km" -> KILO(METRE);
+            case "degrees", "degrees_east", "degrees_north" -> USCustomary.DEGREE_ANGLE;
             default -> ONE;
         };
     }

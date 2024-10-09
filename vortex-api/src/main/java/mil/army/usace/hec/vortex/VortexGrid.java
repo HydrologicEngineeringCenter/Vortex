@@ -214,6 +214,22 @@ public class VortexGrid implements VortexData, Serializable {
         return new VortexGridBuilder();
     }
 
+    public static VortexGrid empty() {
+        return VortexGrid.builder()
+                .shortName("")
+                .fullName("")
+                .description("")
+                .fileName("")
+                .nx(0).ny(0)
+                .dx(0).dy(0)
+                .wkt("")
+                .data(new float[0])
+                .noDataValue(Double.NaN)
+                .units("")
+                .dataType(VortexDataType.UNDEFINED)
+                .build();
+    }
+
     public double dx() {
         return dx;
     }
@@ -298,22 +314,8 @@ public class VortexGrid implements VortexData, Serializable {
         return interval;
     }
 
-    VortexDataType dataType() {
+    public VortexDataType dataType() {
         return dataType != null ? dataType : inferDataType();
-    }
-
-    public double[] xCoordinates() {
-        double[] xCoordinates = new double[nx];
-        // xCoordinates[i] = midpoint of xEdges[i] and xEdges[i + 1]
-        for (int i = 0; i < nx; i++) xCoordinates[i] = originX + (i + 1) * dx - (dx / 2);
-        return xCoordinates;
-    }
-
-    public double[] yCoordinates() {
-        double[] yCoordinates = new double[ny];
-        // yCoordinates[i] = midpoint of yEdges[i] and yEdges[i + 1]
-        for (int i = 0; i < ny; i++) yCoordinates[i] = originY + (i + 1) * dy - (dy / 2);
-        return yCoordinates;
     }
 
     public float[][][] data3D() {
@@ -332,22 +334,49 @@ public class VortexGrid implements VortexData, Serializable {
         };
     }
 
+    public double getValue(int index) {
+        return data[index];
+    }
+
+    public boolean isTemporal() {
+        return startTime != null && endTime != null;
+    }
+
+    private boolean hasSameData(VortexGrid that) {
+        float[] thisData = this.data();
+        float[] thatData = that.data();
+
+        if (thisData.length != thatData.length) {
+            return false;
+        }
+
+        for (int i = 0; i < thisData.length; i++) {
+            float thisValue = thisData[i];
+            float thatValue = thatData[i];
+
+            boolean sameFloatValue = thisValue == thatValue;
+            boolean bothAreNoData = thisValue == this.noDataValue && thatValue == that.noDataValue;
+
+            if (!sameFloatValue && !bothAreNoData) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VortexGrid)) return false;
-
-        VortexGrid that = (VortexGrid) o;
-
+        if (!(o instanceof VortexGrid that)) return false;
         if (Double.compare(that.dx, dx) != 0) return false;
         if (Double.compare(that.dy, dy) != 0) return false;
         if (nx != that.nx) return false;
         if (ny != that.ny) return false;
         if (Double.compare(that.originX, originX) != 0) return false;
         if (Double.compare(that.originY, originY) != 0) return false;
-        if (Double.compare(that.noDataValue, noDataValue) != 0) return false;
         if (!ReferenceUtils.equals(wkt, that.wkt)) return false;
-        if (!Arrays.equals(data, that.data)) return false;
+        if (!this.hasSameData(that)) return false;
         if (!UnitUtil.equals(units, that.units)) return false;
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
@@ -358,27 +387,46 @@ public class VortexGrid implements VortexData, Serializable {
     @Override
     public int hashCode() {
         int result;
-        long temp;
-        temp = Double.doubleToLongBits(dx);
-        result = (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(dy);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = Double.hashCode(dx);
+        result = 31 * result + Double.hashCode(dy);
         result = 31 * result + nx;
         result = 31 * result + ny;
-        temp = Double.doubleToLongBits(originX);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(originY);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + Double.hashCode(originX);
+        result = 31 * result + Double.hashCode(originY);
         result = 31 * result + (wkt != null ? wkt.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(data);
-        temp = Double.doubleToLongBits(noDataValue);
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
         result = 31 * result + (units != null ? units.hashCode() : 0);
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
         result = 31 * result + (endTime != null ? endTime.hashCode() : 0);
         result = 31 * result + (interval != null ? interval.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         return result;
+    }
+
+    // Add to help with debugging (when testing VortexGrid::equals)
+    @Override
+    public String toString() {
+        return "VortexGrid{" +
+                "dx=" + dx +
+                ", dy=" + dy +
+                ", nx=" + nx +
+                ", ny=" + ny +
+                ", originX=" + originX +
+                ", originY=" + originY +
+                ", wkt='" + wkt + '\'' +
+                ", data=" + Arrays.toString(data) +
+                ", noDataValue=" + noDataValue +
+                ", units='" + units + '\'' +
+                ", fileName='" + fileName + '\'' +
+                ", shortName='" + shortName + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", description='" + description + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", interval=" + interval +
+                ", dataType=" + dataType +
+                ", terminusX=" + terminusX +
+                ", terminusY=" + terminusY +
+                '}';
     }
 }
 

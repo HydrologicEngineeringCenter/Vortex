@@ -4,13 +4,12 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import org.gdal.gdal.gdal;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class BilZipDataReader extends DataReader implements VirtualFileSystem{
+class BilZipDataReader extends DataReader implements VirtualFileSystem {
     static {
         GdalRegister.getInstance();
     }
@@ -77,5 +76,12 @@ public class BilZipDataReader extends DataReader implements VirtualFileSystem{
         }
         return null;
     } // Extended getDto(): Bil Zip
+
+    @Override
+    public List<VortexDataInterval> getDataIntervals() {
+        return getDtos().stream()
+                .map(VortexDataInterval::of)
+                .toList();
+    }
 
 } // BilZipDataReader class
