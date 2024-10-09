@@ -279,4 +279,9 @@ class BilDataReader extends DataReader {
                 .map(VortexDataInterval::of)
                 .toList();
     }
+
+    @Override
+    public void close() throws Exception {
+        // No op
+    }
 } // BilDataReader class

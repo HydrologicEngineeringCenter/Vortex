@@ -204,4 +204,9 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
 
         return headerFile;
     } // createHeader()
+
+    @Override
+    public void close() throws Exception {
+        // No op
+    }
 } // SnodasTarDataReader class

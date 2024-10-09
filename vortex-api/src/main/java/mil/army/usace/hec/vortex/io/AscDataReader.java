@@ -310,4 +310,9 @@ class AscDataReader extends DataReader {
                 .map(VortexDataInterval::of)
                 .toList();
     }
+
+    @Override
+    public void close() throws Exception {
+        // No op
+    }
 }
