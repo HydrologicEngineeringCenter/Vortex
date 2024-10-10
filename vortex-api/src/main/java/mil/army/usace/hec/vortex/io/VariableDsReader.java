@@ -21,22 +21,22 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.logging.Logger;
 
 class VariableDsReader extends NetcdfDataReader {
     private static final Logger logger = Logger.getLogger(VariableDsReader.class.getName());
 
+    private final NetcdfDataset ncd;
     private final VariableDS variableDS;
     private final Grid gridDefinition;
     private final List<VortexDataInterval> timeBounds;
 
     /* Constructor */
-    public VariableDsReader(VariableDS variableDS, String variableName) {
+    public VariableDsReader(NetcdfDataset ncd, VariableDS variableDS, String variableName) {
         super(new DataReaderBuilder().path(variableDS.getDatasetLocation()).variable(variableName));
+        this.ncd = ncd;
         this.variableDS = getVariableDS(ncd, variableName);
         CoordinateSystem coordinateSystem = getCoordinateSystem(variableDS);
         this.gridDefinition = getGridDefinition(ncd, coordinateSystem);
@@ -82,7 +82,44 @@ class VariableDsReader extends NetcdfDataReader {
         return 1;
     }
 
+    @Override
+    public List<VortexDataInterval> getDataIntervals() {
+        if (!(ncd.findCoordinateAxis(AxisType.Time) instanceof CoordinateAxis1D timeAxis)) {
+            return Collections.emptyList();
+        }
+
+        String timeAxisUnits = timeAxis.getUnitsString();
+
+        int count = (int) timeAxis.getSize();
+        double[] startTimes = timeAxis.getBound1();
+        double[] endTimes = timeAxis.getBound2();
+
+        List<VortexDataInterval> timeRecords = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            ZonedDateTime startTime = parseTime(timeAxisUnits, startTimes[i]);
+            ZonedDateTime endTime = parseTime(timeAxisUnits, endTimes[i]);
+            VortexDataInterval timeRecord = VortexDataInterval.of(startTime, endTime);
+            timeRecords.add(timeRecord);
+        }
+
+        return timeRecords;
+    }
+
     /* Helpers */
+    private ZonedDateTime parseTime(String timeAxisUnits, double timeValue) {
+        String[] split = timeAxisUnits.split("since");
+        String chronoUnitStr = split[0].trim().toUpperCase(Locale.ROOT);
+        String dateTimeStr = split[1].trim();
+        ChronoUnit chronoUnit = ChronoUnit.valueOf(chronoUnitStr);
+        ZonedDateTime origin = TimeConverter.toZonedDateTime(dateTimeStr);
+        if (origin == null) return undefinedTime();
+        return origin.plus((long) timeValue, chronoUnit);
+    }
+
+    private ZonedDateTime undefinedTime() {
+        return ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+    }
+
     private List<VortexDataInterval> getTimeBounds() {
         CoordinateAxis1D timeAxis = getTimeAxis();
         if (timeAxis == null) return Collections.emptyList();
@@ -261,6 +298,11 @@ class VariableDsReader extends NetcdfDataReader {
         }
 
         return gridDefinition;
+    }
+
+    @Override
+    public void close() throws Exception {
+        ncd.close();
     }
 }
 

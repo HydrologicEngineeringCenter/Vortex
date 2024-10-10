@@ -1,9 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.heclib.dss.DSSPathname;
-import hec.heclib.dss.DssDataType;
-import hec.heclib.dss.HecDSSDataAttributes;
-import hec.heclib.dss.HecDssCatalog;
+import hec.heclib.dss.*;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
@@ -43,6 +40,7 @@ class DssDataReader extends DataReader {
         HecDssCatalog hecDssCatalog = new HecDssCatalog();
         hecDssCatalog.setDSSFileName(path);
         String[] dssPathnames = hecDssCatalog.getCatalog(true, variableName);
+        hecDssCatalog.done();
 
         return Arrays.stream(dssPathnames).map(DSSPathname::new).toList();
     }
@@ -73,6 +71,8 @@ class DssDataReader extends DataReader {
             }
         } catch (Exception e) {
             return null;
+        } finally {
+            griddedData.done();
         }
 
         return gridData;
@@ -185,6 +185,8 @@ class DssDataReader extends DataReader {
                 griddedRecords.add(dssPathname);
         }
 
+        attributes.done();
+
         return new HashSet<>(griddedRecords);
     }
 
@@ -227,5 +229,10 @@ class DssDataReader extends DataReader {
                 .map(DSSPathname::toString)
                 .map(VortexDataInterval::of)
                 .toList();
+    }
+
+    @Override
+    public void close() throws Exception {
+        // No op - done() is called on accessors after an opening call is made
     }
 }

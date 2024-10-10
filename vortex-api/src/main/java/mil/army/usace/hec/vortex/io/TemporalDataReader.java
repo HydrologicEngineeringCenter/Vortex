@@ -14,7 +14,7 @@ import java.util.*;
  * data from a given data source. It supports various operations like reading data
  * for a specific time range and getting grid definitions.
  */
-public class TemporalDataReader {
+public class TemporalDataReader implements AutoCloseable {
     private final DataReader dataReader;
     private final RecordIndexQuery recordIndexQuery;
     private final VortexGrid baseGrid;
@@ -302,5 +302,10 @@ public class TemporalDataReader {
 
             return Integer.compare(o1Count, o2Count);
         };
+    }
+
+    @Override
+    public void close() throws Exception {
+        dataReader.close();
     }
 }

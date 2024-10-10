@@ -18,10 +18,14 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class NetcdfDataWriterTest {
+    private static final Logger LOGGER = Logger.getLogger(NetcdfDataWriterTest.class.getName());
+
     @Test
-    void InstantTimeCircleTest() throws IOException {
+    void InstantTimeCircleTest() {
         String outputPath = TestUtil.createTempFile("InstantTimeCircleTest.nc");
         Assertions.assertNotNull(outputPath);
 
@@ -60,22 +64,32 @@ class NetcdfDataWriterTest {
 
         writer.write();
 
-        DataReader reader = DataReader.builder()
+        try (DataReader reader = DataReader.builder()
                 .variable("temperature")
                 .path(outputPath)
-                .build();
+                .build()) {
 
-        List<VortexData> generatedGrids = reader.getDtos();
+            List<VortexData> generatedGrids = reader.getDtos();
 
-        for (int i = 0; i < originalGrids.size(); i++) {
-            Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+            for (int i = 0; i < originalGrids.size(); i++) {
+                Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, e, e::getMessage);
+            Assertions.fail();
         }
 
-        Files.deleteIfExists(Path.of(outputPath));
+
+        try {
+            Files.deleteIfExists(Path.of(outputPath));
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e, e::getMessage);
+            Assertions.fail();
+        }
     }
 
     @Test
-    void IntervalTimeCircleTest() throws IOException {
+    void IntervalTimeCircleTest() {
         String outputPath = TestUtil.createTempFile("IntervalTimeCircleTest.nc");
         Assertions.assertNotNull(outputPath);
 
@@ -114,17 +128,26 @@ class NetcdfDataWriterTest {
 
         writer.write();
 
-        DataReader reader = DataReader.builder()
+        try (DataReader reader = DataReader.builder()
                 .variable("precipitation")
                 .path(outputPath)
-                .build();
+                .build()) {
 
-        List<VortexData> generatedGrids = reader.getDtos();
+            List<VortexData> generatedGrids = reader.getDtos();
 
-        for (int i = 0; i < originalGrids.size(); i++) {
-            Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+            for (int i = 0; i < originalGrids.size(); i++) {
+                Assertions.assertEquals(originalGrids.get(i), generatedGrids.get(i));
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, e, e::getMessage);
+            Assertions.fail();
         }
 
-        Files.deleteIfExists(Path.of(outputPath));
+        try {
+            Files.deleteIfExists(Path.of(outputPath));
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e, e::getMessage);
+            Assertions.fail();
+        }
     }
 }

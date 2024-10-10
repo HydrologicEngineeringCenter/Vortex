@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.dss.HecDSSUtilities;
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.TestUtil;
 import mil.army.usace.hec.vortex.VortexData;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -483,8 +483,9 @@ class TemporalDataReaderTest {
 
     /* Tear Down */
     @AfterAll
-    static void tearDown() throws IOException {
+    static void tearDown() throws Exception {
         if (tempDssFile != null) {
+            HecDSSUtilities.close(tempDssFile, true);
             Files.deleteIfExists(Path.of(tempDssFile));
         }
     }

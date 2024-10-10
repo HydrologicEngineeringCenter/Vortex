@@ -81,4 +81,9 @@ class AscZipDataReader extends DataReader implements VirtualFileSystem {
                 .toList();
     }
 
+    @Override
+    public void close() throws Exception {
+        // No op
+    }
+
 } // AscZipDataReader class
