@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.util.HecTime;
 import mil.army.usace.hec.vortex.VortexData;
 
 import java.time.Duration;
@@ -17,12 +18,21 @@ record VortexDataInterval(ZonedDateTime startTime, ZonedDateTime endTime) implem
     static VortexDataInterval of(String dssPathname) {
         String[] parts = getDssParts(dssPathname);
 
-        String dPart = parts[3];
-        String ePart = parts[4].isEmpty() ? dPart : parts[4];
+        HecTime hecStart = new HecTime(parts[3]);
+        HecTime hecEnd = new HecTime(parts[4]);
 
-        ZonedDateTime startTime = TimeConverter.toZonedDateTime(dPart);
-        ZonedDateTime endTime = TimeConverter.toZonedDateTime(ePart);
-        return VortexDataInterval.of(startTime, endTime);
+        if (!hecStart.isDefined()) {
+            return null;
+        }
+
+        if (!hecEnd.isDefined()) {
+            hecEnd = hecStart;
+        }
+
+        ZonedDateTime start = TimeConverter.toZonedDateTime(hecStart);
+        ZonedDateTime end = TimeConverter.toZonedDateTime(hecEnd);
+
+        return VortexDataInterval.of(start, end);
     }
 
     static VortexDataInterval of(VortexData vortexData) {

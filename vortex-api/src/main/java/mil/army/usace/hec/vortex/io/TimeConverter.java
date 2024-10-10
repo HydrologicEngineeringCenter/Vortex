@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import hec.heclib.util.HecTime;
 import ucar.nc2.time.CalendarDate;
 
 import java.time.LocalDate;
@@ -42,6 +43,9 @@ class TimeConverter {
         // Utility class - Private constructor
     }
 
+    static ZonedDateTime toZonedDateTime(HecTime hecTime) {
+        return ZonedDateTime.parse(hecTime.getXMLDateTime(0));
+    }
     static ZonedDateTime toZonedDateTime(CalendarDate calendarDate) {
         return ZonedDateTime.ofInstant(calendarDate.toDate().toInstant(), ZoneId.of("UTC"));
     }

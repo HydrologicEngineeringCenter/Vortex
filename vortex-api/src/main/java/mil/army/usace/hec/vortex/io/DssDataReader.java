@@ -1,6 +1,9 @@
 package mil.army.usace.hec.vortex.io;
 
-import hec.heclib.dss.*;
+import hec.heclib.dss.DSSPathname;
+import hec.heclib.dss.DssDataType;
+import hec.heclib.dss.HecDSSDataAttributes;
+import hec.heclib.dss.HecDssCatalog;
 import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
@@ -229,12 +232,6 @@ class DssDataReader extends DataReader {
                 .map(DSSPathname::toString)
                 .map(VortexDataInterval::of)
                 .toList();
-
-        if (!dssPathnameLogic.equals(parseLogic)) {
-            System.out.println("Different");
-        }
-
-        return parseLogic;
     }
 
     @Override
