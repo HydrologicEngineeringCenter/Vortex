@@ -58,6 +58,13 @@ class SnodasDataReader extends DataReader {
             return null;
     } // getDto()
 
+    @Override
+    public List<VortexDataInterval> getDataIntervals() {
+        return getDtos().stream()
+                .map(VortexDataInterval::of)
+                .toList();
+    }
+
     private static Map<String,String> parseFile(String fileName) {
         Map<String,String> info = new HashMap<>();
 

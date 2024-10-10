@@ -3,7 +3,9 @@ package mil.army.usace.hec.vortex.io;
 import hec.heclib.dss.DSSPathname;
 import hec.heclib.dss.DssDataType;
 import hec.heclib.dss.HecTimeSeries;
-import hec.heclib.grid.*;
+import hec.heclib.grid.GridData;
+import hec.heclib.grid.GridInfo;
+import hec.heclib.grid.GriddedData;
 import hec.heclib.util.HecTime;
 import hec.heclib.util.HecTimeArray;
 import hec.heclib.util.Heclib;
@@ -15,8 +17,8 @@ import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ZonalStatistics;
+import mil.army.usace.hec.vortex.util.DssUtil;
 import mil.army.usace.hec.vortex.util.UnitUtil;
-import org.gdal.osr.SpatialReference;
 
 import javax.measure.Unit;
 import java.time.Duration;
@@ -29,16 +31,14 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static javax.measure.MetricPrefix.KILO;
 import static javax.measure.MetricPrefix.MILLI;
 import static mil.army.usace.hec.vortex.VortexVariable.*;
-import static systems.uom.common.USCustomary.*;
+import static systems.uom.common.USCustomary.FAHRENHEIT;
+import static systems.uom.common.USCustomary.INCH;
 import static tech.units.indriya.AbstractUnit.ONE;
-import static tech.units.indriya.unit.Units.HOUR;
-import static tech.units.indriya.unit.Units.MINUTE;
 import static tech.units.indriya.unit.Units.*;
 
-public class DssDataWriter extends DataWriter {
+class DssDataWriter extends DataWriter {
 
     private static final Logger logger = Logger.getLogger(DssDataWriter.class.getName());
 
@@ -58,7 +58,7 @@ public class DssDataWriter extends DataWriter {
                 .toList();
 
         for (VortexGrid grid : grids) {
-            GridInfo gridInfo = getGridInfo(grid);
+            GridInfo gridInfo = DssUtil.getGridInfo(grid);
 
             float[] data;
             if (grid.dy() < 0) {
@@ -372,91 +372,6 @@ public class DssDataWriter extends DataWriter {
         return pathnameOut;
     }
 
-    private static String getUnitsString(Unit<?> unit) {
-        if (unit.equals(MILLI(METRE))) {
-            return "MM";
-        }
-        if (unit.equals(INCH)) {
-            return "IN";
-        }
-        if (unit.equals(INCH.divide(HOUR))) {
-            return "IN/HR";
-        }
-        if (unit.equals(MILLI(METRE).divide(SECOND))) {
-            return "MM/S";
-        }
-        if (unit.equals(MILLI(METRE).divide(HOUR))) {
-            return "MM/HR";
-        }
-        if (unit.equals(MILLI(METRE).divide(DAY))) {
-            return "MM/DAY";
-        }
-        if (unit.equals(CUBIC_METRE.divide(SECOND))) {
-            return "M3/S";
-        }
-        if (unit.equals(CUBIC_FOOT.divide(SECOND))) {
-            return "CFS";
-        }
-        if (unit.equals(METRE)) {
-            return "M";
-        }
-        if (unit.equals(FOOT)) {
-            return "FT";
-        }
-        if (unit.equals(CELSIUS)) {
-            return "DEG C";
-        }
-        if (unit.equals(FAHRENHEIT)) {
-            return "DEG F";
-        }
-        if (unit.equals(WATT.divide(SQUARE_METRE))) {
-            return "WATT/M2";
-        }
-        if (unit.equals(KILOMETRE_PER_HOUR)) {
-            return "KPH";
-        }
-        if (unit.equals(METRE_PER_SECOND)) {
-            return "M/S";
-        }
-        if (unit.equals(MILE_PER_HOUR)) {
-            return "MPH";
-        }
-        if (unit.equals(FOOT_PER_SECOND)) {
-            return "FT/S";
-        }
-        if (unit.equals(KILO(PASCAL))) {
-            return "KPA";
-        }
-        if (unit.equals(PASCAL)) {
-            return "PA";
-        }
-        if (unit.equals(PERCENT)) {
-            return "%";
-        }
-        if (unit.equals(KILO(METRE))) {
-            return "KM";
-        }
-        if (unit.equals(MILE)) {
-            return "MILE";
-        }
-        if (unit.equals(ONE)) {
-            return "UNSPECIF";
-        }
-        if (unit.equals(TON)) {
-            return "TONS";
-        }
-        if (unit.equals(MILLI(GRAM).divide(LITRE))) {
-            return "MG/L";
-        }
-        if (unit.equals(CELSIUS.multiply(DAY))) {
-            return "DEGC-D";
-        }
-        if (unit.equals(MINUTE)) {
-            return "MINUTES";
-        }
-        return unit.toString();
-    }
-
     private static String getEPart(int seconds) {
         int minutes = seconds / SECONDS_PER_MINUTE;
         return switch (minutes) {
@@ -489,96 +404,6 @@ public class DssDataWriter extends DataWriter {
             case 525600 -> "1Year";
             default -> "0";
         };
-    }
-
-    private static GridInfo getGridInfo(VortexGrid grid) {
-        GridInfo gridInfo;
-
-        SpatialReference srs = new SpatialReference(grid.wkt());
-        String crsName;
-        if (srs.IsProjected() == 1) {
-            crsName = srs.GetAttrValue("projcs");
-        } else if (srs.IsGeographic() == 1) {
-            crsName = srs.GetAttrValue("geogcs");
-        } else {
-            crsName = "";
-        }
-
-        if (crsName.toLowerCase().contains("albers")) {
-
-            AlbersInfo albersInfo = new AlbersInfo();
-            albersInfo.setCoordOfGridCellZero(0, 0);
-
-            String datum = srs.GetAttrValue("geogcs");
-            if (datum.contains("83")) {
-                albersInfo.setProjectionDatum(GridInfo.getNad83());
-            }
-
-            String units = srs.GetLinearUnitsName();
-            albersInfo.setProjectionUnits(units);
-
-            double centralMeridian = srs.GetProjParm("central_meridian");
-            albersInfo.setCentralMeridian((float) centralMeridian);
-
-            double falseEasting = srs.GetProjParm("false_easting");
-            double falseNorthing = srs.GetProjParm("false_northing");
-            albersInfo.setFalseEastingAndNorthing((float) falseEasting, (float) falseNorthing);
-
-            double latitudeOfOrigin = srs.GetProjParm("latitude_of_origin");
-            albersInfo.setLatitudeOfProjectionOrigin((float) latitudeOfOrigin);
-
-            double standardParallel1 = srs.GetProjParm("standard_parallel_1");
-            double standardParallel2 = srs.GetProjParm("standard_parallel_2");
-            albersInfo.setStandardParallels((float) standardParallel1, (float) standardParallel2);
-
-            gridInfo = albersInfo;
-        } else {
-            SpecifiedGridInfo specifiedGridInfo = new SpecifiedGridInfo();
-            specifiedGridInfo.setSpatialReference(crsName, grid.wkt(), 0, 0);
-            gridInfo = specifiedGridInfo;
-        }
-
-        double llx = grid.originX();
-        double lly;
-        if (grid.dy() < 0) {
-            lly = grid.originY() + grid.dy() * grid.ny();
-        } else {
-            lly = grid.originY();
-        }
-        double dx = grid.dx();
-        double dy = grid.dy();
-        float cellSize = (float) ((Math.abs(dx) + Math.abs(dy)) / 2.0);
-        int minX = (int) Math.round(llx / cellSize);
-        int minY = (int) Math.round(lly / cellSize);
-
-        gridInfo.setCellInfo(minX, minY, grid.nx(), grid.ny(), cellSize);
-
-        Unit<?> units = UnitUtil.getUnits(grid.units());
-        String unitsString = getUnitsString(units);
-        gridInfo.setDataUnits(unitsString);
-
-        ZonedDateTime startTime = grid.startTime();
-
-        if (startTime == null)
-            return gridInfo;
-
-        ZonedDateTime endTime = grid.endTime();
-        if (!startTime.equals(endTime) && units.isCompatible(CELSIUS)) {
-            gridInfo.setDataType(DssDataType.PER_AVER.value());
-        } else if (startTime.equals(endTime)) {
-            gridInfo.setDataType(DssDataType.INST_VAL.value());
-        } else {
-            gridInfo.setDataType(DssDataType.PER_CUM.value());
-        }
-
-        HecTime hecTimeStart = getHecTime(startTime);
-        hecTimeStart.showTimeAsBeginningOfDay(true);
-        HecTime hecTimeEnd = getHecTime(endTime);
-        hecTimeEnd.showTimeAsBeginningOfDay(false);
-
-        gridInfo.setGridTimes(hecTimeStart, hecTimeEnd);
-
-        return gridInfo;
     }
 
     private static HecTime getHecTime(ZonedDateTime zonedDateTime) {

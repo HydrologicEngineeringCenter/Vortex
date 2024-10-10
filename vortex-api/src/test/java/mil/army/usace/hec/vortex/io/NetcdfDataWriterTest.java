@@ -22,7 +22,10 @@ import java.util.List;
 class NetcdfDataWriterTest {
     @Test
     void InstantTimeCircleTest() throws IOException {
-        ZonedDateTime time = ZonedDateTime.of(1900,2,2,0,0,0,0, ZoneId.of("Z"));
+        String outputPath = TestUtil.createTempFile("InstantTimeCircleTest.nc");
+        Assertions.assertNotNull(outputPath);
+
+        ZonedDateTime time = ZonedDateTime.of(1900, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC"));
         List<VortexData> originalGrids = new ArrayList<>();
 
         for (int i = 0; i < 5; i++) {
@@ -37,6 +40,8 @@ class NetcdfDataWriterTest {
                     .data(data)
                     .noDataValue(-9999)
                     .units("degC")
+                    .fileName(outputPath)
+                    .fullName("temperature")
                     .shortName("temperature")
                     .description("air_temperature")
                     .startTime(time.plusHours(i))
@@ -47,9 +52,6 @@ class NetcdfDataWriterTest {
 
             originalGrids.add(grid);
         }
-
-        String outputPath = TestUtil.createTempFile("InstantTimeCircleTest.nc");
-        Assertions.assertNotNull(outputPath);
 
         DataWriter writer = DataWriter.builder()
                 .data(originalGrids)
@@ -74,7 +76,10 @@ class NetcdfDataWriterTest {
 
     @Test
     void IntervalTimeCircleTest() throws IOException {
-        ZonedDateTime startTime = ZonedDateTime.of(1900,2,2,0,0,0,0, ZoneId.of("Z"));
+        String outputPath = TestUtil.createTempFile("IntervalTimeCircleTest.nc");
+        Assertions.assertNotNull(outputPath);
+
+        ZonedDateTime startTime = ZonedDateTime.of(1900, 2, 2, 0, 0, 0, 0, ZoneId.of("UTC"));
         ZonedDateTime endTime = startTime.plusHours(1);
         List<VortexData> originalGrids = new ArrayList<>();
 
@@ -90,6 +95,7 @@ class NetcdfDataWriterTest {
                     .data(data)
                     .noDataValue(-9999)
                     .units("m")
+                    .fileName(outputPath)
                     .shortName("precipitation")
                     .description("lwe_thickness_of_precipitation_amount")
                     .startTime(startTime.plusHours(i))
@@ -100,9 +106,6 @@ class NetcdfDataWriterTest {
 
             originalGrids.add(grid);
         }
-
-        String outputPath = TestUtil.createTempFile("IntervalTimeCircleTest.nc");
-        Assertions.assertNotNull(outputPath);
 
         DataWriter writer = DataWriter.builder()
                 .data(originalGrids)

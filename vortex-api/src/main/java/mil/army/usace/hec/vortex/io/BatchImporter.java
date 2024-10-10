@@ -93,10 +93,15 @@ public abstract class BatchImporter {
         }
 
         public BatchImporter build() {
-            if (destination == null) throw new IllegalStateException("Invalid destination.");
+            if (destination == null) {
+                throw new IllegalStateException("Invalid destination.");
+            }
 
-            if (isConcurrentWritable()) return new ConcurrentBatchImporter(this);
-            else return new SerialBatchImporter(this);
+            if (isConcurrentWritable()) {
+                return new ConcurrentBatchImporter(this);
+            } else {
+                return new NetcdfBatchImporter(this);
+            }
         }
     }
 
