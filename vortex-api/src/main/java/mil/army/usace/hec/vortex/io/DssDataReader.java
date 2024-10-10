@@ -210,6 +210,10 @@ class DssDataReader extends DataReader {
 
     @Override
     public VortexData getDto(int idx) {
+        if (idx < 0 || idx >= catalogPathnameList.size()) {
+            return null;
+        }
+
         String dssPath = catalogPathnameList.get(idx).pathname();
         int[] status = new int[1];
         GridData gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
@@ -225,6 +229,12 @@ class DssDataReader extends DataReader {
                 .map(DSSPathname::toString)
                 .map(VortexDataInterval::of)
                 .toList();
+
+        if (!dssPathnameLogic.equals(parseLogic)) {
+            System.out.println("Different");
+        }
+
+        return parseLogic;
     }
 
     @Override
