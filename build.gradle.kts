@@ -191,10 +191,10 @@ tasks.getByName("zip").dependsOn(
     "copyJre", "copyRuntimeLibs", "copyNatives", "copyVortexUi", "copyLicense", "copyStartScripts"
 )
 
-tasks.getByName("final").dependsOn(":build")
-tasks.getByName("final").dependsOn("vortex-api:publish")
-tasks.getByName("final").dependsOn("vortex-ui:publish")
-tasks.getByName("candidate").dependsOn(":build")
+tasks.matching { it.name.contains("final") }.forEach { it.dependsOn(":build") }
+tasks.matching { it.name.contains("final") }.forEach { it.dependsOn("vortex-api:publish") }
+tasks.matching { it.name.contains("final") }.forEach { it.dependsOn("vortex-ui:publish") }
+tasks.matching { it.name.contains("candidate") }.forEach { it.dependsOn(":build") }
 
 tasks.getByName("jar").enabled = false
 
