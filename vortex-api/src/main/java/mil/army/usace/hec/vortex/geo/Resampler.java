@@ -249,8 +249,9 @@ public class Resampler {
 
     private double getTargetCellSize() {
         // If no cell size is specified but dx/dy and linear units are the same, preserve cell size
+        // If targetWkt is null, the projection of the input dataset is used guaranteeing common linear units
         if (cellSize == null && grid.dx() == grid.dy()
-                && ReferenceUtils.getLinearUnits(grid.wkt()).equals(ReferenceUtils.getLinearUnits(targetWkt)))
+                && (targetWkt == null || ReferenceUtils.getLinearUnits(grid.wkt()).equals(ReferenceUtils.getLinearUnits(targetWkt))))
             return grid.dx();
 
         if (cellSize == null)
