@@ -1,7 +1,6 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.math.ShiftTimeUnit;
-import mil.army.usace.hec.vortex.math.TimeShiftMethod;
 import mil.army.usace.hec.vortex.math.Shifter;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
@@ -26,10 +25,15 @@ public class ShifterWizard extends VortexWizard {
     private int cardNumber;
 
     private JTextField sourceFileTextField;
+
     private JCheckBox startTimeCheckBox;
+    private JTextField startTimeShiftTextField;
+    private ShiftTimeUnitComboBox startTimeShiftUnitComboBox;
+
     private JCheckBox endTimeCheckBox;
-    private JTextField intervalTextField;
-    private ShiftTimeUnitComboBox shiftTimeUnitComboBox;
+    private JTextField endTimeShiftTextField;
+    private ShiftTimeUnitComboBox endTimeShiftUnitComboBox;
+
     private JList<String> chosenSourceGridsList;
     private JProgressBar progressBar;
 
@@ -163,7 +167,7 @@ public class ShifterWizard extends VortexWizard {
         sourceFileSelectionPanel.clear();
 
         /* Clearing Step Two Panel */
-        intervalTextField.setText("");
+        startTimeShiftTextField.setText("");
 
         /* Clearing Step Three Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
@@ -255,29 +259,58 @@ public class ShifterWizard extends VortexWizard {
             return false;
         }
 
-        /* Check for at least one entry */
-        String intervalText = intervalTextField.getText();
-        if (intervalText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Shift value required.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
+        if (startTimeCheckBox.isSelected()) {
+            /* Check for at least one entry */
+            String intervalText = startTimeShiftTextField.getText();
+            if (intervalText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Shift value required.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            double interval;
+            try {
+                interval = Double.parseDouble(intervalText);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Could not parse start time interval.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            ShiftTimeUnit timeUnit = startTimeShiftUnitComboBox.getSelected();
+            if (!validateInterval(interval, timeUnit)) {
+                String message = "Specified start time shift cannot be converted to an even number of seconds.";
+                JOptionPane.showMessageDialog(this, message,
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         }
 
-        double interval;
-        try {
-            interval = Double.parseDouble(intervalText);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Could not parse interval.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+        if (endTimeCheckBox.isSelected()) {
+            /* Check for at least one entry */
+            String intervalText = endTimeShiftTextField.getText();
+            if (intervalText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Shift value required.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
 
-        ShiftTimeUnit timeUnit = shiftTimeUnitComboBox.getSelected();
-        if (!validateInterval(interval, timeUnit)) {
-            String message = "Specified interval is cannot be converted to an even number of seconds.";
-            JOptionPane.showMessageDialog(this, message,
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
+            double interval;
+            try {
+                interval = Double.parseDouble(intervalText);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Could not parse end time interval.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            ShiftTimeUnit timeUnit = endTimeShiftUnitComboBox.getSelected();
+            if (!validateInterval(interval, timeUnit)) {
+                String message = "Specified end time shift cannot be converted to an even number of seconds.";
+                JOptionPane.showMessageDialog(this, message,
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
         }
 
         return true;
@@ -286,45 +319,73 @@ public class ShifterWizard extends VortexWizard {
     private void submitStepTwo() {}
 
     private JPanel stepTwoIntervalPanel() {
-        JLabel shiftMethodLabel = new JLabel(TextProperties.getInstance().getProperty("Time-ShifterWiz_ShiftMethod_L"));
-        JPanel shiftMethodPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        shiftMethodPanel.add(shiftMethodLabel);
-
         startTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("ShifterWiz_ShiftStart_L"));
-        endTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("ShifterWiz_EndStart_L"));
+        startTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        startTimeCheckBox.setSelected(true);
+
         JPanel startTimeCheckBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         startTimeCheckBoxPanel.add(startTimeCheckBox);
 
-        startTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JPanel startTimeShiftPanel = startTimeShiftPanel();
+
+        startTimeCheckBox.addActionListener(e -> startTimeShiftPanel.setVisible(startTimeCheckBox.isSelected()));
+
+        endTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("ShifterWiz_EndStart_L"));
         endTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        endTimeCheckBox.setSelected(true);
+
         JPanel endTimeCheckBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         endTimeCheckBoxPanel.add(endTimeCheckBox);
 
-        startTimeCheckBox.setSelected(true);
-        endTimeCheckBox.setSelected(true);
+        JPanel endTimeShiftPanel = endTimeShiftPanel();
 
-        /* Interval Panel */
-        JLabel shiftLabel = new JLabel(TextProperties.getInstance().getProperty("ShifterWiz_TimeShift_L"));
-        intervalTextField = new JTextField(25);
-        shiftTimeUnitComboBox = new ShiftTimeUnitComboBox();
-        shiftTimeUnitComboBox.setEnabled(true);
-
-        JPanel setIntervalPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        setIntervalPanel.add(shiftLabel);
-        setIntervalPanel.add(Box.createRigidArea(new Dimension(2,0)));
-        setIntervalPanel.add(intervalTextField);
-        setIntervalPanel.add(Box.createRigidArea(new Dimension(2,0)));
-        setIntervalPanel.add(shiftTimeUnitComboBox);
+        endTimeCheckBox.addActionListener(e -> endTimeShiftPanel.setVisible(endTimeCheckBox.isSelected()));
 
         /* Adding everything together */
         JPanel intervalPanel = new JPanel();
         intervalPanel.setLayout(new BoxLayout(intervalPanel, BoxLayout.Y_AXIS));
-        intervalPanel.add(shiftMethodPanel);
         intervalPanel.add(startTimeCheckBoxPanel);
+        intervalPanel.add(startTimeShiftPanel);
         intervalPanel.add(endTimeCheckBoxPanel);
-        intervalPanel.add(setIntervalPanel);
+        intervalPanel.add(endTimeShiftPanel);
 
         return intervalPanel;
+    }
+
+    private JPanel startTimeShiftPanel() {
+        /* Interval Panel */
+        JLabel startTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("ShifterWiz_StartTimeShift_L"));
+        startTimeShiftTextField = new JTextField(25);
+        startTimeShiftUnitComboBox = new ShiftTimeUnitComboBox();
+        startTimeShiftUnitComboBox.setEnabled(true);
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.add(startTimeShiftLabel);
+        panel.add(Box.createRigidArea(new Dimension(2,0)));
+        panel.add(startTimeShiftTextField);
+        panel.add(Box.createRigidArea(new Dimension(2,0)));
+        panel.add(startTimeShiftUnitComboBox);
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+
+        return panel;
+    }
+
+    private JPanel endTimeShiftPanel() {
+        /* Interval Panel */
+        JLabel endTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("ShifterWiz_EndTimeShift_L"));
+        endTimeShiftTextField = new JTextField(25);
+        endTimeShiftUnitComboBox = new ShiftTimeUnitComboBox();
+        endTimeShiftUnitComboBox.setEnabled(true);
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.add(endTimeShiftLabel);
+        panel.add(Box.createRigidArea(new Dimension(2,0)));
+        panel.add(endTimeShiftTextField);
+        panel.add(Box.createRigidArea(new Dimension(2,0)));
+        panel.add(endTimeShiftUnitComboBox);
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+
+        return panel;
     }
 
     private JPanel stepThreePanel() {
@@ -366,20 +427,8 @@ public class ShifterWizard extends VortexWizard {
         if (chosenSourceGrids == null) return;
         Set<String> sourceGrids = new HashSet<>(chosenSourceGrids);
 
-        Set<TimeShiftMethod> methods = new HashSet<>();
-        if (startTimeCheckBox.isSelected()) methods.add(TimeShiftMethod.START);
-        if (endTimeCheckBox.isSelected()) methods.add(TimeShiftMethod.END);
-
-        String intervalText = intervalTextField.getText();
-        double value = Float.parseFloat(intervalText);
-
-        ShiftTimeUnit timeUnit = shiftTimeUnitComboBox.getSelected();
-        int toSeconds = timeUnit.toSeconds();
-
-        // Cast is validated on step 2 of the wizard
-        long seconds = (long) (value * toSeconds);
-        
-        Duration interval = Duration.ofSeconds(seconds);
+        Duration startTimeShift = getStartTimeShift();
+        Duration endTimeShift = getEndTimeShift();
 
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
@@ -420,8 +469,8 @@ public class ShifterWizard extends VortexWizard {
         Shifter shift = Shifter.builder()
                 .pathToFile(pathToSource)
                 .grids(sourceGrids)
-                .methods(methods)
-                .shift(interval)
+                .shiftStart(startTimeShift)
+                .shiftEnd(endTimeShift)
                 .destination(destinationSelectionPanel.getDestinationTextField().getText())
                 .writeOptions(writeOptions)
                 .build();
@@ -438,6 +487,48 @@ public class ShifterWizard extends VortexWizard {
         });
 
         shift.shift();
+    }
+
+    private Duration getStartTimeShift() {
+        if (!startTimeCheckBox.isSelected())
+            return Duration.ZERO;
+
+        String intervalText = startTimeShiftTextField.getText();
+
+        try {
+            double value = Float.parseFloat(intervalText);
+
+            ShiftTimeUnit timeUnit = startTimeShiftUnitComboBox.getSelected();
+            int toSeconds = timeUnit.toSeconds();
+
+            // Cast is validated on step 2 of the wizard
+            long seconds = (long) (value * toSeconds);
+
+            return Duration.ofSeconds(seconds);
+        } catch (Exception e) {
+            return Duration.ZERO;
+        }
+    }
+
+    private Duration getEndTimeShift() {
+        if (!endTimeCheckBox.isSelected())
+            return Duration.ZERO;
+
+        String intervalText = endTimeShiftTextField.getText();
+
+        try {
+            double value = Float.parseFloat(intervalText);
+
+            ShiftTimeUnit timeUnit = endTimeShiftUnitComboBox.getSelected();
+            int toSeconds = timeUnit.toSeconds();
+
+            // Cast is validated on step 2 of the wizard
+            long seconds = (long) (value * toSeconds);
+
+            return Duration.ofSeconds(seconds);
+        } catch (Exception e) {
+            return Duration.ZERO;
+        }
     }
 
     private JPanel stepFourPanel() {

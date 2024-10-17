@@ -23,8 +23,8 @@ public class Shifter {
 
     private final String pathToFile;
     private final Set<String> variables;
-    private final Set<TimeShiftMethod> methods;
-    private final Duration shift;
+    private final Duration shiftStart;
+    private final Duration shiftEnd;
     private final Path destination;
     private final Map<String, String> options;
     private final PropertyChangeSupport support;
@@ -32,8 +32,8 @@ public class Shifter {
     private Shifter(Builder builder) {
         this.pathToFile = builder.pathToFile;
         this.variables = builder.grids;
-        this.methods = builder.methods;
-        this.shift = builder.shift;
+        this.shiftStart = builder.shiftStart;
+        this.shiftEnd = builder.shiftEnd;
         this.destination = builder.destination;
         this.options = builder.options;
         this.support = new PropertyChangeSupport(this);
@@ -46,7 +46,9 @@ public class Shifter {
         private String pathToFile;
         private Set<String> grids;
         private final Set<TimeShiftMethod> methods = new HashSet<>(List.of(TimeShiftMethod.START, TimeShiftMethod.END));
-        private Duration shift;
+        private Duration shift = Duration.ZERO;
+        private Duration shiftStart = Duration.ZERO;
+        private Duration shiftEnd = Duration.ZERO;
         private Path destination;
         private Map<String, String> options = new HashMap<>();
         private final List<Handler> handlers = new ArrayList<>();
@@ -61,14 +63,37 @@ public class Shifter {
             return this;
         }
 
+        /**
+         * @param methods the time shift methods
+         * @return the builder
+         * @deprecated since 0.11.16, replaced by {@link #shiftStart} and {@link #shiftEnd}
+         */
+        @Deprecated
         public Builder methods(final Set<TimeShiftMethod> methods) {
             this.methods.clear();
             this.methods.addAll(methods);
             return this;
         }
 
+        /**
+         * @param shift the shift duration
+         * @return the builder
+         * @deprecated since 0.11.16, replaced by {@link #shiftStart} and {@link #shiftEnd}
+         */
+        @Deprecated
         public Builder shift(final Duration shift) {
+            logger.info(() -> "shift has been deprecated as of v0.11.16, use shiftStart and shiftEnd");
             this.shift = shift;
+            return this;
+        }
+
+        public Builder shiftStart(final Duration shiftStart) {
+            this.shiftStart = shiftStart;
+            return this;
+        }
+
+        public Builder shiftEnd(final Duration shiftEnd) {
+            this.shiftEnd = shiftEnd;
             return this;
         }
 
@@ -102,6 +127,22 @@ public class Shifter {
             if (methods.isEmpty())
                 throw new IllegalStateException("Methods must not be empty");
 
+            if (!shift.equals(Duration.ZERO) && !shiftStart.equals(Duration.ZERO)) {
+                logger.info(() -> "Specified shift of " + shift + " will override shiftStart of " + shiftStart);
+            }
+
+            if (!shift.equals(Duration.ZERO) && !shiftEnd.equals(Duration.ZERO)) {
+                logger.info(() -> "Specified shift of " + shift + " will override shiftEnd of " + shiftEnd);
+            }
+
+            if (!shift.equals(Duration.ZERO) && methods.contains(TimeShiftMethod.START)) {
+                shiftStart = shift;
+            }
+
+            if (!shift.equals(Duration.ZERO) && methods.contains(TimeShiftMethod.END)) {
+                shiftEnd = shift;
+            }
+
             return new Shifter(this);
         }
     }
@@ -118,26 +159,29 @@ public class Shifter {
         int total = variables.size();
 
         variables.forEach(variable -> {
-            DataReader reader = DataReader.builder()
+            try (DataReader reader = DataReader.builder()
                     .path(pathToFile)
                     .variable(variable)
-                    .build();
+                    .build()) {
 
-            int count = reader.getDtoCount();
+                int count = reader.getDtoCount();
 
-            for (int i = 0; i < count; i++) {
-                VortexGrid grid = (VortexGrid) reader.getDto(i);
+                for (int i = 0; i < count; i++) {
+                    VortexGrid grid = (VortexGrid) reader.getDto(i);
 
-                List<VortexData> shiftedGrids = new ArrayList<>();
-                shiftedGrids.add(shift(grid, methods, shift));
+                    List<VortexData> shiftedGrids = new ArrayList<>();
+                    shiftedGrids.add(shift(grid, shiftStart, shiftEnd));
 
-                DataWriter writer = DataWriter.builder()
-                        .data(shiftedGrids)
-                        .destination(destination)
-                        .options(options)
-                        .build();
+                    DataWriter writer = DataWriter.builder()
+                            .data(shiftedGrids)
+                            .destination(destination)
+                            .options(options)
+                            .build();
 
-                writer.write();
+                    writer.write();
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, e, e::getMessage);
             }
 
             int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
@@ -145,15 +189,11 @@ public class Shifter {
         });
     }
 
-    public static VortexGrid shift(VortexGrid dto, Set<TimeShiftMethod> methods, Duration shift) {
+    static VortexGrid shift(VortexGrid dto, Duration shiftStart, Duration shiftEnd) {
         ZonedDateTime shiftedStart;
         if (dto.startTime() != null) {
             ZonedDateTime start = dto.startTime();
-            if (methods.contains(TimeShiftMethod.START)) {
-                shiftedStart = start.plus(shift);
-            } else {
-                shiftedStart = start;
-            }
+            shiftedStart = start.plus(shiftStart);
         } else {
             shiftedStart = null;
         }
@@ -161,11 +201,7 @@ public class Shifter {
         ZonedDateTime shiftedEnd;
         if (dto.endTime() != null) {
             ZonedDateTime end = dto.endTime();
-            if (methods.contains(TimeShiftMethod.END)) {
-                shiftedEnd = end.plus(shift);
-            } else {
-                shiftedEnd = end;
-            }
+            shiftedEnd = end.plus(shiftEnd);
         } else {
             shiftedEnd = null;
         }
