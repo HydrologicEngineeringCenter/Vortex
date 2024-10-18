@@ -12,10 +12,8 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
-import java.util.logging.Logger;
 
 class TimeConverter {
-    private static final Logger logger = Logger.getLogger(TimeConverter.class.getName());
     private static final ZoneId UTC = ZoneId.of("UTC");
 
     private static final DateTimeFormatter ymdFormatter = new DateTimeFormatterBuilder()
@@ -52,6 +50,10 @@ class TimeConverter {
     }
 
     static ZonedDateTime toZonedDateTime(String dateTimeString) {
+        if (dateTimeString == null || dateTimeString.isEmpty()) {
+            return null;
+        }
+
         TemporalAccessor parsedDate = parseDate(dateTimeString);
 
         if (parsedDate instanceof ZonedDateTime zonedDateTime) {
@@ -61,8 +63,6 @@ class TimeConverter {
         } else if (parsedDate instanceof LocalDate localDate) {
             return localDate.atStartOfDay(UTC);
         } else {
-            String message = String.format("Unable to parse: %s", dateTimeString);
-            logger.warning(message);
             return null;
         }
     }
