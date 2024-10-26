@@ -222,14 +222,14 @@ public class ZonalStatisticsCalculator {
 
         double sum = validValues.stream().mapToDouble(f -> f).sum();
         int count = validValues.size();
-        double average = Double.NaN;
-        double min = Double.NaN;
-        double max = Double.NaN;
-        double median = Double.NaN;
-        double firstQuartile = Double.NaN;
-        double thirdQuartile = Double.NaN;
-        float pctCellsGreaterThanZero = Float.NaN;
-        float pctCellsGreaterThanFirstQuartile = Float.NaN;
+        double average = noDataValue;
+        double min = noDataValue;
+        double max = noDataValue;
+        double median = noDataValue;
+        double firstQuartile = noDataValue;
+        double thirdQuartile = noDataValue;
+        double pctCellsGreaterThanZero = noDataValue;
+        double pctCellsGreaterThanFirstQuartile = noDataValue;
         int numCellsGreaterThanZero = 0;
         int numCellsGreaterThanFirstQuartile = 0;
 
@@ -245,7 +245,7 @@ public class ZonalStatisticsCalculator {
                 }
             }
 
-            pctCellsGreaterThanZero = (float) (100 * numCellsGreaterThanZero) / count;
+            pctCellsGreaterThanZero = (double) (100 * numCellsGreaterThanZero) / count;
 
         }
 
@@ -265,7 +265,7 @@ public class ZonalStatisticsCalculator {
                     numCellsGreaterThanFirstQuartile++;
                 }
             }
-            pctCellsGreaterThanFirstQuartile = (float) (100 * numCellsGreaterThanFirstQuartile) / count;
+            pctCellsGreaterThanFirstQuartile = (double) (100 * numCellsGreaterThanFirstQuartile) / count;
 
         }
 
