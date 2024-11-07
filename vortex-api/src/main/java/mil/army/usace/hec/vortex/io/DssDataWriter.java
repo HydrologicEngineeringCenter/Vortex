@@ -8,7 +8,6 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GriddedData;
 import hec.heclib.util.HecTime;
 import hec.heclib.util.HecTimeArray;
-import hec.heclib.util.Heclib;
 import hec.hecmath.HecMath;
 import hec.io.DataContainer;
 import hec.io.TimeSeriesContainer;
@@ -29,8 +28,8 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
+import static hec.heclib.util.Heclib.UNDEFINED_FLOAT;
 import static javax.measure.MetricPrefix.MILLI;
 import static mil.army.usace.hec.vortex.VortexVariable.*;
 import static systems.uom.common.USCustomary.FAHRENHEIT;
@@ -69,8 +68,9 @@ class DssDataWriter extends DataWriter {
 
             double noDataValue = grid.noDataValue();
             for (int i = 0; i < data.length; i++) {
-                if (Double.compare(data[i], noDataValue) == 0 || Double.isNaN(data[i])) {
-                    data[i] = Heclib.UNDEFINED_FLOAT;
+                float value = data[i];
+                if (Double.compare(value, noDataValue) == 0 || Double.isNaN(value) || Double.isInfinite(value)) {
+                    data[i] = UNDEFINED_FLOAT;
                 }
             }
 
@@ -115,12 +115,7 @@ class DssDataWriter extends DataWriter {
                     conversion = 1;
                 }
 
-                for (int i = 0; i < data.length; i++) {
-                    if (data[i] == Heclib.UNDEFINED_FLOAT)
-                        continue;
-
-                    data[i] *= conversion;
-                }
+                float[] convertedData = RasterUtils.convert(data, conversion, UNDEFINED_FLOAT);
 
                 gridInfo.setDataUnits("MM");
                 gridInfo.setDataType(DssDataType.PER_CUM.value());
@@ -133,25 +128,26 @@ class DssDataWriter extends DataWriter {
                     }
                 }
 
-                write(data, gridInfo, dssPathname);
+                write(convertedData, gridInfo, dssPathname);
 
             } else if (cPart.equals("PRECIPITATION") && units.equals(METRE)) {
-                float[] convertedData = new float[data.length];
-                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * 1000);
-
+                float[] convertedData = RasterUtils.convert(data, 1000, UNDEFINED_FLOAT);
                 gridInfo.setDataUnits("MM");
 
                 write(convertedData, gridInfo, dssPathname);
             } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN) || units.equals(CELSIUS)) {
                 float[] convertedData = new float[data.length];
                 if (units.equals(FAHRENHEIT)) {
-                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i]);
+                    System.arraycopy(data, 0, convertedData, 0, data.length);
                     gridInfo.setDataUnits("DEG F");
                 } else if (units.equals(KELVIN)) {
-                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = (float) (data[i] - 273.15));
+                    for (int i = 0; i < data.length; i++) {
+                        float value = data[i];
+                        convertedData[i] = Float.compare(UNDEFINED_FLOAT, value) == 0 ? UNDEFINED_FLOAT : (float) (data[i] - 273.15);
+                    }
                     gridInfo.setDataUnits("DEG C");
                 } else if (units.equals(CELSIUS)) {
-                    IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i]);
+                    System.arraycopy(data, 0, convertedData, 0, data.length);
                     gridInfo.setDataUnits("DEG C");
                 }
 
@@ -165,23 +161,17 @@ class DssDataWriter extends DataWriter {
 
                 write(convertedData, gridInfo, dssPathname);
             } else if (cPart.equals("HUMIDITY") && units.equals(ONE)) {
-                float[] convertedData = new float[data.length];
-                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] * 100);
-
+                float[] convertedData = RasterUtils.convert(data, 100, UNDEFINED_FLOAT);
                 gridInfo.setDataUnits("%");
 
                 write(convertedData, gridInfo, dssPathname);
             } else if (units.equals(ONE.divide(INCH.multiply(1000)))) {
-                float[] convertedData = new float[data.length];
-                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] / 1000);
-
+                float[] convertedData = RasterUtils.convert(data, 1E-3f, UNDEFINED_FLOAT);
                 gridInfo.setDataUnits("IN");
 
                 write(convertedData, gridInfo, dssPathname);
             } else if (units.equals(PASCAL)) {
-                float[] convertedData = new float[data.length];
-                IntStream.range(0, data.length).forEach(i -> convertedData[i] = data[i] / 1000);
-
+                float[] convertedData = RasterUtils.convert(data, 1E-3f, UNDEFINED_FLOAT);
                 gridInfo.setDataUnits("KPA");
 
                 write(convertedData, gridInfo, dssPathname);

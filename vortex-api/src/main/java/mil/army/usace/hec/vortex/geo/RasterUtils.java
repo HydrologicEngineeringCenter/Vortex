@@ -11,6 +11,8 @@ import org.gdal.osr.SpatialReference;
 
 import java.nio.file.Path;
 
+import static hec.heclib.util.Heclib.UNDEFINED_FLOAT;
+
 public class RasterUtils {
     static {
         GdalRegister.getInstance();
@@ -86,5 +88,14 @@ public class RasterUtils {
         }
 
         return flipped;
+    }
+
+    public static float[] convert(float[] data, float conversionFactor, float noDataValue) {
+        float[] convertedData = new float[data.length];
+        for (int i = 0; i < data.length; i++) {
+            float value = data[i];
+            convertedData[i] = Float.compare(noDataValue, value) == 0 ? noDataValue : value * conversionFactor;
+        }
+        return convertedData;
     }
 }
