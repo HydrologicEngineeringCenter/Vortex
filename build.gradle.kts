@@ -178,15 +178,15 @@ tasks.register("zip") {
 
 tasks.getByName("copyJre").dependsOn("refreshNatives")
 
-tasks.getByName("build") { finalizedBy("copyJre") }
-tasks.getByName("build") { finalizedBy("copyRuntimeLibs") }
-tasks.getByName("build") { finalizedBy("copyNatives") }
-tasks.getByName("build") { finalizedBy("copyVortexUi") }
-tasks.getByName("build") { finalizedBy("copyLicense") }
-tasks.getByName("build") { finalizedBy("copyStartScripts") }
+tasks.getByName("build").dependsOn("copyJre")
+tasks.getByName("build").dependsOn("copyRuntimeLibs")
+tasks.getByName("build").dependsOn("copyNatives")
+tasks.getByName("build").dependsOn("copyVortexUi")
+tasks.getByName("build").dependsOn("copyLicense")
+tasks.getByName("build").dependsOn("copyStartScripts")
 tasks.getByName("build").dependsOn("vortex-api:fatJar")
-tasks.getByName("build") { finalizedBy("copyFatJar") }
-tasks.getByName("build") { finalizedBy("zip") }
+tasks.getByName("build").dependsOn("copyFatJar")
+tasks.getByName("build").finalizedBy("zip")
 tasks.getByName("zip").dependsOn(
     "copyJre", "copyRuntimeLibs", "copyNatives", "copyVortexUi", "copyLicense", "copyStartScripts"
 )
