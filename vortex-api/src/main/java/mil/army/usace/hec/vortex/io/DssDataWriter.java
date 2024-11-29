@@ -14,14 +14,12 @@ import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexPoint;
 import mil.army.usace.hec.vortex.VortexVariable;
+import mil.army.usace.hec.vortex.convert.DataConverter;
 import mil.army.usace.hec.vortex.geo.RasterUtils;
 import mil.army.usace.hec.vortex.geo.ZonalStatistics;
 import mil.army.usace.hec.vortex.util.DssUtil;
-import mil.army.usace.hec.vortex.util.UnitUtil;
 
-import javax.measure.Unit;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -30,12 +28,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static hec.heclib.util.Heclib.UNDEFINED_FLOAT;
-import static javax.measure.MetricPrefix.MILLI;
 import static mil.army.usace.hec.vortex.VortexVariable.*;
-import static systems.uom.common.USCustomary.FAHRENHEIT;
-import static systems.uom.common.USCustomary.INCH;
-import static tech.units.indriya.AbstractUnit.ONE;
-import static tech.units.indriya.unit.Units.*;
 
 class DssDataWriter extends DataWriter {
 
@@ -46,14 +39,13 @@ class DssDataWriter extends DataWriter {
     }
 
     private static final int SECONDS_PER_MINUTE = 60;
-    private static final int SECONDS_PER_HOUR = 3600;
-    private static final int SECONDS_PER_DAY = 86400;
 
     @Override
     public void write() {
         List<VortexGrid> grids = data.stream()
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
+                .map(DataConverter::convert)
                 .toList();
 
         for (VortexGrid grid : grids) {
@@ -74,8 +66,6 @@ class DssDataWriter extends DataWriter {
                 }
             }
 
-            Unit<?> units = UnitUtil.getUnits(grid.units());
-
             DSSPathname dssPathname = new DSSPathname();
 
             String cPart = getCPart(grid);
@@ -95,97 +85,16 @@ class DssDataWriter extends DataWriter {
                     options.put("dataType", "INST-VAL");
             }
 
-            if (cPart.equals("PRECIPITATION") && !grid.interval().isZero()
-                    && (units.equals(MILLI(METRE).divide(SECOND))
-                    || units.equals(MILLI(METRE).divide(HOUR))
-                    || units.equals(MILLI(METRE).divide(DAY)))) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm", Locale.ENGLISH);
-                LocalDateTime startTime = LocalDateTime.parse(gridInfo.getStartTime(), formatter);
-                LocalDateTime endTime = LocalDateTime.parse(gridInfo.getEndTime(), formatter);
-                Duration interval = Duration.between(startTime, endTime);
-
-                float conversion;
-                if (units.equals(MILLI(METRE).divide(SECOND))) {
-                    conversion = interval.getSeconds();
-                } else if (units.equals(MILLI(METRE).divide(HOUR))) {
-                    conversion = (float) interval.getSeconds() / SECONDS_PER_HOUR;
-                } else if (units.equals(MILLI(METRE).divide(DAY))) {
-                    conversion = (float) interval.getSeconds() / SECONDS_PER_DAY;
-                } else {
-                    conversion = 1;
+            if (options.containsKey("partF") && options.get("partF").equals("*")) {
+                DSSPathname pathnameIn = new DSSPathname();
+                int status = pathnameIn.setPathname(grid.fullName());
+                if (status == 0) {
+                    dssPathname.setFPart(pathnameIn.getFPart());
                 }
-
-                float[] convertedData = RasterUtils.convert(data, conversion, UNDEFINED_FLOAT);
-
-                gridInfo.setDataUnits("MM");
-                gridInfo.setDataType(DssDataType.PER_CUM.value());
-
-                if (options.containsKey("partF") && options.get("partF").equals("*")) {
-                    DSSPathname pathnameIn = new DSSPathname();
-                    int status = pathnameIn.setPathname(grid.fullName());
-                    if (status == 0) {
-                        dssPathname.setFPart(pathnameIn.getFPart());
-                    }
-                }
-
-                write(convertedData, gridInfo, dssPathname);
-
-            } else if (cPart.equals("PRECIPITATION") && units.equals(METRE)) {
-                float[] convertedData = RasterUtils.convert(data, 1000, UNDEFINED_FLOAT);
-                gridInfo.setDataUnits("MM");
-
-                write(convertedData, gridInfo, dssPathname);
-            } else if (units.equals(FAHRENHEIT) || units.equals(KELVIN) || units.equals(CELSIUS)) {
-                float[] convertedData = new float[data.length];
-                if (units.equals(FAHRENHEIT)) {
-                    System.arraycopy(data, 0, convertedData, 0, data.length);
-                    gridInfo.setDataUnits("DEG F");
-                } else if (units.equals(KELVIN)) {
-                    for (int i = 0; i < data.length; i++) {
-                        float value = data[i];
-                        convertedData[i] = Float.compare(UNDEFINED_FLOAT, value) == 0 ? UNDEFINED_FLOAT : (float) (data[i] - 273.15);
-                    }
-                    gridInfo.setDataUnits("DEG C");
-                } else if (units.equals(CELSIUS)) {
-                    System.arraycopy(data, 0, convertedData, 0, data.length);
-                    gridInfo.setDataUnits("DEG C");
-                }
-
-                if (options.containsKey("partF") && options.get("partF").equals("*")) {
-                    DSSPathname pathnameIn = new DSSPathname();
-                    int status = pathnameIn.setPathname(grid.fullName());
-                    if (status == 0) {
-                        dssPathname.setFPart(pathnameIn.getFPart());
-                    }
-                }
-
-                write(convertedData, gridInfo, dssPathname);
-            } else if (cPart.equals("HUMIDITY") && units.equals(ONE)) {
-                float[] convertedData = RasterUtils.convert(data, 100, UNDEFINED_FLOAT);
-                gridInfo.setDataUnits("%");
-
-                write(convertedData, gridInfo, dssPathname);
-            } else if (units.equals(ONE.divide(INCH.multiply(1000)))) {
-                float[] convertedData = RasterUtils.convert(data, 1E-3f, UNDEFINED_FLOAT);
-                gridInfo.setDataUnits("IN");
-
-                write(convertedData, gridInfo, dssPathname);
-            } else if (units.equals(PASCAL)) {
-                float[] convertedData = RasterUtils.convert(data, 1E-3f, UNDEFINED_FLOAT);
-                gridInfo.setDataUnits("KPA");
-
-                write(convertedData, gridInfo, dssPathname);
-            } else {
-                if (options.containsKey("partF") && options.get("partF").equals("*")) {
-                    DSSPathname pathnameIn = new DSSPathname();
-                    int status = pathnameIn.setPathname(grid.fullName());
-                    if (status == 0) {
-                        dssPathname.setFPart(pathnameIn.getFPart());
-                    }
-                }
-
-                write(data, gridInfo, dssPathname);
             }
+
+            write(data, gridInfo, dssPathname);
+
         }
 
         List<VortexPoint> points = data.stream()

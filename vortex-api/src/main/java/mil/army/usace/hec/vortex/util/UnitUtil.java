@@ -32,6 +32,7 @@ public class UnitUtil {
             case "m s-1" -> METRE.divide(SECOND);
             case "%" -> PERCENT;
             case "hpa" -> HECTO(PASCAL);
+            case "kpa" -> KILO(PASCAL);
             case "pa" -> PASCAL;
             case "m", "meter", "metre" -> METRE;
             case "min" -> MINUTE;

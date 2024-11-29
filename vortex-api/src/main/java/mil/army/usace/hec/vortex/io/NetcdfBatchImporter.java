@@ -4,6 +4,7 @@ import hec.heclib.dss.DSSPathname;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.convert.DataConverter;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
@@ -55,6 +56,7 @@ class NetcdfBatchImporter extends BatchImporter {
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .map(geoProcessor::process)
+                .map(DataConverter::convert)
                 .forEach(grid -> bufferedDataWriter.addAndProcessWhenFull(grid, bufferProcessFunction, false));
         bufferedDataWriter.processBufferAndClear(bufferProcessFunction, true);
 
@@ -99,6 +101,7 @@ class NetcdfBatchImporter extends BatchImporter {
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .map(geoProcessor::process)
+                .map(DataConverter::convert)
                 .toList();
         VortexGridCollection vortexGridCollection = VortexGridCollection.of(processedFirstGrids);
         List<VortexGrid> uniqueGrids = List.copyOf(vortexGridCollection.getRepresentativeGridNameMap().values());

@@ -4,6 +4,7 @@ import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.convert.DataConverter;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 
 import java.beans.PropertyChangeListener;
@@ -101,9 +102,10 @@ public class ImportableUnit {
         for (int i = 0; i < count; i++) {
             VortexGrid grid = (VortexGrid) reader.getDto(i);
             VortexGrid processed = geoProcessor.process(grid);
+            VortexGrid converted = DataConverter.convert(processed);
 
             List<VortexData> data = new ArrayList<>();
-            data.add(processed);
+            data.add(converted);
 
             DataWriter writer = DataWriter.builder()
                     .data(data)
