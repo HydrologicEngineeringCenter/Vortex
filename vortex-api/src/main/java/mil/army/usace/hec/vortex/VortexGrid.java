@@ -315,7 +315,7 @@ public class VortexGrid implements VortexData, Serializable {
     }
 
     public VortexDataType dataType() {
-        return dataType != null ? dataType : inferDataType();
+        return dataType != null && dataType != VortexDataType.UNDEFINED ? dataType : inferDataType();
     }
 
     public float[][][] data3D() {
