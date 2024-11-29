@@ -54,7 +54,7 @@ fun uiJvmArgs(): List<String> {
 fun uiEnvironment(): Map<String,String> {
     if (isWindows()) {
         return mapOf(
-            "PATH" to "${rootProject.projectDir}/bin/gdal",
+            "PATH" to "${rootProject.projectDir}/bin/gdal;${rootProject.projectDir}/bin/netcdf",
             "GDAL_DRIVER_PATH" to "${rootProject.projectDir}/bin/gdal/gdalplugins",
             "GDAL_DATA" to "${rootProject.projectDir}/bin/gdal/gdal-data",
             "PROJ_LIB" to "${rootProject.projectDir}/bin/gdal/projlib"

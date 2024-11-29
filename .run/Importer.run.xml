@@ -21,8 +21,8 @@
   </configuration>
   <configuration default="false" name="Importer" type="Application" factoryName="Application">
     <envs>
-      <env name="PATH" value="$PROJECT_DIR$/../vortex\bin\gdal;$PROJECT_DIR$/vortex/bin/netcdf" />
       <env name="GDAL_DATA" value="$PROJECT_DIR$/../vortex\bin\gdal\gdal-data" />
+      <env name="PATH" value="$PROJECT_DIR$/../vortex\bin\gdal;$PROJECT_DIR$/bin/netcdf" />
       <env name="PROJ_LIB" value="$PROJECT_DIR$/../vortex\bin\gdal\projlib" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="mil.army.usace.hec.vortex.ui.VortexUi" />
