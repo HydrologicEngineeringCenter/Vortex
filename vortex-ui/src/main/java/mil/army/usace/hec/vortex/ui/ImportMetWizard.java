@@ -674,10 +674,7 @@ public class ImportMetWizard extends VortexWizard {
 
         dataSourceTextField = new JTextField();
         dataSourceTextField.setFont(addFilesList.getFont());
-        dataSourceTextField.setColumns(0);
-        dataSourceTextField.setBorder(null);
-        JScrollPane layerPanel = new JScrollPane(dataSourceTextField);
-        dataSourceTextFieldPanel.add(layerPanel);
+        dataSourceTextFieldPanel.add(dataSourceTextField);
 
         dataSourceTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
 
