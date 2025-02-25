@@ -107,7 +107,7 @@ public class DssUtil {
 
         gridInfo.setCellInfo(minX, minY, grid.nx(), grid.ny(), cellSize);
 
-        Unit<?> units = UnitUtil.getUnits(grid.units());
+        Unit<?> units = UnitUtil.parse(grid.units());
         String unitsString = getUnitsString(units);
         gridInfo.setDataUnits(unitsString);
 
