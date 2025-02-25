@@ -303,7 +303,7 @@ class GridDatasetReader extends NetcdfDataReader {
                 .build());
 
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();
-        Unit<?> cellUnits = UnitUtil.getUnits(xAxisUnits.toLowerCase());
+        Unit<?> cellUnits = UnitUtil.parse(xAxisUnits.toLowerCase());
         Unit<?> csUnits = ReferenceUtils.getLinearUnits(wkt);
 
         // This will scale the grid if cellUnits and csUnits do not align
