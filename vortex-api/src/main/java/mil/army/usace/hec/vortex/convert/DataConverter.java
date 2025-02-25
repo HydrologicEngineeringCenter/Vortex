@@ -40,7 +40,7 @@ public class DataConverter {
 
     public static VortexGrid convert(VortexGrid vortexGrid) {
         VortexVariable variable = VortexVariable.fromGrid(vortexGrid);
-        Unit<?> units = UnitUtil.getUnits(vortexGrid.units());
+        Unit<?> units = UnitUtil.parse(vortexGrid.units());
 
         if (units == null)
             return vortexGrid;

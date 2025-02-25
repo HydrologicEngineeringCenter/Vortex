@@ -290,7 +290,7 @@ class VariableDsReader extends NetcdfDataReader {
                 .build();
 
         String xAxisUnits = Objects.requireNonNull(xAxis).getUnitsString();
-        Unit<?> cellUnits = UnitUtil.getUnits(xAxisUnits.toLowerCase());
+        Unit<?> cellUnits = UnitUtil.parse(xAxisUnits.toLowerCase());
         Unit<?> csUnits = ReferenceUtils.getLinearUnits(wkt);
 
         if (cellUnits.isCompatible(csUnits) && !cellUnits.equals(csUnits)) {
