@@ -650,7 +650,7 @@ public class ImportMetWizard extends VortexWizard {
 
     private JPanel stepSixPanel() {
         JPanel stepSixPanel = new JPanel(new GridBagLayout());
-        importStatusMessageLabel = new JLabel();
+        importStatusMessageLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizComplete_L"));
         stepSixPanel.add(importStatusMessageLabel);
         return stepSixPanel;
     }
