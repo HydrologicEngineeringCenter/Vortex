@@ -65,6 +65,11 @@ class SnodasDataReader extends DataReader {
                 .toList();
     }
 
+    @Override
+    public Validation isValid() {
+        return Validation.of(true);
+    }
+
     private static Map<String,String> parseFile(String fileName) {
         Map<String,String> info = new HashMap<>();
 

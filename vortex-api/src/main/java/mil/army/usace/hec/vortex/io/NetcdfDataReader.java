@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.geo.Grid;
@@ -17,12 +18,15 @@ import javax.measure.IncommensurableException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 abstract class NetcdfDataReader extends DataReader {
     private static final Logger logger = Logger.getLogger(NetcdfDataReader.class.getName());
+
+    private static final String TIME_BOUNDS = "time_bnds";
 
     /* Factory Method */
     public static NetcdfDataReader createInstance(String pathToFile, String pathToData) {
@@ -154,5 +158,24 @@ abstract class NetcdfDataReader extends DataReader {
     static VortexDataType getVortexDataType(VariableDS variableDS) {
         String cellMethods = variableDS.findAttributeString(CF.CELL_METHODS, "");
         return VortexDataType.fromString(cellMethods);
+    }
+
+    @Override
+    public Validation isValid() {
+        try (NetcdfDataset dataset = NetcdfDatasets.openDataset(path)) {
+            Variable variable = dataset.findVariable(TIME_BOUNDS);
+            if (variable == null) {
+                String template = MessageStore.getInstance().getMessage("warn_nc_time_bnds");
+                String filename = Path.of(path).getFileName().toString();
+                Object[] args = new Object[]{filename};
+                String message = String.format(template, args);
+                return Validation.of(true, message);
+            }
+        } catch (IOException e) {
+            String template = MessageStore.getInstance().getMessage("error_invalid_file");
+            String message = String.format(template, path);
+            return Validation.of(false, message);
+        }
+        return Validation.of(true);
     }
 }

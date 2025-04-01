@@ -91,6 +91,11 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
                 .toList();
     }
 
+    @Override
+    public Validation isValid() {
+        return Validation.of(true);
+    }
+
     private void updateTar(String pathToFile) throws IOException {
         // Get DirectoryPath, TarFilePath, and TarFileName
         String directoryPath = Paths.get(pathToFile).getParent().toString();

@@ -427,4 +427,12 @@ class GridDatasetReader extends NetcdfDataReader {
                 .map(t -> VortexDataInterval.of(t, t))
                 .toList();
     }
+
+    @Override
+    public Validation isValid() {
+        if (isSpecialTimeBounds())
+            return Validation.of(true);
+
+        return super.isValid();
+    }
 }

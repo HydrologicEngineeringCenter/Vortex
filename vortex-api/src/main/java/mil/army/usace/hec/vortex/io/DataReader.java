@@ -109,6 +109,8 @@ public abstract class DataReader implements AutoCloseable {
         return !fileName.matches(".*\\.(asc|tif|tiff|bil|bil.zip|asc.zip)$");
     }
 
+    public abstract Validation isValid();
+
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         support.addPropertyChangeListener(pcl);
     }

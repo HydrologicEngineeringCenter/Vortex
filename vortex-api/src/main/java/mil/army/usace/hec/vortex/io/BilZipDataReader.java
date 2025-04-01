@@ -85,6 +85,11 @@ class BilZipDataReader extends DataReader implements VirtualFileSystem {
     }
 
     @Override
+    public Validation isValid() {
+        return Validation.of(true);
+    }
+
+    @Override
     public void close() throws Exception {
         // No op
     }

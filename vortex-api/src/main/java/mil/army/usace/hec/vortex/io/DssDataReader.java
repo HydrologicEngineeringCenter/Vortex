@@ -232,6 +232,11 @@ class DssDataReader extends DataReader {
     }
 
     @Override
+    public Validation isValid() {
+        return Validation.of(true);
+    }
+
+    @Override
     public void close() throws Exception {
         // No op - done() is called on accessors after an opening call is made
     }

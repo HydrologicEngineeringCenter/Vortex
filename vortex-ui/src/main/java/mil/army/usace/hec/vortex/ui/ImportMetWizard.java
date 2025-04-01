@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.io.Validation;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
@@ -26,8 +27,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class ImportMetWizard extends VortexWizard {
+    private static final Logger logger = Logger.getLogger(ImportMetWizard.class.getName());
+
     private final Frame frame;
-    DestinationSelectionPanel destinationSelectionPanel;
+    private DestinationSelectionPanel destinationSelectionPanel;
 
     private Container contentCards;
     private CardLayout cardLayout;
@@ -43,8 +46,6 @@ public class ImportMetWizard extends VortexWizard {
     private JTextArea targetWktTextArea;
     private ResamplingMethodSelectionPanel resamplingPanel;
     private JLabel importStatusMessageLabel;
-
-    private static final Logger logger = Logger.getLogger(ImportMetWizard.class.getName());
 
     public ImportMetWizard (Frame frame) {
         super();
@@ -283,10 +284,49 @@ public class ImportMetWizard extends VortexWizard {
             } // If: DSS file does not exist, make a new one
         } // If: Path does end with .dss
 
-        return true;
+        return validateSelections();
     }
 
     private boolean validateStepFive() { return true; }
+
+    private boolean validateSelections() {
+        DefaultListModel<String> defaultAddFilesModel = getDefaultListModel(addFilesList);
+        List<String> files = Collections.list(Optional.ofNullable(defaultAddFilesModel).orElse(new DefaultListModel<>()).elements());
+
+        /* Getting selected variables */
+        DefaultListModel<String> defaultSelectedVariablesModel = getDefaultListModel(rightVariablesList);
+        List<String> variables = Collections.list(Optional.ofNullable(defaultSelectedVariablesModel).orElse(new DefaultListModel<>()).elements());
+
+        boolean isValid = true;
+        Set<String> messages = new LinkedHashSet<>();
+        for (String file : files) {
+            for (String variable : variables) {
+                try (DataReader reader = DataReader.builder().path(file.trim()).variable(variable).build()) {
+                    Validation validation = reader.isValid();
+                    if (!validation.isValid()) isValid = false;
+                    messages.addAll(validation.getMessages());
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, e, e::getMessage);
+                    return false;
+                }
+            }
+        }
+
+        String message = String.join(System.lineSeparator(), messages);
+        if (!isValid) {
+            String title = TextProperties.getInstance().getProperty("Error_Title");
+            JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (!messages.isEmpty()) {
+            String title = TextProperties.getInstance().getProperty("Warning_Title");
+            return JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this, message, title,
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        }
+
+        return true;
+    }
 
     private void submitStepOne() {
         /* Wait Cursor */

@@ -312,6 +312,11 @@ class AscDataReader extends DataReader {
     }
 
     @Override
+    public Validation isValid() {
+        return Validation.of(true);
+    }
+
+    @Override
     public void close() throws Exception {
         // No op
     }
