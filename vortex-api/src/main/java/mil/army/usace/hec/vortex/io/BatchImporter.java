@@ -153,12 +153,13 @@ public abstract class BatchImporter {
 
     PropertyChangeListener propertyChangeListener() {
         return evt -> {
+            VortexProperty property = VortexProperty.parse(evt.getPropertyName());
             // Propagating Write Progress to UI
-            if (VortexProperty.STATUS.equals(evt.getPropertyName())
+            if (VortexProperty.STATUS == property
                     && ImportableUnit.IMPORT_COMPLETE.equals(evt.getNewValue())) {
-                support.firePropertyChange(VortexProperty.STATUS, null, "Importing");
+                support.firePropertyChange(VortexProperty.STATUS.toString(), null, "Importing");
                 int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
-                support.firePropertyChange(VortexProperty.PROGRESS, null, newValue);
+                support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, newValue);
             } else {
                 support.firePropertyChange(evt);
             }

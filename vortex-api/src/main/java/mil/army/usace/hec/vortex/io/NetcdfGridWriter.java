@@ -95,7 +95,7 @@ class NetcdfGridWriter {
             String overwriteErrorMessage = "Failed to overwrite file.";
             String appendErrorMessage = "Some reasons may be:\n* Attempted to append to non-existing variable\n* Attempted to append data with different projection\n* Attempted to append data with different location";
 //            String message = isAppend ? appendErrorMessage : overwriteErrorMessage;
-            support.firePropertyChange(VortexProperty.ERROR, null, appendErrorMessage);
+            support.firePropertyChange(VortexProperty.ERROR.toString(), null, appendErrorMessage);
         }
     }
 

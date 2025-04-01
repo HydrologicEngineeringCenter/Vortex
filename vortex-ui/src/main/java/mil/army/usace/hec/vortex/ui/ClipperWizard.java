@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.ui;
 
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.geo.BatchSubsetter;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
@@ -357,7 +358,8 @@ public class ClipperWizard extends VortexWizard {
                 .build();
 
         batchSubsetter.addPropertyChangeListener(evt -> {
-            if (evt.getPropertyName().equalsIgnoreCase("progress")) {
+            VortexProperty property = VortexProperty.parse(evt.getPropertyName());
+            if (VortexProperty.PROGRESS == property) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
                 progressBar.setIndeterminate(false);

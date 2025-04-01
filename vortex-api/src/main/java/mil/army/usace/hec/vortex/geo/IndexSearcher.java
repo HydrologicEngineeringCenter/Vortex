@@ -99,14 +99,14 @@ public class IndexSearcher {
         if (isCoordinatesCached)
             return;
 
-        support.firePropertyChange(VortexProperty.STATUS, null, "ReIndexing");
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, "ReIndexing");
 
         int count = coordinates.length;
         for (int i = 0; i < count; i++) {
             Coordinate coordinate = coordinates[i];
             getIndex(coordinate);
             int progress = (int) (((float) i / count) * 100);
-            support.firePropertyChange(VortexProperty.PROGRESS, null, progress);
+            support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progress);
         }
     }
 

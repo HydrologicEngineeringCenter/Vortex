@@ -106,7 +106,7 @@ public abstract class DataWriter {
     public abstract void write();
 
     void fireWriteError(String errorMessage) {
-        support.firePropertyChange(VortexProperty.ERROR, null, errorMessage);
+        support.firePropertyChange(VortexProperty.ERROR.toString(), null, errorMessage);
     }
 }
 

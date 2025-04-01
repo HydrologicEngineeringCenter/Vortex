@@ -115,7 +115,7 @@ public class ImportableUnit {
 
             writer.write();
 
-            support.firePropertyChange(VortexProperty.STATUS, null, ImportableUnit.IMPORT_COMPLETE);
+            support.firePropertyChange(VortexProperty.STATUS.toString(), null, ImportableUnit.IMPORT_COMPLETE);
         }
     }
 

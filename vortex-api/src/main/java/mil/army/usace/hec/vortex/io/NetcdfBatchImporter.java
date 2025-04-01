@@ -64,7 +64,7 @@ class NetcdfBatchImporter extends BatchImporter {
         String timeMessage = "Batch import time: " + stopwatch;
         logger.info(timeMessage);
 
-        support.firePropertyChange(VortexProperty.STATUS, null, null);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, null);
     }
 
     private void writeBufferedData(Path destination, Map<String, String> writeOptions, Stream<VortexData> bufferedData) {
@@ -87,7 +87,7 @@ class NetcdfBatchImporter extends BatchImporter {
         double doneCount = doneDataCount.addAndGet(bufferedDataList.size());
         double totalCount = totalDataCount.addAndGet(bufferedDataList.size());
         int progress = (int) ((doneCount / totalCount) * 100);
-        support.firePropertyChange(VortexProperty.PROGRESS, null, progress);
+        support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progress);
         logger.info(() -> "Completed Buffered Write Count: " + bufferedDataList.size());
     }
 

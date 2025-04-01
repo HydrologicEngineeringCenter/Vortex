@@ -424,13 +424,14 @@ public class ImportMetWizard extends VortexWizard {
                 .build();
 
         importer.addPropertyChangeListener(evt -> {
-            if (VortexProperty.STATUS.equals(evt.getPropertyName())) {
+            VortexProperty property = VortexProperty.parse(evt.getPropertyName());
+            if (VortexProperty.STATUS == property) {
                 String value = String.valueOf(evt.getNewValue());
                 String message = TextProperties.getInstance().getProperty(value);
                 processingLabel.setText(message);
             }
 
-            if (VortexProperty.PROGRESS.equals(evt.getPropertyName())) {
+            if (VortexProperty.PROGRESS == property) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
                 progressBar.setIndeterminate(false);
@@ -439,14 +440,14 @@ public class ImportMetWizard extends VortexWizard {
                 progressBar.setString(progressValue + "%");
             }
 
-            if (VortexProperty.ERROR.equals(evt.getPropertyName())) {
+            if (VortexProperty.ERROR == property) {
                 String errorMessage = String.valueOf(evt.getNewValue());
                 JOptionPane.showMessageDialog(this, errorMessage,
                         "Error: Failed to write", JOptionPane.ERROR_MESSAGE);
                 setImportStatusMessageLabel(false);
             }
 
-            if (VortexProperty.COMPLETE.equals(evt.getPropertyName())) {
+            if (VortexProperty.COMPLETE == property) {
                 setImportStatusMessageLabel(true);
             }
         });

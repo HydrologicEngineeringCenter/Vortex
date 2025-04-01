@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.ui;
 
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.geo.ResamplingMethod;
 import mil.army.usace.hec.vortex.math.BatchCalculator;
 import mil.army.usace.hec.vortex.math.BatchGridCalculator;
@@ -638,7 +639,8 @@ public class CalculatorWizard extends VortexWizard {
                     .build();
 
             batchCalculator.addPropertyChangeListener(evt -> {
-                if (evt.getPropertyName().equalsIgnoreCase("progress")) {
+                VortexProperty property = VortexProperty.parse(evt.getPropertyName());
+                if (VortexProperty.PROGRESS == property) {
                     if (!(evt.getNewValue() instanceof Integer)) return;
                     int progressValue = (int) evt.getNewValue();
                     progressBar.setIndeterminate(false);
@@ -668,7 +670,8 @@ public class CalculatorWizard extends VortexWizard {
                     .build();
 
             batchGridCalculator.addPropertyChangeListener(evt -> {
-                if (evt.getPropertyName().equalsIgnoreCase("progress")) {
+                VortexProperty property = VortexProperty.parse(evt.getPropertyName());
+                if (VortexProperty.PROGRESS == property) {
                     if (!(evt.getNewValue() instanceof Integer)) return;
                     int progressValue = (int) evt.getNewValue();
                     progressBar.setIndeterminate(false);

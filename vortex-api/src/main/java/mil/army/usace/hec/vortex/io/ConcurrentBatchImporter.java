@@ -33,6 +33,6 @@ class ConcurrentBatchImporter extends BatchImporter {
         String timeMessage = "Batch import time: " + stopwatch;
         logger.info(timeMessage);
 
-        support.firePropertyChange(VortexProperty.COMPLETE, null, null);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, null);
     }
 }

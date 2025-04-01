@@ -59,11 +59,11 @@ class NetcdfDataWriter extends DataWriter {
     }
 
     private PropertyChangeListener writerPropertyListener() {
-        return e -> {
-            String propertyName = e.getPropertyName();
+        return evt -> {
+            VortexProperty property = VortexProperty.parse(evt.getPropertyName());
 
-            if (VortexProperty.ERROR.equals(propertyName)) {
-                String errorMessage = String.valueOf(e.getNewValue());
+            if (VortexProperty.ERROR == property) {
+                String errorMessage = String.valueOf(evt.getNewValue());
                 fireWriteError(errorMessage);
             }
         };
