@@ -18,7 +18,9 @@ import javax.measure.IncommensurableException;
 import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,6 +28,7 @@ import java.util.logging.Logger;
 abstract class NetcdfDataReader extends DataReader {
     private static final Logger logger = Logger.getLogger(NetcdfDataReader.class.getName());
 
+    private static final PathMatcher NC_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/*.{nc|NC|nc4|NC4}");
     private static final String TIME_BOUNDS = "time_bnds";
 
     /* Factory Method */
@@ -163,13 +166,16 @@ abstract class NetcdfDataReader extends DataReader {
     @Override
     public Validation isValid() {
         try (NetcdfDataset dataset = NetcdfDatasets.openDataset(path)) {
-            Variable variable = dataset.findVariable(TIME_BOUNDS);
-            if (variable == null) {
-                String template = MessageStore.getInstance().getMessage("warn_nc_time_bnds");
-                String filename = Path.of(path).getFileName().toString();
-                Object[] args = new Object[]{filename};
-                String message = String.format(template, args);
-                return Validation.of(true, message);
+            Path pathToFile = Path.of(path);
+            if (NC_MATCHER.matches(pathToFile)) {
+                Variable variable = dataset.findVariable(TIME_BOUNDS);
+                if (variable == null) {
+                    String template = MessageStore.getInstance().getMessage("warn_nc_time_bnds");
+                    String filename = pathToFile.getFileName().toString();
+                    Object[] args = new Object[]{filename};
+                    String message = String.format(template, args);
+                    return Validation.of(true, message);
+                }
             }
         } catch (IOException e) {
             String template = MessageStore.getInstance().getMessage("error_invalid_file");
