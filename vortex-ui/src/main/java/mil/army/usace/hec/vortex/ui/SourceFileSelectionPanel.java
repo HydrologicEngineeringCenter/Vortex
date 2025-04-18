@@ -62,7 +62,7 @@ public class SourceFileSelectionPanel extends JPanel {
         sourceFileTextField.setColumns(0);
         sourceFileTextFieldPanel.add(sourceFileTextField);
 
-        sourceFileTextFieldPanel.add(Box.createRigidArea(new Dimension(8,0)));
+        sourceFileTextFieldPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
         String uniqueId = className + ".sourceFile";
         FileBrowseButton sourceFileBrowseButton = new FileBrowseButton(uniqueId, "");

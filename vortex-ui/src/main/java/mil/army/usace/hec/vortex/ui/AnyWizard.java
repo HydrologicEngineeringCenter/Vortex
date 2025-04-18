@@ -10,6 +10,7 @@ public class AnyWizard extends VortexWizard {
 
     private JRadioButton calculatorButton;
     private JRadioButton clipperButton;
+    private JRadioButton gapFillerButton;
     private JRadioButton gridToPointButton;
     private JRadioButton imageExporterButton;
     private JRadioButton sanitizerButton;
@@ -45,6 +46,7 @@ public class AnyWizard extends VortexWizard {
         JRadioButton importerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Importer_L"));
         calculatorButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Calculator_L"));
         clipperButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Clipper_L"));
+        gapFillerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_GapFiller_L"));
         gridToPointButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_GridToPoint_L"));
         imageExporterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_ImageExporter_L"));
         sanitizerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Sanitizer_L"));
@@ -57,6 +59,7 @@ public class AnyWizard extends VortexWizard {
         buttonGroup.add(importerButton);
         buttonGroup.add(calculatorButton);
         buttonGroup.add(clipperButton);
+        buttonGroup.add(gapFillerButton);
         buttonGroup.add(gridToPointButton);
         buttonGroup.add(imageExporterButton);
         buttonGroup.add(sanitizerButton);
@@ -66,6 +69,7 @@ public class AnyWizard extends VortexWizard {
         buttonBox.add(importerButton);
         buttonBox.add(calculatorButton);
         buttonBox.add(clipperButton);
+        buttonBox.add(gapFillerButton);
         buttonBox.add(gridToPointButton);
         buttonBox.add(imageExporterButton);
         buttonBox.add(sanitizerButton);
@@ -94,22 +98,7 @@ public class AnyWizard extends VortexWizard {
     }
 
     private void continueAction() {
-        VortexWizard wizard;
-        if (calculatorButton.isSelected()) {
-            wizard = new CalculatorWizard(frame);
-        } else if (clipperButton.isSelected()) {
-            wizard = new ClipperWizard(frame);
-        } else if (gridToPointButton.isSelected()) {
-            wizard = new GridToPointWizard(frame);
-        } else if (imageExporterButton.isSelected()) {
-            wizard = new ImageExporterWizard(frame);
-        } else if (sanitizerButton.isSelected()) {
-            wizard = new SanitizerWizard(frame);
-        } else if (shifterButton.isSelected()) {
-            wizard = new ShifterWizard(frame);
-        } else {
-            wizard = new ImportMetWizard(frame);
-        }
+        VortexWizard wizard = initVortexWizard();
 
         setVisible(false);
 
@@ -128,6 +117,25 @@ public class AnyWizard extends VortexWizard {
         wizard.addWindowListener(listener);
         wizard.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         wizard.buildAndShowUI();
+    }
+
+    private VortexWizard initVortexWizard() {
+        if (calculatorButton.isSelected())
+            return new CalculatorWizard(frame);
+        else if (clipperButton.isSelected())
+            return new ClipperWizard(frame);
+        else if (gapFillerButton.isSelected())
+            return new GapFillerWizard(frame);
+        else if (gridToPointButton.isSelected())
+            return new GridToPointWizard(frame);
+        else if (imageExporterButton.isSelected())
+            return new ImageExporterWizard(frame);
+        else if (sanitizerButton.isSelected())
+            return new SanitizerWizard(frame);
+        else if (shifterButton.isSelected())
+            return new ShifterWizard(frame);
+        else
+            return new ImportMetWizard(frame);
     }
 
     private void closeAction() {

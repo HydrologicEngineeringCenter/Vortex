@@ -15,29 +15,29 @@ public abstract class DataReader implements AutoCloseable {
     final String path;
     final String variableName;
 
-    DataReader(DataReaderBuilder builder){
+    DataReader(DataReaderBuilder builder) {
         this.path = builder.path;
         this.variableName = builder.variableName;
 
         support = new PropertyChangeSupport(this);
     } // DataReader builder()
 
-    public static class DataReaderBuilder{
+    public static class DataReaderBuilder {
         private String path;
         private String variableName;
 
-        public DataReaderBuilder path (final String path){
+        public DataReaderBuilder path(final String path) {
             this.path = path;
             return this;
         } // Get path()
 
-        public DataReaderBuilder variable (final String variable){
+        public DataReaderBuilder variable(final String variable) {
             this.variableName = variable;
             return this;
         } // Get variable()
 
-        public DataReader build(){
-            if (path == null){
+        public DataReader build() {
+            if (path == null) {
                 throw new IllegalStateException("DataReader requires a path to data source file.");
             }
 
@@ -65,7 +65,7 @@ public abstract class DataReader implements AutoCloseable {
                 return new AscZipDataReader(this);
             }
 
-            if (variableName == null){
+            if (variableName == null) {
                 throw new IllegalStateException("This DataReader requires a variableName.");
             }
 
@@ -77,11 +77,20 @@ public abstract class DataReader implements AutoCloseable {
         } // build()
     } // DataReaderBuilder class
 
-    public static DataReaderBuilder builder(){return new DataReaderBuilder();}
+    public static DataReaderBuilder builder() {
+        return new DataReaderBuilder();
+    }
+
+    public static DataReader copy(DataReader dataReader) {
+        return DataReader.builder()
+                .path(dataReader.path)
+                .variable(dataReader.variableName)
+                .build();
+    }
 
     public abstract List<VortexData> getDtos();
 
-    public static Set<String> getVariables(String path){
+    public static Set<String> getVariables(String path) {
         String fileName = new File(path).getName().toLowerCase();
 
         if (FilenameUtil.endsWithExtensions(fileName, ".asc", ".tif", ".tiff", "asc.zip")) {
@@ -110,6 +119,10 @@ public abstract class DataReader implements AutoCloseable {
     }
 
     public abstract Validation isValid();
+
+    public String getVariableName() {
+        return variableName;
+    }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         support.addPropertyChangeListener(pcl);

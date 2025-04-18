@@ -2,31 +2,38 @@ package mil.army.usace.hec.vortex.util;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.logging.Logger;
 
 public class Stopwatch {
+    private static final Logger LOGGER = Logger.getLogger(Stopwatch.class.getName());
+
     private Instant startTime;
     private Instant endTime;
 
     public void start() {
         if (startTime != null)
-            throw new IllegalStateException("Timer has already started");
+            LOGGER.warning(() -> "Timer has already started");
 
         startTime = Instant.now();
     }
 
     public void end() {
         if (endTime != null)
-            throw new IllegalStateException("Timer has already ended");
+            LOGGER.warning(() -> "Timer has already ended");
 
         endTime = Instant.now();
     }
 
     private long getSeconds() {
-        if (startTime == null)
-            throw new IllegalStateException("Timer has not started");
+        if (startTime == null) {
+            LOGGER.warning(() -> "Timer has not started");
+            return 0;
+        }
 
-        if (endTime == null)
-            throw new IllegalStateException("Timer has not ended");
+        if (endTime == null) {
+            LOGGER.warning(() -> "Timer has not ended");
+            return 0;
+        }
 
         return Duration.between(startTime, endTime).toSeconds();
     }

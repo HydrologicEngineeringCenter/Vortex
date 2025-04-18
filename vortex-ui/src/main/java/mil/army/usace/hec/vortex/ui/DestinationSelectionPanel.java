@@ -72,7 +72,7 @@ public class DestinationSelectionPanel extends JPanel {
         JPanel selectDestinationTextFieldPanel = new JPanel();
         selectDestinationTextFieldPanel.setLayout(new BoxLayout(selectDestinationTextFieldPanel, BoxLayout.X_AXIS));
 
-        selectDestinationTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
+        selectDestinationTextFieldPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
         selectDestinationTextField = new JTextField();
         selectDestinationTextField.setColumns(0);
@@ -92,7 +92,7 @@ public class DestinationSelectionPanel extends JPanel {
         });
         selectDestinationTextFieldPanel.add(selectDestinationTextField);
 
-        selectDestinationTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
+        selectDestinationTextFieldPanel.add(Box.createRigidArea(new Dimension(5, 0)));
 
         FileBrowseButton selectDestinationBrowseButton = new FileBrowseButton(parent.getClass().getName(), "");
         selectDestinationBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));

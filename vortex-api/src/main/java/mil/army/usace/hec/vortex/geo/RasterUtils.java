@@ -98,4 +98,12 @@ public class RasterUtils {
         }
         return convertedData;
     }
+
+    public static float[][] convert1DTo2D(float[] oneDArray, int nx, int ny) {
+        float[][] twoDArray = new float[ny][nx];
+        for (int i = 0; i < ny; i++) {
+            System.arraycopy(oneDArray, i * nx, twoDArray[i], 0, nx);
+        }
+        return twoDArray;
+    }
 }
