@@ -6,6 +6,7 @@ import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.nio.file.Path;
@@ -16,6 +17,9 @@ import java.util.logging.Logger;
 
 public class GapFillerWizard extends VortexWizard {
     private static final Logger LOGGER = Logger.getLogger(GapFillerWizard.class.getName());
+
+    private static final int ROW_HEIGHT = (int) new JTextField().getPreferredSize().getHeight();
+    private static final int PAD = 2;
 
     private static final String FOCAL_MEAN_LABEL = TextProperties.getInstance().getProperty("GapFillerWiz_FocalMean_L");
     private static final String LINEAR_INTERP_LABEL = TextProperties.getInstance().getProperty("GapFillerWiz_LinearInterp_L");
@@ -247,6 +251,8 @@ public class GapFillerWizard extends VortexWizard {
     }
 
     private JPanel stepTwoPanel() {
+        JPanel selectInterpolationPanel = initInterpolationPanel();
+
         // Initialize spatial fill panel
         JPanel spatialFillPanel = new JPanel();
         spatialFillPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -289,9 +295,35 @@ public class GapFillerWizard extends VortexWizard {
         // Add all panels
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(selectInterpolationPanel);
         panel.add(spatialFillPanel);
         panel.add(temporalFillPanel);
 
+        return panel;
+    }
+
+    private static JPanel initInterpolationPanel() {
+        String selectInterpolationText = "Select an Interpolation Method";
+        JLabel selectInterpolationLabel = new JLabel(selectInterpolationText);
+        selectInterpolationLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectInterpolationLabel.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
+
+        String selectInterpolationDescText = "Interpolations will be performed on gridded records that already exist.";
+        JLabel selectInterpolationDescLabel = new JLabel(selectInterpolationDescText);
+        selectInterpolationDescLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectInterpolationDescLabel.setBorder(new EmptyBorder(PAD, 4 * PAD, PAD, PAD));
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        Dimension dimension = new Dimension(Integer.MAX_VALUE, (ROW_HEIGHT + 2 * PAD) * 2);
+
+        panel.setMinimumSize(dimension);
+        panel.setMaximumSize(dimension);
+        panel.setPreferredSize(dimension);
+
+        panel.add(selectInterpolationLabel);
+        panel.add(selectInterpolationDescLabel);
         return panel;
     }
 
@@ -309,16 +341,30 @@ public class GapFillerWizard extends VortexWizard {
     }
 
     private JPanel stepThreePanel() {
+        String selectAddMissingText = "Add records for missing time steps";
+        JLabel selectAddMissingLabel = new JLabel(selectAddMissingText);
+        selectAddMissingLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectAddMissingLabel.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
+
+        String selectAddMissingDescText = "If selected, gridded records will be inserted at missing time-steps.";
+        JLabel selectAddMissingDescLabel = new JLabel(selectAddMissingDescText);
+        selectAddMissingDescLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        selectAddMissingDescLabel.setBorder(new EmptyBorder(PAD, 4 * PAD, PAD, PAD));
+
         // Initialize time steps panel
         String timeStepsTT = TextProperties.getInstance().getProperty("GapFillerWiz_TimeSteps_TT");
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        panel.setToolTipText(timeStepsTT);
-
         insertTimeStepsCheckBox = new JCheckBox(INSERT_TIME_STEPS_LABEL);
         insertTimeStepsCheckBox.setToolTipText(timeStepsTT);
+        insertTimeStepsCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setToolTipText(timeStepsTT);
+
+        panel.add(selectAddMissingLabel);
+        panel.add(selectAddMissingDescLabel);
+        panel.add(Box.createVerticalStrut(10));
         panel.add(insertTimeStepsCheckBox);
 
         return panel;
