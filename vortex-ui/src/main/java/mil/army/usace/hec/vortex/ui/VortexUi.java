@@ -19,6 +19,8 @@ public class VortexUi {
             wizard = new ClipperWizard(null);
         } else if (set.contains("-grid-to-point")) {
             wizard = new GridToPointWizard(null);
+        } else if (set.contains("-gap-filler")) {
+            wizard = new GapFillerWizard(null);
         } else if (set.contains("-image-exporter")) {
             wizard = new ImageExporterWizard(null);
         } else if (set.contains("-importer")) {
