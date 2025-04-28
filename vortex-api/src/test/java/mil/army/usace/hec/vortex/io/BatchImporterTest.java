@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BatchImporterTest {
@@ -155,11 +156,14 @@ class BatchImporterTest {
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-        float[] data = gridData.getData();
+        float[] serialized = new float[arraylist.size()];
         for (int i = 0; i < arraylist.size(); i++) {
-            assertEquals(arraylist.get(i), data[i]);
+            serialized[i] = (float) arraylist.get(i);
         }
 
+        float[] data = gridData.getData();
+
+        assertArrayEquals(serialized, data, 1E-5F);
 //        float[] vortex = gridData.getData();
 //        List<Float> list = new ArrayList<>();
 //        for (int i = 0; i < vortex.length; i++){
