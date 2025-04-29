@@ -30,7 +30,9 @@ public class UnitUtil {
             return ONE;
         }
 
-        return switch (units.toLowerCase()) {
+        String str = units.toLowerCase().trim();
+
+        return switch (str) {
             // length
             case "kg.m-2", "kg/m^2", "kg m^-2", "kg m-2", "mm", "millimeter", "millimeters", "millimeters h20",
                  "millimeters snow thickness" -> MILLI(METRE);
