@@ -8,6 +8,8 @@ import hec.heclib.grid.SpecifiedGridInfo;
 import hec.heclib.util.HecTime;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.osr.SpatialReference;
+import si.uom.NonSI;
+import tech.units.indriya.unit.Units;
 
 import javax.measure.Unit;
 import java.time.ZonedDateTime;
@@ -23,6 +25,53 @@ import static tech.units.indriya.unit.Units.MINUTE;
 import static tech.units.indriya.unit.Units.*;
 
 public class DssUtil {
+
+    // Map Unit<?> object to string (to be written to DSS)
+    private static final Map<Unit<?>, String> UNITS_TO_STRING = Map.ofEntries(
+            Map.entry(INCH, "IN"),
+            Map.entry(MILLI(METRE), "MM"),
+            Map.entry(CUBIC_FOOT.divide(SECOND), "CFS"),
+            Map.entry(CUBIC_METRE.divide(SECOND), "M3/S"),
+            Map.entry(METRE, "M"),
+            Map.entry(FOOT, "FT"),
+            Map.entry(FAHRENHEIT, "DEG F"),
+            Map.entry(CELSIUS, "DEG C"),
+            Map.entry(CELSIUS.multiply(DAY), "DEGC-D"),
+            Map.entry(FAHRENHEIT.multiply(DAY), "DEGF-D"),
+            Map.entry(MILLI(METRE).divide(CELSIUS.multiply(DAY)), "MM/DEG-D"),
+            Map.entry(INCH.divide(FAHRENHEIT.multiply(DAY)), "IN/DEG-D"),
+            Map.entry(JOULE.divide(SQUARE_METRE).multiply(41840).divide(MINUTE), "LANG/MIN"),
+            Map.entry(WATT.divide(SQUARE_METRE), "WATT/M2"),
+            Map.entry(ONE, "UNSPECIF"),
+            Map.entry(MILLI(GRAM).divide(LITRE), "MG/L"),
+            Map.entry(Units.PERCENT, "%"),
+            Map.entry(HOUR, "HR"),
+            Map.entry(MINUTE, "MINUTES"),
+            Map.entry(KILO(METRE).divide(HOUR), "KPH"),
+            Map.entry(MILE.divide(HOUR), "MPH"),
+            Map.entry(FOOT_PER_SECOND, "FT/S"),
+            Map.entry(METRE_PER_SECOND, "M/S"),
+            Map.entry(INCH.divide(HOUR), "IN/HR"),
+            Map.entry(INCH.divide(DAY), "IN/DAY"),
+            Map.entry(MILLI(METRE).divide(SECOND), "MM/S"),
+            Map.entry(MILLI(METRE).divide(HOUR), "MM/HR"),
+            Map.entry(MILLI(METRE).divide(DAY), "MM/DAY"),
+            Map.entry(TON, "TONS"),
+            Map.entry(KILOGRAM.multiply(1000), "TONNES"),
+            Map.entry(MILE, "MILE"),
+            Map.entry(KILO(METRE), "KM"),
+            Map.entry(KILO(PASCAL), "KPA"),
+            Map.entry(PASCAL, "PA"),
+            Map.entry(NonSI.INCH_OF_MERCURY, "IN HG"),
+            Map.entry(SQUARE_METRE, "M2"),
+            Map.entry(SQUARE_FOOT, "SQFT"),
+            Map.entry(ACRE, "ACRE"),
+            Map.entry(SQUARE_METRE.multiply(1000), "THOU M2"),
+            Map.entry(CUBIC_METRE, "M3"),
+            Map.entry(CUBIC_METRE.multiply(1000), "THOU M3"),
+            Map.entry(ACRE_FOOT, "AC-FT"),
+            Map.entry(JOULE.divide(SQUARE_METRE), "J/M2")
+    );
 
     private DssUtil(){}
 
@@ -135,64 +184,8 @@ public class DssUtil {
         return gridInfo;
     }
 
-    private static String getUnitsString(Unit<?> unit) {
-        if (unit.equals(MILLI(METRE))) {
-            return "MM";
-        } else if (unit.equals(INCH)) {
-            return "IN";
-        } else if (unit.equals(INCH.divide(HOUR))) {
-            return "IN/HR";
-        } else if (unit.equals(MILLI(METRE).divide(SECOND))) {
-            return "MM/S";
-        } else if (unit.equals(MILLI(METRE).divide(HOUR))) {
-            return "MM/HR";
-        } else if (unit.equals(MILLI(METRE).divide(DAY))) {
-            return "MM/DAY";
-        } else if (unit.equals(CUBIC_METRE.divide(SECOND))) {
-            return "M3/S";
-        } else if (unit.equals(CUBIC_FOOT.divide(SECOND))) {
-            return "CFS";
-        } else if (unit.equals(METRE)) {
-            return "M";
-        } else if (unit.equals(FOOT)) {
-            return "FT";
-        } else if (unit.equals(CELSIUS)) {
-            return "DEG C";
-        } else if (unit.equals(FAHRENHEIT)) {
-            return "DEG F";
-        } else if (unit.equals(WATT.divide(SQUARE_METRE))) {
-            return "WATT/M2";
-        } else if (unit.equals(KILOMETRE_PER_HOUR)) {
-            return "KPH";
-        } else if (unit.equals(METRE_PER_SECOND)) {
-            return "M/S";
-        } else if (unit.equals(MILE_PER_HOUR)) {
-            return "MPH";
-        } else if (unit.equals(FOOT_PER_SECOND)) {
-            return "FT/S";
-        } else if (unit.equals(KILO(PASCAL))) {
-            return "KPA";
-        } else if (unit.equals(PASCAL)) {
-            return "PA";
-        } else if (unit.equals(PERCENT)) {
-            return "%";
-        } else if (unit.equals(KILO(METRE))) {
-            return "KM";
-        } else if (unit.equals(MILE)) {
-            return "MILE";
-        } else if (unit.equals(ONE)) {
-            return "UNSPECIF";
-        } else if (unit.equals(TON)) {
-            return "TONS";
-        } else if (unit.equals(MILLI(GRAM).divide(LITRE))) {
-            return "MG/L";
-        } else if (unit.equals(CELSIUS.multiply(DAY))) {
-            return "DEGC-D";
-        } else if (unit.equals(MINUTE)) {
-            return "MINUTES";
-        } else {
-            return unit.toString();
-        }
+    public static String getUnitsString(Unit<?> unit) {
+        return UNITS_TO_STRING.getOrDefault(unit, unit.toString());
     }
 
     private static HecTime getHecTime(ZonedDateTime zonedDateTime) {
