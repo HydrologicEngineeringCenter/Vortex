@@ -25,6 +25,7 @@ import static tech.units.indriya.unit.Units.MINUTE;
 import static tech.units.indriya.unit.Units.*;
 
 public class DssUtil {
+    private static final int SECONDS_PER_MINUTE = 60;
 
     // Map Unit<?> object to string (to be written to DSS)
     private static final Map<Unit<?>, String> UNITS_TO_STRING = Map.ofEntries(
@@ -186,6 +187,40 @@ public class DssUtil {
 
     public static String getUnitsString(Unit<?> unit) {
         return UNITS_TO_STRING.getOrDefault(unit, unit.toString());
+    }
+
+    public static String getEPart(int seconds) {
+        int minutes = seconds / SECONDS_PER_MINUTE;
+        return switch (minutes) {
+            case 1 -> "1Minute";
+            case 2 -> "2Minute";
+            case 3 -> "3Minute";
+            case 4 -> "4Minute";
+            case 5 -> "5Minute";
+            case 6 -> "6Minute";
+            case 8 -> "8Minute";
+            case 10 -> "10Minute";
+            case 12 -> "12Minute";
+            case 15 -> "15Minute";
+            case 20 -> "20Minute";
+            case 30 -> "30Minutes";
+            case 60 -> "1Hour";
+            case 120 -> "2Hours";
+            case 180 -> "3Hours";
+            case 240 -> "4Hours";
+            case 360 -> "6Hours";
+            case 480 -> "8Hours";
+            case 720 -> "12Hours";
+            case 1440 -> "1Day";
+            case 2880 -> "2Days";
+            case 5760 -> "3Days";
+            case 7200 -> "4Days";
+            case 8640 -> "6Days";
+            case 10080 -> "1Week";
+            case 43200 -> "1Month";
+            case 525600 -> "1Year";
+            default -> "0";
+        };
     }
 
     private static HecTime getHecTime(ZonedDateTime zonedDateTime) {

@@ -38,8 +38,6 @@ class DssDataWriter extends DataWriter {
         super(builder);
     }
 
-    private static final int SECONDS_PER_MINUTE = 60;
-
     @Override
     public void write() {
         List<VortexGrid> grids = data.stream()
@@ -271,40 +269,6 @@ class DssDataWriter extends DataWriter {
         return pathnameOut;
     }
 
-    private static String getEPart(int seconds) {
-        int minutes = seconds / SECONDS_PER_MINUTE;
-        return switch (minutes) {
-            case 1 -> "1Minute";
-            case 2 -> "2Minute";
-            case 3 -> "3Minute";
-            case 4 -> "4Minute";
-            case 5 -> "5Minute";
-            case 6 -> "6Minute";
-            case 8 -> "8Minute";
-            case 10 -> "10Minute";
-            case 12 -> "12Minute";
-            case 15 -> "15Minute";
-            case 20 -> "20Minute";
-            case 30 -> "30Minutes";
-            case 60 -> "1Hour";
-            case 120 -> "2Hours";
-            case 180 -> "3Hours";
-            case 240 -> "4Hours";
-            case 360 -> "6Hours";
-            case 480 -> "8Hours";
-            case 720 -> "12Hours";
-            case 1440 -> "1Day";
-            case 2880 -> "2Days";
-            case 5760 -> "3Days";
-            case 7200 -> "4Days";
-            case 8640 -> "6Days";
-            case 10080 -> "1Week";
-            case 43200 -> "1Month";
-            case 525600 -> "1Year";
-            default -> "0";
-        };
-    }
-
     private static HecTime getHecTime(ZonedDateTime zonedDateTime) {
         return new HecTime(zonedDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
     }
@@ -530,7 +494,7 @@ class DssDataWriter extends DataWriter {
 
         private void setRegularTscTimes(TimeSeriesContainer tsc, Duration diff, ZonedDateTime zdtStartTime, DssDataType type) {
             int seconds = (int) diff.abs().getSeconds();
-            String ePart = getEPart(seconds);
+            String ePart = DssUtil.getEPart(seconds);
             DSSPathname dssPathname = new DSSPathname(tsc.getFullName());
             dssPathname.setEPart(ePart);
 
