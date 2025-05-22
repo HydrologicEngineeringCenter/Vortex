@@ -234,7 +234,7 @@ public class TemporalDataReader implements AutoCloseable {
 
     private List<VortexGrid> getGridsForPeriod(ZonedDateTime startTime, ZonedDateTime endTime) {
         List<VortexGrid> relevantGrids = new ArrayList<>();
-        long coveredUntil = startTime.toEpochSecond();
+        VortexDataInterval coveredInterval = VortexDataInterval.UNDEFINED;
 
         List<Integer> indices = recordIndexQuery.query(startTime, endTime);
         List<VortexGrid> overlappingGrids = indices.stream()
@@ -245,19 +245,15 @@ public class TemporalDataReader implements AutoCloseable {
                 .toList();
 
         for (VortexGrid grid : overlappingGrids) {
-            VortexDataInterval timeRecord = VortexDataInterval.of(grid);
-            long recordStart = timeRecord.startTime().toEpochSecond();
-            long recordEnd = timeRecord.endTime().toEpochSecond();
-
-            boolean isRelevant = recordEnd > coveredUntil && recordStart <= coveredUntil;
-
-            if (isRelevant) {
+            VortexDataInterval gridInterval = VortexDataInterval.of(grid);
+            if (!VortexDataInterval.isDefined(coveredInterval)) {
                 relevantGrids.add(grid);
-                coveredUntil = recordEnd;
-            }
-
-            if (coveredUntil >= endTime.toEpochSecond()) {
-                break;
+                coveredInterval = gridInterval;
+            } else if (!coveredInterval.overlaps(gridInterval)) {
+                // If gridInterval cover more than covered interval
+                // Update covered interval end time
+                relevantGrids.add(grid);
+                coveredInterval = VortexDataInterval.of(coveredInterval.startTime(), gridInterval.endTime());
             }
         }
 
