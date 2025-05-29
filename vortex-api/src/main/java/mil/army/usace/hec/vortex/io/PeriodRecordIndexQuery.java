@@ -27,6 +27,13 @@ final class PeriodRecordIndexQuery implements RecordIndexQuery {
     }
 
     @Override
+    public List<Integer> queryNearest(ZonedDateTime queryTime) {
+        VortexDataInterval interval = VortexDataInterval.of(queryTime, queryTime);
+        List<VortexDataInterval> nearestIntervals = intervalTree.findNearest(interval);
+        return nearestIntervals.stream().map(originalIndexMap::get).toList();
+    }
+
+    @Override
     public ZonedDateTime getEarliestStartTime() {
         return Optional.ofNullable(intervalTree.findMinimum())
                 .map(VortexDataInterval::startTime)
