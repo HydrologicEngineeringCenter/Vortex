@@ -11,6 +11,11 @@ class NoRecordIndexQuery implements RecordIndexQuery {
     }
 
     @Override
+    public List<Integer> queryNearest(ZonedDateTime queryTime) {
+        return Collections.emptyList();
+    }
+
+    @Override
     public ZonedDateTime getEarliestStartTime() {
         return null;
     }

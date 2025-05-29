@@ -8,6 +8,8 @@ import java.util.List;
 interface RecordIndexQuery {
     List<Integer> query(ZonedDateTime startTime, ZonedDateTime endTime);
 
+    List<Integer> queryNearest(ZonedDateTime queryTime);
+
     ZonedDateTime getEarliestStartTime();
 
     ZonedDateTime getLatestEndTime();

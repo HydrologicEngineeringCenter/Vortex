@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static mil.army.usace.hec.vortex.VortexDataType.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TemporalDataReaderTest {
     private static String tempDssFile;
@@ -97,18 +96,30 @@ class TemporalDataReaderTest {
     void getStartAndEndTime() {
         ZonedDateTime expectedAccumulationStartTime = TimeConverter.toZonedDateTime("01JAN2020:0100");
         ZonedDateTime expectedAccumulationEndTime = TimeConverter.toZonedDateTime("01JAN2020:0600");
-        assertEquals(expectedAccumulationStartTime, accumulationReader.getStartTime().orElse(null));
-        assertEquals(expectedAccumulationEndTime, accumulationReader.getEndTime().orElse(null));
+        Optional<ZonedDateTime> actualAccumulationStartTime = accumulationReader.getStartTime();
+        Optional<ZonedDateTime> actualAccumulationEndTime = accumulationReader.getEndTime();
+        assertTrue(actualAccumulationStartTime.isPresent());
+        assertTrue(actualAccumulationEndTime.isPresent());
+        assertTimeEquals(expectedAccumulationStartTime, actualAccumulationStartTime.get());
+        assertTimeEquals(expectedAccumulationEndTime, actualAccumulationEndTime.get());
 
         ZonedDateTime expectedAverageStartTime = TimeConverter.toZonedDateTime("01JAN2020:0100");
         ZonedDateTime expectedAverageEndTime = TimeConverter.toZonedDateTime("01JAN2020:0600");
-        assertEquals(expectedAverageStartTime, averageReader.getStartTime().orElse(null));
-        assertEquals(expectedAverageEndTime, averageReader.getEndTime().orElse(null));
+        Optional<ZonedDateTime> actualAverageStartTime = averageReader.getStartTime();
+        Optional<ZonedDateTime> actualAverageEndTime = averageReader.getEndTime();
+        assertTrue(actualAverageStartTime.isPresent());
+        assertTrue(actualAverageEndTime.isPresent());
+        assertTimeEquals(expectedAverageStartTime, actualAverageStartTime.get());
+        assertTimeEquals(expectedAverageEndTime, actualAverageEndTime.get());
 
         ZonedDateTime expectedInstantStartTime = TimeConverter.toZonedDateTime("01JAN2020:0100");
         ZonedDateTime expectedInstantEndTime = TimeConverter.toZonedDateTime("01JAN2020:0500");
-        assertEquals(expectedInstantStartTime, instantReader.getStartTime().orElse(null));
-        assertEquals(expectedInstantEndTime, instantReader.getEndTime().orElse(null));
+        Optional<ZonedDateTime> actualInstantStartTime = instantReader.getStartTime();
+        Optional<ZonedDateTime> actualInstantEndTime = instantReader.getEndTime();
+        assertTrue(actualInstantStartTime.isPresent());
+        assertTrue(actualInstantEndTime.isPresent());
+        assertTimeEquals(expectedInstantStartTime, actualInstantStartTime.get());
+        assertTimeEquals(expectedInstantEndTime, actualInstantEndTime.get());
     }
 
     @Test
@@ -350,6 +361,114 @@ class TemporalDataReaderTest {
         assertMissingData(actualGrid);
     }
 
+    /* ------------------ readNearest() TESTS ------------------ */
+
+    //
+    // ACCUMULATION (period) grids: [1–2]=2.0, [2–3]=1.5, [3–4]=0.0, [4–5]=3.0, [5–6]=2.5
+    //
+
+    @Test
+    void readNearestAccumulation_exactMatchOnStart() {
+        // query exactly at start of the [3–4] interval
+        ZonedDateTime query = buildTestTime(3, 0);
+        Optional<VortexGrid> opt = accumulationReader.readNearest(query);
+        assertTrue(opt.isPresent(), "Should find a nearest");
+        float[] actual = opt.get().data();
+        float[] expected = buildTestData(0f);
+        assertFloatArrayEquals(expected, actual);
+    }
+
+    @Test
+    void readNearestAccumulation_midpointTieBreakToEarliestEnd() {
+        // 2:30 is exactly 0.5h from both start=2 and start=3;
+        // tie‐breaker on endTime -> picks the one ending sooner ([2–3])
+        ZonedDateTime query = buildTestTime(2, 30);
+        Optional<VortexGrid> opt = accumulationReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(1.5f), opt.get().data());
+    }
+
+    @Test
+    void readNearestAccumulation_beforeFirstStarts() {
+        // 00:30 is closest to the first interval start at 01:00
+        ZonedDateTime query = buildTestTime(0, 30);
+        Optional<VortexGrid> opt = accumulationReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(2f), opt.get().data());
+    }
+
+
+    //
+    // AVERAGE (period) grids: [1–2]=7.5, [2–3]=7.6, [3–4]=7.7, [4–5]=7.4, [5–6]=7.6
+    //
+
+    @Test
+    void readNearestAverage_exactMatchOnStart() {
+        ZonedDateTime query = buildTestTime(4, 0);
+        Optional<VortexGrid> opt = averageReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(7.4f), opt.get().data());
+    }
+
+    @Test
+    void readNearestAverage_tieBetween2and3ResolvesTo2() {
+        // 2:30 -> 0.5h from start=2 and start=3; ends at 3 < 4 so pick [2–3]
+        ZonedDateTime query = buildTestTime(2, 30);
+        Optional<VortexGrid> opt = averageReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(7.6f), opt.get().data());
+    }
+
+    @Test
+    void readNearestAverage_afterLastEnds() {
+        // 06:30 is closest to the interval starting at 05:00 (last)
+        ZonedDateTime query = buildTestTime(6, 30);
+        Optional<VortexGrid> opt = averageReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(7.6f), opt.get().data());
+    }
+
+
+    //
+    // INSTANTANEOUS (point) grids at hours 1→15, 2→20, 3→18, 4→22, 5→15
+    //
+
+    @Test
+    void readNearestInstant_exactHit() {
+        // exact hit at 04:00
+        ZonedDateTime query = buildTestTime(4, 0);
+        Optional<VortexGrid> opt = instantReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(22f), opt.get().data());
+    }
+
+    @Test
+    void readNearestInstant_midpointTieEarlierWins() {
+        // 3:30 is 0.5h from both 3 and 4; earlier (3) should win → value=18
+        ZonedDateTime query = buildTestTime(3, 30);
+        Optional<VortexGrid> opt = instantReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(18f), opt.get().data());
+    }
+
+    @Test
+    void readNearestInstant_beforeFirstPoint() {
+        // before 1:00 → nearest is 1:00
+        ZonedDateTime query = buildTestTime(0, 15);
+        Optional<VortexGrid> opt = instantReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(15f), opt.get().data());
+    }
+
+    @Test
+    void readNearestInstant_afterLastPoint() {
+        // after 5:00 → nearest is 5:00
+        ZonedDateTime query = buildTestTime(6, 45);
+        Optional<VortexGrid> opt = instantReader.readNearest(query);
+        assertTrue(opt.isPresent());
+        assertFloatArrayEquals(buildTestData(15f), opt.get().data());
+    }
+
     /* Helpers */
     private static void writeAccumulationData() {
         List<VortexData> accumulationGrids = List.of(
@@ -488,5 +607,10 @@ class TemporalDataReaderTest {
             HecDSSUtilities.close(tempDssFile, true);
             Files.deleteIfExists(Path.of(tempDssFile));
         }
+    }
+
+    /* Helpers */
+    private static void assertTimeEquals(ZonedDateTime zdt1, ZonedDateTime zdt2) {
+        assertEquals(zdt1.toOffsetDateTime(), zdt2.toOffsetDateTime());
     }
 }

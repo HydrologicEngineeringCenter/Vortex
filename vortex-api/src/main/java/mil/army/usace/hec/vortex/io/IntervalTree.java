@@ -65,6 +65,70 @@ final class IntervalTree<T extends Interval> {
         return overlaps;
     }
 
+    public List<T> findNearest(T target) {
+        if (root == null) {
+            return Collections.emptyList();
+        }
+
+        // 1) If there are any overlaps, those are by definition
+        //    the nearest (zero‐distance) intervals.
+        List<T> overlaps = findOverlaps(target);
+        if (!overlaps.isEmpty()) {
+            return overlaps;
+        }
+
+        // 2) No overlaps => find predecessor and successor by start time (anchored on target.start).
+        Node pred = null;
+        Node succ = null;
+        Node current;
+
+        // Find predecessor: the node with the largest start <= target.start
+        long query = target.startEpochSecond();
+        current = root;
+        while (current != null) {
+            if (current.interval.startEpochSecond() <= query) {
+                pred = current;
+                current = current.right;
+            } else {
+                current = current.left;
+            }
+        }
+
+        // Find successor: the node with the smallest start >= target.end
+        current = root;
+        while (current != null) {
+            if (current.interval.startEpochSecond() >= query) {
+                succ = current;
+                current = current.left;
+            } else {
+                current = current.right;
+            }
+        }
+
+        // 3) Compute the gaps (if the node is null we leave gap=∞)
+        long predGap = Long.MAX_VALUE;
+        long succGap = Long.MAX_VALUE;
+
+        if (pred != null) {
+            predGap = query - pred.interval.endEpochSecond();
+        }
+        if (succ != null) {
+            succGap = succ.interval.startEpochSecond() - query;
+        }
+
+        // 4) Collect whichever interval(s) realizes the minimal gap
+        long minGap = Math.min(predGap, succGap);
+        List<T> result = new ArrayList<>(2);
+        if (pred != null && predGap == minGap) {
+            result.add(pred.interval);
+        }
+        if (succ != null && succGap == minGap) {
+            result.add(succ.interval);
+        }
+
+        return result;
+    }
+
     public T findMinimum() {
         if (root == null) {
             return null;

@@ -65,6 +65,64 @@ public class TemporalDataReader implements AutoCloseable {
     }
 
     /**
+     * Finds one {@link VortexGrid} whose valid time is closest to the specified {@code queryTime}.
+     *
+     * <p>Behavior:
+     * <ul>
+     *   <li><b>Point grids (start == end):</b> picks the grid with a timestamp closest to {@code queryTime}.</li>
+     *   <li><b>Period grids (start < end):</b> picks the grid whose start time is nearest to {@code queryTime}.
+     *       If two start times tie, selects the one with the finer resolution (smaller time step).</li>
+     * </ul>
+     *
+     * <p><b>Tie-breakers & edge cases:</b>
+     * <ul>
+     *   <li><b>No grids available:</b> returns {@code Optional.empty()}.</li>
+     *   <li><b>Exact match:</b> if {@code queryTime} equals a grid’s start or end time, that grid is returned immediately.</li>
+     *   <li><b>Point grid tie:</b> if two point grids are equally distant (e.g. one hour before vs. one hour after), the earlier one wins.</li>
+     *   <li><b>Time-zone handling:</b> all comparisons are done in UTC to avoid zone quirks.</li>
+     * </ul>
+     *
+     * @param queryTime the {@link java.time.ZonedDateTime} to match against
+     * @return an {@link Optional} containing the best-matched {@link VortexGrid},
+     *         or {@code Optional.empty()} if no grids are available
+     */
+    public Optional<VortexGrid> readNearest(ZonedDateTime queryTime) {
+        if (baseGrid == null) {
+            return Optional.empty();
+        }
+
+        return recordIndexQuery.queryNearest(queryTime).stream()
+                .map(dataReader::getDto)
+                .filter(VortexGrid.class::isInstance)
+                .map(VortexGrid.class::cast)
+                .min(nearestComparator(queryTime));
+    }
+
+    private Comparator<VortexGrid> nearestComparator(ZonedDateTime queryTime) {
+        return (g1, g2) -> {
+            // 1) Compare absolute distance to startTime
+            Duration dist1 = Duration.between(queryTime, g1.startTime()).abs();
+            Duration dist2 = Duration.between(queryTime, g2.startTime()).abs();
+            int comparatorValue = dist1.compareTo(dist2);
+            if (comparatorValue != 0) {
+                return comparatorValue;
+            }
+
+            // 2) If tied on start‐distance, compare record duration (point=zero)
+            Duration dur1 = Duration.between(g1.startTime(), g1.endTime());
+            Duration dur2 = Duration.between(g2.startTime(), g2.endTime());
+            comparatorValue = dur1.compareTo(dur2);
+            if (comparatorValue != 0) {
+                return comparatorValue;
+            }
+
+            // 3) Final tie‐breaker: earlier startTime wins
+            return g1.startTime().compareTo(g2.startTime());
+        };
+    }
+
+
+    /**
      * Retrieves the minimum and maximum grid data within a specified time range.
      *
      * @param startTime The start time for the data range.

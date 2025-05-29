@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.io;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 final class InstantaneousRecordIndexQuery implements RecordIndexQuery {
     private static final Logger logger = Logger.getLogger(InstantaneousRecordIndexQuery.class.getName());
@@ -24,6 +25,16 @@ final class InstantaneousRecordIndexQuery implements RecordIndexQuery {
         } else {
             return queryPeriod(instantaneousDataTree, startTime, endTime);
         }
+    }
+
+    @Override
+    public List<Integer> queryNearest(ZonedDateTime queryTime) {
+        Map.Entry<ZonedDateTime, Integer> floorEntry = instantaneousDataTree.floorEntry(queryTime);
+        Map.Entry<ZonedDateTime, Integer> ceilingEntry = instantaneousDataTree.ceilingEntry(queryTime);
+        return Stream.of(floorEntry, ceilingEntry)
+                .filter(Objects::nonNull)
+                .map(Map.Entry::getValue)
+                .toList();
     }
 
     @Override
