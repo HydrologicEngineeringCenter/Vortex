@@ -9,6 +9,7 @@ import mil.army.usace.hec.vortex.util.UnitUtil;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
+import ucar.nc2.Attribute;
 import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.AxisType;
@@ -80,6 +81,19 @@ class VariableDsReader extends NetcdfDataReader {
         }
 
         return 1;
+    }
+
+    @Override
+    double getNoDataValue() {
+        Attribute missingValueAttr = variableDS.findAttribute("missing_value");
+        if (missingValueAttr != null) {
+            Number number = missingValueAttr.getNumericValue();
+            if (number != null) {
+                return number.doubleValue();
+            }
+        }
+
+        return variableDS.getFillValue();
     }
 
     @Override
@@ -224,7 +238,7 @@ class VariableDsReader extends NetcdfDataReader {
                 .originX(grid.getOriginX()).originY(grid.getOriginY())
                 .wkt(grid.getCrs())
                 .data(data)
-                .noDataValue(variableDS.getFillValue())
+                .noDataValue(getNoDataValue())
                 .units(variableDS.getUnitsString())
                 .fileName(ncd.getLocation())
                 .shortName(variableDS.getShortName())

@@ -225,7 +225,7 @@ class GridDatasetReader extends NetcdfDataReader {
                 .originX(grid.getOriginX()).originY(grid.getOriginY())
                 .wkt(grid.getCrs())
                 .data(data)
-                .noDataValue(variableDS.getFillValue())
+                .noDataValue(getNoDataValue())
                 .units(getUnits(variableDS))
                 .fileName(path)
                 .shortName(gridDatatype.getShortName())
@@ -434,5 +434,18 @@ class GridDatasetReader extends NetcdfDataReader {
             return Validation.of(true);
 
         return super.isValid();
+    }
+
+    @Override
+    double getNoDataValue() {
+        Attribute missingValueAttr = variableDS.findAttribute("missing_value");
+        if (missingValueAttr != null) {
+            Number number = missingValueAttr.getNumericValue();
+            if (number != null) {
+                return number.doubleValue();
+            }
+        }
+
+        return variableDS.getFillValue();
     }
 }

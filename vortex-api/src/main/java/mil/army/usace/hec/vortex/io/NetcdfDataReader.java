@@ -184,4 +184,6 @@ abstract class NetcdfDataReader extends DataReader {
         }
         return Validation.of(true);
     }
+
+    abstract double getNoDataValue();
 }
