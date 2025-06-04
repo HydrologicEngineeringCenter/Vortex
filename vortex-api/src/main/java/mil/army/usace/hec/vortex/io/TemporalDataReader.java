@@ -297,6 +297,7 @@ public class TemporalDataReader implements AutoCloseable {
         List<Integer> indices = recordIndexQuery.query(startTime, endTime);
         List<VortexGrid> overlappingGrids = indices.stream()
                 .map(dataReader::getDto)
+                .filter(d -> d.endTime().isAfter(d.startTime())) // Filter out instantaneous grids
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .sorted(gridPrioritizationComparator())
