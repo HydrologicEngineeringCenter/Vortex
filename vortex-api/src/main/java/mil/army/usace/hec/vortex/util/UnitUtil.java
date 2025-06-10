@@ -3,10 +3,14 @@ package mil.army.usace.hec.vortex.util;
 import si.uom.NonSI;
 import systems.uom.common.USCustomary;
 import tech.units.indriya.format.SimpleUnitFormat;
+import tech.units.indriya.function.MultiplyConverter;
+import tech.units.indriya.unit.TransformedUnit;
 
 import javax.measure.Unit;
+import javax.measure.UnitConverter;
 import javax.measure.format.MeasurementParseException;
 import javax.measure.format.UnitFormat;
+import javax.measure.quantity.Energy;
 import java.util.Optional;
 
 import static javax.measure.MetricPrefix.*;
@@ -20,6 +24,8 @@ public class UnitUtil {
     static {
         USCustomary.getInstance();
     }
+
+    public static final Unit<?> BTU_PER_FT2 = initBtuPerFt2();
 
     private UnitUtil() {
         // Utility Class
@@ -67,6 +73,7 @@ public class UnitUtil {
             case "in/deg-d" -> INCH.divide(FAHRENHEIT.multiply(DAY));
             // energy (work) per area
             case "j m**-2", "j/m2" -> JOULE.divide(SQUARE_METRE);
+            case "btu/ft2" -> BTU_PER_FT2;
             // power per area
             case "watt/m2", "w m-2", "w/m2" -> WATT.divide(SQUARE_METRE);
             case "lang/min" -> JOULE.divide(SQUARE_METRE).multiply(41840).divide(MINUTE);
@@ -101,6 +108,13 @@ public class UnitUtil {
             // attempt to parse units
             default -> parseSimpleUnitFormat(units);
         };
+    }
+
+    private static Unit<?> initBtuPerFt2() {
+        double btuToJouleFactor = 1055.05585262; // Conversion factor for Joules to BTU (International Steam Table calorie)
+        UnitConverter btuConverter = MultiplyConverter.of(btuToJouleFactor);
+        Unit<Energy> btuUnit = new TransformedUnit<>("BTU", JOULE.multiply(btuToJouleFactor), btuConverter);
+        return btuUnit.divide(SQUARE_FOOT);
     }
 
     public static boolean equals(String units1, String units2) {
