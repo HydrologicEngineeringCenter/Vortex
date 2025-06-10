@@ -9,9 +9,13 @@ import hec.heclib.util.HecTime;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.gdal.osr.SpatialReference;
 import si.uom.NonSI;
+import tech.units.indriya.function.MultiplyConverter;
+import tech.units.indriya.unit.TransformedUnit;
 import tech.units.indriya.unit.Units;
 
 import javax.measure.Unit;
+import javax.measure.UnitConverter;
+import javax.measure.quantity.Energy;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -42,6 +46,7 @@ public class DssUtil {
             Map.entry(MILLI(METRE).divide(CELSIUS.multiply(DAY)), "MM/DEG-D"),
             Map.entry(INCH.divide(FAHRENHEIT.multiply(DAY)), "IN/DEG-D"),
             Map.entry(JOULE.divide(SQUARE_METRE).multiply(41840).divide(MINUTE), "LANG/MIN"),
+            Map.entry(createBtuPerFt2Unit(), "BTU/FT2"),
             Map.entry(WATT.divide(SQUARE_METRE), "WATT/M2"),
             Map.entry(ONE, "UNSPECIF"),
             Map.entry(MILLI(GRAM).divide(LITRE), "MG/L"),
@@ -73,6 +78,13 @@ public class DssUtil {
             Map.entry(ACRE_FOOT, "AC-FT"),
             Map.entry(JOULE.divide(SQUARE_METRE), "J/M2")
     );
+
+    private static Unit<?> createBtuPerFt2Unit() {
+        double btuToJouleFactor = 1055.05585262; // Conversion factor for Joules to BTU (International Steam Table calorie)
+        UnitConverter btuConverter = MultiplyConverter.of(btuToJouleFactor);
+        Unit<Energy> btuUnit = new TransformedUnit<>("BTU", JOULE.multiply(btuToJouleFactor), btuConverter);
+        return btuUnit.divide(SQUARE_FOOT);
+    }
 
     private DssUtil(){}
 
