@@ -42,6 +42,8 @@ public class DssUtil {
             Map.entry(MILLI(METRE).divide(CELSIUS.multiply(DAY)), "MM/DEG-D"),
             Map.entry(INCH.divide(FAHRENHEIT.multiply(DAY)), "IN/DEG-D"),
             Map.entry(JOULE.divide(SQUARE_METRE).multiply(41840).divide(MINUTE), "LANG/MIN"),
+            Map.entry(JOULE.divide(SQUARE_METRE), "J/M2"),
+            Map.entry(UnitUtil.BTU_PER_FT2, "BTU/FT2"),
             Map.entry(WATT.divide(SQUARE_METRE), "WATT/M2"),
             Map.entry(ONE, "UNSPECIF"),
             Map.entry(MILLI(GRAM).divide(LITRE), "MG/L"),
@@ -70,8 +72,7 @@ public class DssUtil {
             Map.entry(SQUARE_METRE.multiply(1000), "THOU M2"),
             Map.entry(CUBIC_METRE, "M3"),
             Map.entry(CUBIC_METRE.multiply(1000), "THOU M3"),
-            Map.entry(ACRE_FOOT, "AC-FT"),
-            Map.entry(JOULE.divide(SQUARE_METRE), "J/M2")
+            Map.entry(ACRE_FOOT, "AC-FT")
     );
 
     private DssUtil(){}
@@ -186,6 +187,10 @@ public class DssUtil {
     }
 
     public static String getUnitsString(Unit<?> unit) {
+        if (unit == null) {
+            return "";
+        }
+
         return UNITS_TO_STRING.getOrDefault(unit, unit.toString());
     }
 
