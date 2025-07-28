@@ -48,8 +48,6 @@ class GridDatasetReader extends NetcdfDataReader {
         ABRSC_GAUGE(".*gaugecorr.*qpe.*01h.*grib2", ".*"),
         ABRSC_RADAR(".*radaronly.*qpe.*01h.*grib2", ".*"),
         MRMS_IDP(".*multisensor.*qpe.*01h.*grib2", ".*"),
-        MRMS_PRECIP("mrms_preciprate.*", ".*"),
-        MRMS_PRECIP_2_MIN("preciprate_.*\\.grib2", ".*"),
         GPM(".*hhr\\.ms\\.mrg.*hdf.*", ".*"),
         AORC_APCP(".*aorc.*apcp.*nc4.*", ".*"),
         AORC_TMP(".*aorc.*tmp.*nc4.*", ".*"),
@@ -395,8 +393,6 @@ class GridDatasetReader extends NetcdfDataReader {
 
         ZonedDateTime adjustedStart = switch (specialFileType) {
             case ABRSC_GAUGE, ABRSC_RADAR, MRMS_IDP, NLDAS_APCP -> startTime.minusHours(1);
-            case MRMS_PRECIP -> startTime.minusMinutes(5);
-            case MRMS_PRECIP_2_MIN -> startTime.minusMinutes(2);
             case GPM, AORC_TMP, LIVNEH_PRECIP -> instantTime;
             case AORC_APCP -> instantTime.minusHours(1);
             case UA_SWE -> initialTime;
