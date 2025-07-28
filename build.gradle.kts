@@ -5,6 +5,10 @@ plugins {
     id("nebula.release") version "19.0.10"
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
 val windows_x64 by configurations.creating
 val linux_x64 by configurations.creating
 val macOS_x64 by configurations.creating
