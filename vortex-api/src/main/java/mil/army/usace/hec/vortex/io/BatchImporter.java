@@ -157,7 +157,6 @@ public abstract class BatchImporter {
             // Propagating Write Progress to UI
             if (VortexProperty.STATUS == property
                     && ImportableUnit.IMPORT_COMPLETE.equals(evt.getNewValue())) {
-                support.firePropertyChange(VortexProperty.STATUS.toString(), null, "Importing");
                 int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
                 support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, newValue);
             } else {

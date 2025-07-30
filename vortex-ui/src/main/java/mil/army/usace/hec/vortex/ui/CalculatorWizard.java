@@ -38,8 +38,6 @@ public class CalculatorWizard extends VortexWizard {
     private JPanel constantOrRasterSelectionPanel; // Step 2
     private JPanel calculationSelectionPanel; // Step 3 (Constant or Raster)
     private DestinationSelectionPanel destinationSelectionPanel; // Step 4
-    private JPanel progressBarPanel; // Step 5
-    private JPanel completedPanel; // Step 6
 
     private JRadioButton constantRadioButton;
     private JTextField sourceFileTextField;
@@ -51,7 +49,8 @@ public class CalculatorWizard extends VortexWizard {
     private JTextField rasterTextField;
     private ResamplingMethodSelectionPanel resamplingPanel;
     private JList<String> chosenSourceGridsList;
-    private JProgressBar progressBar;
+
+    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
 
     public CalculatorWizard(Frame frame) {
         super();
@@ -97,16 +96,14 @@ public class CalculatorWizard extends VortexWizard {
         initConstantOrRasterSelectionPanel();
         initCalculationSelectionPanel();
         initDestinationSelectionPanel();
-        initProgressBarPanel();
-        initCompletedPanel();
 
         /* Adding Step Content Panels to contentCards */
         contentCards.add("Step One", sourceFileSelectionPanel);
         contentCards.add("Step Two", constantOrRasterSelectionPanel);
         contentCards.add("Step Three", calculationSelectionPanel);
         contentCards.add("Step Four", destinationSelectionPanel);
-        contentCards.add("Step Five", progressBarPanel);
-        contentCards.add("Step Six", completedPanel);
+        contentCards.add("Step Five", initProgressBarPanel());
+        contentCards.add("Step Six", initCompletedPanel());
     }
 
     private void initializeButtonPanel() {
@@ -210,10 +207,7 @@ public class CalculatorWizard extends VortexWizard {
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clear Progress Panel */
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
+        progressMessagePanel.clear();
     }
 
     private boolean validateCurrentStep() {
@@ -593,6 +587,8 @@ public class CalculatorWizard extends VortexWizard {
         if (dataType != null && !dataType.isEmpty())
             writeOptions.put("dataType", dataType);
 
+        Runnable runnable;
+
         if (constantRadioButton.isSelected()) {
             String multiplyText = multiplyTextField.getText();
             String divideText = divideTextField.getText();
@@ -643,14 +639,14 @@ public class CalculatorWizard extends VortexWizard {
                 if (VortexProperty.PROGRESS == property) {
                     if (!(evt.getNewValue() instanceof Integer)) return;
                     int progressValue = (int) evt.getNewValue();
-                    progressBar.setIndeterminate(false);
-                    progressBar.setStringPainted(true);
-                    progressBar.setValue(progressValue);
-                    progressBar.setString(progressValue + "%");
+                    progressMessagePanel.setValue(progressValue);
+                } else {
+                    String value = String.valueOf(evt.getNewValue());
+                    progressMessagePanel.write(value);
                 }
             });
 
-            batchCalculator.process();
+            runnable = batchCalculator;
 
         } else {
             String pathToRaster = rasterTextField.getText();
@@ -674,46 +670,41 @@ public class CalculatorWizard extends VortexWizard {
                 if (VortexProperty.PROGRESS == property) {
                     if (!(evt.getNewValue() instanceof Integer)) return;
                     int progressValue = (int) evt.getNewValue();
-                    progressBar.setIndeterminate(false);
-                    progressBar.setStringPainted(true);
-                    progressBar.setValue(progressValue);
-                    progressBar.setString(progressValue + "%");
+                    progressMessagePanel.setValue(progressValue);
+                } else {
+                    String value = String.valueOf(evt.getNewValue());
+                    progressMessagePanel.write(value);
                 }
             });
 
-            batchGridCalculator.process();
+            runnable = batchGridCalculator;
         }
+
+        SwingWorker<Void, Void> task = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                runnable.run();
+                return null;
+            }
+        };
+
+        task.execute();
     }
 
-    private void initProgressBarPanel() {
-        progressBarPanel = new JPanel(new GridBagLayout());
-
-        JPanel insidePanel = new JPanel();
-        insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-
-        JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_Processing_L"));
-        JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        processingPanel.add(processingLabel);
-        insidePanel.add(processingPanel);
-
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        progressPanel.add(progressBar);
-        insidePanel.add(progressPanel);
-
-        progressBarPanel.add(insidePanel);
+    private JPanel initProgressBarPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private void submitStepFive() {
         // No operations needed
     }
 
-    private void initCompletedPanel() {
-        completedPanel = new JPanel(new GridBagLayout());
-        JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_Complete_L"));
-        completedPanel.add(completeLabel);
+    private JPanel initCompletedPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private List<String> getItemsInList(JList<String> list) {

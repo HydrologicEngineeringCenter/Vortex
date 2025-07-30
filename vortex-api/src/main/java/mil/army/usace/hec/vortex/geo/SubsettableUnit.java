@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class SubsettableUnit {
     private static final Logger logger = Logger.getLogger(SubsettableUnit.class.getName());
@@ -92,37 +91,41 @@ public class SubsettableUnit {
     }
 
     public void process() {
-        List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).toList();
 
-        grids.forEach(grid -> {
-            String gridWkt = grid.wkt();
+        for (VortexGrid grid : grids) {
+            try {
+                String gridWkt = grid.wkt();
 
-            if (ReferenceUtils.isGeographic(gridWkt)) {
-                logger.log(Level.SEVERE, String.format("Grid \"%s\" uses geographic coordinate system. Can not clip.", grid.fullName()));
-                return;
+                if (ReferenceUtils.isGeographic(gridWkt)) {
+                    logger.log(Level.SEVERE, String.format("Grid \"%s\" uses geographic coordinate system. Can not clip.", grid.fullName()));
+                    return;
+                }
+
+                ResamplingMethod resamplingMethod = ResamplingMethod.NEAREST_NEIGHBOR;
+
+                Resampler resampler = Resampler.builder()
+                        .grid(grid)
+                        .envelope(envelope)
+                        .envelopeWkt(envelopeWkt)
+                        .method(resamplingMethod)
+                        .build();
+
+                VortexGrid resampled = resampler.resample();
+
+                List<VortexData> data = new ArrayList<>();
+                data.add(resampled);
+
+                DataWriter writer = DataWriter.builder()
+                        .data(data)
+                        .destination(destination)
+                        .options(writeOptions)
+                        .build();
+
+                writer.write();
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, e, e::getMessage);
             }
-
-            ResamplingMethod resamplingMethod = ResamplingMethod.NEAREST_NEIGHBOR;
-
-            Resampler resampler = Resampler.builder()
-                    .grid(grid)
-                    .envelope(envelope)
-                    .envelopeWkt(envelopeWkt)
-                    .method(resamplingMethod)
-                    .build();
-
-            VortexGrid resampled = resampler.resample();
-
-            List<VortexData> data = new ArrayList<>();
-            data.add(resampled);
-
-            DataWriter writer = DataWriter.builder()
-                    .data(data)
-                    .destination(destination)
-                    .options(writeOptions)
-                    .build();
-
-            writer.write();
-        });
+        }
     }
 }

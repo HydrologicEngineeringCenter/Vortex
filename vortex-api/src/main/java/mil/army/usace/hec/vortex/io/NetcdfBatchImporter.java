@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.dss.DSSPathname;
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
@@ -18,7 +19,6 @@ import java.util.stream.Stream;
 class NetcdfBatchImporter extends BatchImporter {
     private static final Logger logger = Logger.getLogger(NetcdfBatchImporter.class.getName());
 
-    private final AtomicInteger totalDataCount = new AtomicInteger(0);
     private final AtomicInteger doneDataCount = new AtomicInteger(0);
 
     // Netcdf Batch Importer
@@ -36,7 +36,11 @@ class NetcdfBatchImporter extends BatchImporter {
 
         // Prepare NetCDF file to append
         List<DataReader> dataReaders = getDataReaders();
-        totalDataCount.set(dataReaders.stream().mapToInt(DataReader::getDtoCount).sum());
+        totalCount = dataReaders.stream().mapToInt(DataReader::getDtoCount).sum();
+
+        String templateBegin = MessageStore.getInstance().getMessage("import_begin");
+        String messageBegin = String.format(templateBegin, totalCount);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         Stream<VortexDataInterval> sortedRecordStream = dataReaders.parallelStream()
                 .map(DataReader::getDataIntervals)
@@ -64,7 +68,13 @@ class NetcdfBatchImporter extends BatchImporter {
         String timeMessage = "Batch import time: " + stopwatch;
         logger.info(timeMessage);
 
-        support.firePropertyChange(VortexProperty.STATUS.toString(), null, null);
+        String templateEnd = MessageStore.getInstance().getMessage("import_end");
+        String messageEnd = String.format(templateEnd, totalCount, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("import_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     private void writeBufferedData(Path destination, Map<String, String> writeOptions, Stream<VortexData> bufferedData) {
@@ -85,7 +95,6 @@ class NetcdfBatchImporter extends BatchImporter {
 
         // Update Progress
         double doneCount = doneDataCount.addAndGet(bufferedDataList.size());
-        double totalCount = totalDataCount.addAndGet(bufferedDataList.size());
         int progress = (int) ((doneCount / totalCount) * 100);
         support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progress);
         logger.info(() -> "Completed Buffered Write Count: " + bufferedDataList.size());

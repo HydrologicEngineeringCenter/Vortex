@@ -13,7 +13,7 @@ public enum MessageStore {
 
     MessageStore() {
         properties = new Properties();
-        try (InputStream input = getClass().getClassLoader().getResourceAsStream("api.text.properties")) {
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream("message.properties")) {
             properties.load(input);
         } catch (IOException e) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage(), e);

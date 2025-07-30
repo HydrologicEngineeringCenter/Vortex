@@ -1,7 +1,10 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -9,8 +12,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
-public class BatchSanitizer {
+public class BatchSanitizer implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(BatchSanitizer.class.getName());
+
     private final String pathToInput;
     private final Set<String> variables;
     private final double minimumThreshold;
@@ -116,7 +122,15 @@ public class BatchSanitizer {
         return new Builder();
     }
 
+    @Override
+    public void run() {
+        process();
+    }
+
     public void process(){
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
         List<SanitizableUnit> units = new ArrayList<>();
         variables.forEach(variable -> {
             if (DataReader.getVariables(pathToInput).contains(variable)) {
@@ -141,15 +155,32 @@ public class BatchSanitizer {
         });
 
         AtomicInteger processed = new AtomicInteger();
-        int total = units.size();
+        int totalCount = units.size();
+
+        String templateBegin = MessageStore.getInstance().getMessage("sanitizer_begin");
+        String messageBegin = String.format(templateBegin, totalCount);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+
         units.parallelStream().forEach(unit -> {
             unit.addPropertyChangeListener(evt -> {
-                int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+                int newValue = (int) (((float) processed.incrementAndGet() / totalCount) * 100);
                 support.firePropertyChange("progress", null, newValue);
             });
 
             unit.process();
         });
+
+        stopwatch.end();
+        String timeMessage = "Batch sanitizer time: " + stopwatch;
+        LOGGER.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("sanitizer_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("sanitizer_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

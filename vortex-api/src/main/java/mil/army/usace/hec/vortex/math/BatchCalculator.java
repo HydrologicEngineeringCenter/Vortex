@@ -1,7 +1,10 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -12,8 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class BatchCalculator {
-    private static final Logger logger = Logger.getLogger(Normalizer.class.getName());
+public class BatchCalculator implements Runnable {
+    private static final Logger logger = Logger.getLogger(BatchCalculator.class.getName());
 
     private final String pathToInput;
     private final Set<String> variables;
@@ -121,7 +124,15 @@ public class BatchCalculator {
         return new Builder();
     }
 
+    @Override
+    public void run() {
+        process();
+    }
+
     public void process(){
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
         List<CalculatableUnit> units = new ArrayList<>();
         variables.forEach(variable -> {
             if (DataReader.getVariables(pathToInput).contains(variable)) {
@@ -144,16 +155,34 @@ public class BatchCalculator {
                 units.add(unit);
             }
         });
+
         AtomicInteger processed = new AtomicInteger();
-        int total = units.size();
+        int totalCount = units.size();
+
+        String templateBegin = MessageStore.getInstance().getMessage("calculator_begin");
+        String messageBegin = String.format(templateBegin, totalCount);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+
         units.parallelStream().forEach(unit -> {
             unit.addPropertyChangeListener(evt -> {
-                int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+                int newValue = (int) (((float) processed.incrementAndGet() / totalCount) * 100);
                 support.firePropertyChange("progress", null, newValue);
             });
 
             unit.process();
         });
+
+        stopwatch.end();
+        String timeMessage = "Batch calculator time: " + stopwatch;
+        logger.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("calculator_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("calculator_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

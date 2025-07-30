@@ -1,7 +1,10 @@
 package mil.army.usace.hec.vortex.geo;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 import org.locationtech.jts.geom.Envelope;
 
 import java.beans.PropertyChangeListener;
@@ -9,8 +12,10 @@ import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
-public class BatchSubsetter {
+public class BatchSubsetter implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(BatchSubsetter.class.getName());
 
     private final String pathToInput;
     private final Set<String> variables;
@@ -95,7 +100,15 @@ public class BatchSubsetter {
         return new Builder();
     }
 
+    @Override
+    public void run() {
+        process();
+    }
+
     public void process(){
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+        
         List<SubsettableUnit> units = new ArrayList<>();
         variables.forEach(variable -> {
             if (DataReader.getVariables(pathToInput).contains(variable)) {
@@ -115,13 +128,31 @@ public class BatchSubsetter {
                units.add(unit);
             }
         });
+
         AtomicInteger processed = new AtomicInteger();
-        int total = units.size();
+        int totalCount = units.size();
+
+        String templateBegin = MessageStore.getInstance().getMessage("clipper_begin");
+        String messageBegin = String.format(templateBegin, totalCount);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+
         units.parallelStream().forEach(unit -> {
-            int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
+            int newValue = (int) (((float) processed.incrementAndGet() / totalCount) * 100);
             support.firePropertyChange("progress", null, newValue);
             unit.process();
         });
+
+        stopwatch.end();
+        String timeMessage = "Batch subset time: " + stopwatch;
+        LOGGER.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("clipper_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("clipper_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

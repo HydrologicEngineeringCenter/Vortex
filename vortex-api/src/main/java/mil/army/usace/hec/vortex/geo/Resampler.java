@@ -14,6 +14,7 @@ import javax.measure.Unit;
 import javax.measure.UnitConverter;
 import javax.measure.quantity.Length;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,7 +29,7 @@ public class Resampler {
     private final Quantity<Length> cellSize;
     private final ResamplingMethod method;
 
-    private static final Map<EnvelopeReprojection, Envelope> envelopeReprojections = new HashMap<>();
+    private static final Map<EnvelopeReprojection, Envelope> ENVELOPE_REPROJECTIONS = new ConcurrentHashMap<>();
 
     private Resampler(ResamplerBuilder builder){
         this.grid = builder.grid;
@@ -157,7 +158,7 @@ public class Resampler {
 
             EnvelopeReprojection envelopeReprojection = EnvelopeReprojection.of(env, envWkt, toWkt);
 
-            Envelope reprojected = envelopeReprojections.computeIfAbsent(
+            Envelope reprojected = ENVELOPE_REPROJECTIONS.computeIfAbsent(
                     envelopeReprojection, r -> envelopeReprojection.reproject()
             );
 

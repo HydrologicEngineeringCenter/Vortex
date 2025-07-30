@@ -1,18 +1,14 @@
 package mil.army.usace.hec.vortex.ui;
 
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.io.DataReader;
-import mil.army.usace.hec.vortex.io.DataWriter;
+import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.io.BatchExporter;
 import mil.army.usace.hec.vortex.io.ImageFileType;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
-import mil.army.usace.hec.vortex.util.ImageUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.logging.Level;
@@ -34,7 +30,8 @@ public class ImageExporterWizard extends VortexWizard {
 	private JTextField filenamePrefixTextField;
 	private JComboBox<ImageFileType> formatComboBox;
 	private JList<String> chosenSourceGridsList;
-	private JProgressBar progressBar;
+
+	private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
 	
 	private static final String NEXT = TextProperties.getInstance().getProperty("ImageExporterWiz_Next");
 	private static final boolean IS_VALID = true;
@@ -172,10 +169,7 @@ public class ImageExporterWizard extends VortexWizard {
 		filenamePrefixTextField.setText("");
 		
 		/* Clearing Step Three Panel */
-		progressBar.setIndeterminate(true);
-		progressBar.setStringPainted(false);
-		progressBar.setValue(0);
-		progressBar.setString("0%");
+		progressMessagePanel.clear();
 	}
 	
 	private boolean validateCurrentStep() {
@@ -399,26 +393,9 @@ public class ImageExporterWizard extends VortexWizard {
 	}
 	
 	private JPanel stepThreePanel() {
-		JPanel stepThreePanel = new JPanel(new GridBagLayout());
-		
-		JPanel insidePanel = new JPanel();
-		insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-		
-		JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_Processing_L"));
-		JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		processingPanel.add(processingLabel);
-		insidePanel.add(processingPanel);
-		
-		progressBar = new JProgressBar(0, 100);
-		progressBar.setIndeterminate(true);
-		progressBar.setStringPainted(false);
-		JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-		progressPanel.add(progressBar);
-		insidePanel.add(progressPanel);
-		
-		stepThreePanel.add(insidePanel);
-		
-		return stepThreePanel;
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(progressMessagePanel, BorderLayout.CENTER);
+		return panel;
 	}
 	
 	private void submitStepThree() { 
@@ -426,10 +403,9 @@ public class ImageExporterWizard extends VortexWizard {
 	}
 	
 	private JPanel stepFourPanel() {
-		JPanel stepFourPanel = new JPanel(new GridBagLayout());
-		JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_Complete_L"));
-		stepFourPanel.add(completeLabel);
-		return stepFourPanel;
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(progressMessagePanel, BorderLayout.CENTER);
+		return panel;
 	}
 	
 	private void exportImageTask() {
@@ -437,25 +413,36 @@ public class ImageExporterWizard extends VortexWizard {
 		List<String> chosenSourceGrids = getItemsInList(chosenSourceGridsList);
 		if (chosenSourceGrids == null) return;
 		Set<String> variables = new HashSet<>(chosenSourceGrids);
-		
-		variables.forEach(variable -> {
-			List<VortexData> grids = DataReader.builder()
-					.path(pathToSource)
-					.variable(variable)
-					.build()
-					.getDtos();
-			
-			grids.forEach(grid -> {
-				String fileName = ImageUtils.generateFileName(filenamePrefixTextField.getText(), (VortexGrid) grid, getFileType());
-				Path destination = Paths.get(destinationDirectoryTextField.getText(), fileName);
-				DataWriter writer = DataWriter.builder()
-						.data(grids)
-						.destination(destination)
-						.build();
-				
-				writer.write();
-			});
+
+		BatchExporter batchExporter = BatchExporter.builder()
+				.pathToSource(pathToSource)
+				.variables(variables)
+				.filenamePrefix(filenamePrefixTextField.getText())
+				.destinationDir(destinationDirectoryTextField.getText())
+				.imageFileType(getFileType())
+				.build();
+
+		batchExporter.addPropertyChangeListener(evt -> {
+			VortexProperty property = VortexProperty.parse(evt.getPropertyName());
+			if (VortexProperty.PROGRESS == property) {
+				if (!(evt.getNewValue() instanceof Integer)) return;
+				int progressValue = (int) evt.getNewValue();
+				progressMessagePanel.setValue(progressValue);
+			} else {
+				String value = String.valueOf(evt.getNewValue());
+				progressMessagePanel.write(value);
+			}
 		});
+
+		SwingWorker<Void, Void> task = new SwingWorker<>() {
+			@Override
+			protected Void doInBackground() {
+				batchExporter.run();
+				return null;
+			}
+		};
+
+		task.execute();
 	}
 	
 	private List<String> getItemsInList(JList<String> list) {

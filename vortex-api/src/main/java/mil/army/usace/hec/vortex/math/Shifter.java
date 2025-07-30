@@ -1,10 +1,9 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.Options;
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -18,7 +17,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Shifter {
+public class Shifter implements Runnable {
     private static final Logger logger = Logger.getLogger(Shifter.class.getName());
 
     private final String pathToFile;
@@ -151,9 +150,18 @@ public class Shifter {
         return new Builder();
     }
 
-    public void shift() {
+    @Override
+    public void run() {
+        shift();
+    }
 
-        logger.info(() -> "Time-shift started...");
+    public void shift() {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
+        String templateBegin = MessageStore.getInstance().getMessage("shifter_begin");
+        String messageBegin = String.format(templateBegin);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         AtomicInteger processed = new AtomicInteger();
         int total = variables.size();
@@ -187,6 +195,18 @@ public class Shifter {
             int newValue = (int) (((float) processed.incrementAndGet() / total) * 100);
             support.firePropertyChange("progress", null, newValue);
         });
+
+        stopwatch.end();
+        String timeMessage = "Batch shift time: " + stopwatch;
+        logger.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("shifter_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("shifter_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     static VortexGrid shift(VortexGrid dto, Duration shiftStart, Duration shiftEnd) {

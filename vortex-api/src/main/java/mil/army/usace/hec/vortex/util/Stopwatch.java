@@ -34,6 +34,6 @@ public class Stopwatch {
     @Override
     public String toString() {
         long seconds = getSeconds();
-        return String.format("%d:%02d:%02d%n", seconds / 3600, (seconds % 3600) / 60, (seconds % 60));
+        return String.format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, (seconds % 60));
     }
 }

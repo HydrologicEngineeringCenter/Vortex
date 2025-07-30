@@ -21,6 +21,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class GridToPointWizard extends VortexWizard {
+    private static final Logger logger = Logger.getLogger(GridToPointWizard.class.getName());
+
     private final Frame frame;
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
@@ -42,9 +44,8 @@ public class GridToPointWizard extends VortexWizard {
     private JTextField sourceFileTextField;
     private JList<String> chosenSourceGridsList;
     private JComboBox<String> fieldComboBox;
-    private JProgressBar progressBar;
 
-    private static final Logger logger = Logger.getLogger(GridToPointWizard.class.getName());
+    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
 
     public GridToPointWizard(Frame frame) {
         super();
@@ -193,10 +194,7 @@ public class GridToPointWizard extends VortexWizard {
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Five Panel */
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
+        progressMessagePanel.clear();
     }
 
     private boolean validateCurrentStep() {
@@ -518,37 +516,28 @@ public class GridToPointWizard extends VortexWizard {
             if (VortexProperty.PROGRESS == property) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
-                progressBar.setIndeterminate(false);
-                progressBar.setStringPainted(true);
-                progressBar.setValue(progressValue);
-                progressBar.setString(progressValue + "%");
+                progressMessagePanel.setValue(progressValue);
+            } else {
+                String value = String.valueOf(evt.getNewValue());
+                progressMessagePanel.write(value);
             }
         });
 
-        converter.convert();
+        SwingWorker<Void, Void> task = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                converter.run();
+                return null;
+            }
+        };
+
+        task.execute();
     }
 
     private JPanel stepFivePanel() {
-        JPanel stepFivePanel = new JPanel(new GridBagLayout());
-
-        JPanel insidePanel = new JPanel();
-        insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-
-        JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWiz_Processing_L"));
-        JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        processingPanel.add(processingLabel);
-        insidePanel.add(processingPanel);
-
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        progressPanel.add(progressBar);
-        insidePanel.add(progressPanel);
-
-        stepFivePanel.add(insidePanel);
-
-        return stepFivePanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private boolean validateStepFive() { return true; }
@@ -556,10 +545,9 @@ public class GridToPointWizard extends VortexWizard {
     private void submitStepFive() {}
 
     private JPanel stepSixPanel() {
-        JPanel stepSixPanel = new JPanel(new GridBagLayout());
-        JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWiz_Complete_L"));
-        stepSixPanel.add(completeLabel);
-        return stepSixPanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private void dataSourceBrowseAction(FileBrowseButton fileBrowseButton) {

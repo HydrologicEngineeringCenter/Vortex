@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.logging.*;
 
 public class NormalizerWizard extends VortexWizard {
+    private static final Logger logger = Logger.getLogger(NormalizerWizard.class.getName());
+
     private final Frame frame;
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
@@ -37,11 +39,10 @@ public class NormalizerWizard extends VortexWizard {
     private JList<String> chosenSourceGridsList;
     private JList<String> availableNormalGridsList, chosenNormalGridsList;
     private JComboBox<String> timeUnitComboBox;
-    private JProgressBar progressBar;
 
     private ZonedDateTime startDateTime, endDateTime;
 
-    private static final Logger logger = Logger.getLogger(NormalizerWizard.class.getName());
+    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
 
     public NormalizerWizard(Frame frame) {
         super();
@@ -192,10 +193,7 @@ public class NormalizerWizard extends VortexWizard {
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Five Panel */
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
+        progressMessagePanel.clear();
     }
 
     private boolean validateCurrentStep() {
@@ -789,29 +787,43 @@ public class NormalizerWizard extends VortexWizard {
             if (VortexProperty.PROGRESS == property) {
                 if(!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
-                progressBar.setIndeterminate(false);
-                progressBar.setStringPainted(true);
-                progressBar.setValue(progressValue);
-                progressBar.setString(progressValue + "%");
+                progressMessagePanel.setValue(progressValue);
+            } else {
+                String value = String.valueOf(evt.getNewValue());
+                progressMessagePanel.write(value);
             }
         });
 
-        normalizer.normalize();
+        SwingWorker<Void, Void> task = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                normalizer.run();
+                return null;
+            }
+
+            @Override
+            public void done() {
+                handlers.forEach(Handler::close);
+                progressMessagePanel.flush();
+            }
+        };
+
+        task.execute();
     }
 
     private List<Handler> handlersForNormalizer() {
         /* Handler to get Normalizer's Log Messages */
-        SimpleFormatter formatter = new SimpleFormatter(){
+        SimpleFormatter formatter = new SimpleFormatter() {
             private static final String format = "%s %s %s\n";
 
             @Override
             public synchronized String format(LogRecord lr) {
-                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
                         .withZone(ZoneId.systemDefault());
 
                 return String.format(format,
                         formatter.format(Instant.now()),
-                        lr.getLevel().getLocalizedName(),
+                        "[" + lr.getLevel().getLocalizedName() + "]",
                         lr.getMessage()
                 );
             }
@@ -820,10 +832,9 @@ public class NormalizerWizard extends VortexWizard {
         StreamHandler handler = new StreamHandler(new OutputStream() {
             @Override
             public void write(int b) {
-                @SuppressWarnings("unused")
-                String s = String.valueOf((char)b);
+                SwingUtilities.invokeLater(() -> progressMessagePanel.write(b));
             }
-        }, formatter){
+        }, formatter) {
 
             // flush on each publish:
             @Override
@@ -831,8 +842,8 @@ public class NormalizerWizard extends VortexWizard {
                 super.publish(record);
                 flush();
             }
-
         };
+
         List<Handler> handlers = new ArrayList<>();
         handlers.add(handler);
 
@@ -840,26 +851,9 @@ public class NormalizerWizard extends VortexWizard {
     }
 
     private JPanel stepFivePanel() {
-        JPanel stepFivePanel = new JPanel(new GridBagLayout());
-
-        JPanel insidePanel = new JPanel();
-        insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-
-        JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_Processing_L"));
-        JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        processingPanel.add(processingLabel);
-        insidePanel.add(processingPanel);
-
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        progressPanel.add(progressBar);
-        insidePanel.add(progressPanel);
-
-        stepFivePanel.add(insidePanel);
-
-        return stepFivePanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private boolean validateStepFive() { return true; }
@@ -867,10 +861,9 @@ public class NormalizerWizard extends VortexWizard {
     private void submitStepFive() {}
 
     private JPanel stepSixPanel() {
-        JPanel stepSixPanel = new JPanel(new GridBagLayout());
-        JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_Complete_L"));
-        stepSixPanel.add(completeLabel);
-        return stepSixPanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private List<String> getItemsInList(JList<String> list) {

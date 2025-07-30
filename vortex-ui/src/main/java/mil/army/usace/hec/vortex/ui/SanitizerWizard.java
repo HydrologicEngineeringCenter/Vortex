@@ -15,6 +15,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SanitizerWizard extends VortexWizard {
+    private static final Logger logger = Logger.getLogger(SanitizerWizard.class.getName());
+
     private final Frame frame;
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
@@ -32,9 +34,8 @@ public class SanitizerWizard extends VortexWizard {
     private JTextField upperThresholdTextField;
     private JTextField upperReplacementTextField;
     private JList<String> chosenSourceGridsList;
-    private JProgressBar progressBar;
 
-    private static final Logger logger = Logger.getLogger(SanitizerWizard.class.getName());
+    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
 
     public SanitizerWizard(Frame frame) {
         super();
@@ -176,10 +177,7 @@ public class SanitizerWizard extends VortexWizard {
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Four Panel */
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
+        progressMessagePanel.clear();
     }
 
     private boolean validateCurrentStep() {
@@ -505,37 +503,28 @@ public class SanitizerWizard extends VortexWizard {
             if (VortexProperty.PROGRESS == property) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
-                progressBar.setIndeterminate(false);
-                progressBar.setStringPainted(true);
-                progressBar.setValue(progressValue);
-                progressBar.setString(progressValue + "%");
+                progressMessagePanel.setValue(progressValue);
+            } else {
+                String value = String.valueOf(evt.getNewValue());
+                progressMessagePanel.write(value);
             }
         });
 
-        batchSanitizer.process();
+        SwingWorker<Void, Void> task = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                batchSanitizer.run();
+                return null;
+            }
+        };
+
+        task.execute();
     }
 
     private JPanel stepFourPanel() {
-        JPanel stepFourPanel = new JPanel(new GridBagLayout());
-
-        JPanel insidePanel = new JPanel();
-        insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-
-        JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_Processing_L"));
-        JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        processingPanel.add(processingLabel);
-        insidePanel.add(processingPanel);
-
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        progressPanel.add(progressBar);
-        insidePanel.add(progressPanel);
-
-        stepFourPanel.add(insidePanel);
-
-        return stepFourPanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private boolean validateStepFour() { return true; }
@@ -543,10 +532,9 @@ public class SanitizerWizard extends VortexWizard {
     private void submitStepFour() {}
 
     private JPanel stepFivePanel() {
-        JPanel stepFivePanel = new JPanel(new GridBagLayout());
-        JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_Complete_L"));
-        stepFivePanel.add(completeLabel);
-        return stepFivePanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private List<String> getItemsInList(JList<String> list) {

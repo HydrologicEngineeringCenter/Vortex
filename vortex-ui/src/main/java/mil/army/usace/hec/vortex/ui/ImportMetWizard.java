@@ -10,10 +10,7 @@ import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -35,8 +33,7 @@ public class ImportMetWizard extends VortexWizard {
     private Container contentCards;
     private CardLayout cardLayout;
     private JButton backButton, nextButton, cancelButton;
-    private JLabel processingLabel;
-    private JProgressBar progressBar;
+
     private int cardNumber;
 
     private JList<String> addFilesList, leftVariablesList, rightVariablesList;
@@ -45,7 +42,10 @@ public class ImportMetWizard extends VortexWizard {
     private CellSizeUnitsComboBox targetCellSizeUnitsComboBox;
     private JTextArea targetWktTextArea;
     private ResamplingMethodSelectionPanel resamplingPanel;
-    private JLabel importStatusMessageLabel;
+
+    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
+
+    private final AtomicBoolean importComplete = new AtomicBoolean();
 
     public ImportMetWizard (Frame frame) {
         super();
@@ -163,6 +163,8 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private void restartWizard() {
+        importComplete.set(false);
+
         cardNumber = 0;
         cardLayout.first(contentCards);
 
@@ -196,12 +198,8 @@ public class ImportMetWizard extends VortexWizard {
         destinationSelectionPanel.getFieldB().setText("");
         destinationSelectionPanel.getFieldF().setText("");
 
-        /* Clearing Step Five Panel */
-        processingLabel.setText(TextProperties.getInstance().getProperty("ImportMetWizProcessing_L"));
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
+        /* Clear progress message panel */
+        progressMessagePanel.clear();
     }
 
     private boolean validateCurrentStep() {
@@ -467,32 +465,36 @@ public class ImportMetWizard extends VortexWizard {
             VortexProperty property = VortexProperty.parse(evt.getPropertyName());
             if (VortexProperty.STATUS == property) {
                 String value = String.valueOf(evt.getNewValue());
-                String message = TextProperties.getInstance().getProperty(value);
-                processingLabel.setText(message);
+                progressMessagePanel.write(value);
             }
 
             if (VortexProperty.PROGRESS == property) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
-                progressBar.setIndeterminate(false);
-                progressBar.setStringPainted(true);
-                progressBar.setValue(progressValue);
-                progressBar.setString(progressValue + "%");
+                progressMessagePanel.setValue(progressValue);
             }
 
             if (VortexProperty.ERROR == property) {
                 String errorMessage = String.valueOf(evt.getNewValue());
-                JOptionPane.showMessageDialog(this, errorMessage,
-                        "Error: Failed to write", JOptionPane.ERROR_MESSAGE);
-                setImportStatusMessageLabel(false);
+                progressMessagePanel.write(errorMessage);
             }
 
             if (VortexProperty.COMPLETE == property) {
-                setImportStatusMessageLabel(true);
+                String value = String.valueOf(evt.getNewValue());
+                progressMessagePanel.write(value);
+                importComplete.set(true);
             }
         });
 
-        importer.process();
+        SwingWorker<Void, Void> task = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                importer.process();
+                return null;
+            }
+        };
+
+        task.execute();
     }
 
     private boolean unknownStepError() {
@@ -667,39 +669,15 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private JPanel stepFivePanel() {
-        JPanel stepFivePanel = new JPanel(new GridBagLayout());
-
-        JPanel insidePanel = new JPanel();
-        insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-
-        processingLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizProcessing_L"));
-        JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        processingPanel.add(processingLabel);
-        insidePanel.add(processingPanel);
-
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        progressPanel.add(progressBar);
-        insidePanel.add(progressPanel);
-
-        stepFivePanel.add(insidePanel);
-
-        return stepFivePanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel stepSixPanel() {
-        JPanel stepSixPanel = new JPanel(new GridBagLayout());
-        importStatusMessageLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizComplete_L"));
-        stepSixPanel.add(importStatusMessageLabel);
-        return stepSixPanel;
-    }
-
-    private void setImportStatusMessageLabel(boolean isImportSuccessful) {
-        String messageKey = isImportSuccessful ? "ImportMetWizComplete_L" : "ImportMetWizFailed_L";
-        String message = TextProperties.getInstance().getProperty(messageKey);
-        importStatusMessageLabel.setText(message);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private JPanel dataSourceSectionPanel() {
@@ -1065,9 +1043,9 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private void closeAction() {
-        ImportMetWizard.this.setVisible(false);
-        ImportMetWizard.this.dispose();
-        boolean isSuccessful = importStatusMessageLabel.getText().equals(TextProperties.getInstance().getProperty("ImportMetWizComplete_L"));
+        setVisible(false);
+        dispose();
+        boolean isSuccessful = importComplete.get();
         if (isSuccessful) {
             String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
             FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));

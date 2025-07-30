@@ -1,10 +1,12 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -19,13 +21,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static java.lang.String.format;
-
-public class Normalizer {
+public class Normalizer implements Runnable {
 
     private static final Logger logger = Logger.getLogger(Normalizer.class.getName());
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm").withZone(ZoneId.of("UTC"));
@@ -53,8 +52,7 @@ public class Normalizer {
         this.writeOptions = builder.writeOptions;
         this.support = new PropertyChangeSupport(this);
 
-        logger.setLevel(Level.INFO);
-        builder.handlers.forEach(handler -> logger.addHandler(handler));
+        builder.handlers.forEach(logger::addHandler);
     }
 
     public static class Builder {
@@ -67,7 +65,7 @@ public class Normalizer {
         private Duration interval;
         private Path destination;
         private final Map<String, String> writeOptions = new HashMap<>();
-        private List<Handler> handlers = new ArrayList<>();
+        private final List<Handler> handlers = new ArrayList<>();
 
         public Builder pathToSource (final String pathToSource){
             this.pathToSource = pathToSource;
@@ -137,9 +135,17 @@ public class Normalizer {
 
     public static Builder builder() {return new Builder();}
 
-    public void normalize(){
+    @Override
+    public void run() {
+        normalize();
+    }
 
-        logger.info(() -> "Normalization started...");
+    public void normalize(){
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
+        String messageBegin = MessageStore.INSTANCE.getMessage("normalizer_begin");
+        logger.info(() -> messageBegin);
 
         List<VortexData> source = new ArrayList<>();
         sourceVariables.forEach(variable -> source.addAll(
@@ -174,7 +180,9 @@ public class Normalizer {
                     .collect(Collectors.toList());
 
             if (sourceFiltered.isEmpty()) {
-                logger.warning(() -> format("No source grids for period %s to %s", formatter.format(start), formatter.format(end)));
+                String template = MessageStore.INSTANCE.getMessage("normalizer_empty_spatial_grids");
+                String message = String.format(template, formatter.format(start), formatter.format(end));
+                logger.warning(() -> message);
             }
 
             List<VortexGrid> normalsFiltered = normals.stream()
@@ -186,7 +194,9 @@ public class Normalizer {
                     .toList();
 
             if (normalsFiltered.isEmpty()){
-                logger.warning(() -> format("No normals grids for period %s to %s", formatter.format(start), formatter.format(end)));
+                String template = MessageStore.INSTANCE.getMessage("normalizer_empty_volume_grids");
+                String message = String.format(template, formatter.format(start), formatter.format(end));
+                logger.warning(() -> message);
             }
 
             List<VortexGrid> output = normalize(sourceFiltered, normalsFiltered);
@@ -214,7 +224,15 @@ public class Normalizer {
             intervalStart.set(end);
             count.addAndGet(output.size());
         }
-        logger.info(() -> format("Normalization complete: %s grids normalized.", count.get()));
+
+        String templateEnd = MessageStore.INSTANCE.getMessage("normalizer_end");
+        String messageEnd = String.format(templateEnd, count.get(), destination);
+        logger.info(() -> messageEnd);
+
+        stopwatch.end();
+        String templateTime = MessageStore.INSTANCE.getMessage("normalizer_time");
+        String timeMessage = String.format(templateTime, stopwatch);
+        logger.info(timeMessage);
     }
 
     static List<VortexGrid> normalize(List<VortexGrid> source, List<VortexGrid> normals) {

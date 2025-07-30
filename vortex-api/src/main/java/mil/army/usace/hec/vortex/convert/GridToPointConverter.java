@@ -1,14 +1,12 @@
 package mil.army.usace.hec.vortex.convert;
 
-import mil.army.usace.hec.vortex.Options;
-import mil.army.usace.hec.vortex.VortexData;
-import mil.army.usace.hec.vortex.VortexGrid;
-import mil.army.usace.hec.vortex.VortexPoint;
+import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.ZonalStatistics;
 import mil.army.usace.hec.vortex.geo.ZonalStatisticsCalculator;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -17,8 +15,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
-public class GridToPointConverter {
+public class GridToPointConverter implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(GridToPointConverter.class.getName());
 
     private final String pathToGrids;
     private final Set<String> variables;
@@ -116,7 +116,15 @@ public class GridToPointConverter {
 
     public static GridToPointConverterBuilder builder() {return new GridToPointConverterBuilder();}
 
+    @Override
+    public void run() {
+        convert();
+    }
+
     public void convert() {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
         VortexGrid grid0 = (VortexGrid) DataReader.builder()
                 .path(pathToGrids)
                 .variable(variables.iterator().next())
@@ -131,7 +139,12 @@ public class GridToPointConverter {
         List<VortexData> points = new ArrayList<>();
 
         int totalCount = variables.size();
-        AtomicInteger doneCount = new AtomicInteger();
+
+        String templateBegin = MessageStore.getInstance().getMessage("grid_to_point_converter_begin");
+        String messageBegin = String.format(templateBegin, totalCount);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+
+        AtomicInteger processed = new AtomicInteger();
 
         variables.forEach(variable -> {
             DataReader reader = DataReader.builder()
@@ -170,7 +183,7 @@ public class GridToPointConverter {
                     points.add(point);
                 });
             }
-            int newValue = (int) (((float) doneCount.incrementAndGet() / totalCount) * 100);
+            int newValue = (int) (((float) processed.incrementAndGet() / totalCount) * 100);
             support.firePropertyChange("progress", null, newValue);
         });
 
@@ -181,6 +194,18 @@ public class GridToPointConverter {
                 .build();
 
         writer.write();
+
+        stopwatch.end();
+        String timeMessage = "Batch grid-to-point time: " + stopwatch;
+        LOGGER.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("grid_to_point_converter_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("grid_to_point_converter_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {

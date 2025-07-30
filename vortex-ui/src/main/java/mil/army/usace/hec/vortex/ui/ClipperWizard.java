@@ -30,7 +30,8 @@ public class ClipperWizard extends VortexWizard {
     private JTextField dataSourceTextField;
     private JTextField sourceFileTextField;
     private JList<String> chosenSourceGridsList;
-    private JProgressBar progressBar;
+
+    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
 
     private static final Logger logger = Logger.getLogger(ClipperWizard.class.getName());
 
@@ -171,10 +172,7 @@ public class ClipperWizard extends VortexWizard {
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Four Panel */
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
+        progressMessagePanel.clear();
     }
 
     private boolean validateCurrentStep() {
@@ -362,37 +360,28 @@ public class ClipperWizard extends VortexWizard {
             if (VortexProperty.PROGRESS == property) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
-                progressBar.setIndeterminate(false);
-                progressBar.setStringPainted(true);
-                progressBar.setValue(progressValue);
-                progressBar.setString(progressValue + "%");
+                progressMessagePanel.setValue(progressValue);
+            } else {
+                String value = String.valueOf(evt.getNewValue());
+                progressMessagePanel.write(value);
             }
         });
 
-        batchSubsetter.process();
+        SwingWorker<Void, Void> task = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                batchSubsetter.run();
+                return null;
+            }
+        };
+
+        task.execute();
     }
 
     private JPanel stepFourPanel() {
-        JPanel stepFourPanel = new JPanel(new GridBagLayout());
-
-        JPanel insidePanel = new JPanel();
-        insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-
-        JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("ClipperWiz_Processing_L"));
-        JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        processingPanel.add(processingLabel);
-        insidePanel.add(processingPanel);
-
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        progressPanel.add(progressBar);
-        insidePanel.add(progressPanel);
-
-        stepFourPanel.add(insidePanel);
-
-        return stepFourPanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private boolean validateStepFour() { return true; }
@@ -400,10 +389,9 @@ public class ClipperWizard extends VortexWizard {
     private void submitStepFour() {}
 
     private JPanel stepFivePanel() {
-        JPanel stepFivePanel = new JPanel(new GridBagLayout());
-        JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("ClipperWiz_Complete_L"));
-        stepFivePanel.add(completeLabel);
-        return stepFivePanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private void dataSourceBrowseAction(FileBrowseButton fileBrowseButton) {
