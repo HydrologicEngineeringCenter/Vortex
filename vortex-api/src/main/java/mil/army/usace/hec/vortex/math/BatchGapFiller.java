@@ -1,9 +1,12 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -11,6 +14,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,7 +28,7 @@ public class BatchGapFiller implements Runnable {
     final Map<String, String> writeOptions;
     private final GapFillMethod method;
 
-    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    final PropertyChangeSupport support = new PropertyChangeSupport(this);
 
     BatchGapFiller(Builder builder) {
         source = builder.source;
@@ -93,8 +97,18 @@ public class BatchGapFiller implements Runnable {
         return new Builder();
     }
 
+    @Override
     public void run() {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
+        String templateBegin = MessageStore.getInstance().getMessage("gap_filler_begin");
+        String messageBegin = String.format(templateBegin);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+
         Set<String> datasetVars = DataReader.getVariables(source);
+
+        AtomicInteger processed = new AtomicInteger();
 
         for (String variable : variables) {
             if (datasetVars.contains(variable)) {
@@ -120,6 +134,7 @@ public class BatchGapFiller implements Runnable {
                                 .build();
 
                         writer.write();
+                        processed.incrementAndGet();
                     }
 
                 } catch (Exception e) {
@@ -127,6 +142,21 @@ public class BatchGapFiller implements Runnable {
                 }
             }
         }
+
+        // The total count happens while processing for computational efficiency
+        support.firePropertyChange("progress", null, 100);
+
+        stopwatch.end();
+        String timeMessage = "Batch gap-filler time: " + stopwatch;
+        LOGGER.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("gap_filler_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("gap_filler_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     void condenseVariables() {

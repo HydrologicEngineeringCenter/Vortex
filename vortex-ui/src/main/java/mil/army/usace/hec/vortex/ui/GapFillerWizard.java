@@ -9,6 +9,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
@@ -21,9 +23,9 @@ public class GapFillerWizard extends VortexWizard {
     private static final int ROW_HEIGHT = (int) new JTextField().getPreferredSize().getHeight();
     private static final int PAD = 2;
 
-    private static final String FOCAL_MEAN_LABEL = TextProperties.getInstance().getProperty("GapFillerWiz_FocalMean_L");
-    private static final String LINEAR_INTERP_LABEL = TextProperties.getInstance().getProperty("GapFillerWiz_LinearInterp_L");
-    private static final String INSERT_TIME_STEPS_LABEL = TextProperties.getInstance().getProperty("GapFillerWiz_TimeSteps_L");
+    private static final String FOCAL_MEAN_LABEL = TextProperties.INSTANCE.getProperty("GapFillerWiz_FocalMean_L");
+    private static final String LINEAR_INTERP_LABEL = TextProperties.INSTANCE.getProperty("GapFillerWiz_LinearInterp_L");
+    private static final String INSERT_TIME_STEPS_LABEL = TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_L");
 
     private final Frame frame;
     private SourceFileSelectionPanel sourceFileSelectionPanel;
@@ -38,19 +40,20 @@ public class GapFillerWizard extends VortexWizard {
 
     private JTextField sourceFileTextField;
     private JList<String> chosenSourceGridsList;
-    private JProgressBar progressBar;
 
     private ButtonGroup buttonGroup;
 
     private JCheckBox insertTimeStepsCheckBox;
 
+    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
+
     public GapFillerWizard(Frame frame) {
         super();
         this.frame = frame;
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter() {
+        addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
+            public void windowClosing(WindowEvent e) {
                 closeAction();
             }
         });
@@ -58,7 +61,7 @@ public class GapFillerWizard extends VortexWizard {
 
     public void buildAndShowUI() {
         /* Setting Wizard's names and layout */
-        setTitle(TextProperties.getInstance().getProperty("GapFillerWiz_Title"));
+        setTitle(TextProperties.INSTANCE.getProperty("GapFillerWiz_Title"));
         setIconImage(IconResources.loadImage("images/vortex_black.png"));
         setMinimumSize(new Dimension(600, 400));
         setLocation(getPersistedLocation());
@@ -96,25 +99,25 @@ public class GapFillerWizard extends VortexWizard {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
         /* Back Button */
-        backButton = new JButton(TextProperties.getInstance().getProperty("GapFillerWiz_Back"));
-        backButton.setToolTipText(TextProperties.getInstance().getProperty("GapFillerWiz_Back_TT"));
+        backButton = new JButton(TextProperties.INSTANCE.getProperty("GapFillerWiz_Back"));
+        backButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Back_TT"));
         backButton.setEnabled(false);
         backButton.addActionListener(evt -> backAction());
 
         /* Next Button */
-        nextButton = new JButton(TextProperties.getInstance().getProperty("GapFillerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("GapFillerWiz_Next_TT"));
+        nextButton = new JButton(TextProperties.INSTANCE.getProperty("GapFillerWiz_Next"));
+        nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Next_TT"));
         nextButton.addActionListener(evt -> {
-            if (nextButton.getText().equals(TextProperties.getInstance().getProperty("GapFillerWiz_Restart"))) {
+            if (nextButton.getText().equals(TextProperties.INSTANCE.getProperty("GapFillerWiz_Restart"))) {
                 restartAction();
-            } else if (nextButton.getText().equals(TextProperties.getInstance().getProperty("GapFillerWiz_Next"))) {
+            } else if (nextButton.getText().equals(TextProperties.INSTANCE.getProperty("GapFillerWiz_Next"))) {
                 nextAction();
             }
         });
 
         /* Cancel Button */
-        cancelButton = new JButton(TextProperties.getInstance().getProperty("GapFillerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("GapFillerWiz_Cancel_TT"));
+        cancelButton = new JButton(TextProperties.INSTANCE.getProperty("GapFillerWiz_Cancel"));
+        cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Cancel_TT"));
         cancelButton.addActionListener(evt -> closeAction());
 
         /* Adding Buttons to NavigationPanel */
@@ -139,11 +142,11 @@ public class GapFillerWizard extends VortexWizard {
 
         if (cardNumber == 5) {
             backButton.setVisible(false);
-            nextButton.setText(TextProperties.getInstance().getProperty("GapFillerWiz_Restart"));
-            nextButton.setToolTipText(TextProperties.getInstance().getProperty("GapFillerWiz_Restart_TT"));
+            nextButton.setText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Restart"));
+            nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Restart_TT"));
             nextButton.setEnabled(true);
-            cancelButton.setText(TextProperties.getInstance().getProperty("GapFillerWiz_Close"));
-            cancelButton.setToolTipText(TextProperties.getInstance().getProperty("GapFillerWiz_Close_TT"));
+            cancelButton.setText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Close"));
+            cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Close_TT"));
         } // If: Step Five (Change Cancel to Close)
 
         cardLayout.next(contentCards);
@@ -166,11 +169,11 @@ public class GapFillerWizard extends VortexWizard {
         backButton.setEnabled(false);
 
         nextButton.setEnabled(true);
-        nextButton.setText(TextProperties.getInstance().getProperty("GapFillerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("GapFillerWiz_Next_TT"));
+        nextButton.setText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Next"));
+        nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Next_TT"));
 
-        cancelButton.setText(TextProperties.getInstance().getProperty("GapFillerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("GapFillerWiz_Cancel_TT"));
+        cancelButton.setText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Cancel"));
+        cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Cancel_TT"));
 
         /* Clearing Step One Panel */
         sourceFileSelectionPanel.clear();
@@ -188,10 +191,7 @@ public class GapFillerWizard extends VortexWizard {
         destinationSelectionPanel.getFieldF().setText("");
 
         /* Clearing Step Five Panel */
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        progressBar.setValue(0);
-        progressBar.setString("0%");
+        progressMessagePanel.clear();
     }
 
     private boolean validateCurrentStep() {
@@ -257,8 +257,8 @@ public class GapFillerWizard extends VortexWizard {
         JPanel spatialFillPanel = new JPanel();
         spatialFillPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-        String spatialFillTitle = TextProperties.getInstance().getProperty("GapFillerWiz_SpatialFill_Title");
-        String spatialFillTT = TextProperties.getInstance().getProperty("GapFillerWiz_SpatialFill_TT");
+        String spatialFillTitle = TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_Title");
+        String spatialFillTT = TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_TT");
 
         spatialFillPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), spatialFillTitle));
@@ -274,8 +274,8 @@ public class GapFillerWizard extends VortexWizard {
         JPanel temporalFillPanel = new JPanel();
         temporalFillPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-        String temporalFillTitle = TextProperties.getInstance().getProperty("GapFillerWiz_TemporalFill_Title");
-        String temporalFillTT = TextProperties.getInstance().getProperty("GapFillerWiz_TemporalFill_TT");
+        String temporalFillTitle = TextProperties.INSTANCE.getProperty("GapFillerWiz_TemporalFill_Title");
+        String temporalFillTT = TextProperties.INSTANCE.getProperty("GapFillerWiz_TemporalFill_TT");
 
         temporalFillPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), temporalFillTitle));
@@ -303,12 +303,12 @@ public class GapFillerWizard extends VortexWizard {
     }
 
     private static JPanel initInterpolationPanel() {
-        String selectInterpolationText = "Select an Interpolation Method";
+        String selectInterpolationText = TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_Select_L");
         JLabel selectInterpolationLabel = new JLabel(selectInterpolationText);
         selectInterpolationLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectInterpolationLabel.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
 
-        String selectInterpolationDescText = "Interpolations will be performed on gridded records that already exist.";
+        String selectInterpolationDescText = TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_Select_Desc");
         JLabel selectInterpolationDescLabel = new JLabel(selectInterpolationDescText);
         selectInterpolationDescLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectInterpolationDescLabel.setBorder(new EmptyBorder(PAD, 4 * PAD, PAD, PAD));
@@ -330,8 +330,9 @@ public class GapFillerWizard extends VortexWizard {
     private boolean validateStepTwo() {
         //Is the lower threshold box checked
         if (getSelectedButtonText(buttonGroup) == null) {
-            JOptionPane.showMessageDialog(this, "One gap fill method must be selected.",
-                    "Error: Invalid Selection", JOptionPane.ERROR_MESSAGE);
+            String title = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoMethodSelected_Title");
+            String message = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoMethodSelected_Error");
+            JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -341,18 +342,18 @@ public class GapFillerWizard extends VortexWizard {
     }
 
     private JPanel stepThreePanel() {
-        String selectAddMissingText = "Add records for missing time steps";
+        String selectAddMissingText = TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_Option_L");
         JLabel selectAddMissingLabel = new JLabel(selectAddMissingText);
         selectAddMissingLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectAddMissingLabel.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
 
-        String selectAddMissingDescText = "If selected, gridded records will be inserted at missing time-steps.";
+        String selectAddMissingDescText = TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_Option_Desc");
         JLabel selectAddMissingDescLabel = new JLabel(selectAddMissingDescText);
         selectAddMissingDescLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectAddMissingDescLabel.setBorder(new EmptyBorder(PAD, 4 * PAD, PAD, PAD));
 
         // Initialize time steps panel
-        String timeStepsTT = TextProperties.getInstance().getProperty("GapFillerWiz_TimeSteps_TT");
+        String timeStepsTT = TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_TT");
 
         insertTimeStepsCheckBox = new JCheckBox(INSERT_TIME_STEPS_LABEL);
         insertTimeStepsCheckBox.setToolTipText(timeStepsTT);
@@ -386,8 +387,9 @@ public class GapFillerWizard extends VortexWizard {
     private boolean validateStepFour() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if (destinationFile == null || destinationFile.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            String title = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoDestination_Title");
+            String message = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoDestination_Error");
+            JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
@@ -468,14 +470,15 @@ public class GapFillerWizard extends VortexWizard {
             if (evt.getPropertyName().equalsIgnoreCase("progress")) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
                 int progressValue = (int) evt.getNewValue();
-                progressBar.setIndeterminate(false);
-                progressBar.setStringPainted(true);
-                progressBar.setValue(progressValue);
-                progressBar.setString(progressValue + "%");
+                progressMessagePanel.setValue(progressValue);
+            } else {
+                String value = String.valueOf(evt.getNewValue());
+                progressMessagePanel.write(value);
             }
         });
 
-        batchGapFiller.run();
+        List<Runnable> runnables = new ArrayList<>();
+        runnables.add(batchGapFiller);
 
         if (insertTimeStepsCheckBox.isSelected()) {
             BatchGapFiller timeStepFiller = BatchGapFiller.builder()
@@ -486,31 +489,41 @@ public class GapFillerWizard extends VortexWizard {
                     .writeOptions(writeOptions)
                     .build();
 
-            timeStepFiller.run();
+            timeStepFiller.addPropertyChangeListener(evt -> {
+                if (evt.getPropertyName().equalsIgnoreCase("progress")) {
+                    if (!(evt.getNewValue() instanceof Integer)) return;
+                    int progressValue = (int) evt.getNewValue();
+                    progressMessagePanel.setValue(progressValue);
+                } else {
+                    String value = String.valueOf(evt.getNewValue());
+                    progressMessagePanel.write(value);
+                }
+            });
+
+            runnables.add(timeStepFiller);
         }
+
+        SwingWorker<Void, Void> task = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                runnables.forEach(Runnable::run);
+                return null;
+            }
+
+            @Override
+            public void done() {
+                //Gap-fillers do not currently report progress. Manually set to 100 when done.
+                progressMessagePanel.setValue(100);
+            }
+        };
+
+        task.execute();
     }
 
     private JPanel stepFivePanel() {
-        JPanel stepFourPanel = new JPanel(new GridBagLayout());
-
-        JPanel insidePanel = new JPanel();
-        insidePanel.setLayout(new BoxLayout(insidePanel, BoxLayout.Y_AXIS));
-
-        JLabel processingLabel = new JLabel(TextProperties.getInstance().getProperty("GapFillerWiz_Processing_L"));
-        JPanel processingPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        processingPanel.add(processingLabel);
-        insidePanel.add(processingPanel);
-
-        progressBar = new JProgressBar(0, 100);
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(false);
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        progressPanel.add(progressBar);
-        insidePanel.add(progressPanel);
-
-        stepFourPanel.add(insidePanel);
-
-        return stepFourPanel;
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
+        return panel;
     }
 
     private boolean validateStepFive() {
@@ -521,9 +534,8 @@ public class GapFillerWizard extends VortexWizard {
     }
 
     private JPanel stepSixPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        JLabel completeLabel = new JLabel(TextProperties.getInstance().getProperty("GapFillerWiz_Complete_L"));
-        panel.add(completeLabel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(progressMessagePanel, BorderLayout.CENTER);
         return panel;
     }
 

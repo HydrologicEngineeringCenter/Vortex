@@ -1,13 +1,17 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,7 +25,16 @@ public class LinearInterpGapFiller extends BatchGapFiller {
 
     @Override
     public void run() {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
+        String templateBegin = MessageStore.getInstance().getMessage("gap_filler_begin");
+        String messageBegin = String.format(templateBegin);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+
         condenseVariables();
+
+        AtomicInteger processed = new AtomicInteger();
 
         for (String variable : variables) {
             try (DataReader reader = DataReader.builder()
@@ -122,11 +135,25 @@ public class LinearInterpGapFiller extends BatchGapFiller {
                             .build();
 
                     writer.write();
+
+                    processed.incrementAndGet();
                 }
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e, e::getMessage);
             }
         }
+
+        stopwatch.end();
+        String timeMessage = "Batch gap-filler time: " + stopwatch;
+        LOGGER.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("gap_filler_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("gap_filler_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     // Method to perform linear interpolation

@@ -1,13 +1,17 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.io.TemporalDataReader;
+import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -23,9 +27,18 @@ class TimeStepFiller extends BatchGapFiller {
 
     @Override
     public void run() {
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.start();
+
+        String templateBegin = MessageStore.getInstance().getMessage("time_step_filler_begin");
+        String messageBegin = String.format(templateBegin);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+
         boolean isSourceEqualToDestination = isSameFile(source, destination);
 
         condenseVariables();
+
+        AtomicInteger processed = new AtomicInteger();
 
         for (String variable : variables) {
             List<ZonedDateTime> startTimes = new ArrayList<>();
@@ -50,6 +63,8 @@ class TimeStepFiller extends BatchGapFiller {
                                 .build();
 
                         dataWriter.write();
+
+                        processed.incrementAndGet();
                     }
                 }
 
@@ -89,6 +104,8 @@ class TimeStepFiller extends BatchGapFiller {
                                     .build();
 
                             dataWriter.write();
+
+                            processed.incrementAndGet();
                         });
                     }
                 }
@@ -96,6 +113,18 @@ class TimeStepFiller extends BatchGapFiller {
                 LOGGER.log(Level.SEVERE, e, e::getMessage);
             }
         }
+
+        stopwatch.end();
+        String timeMessage = "Batch time-step-fill time: " + stopwatch;
+        LOGGER.info(timeMessage);
+
+        String templateEnd = MessageStore.getInstance().getMessage("time_step_filler_end");
+        String messageEnd = String.format(templateEnd, processed, destination);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+
+        String templateTime = MessageStore.getInstance().getMessage("time_step_filler_time");
+        String messageTime = String.format(templateTime, stopwatch);
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     private static Duration getMostCommonInterval(List<ZonedDateTime> times) {

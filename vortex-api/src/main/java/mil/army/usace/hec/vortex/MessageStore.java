@@ -25,6 +25,11 @@ public enum MessageStore {
     }
 
     public String getMessage(String key) {
-        return properties.getProperty(key);
+        String property = properties.getProperty(key);
+
+        if (property == null)
+            return "Could not find property for key: " + key;
+
+        return property;
     }
 }
