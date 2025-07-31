@@ -525,13 +525,13 @@ public class GapFillerWizard extends VortexWizard {
                 try {
                     get(); // Check for exceptions
                     nextAction();
-                } catch (InterruptedException e) {
-                    LOGGER.log(Level.SEVERE, "Error during processing", e);
-                    String title = TextProperties.INSTANCE.getProperty("GapFillerWiz_ProcessingError_Title");
-                    String message = TextProperties.INSTANCE.getProperty("GapFillerWiz_ProcessingError_Message");
-                    showErrorDialog(title, message + " " + e.getMessage());
-                } catch (ExecutionException e) {
-                    Thread.currentThread().interrupt();
+                } catch (InterruptedException | ExecutionException e) {
+                    // Restore interrupt status only for InterruptedException
+                    if (e instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    // Common error handling
                     LOGGER.log(Level.SEVERE, "Error during processing", e);
                     String title = TextProperties.INSTANCE.getProperty("GapFillerWiz_ProcessingError_Title");
                     String message = TextProperties.INSTANCE.getProperty("GapFillerWiz_ProcessingError_Message");
