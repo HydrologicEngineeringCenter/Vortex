@@ -30,6 +30,16 @@ class FocalMeanGapFiller implements GapFiller {
     }
 
     /**
+     * Creates a new gap filler with custom parameters.
+     */
+    static FocalMeanGapFiller newInstance(int initialKernelSize, int maxKernelSize, int kernelSizeIncrement) {
+        if (initialKernelSize % 2 == 0 || maxKernelSize % 2 == 0 || kernelSizeIncrement % 2 != 0) {
+            throw new IllegalArgumentException("Invalid kernel parameters");
+        }
+        return new FocalMeanGapFiller(initialKernelSize, maxKernelSize, kernelSizeIncrement);
+    }
+
+    /**
      * Represents a value to fill a gap at a specific index.
      */
     private record FillValue(int index, float value) {
@@ -64,7 +74,10 @@ class FocalMeanGapFiller implements GapFiller {
                     kernelSize += kernelSizeIncrement;
                 }
 
-                fillValues.add(new FillValue(i, focalMean));
+                // Only add if we found a valid value
+                if (Float.compare(noDataValue, focalMean) != 0) {
+                    fillValues.add(new FillValue(i, focalMean));
+                }
             }
         }
 
