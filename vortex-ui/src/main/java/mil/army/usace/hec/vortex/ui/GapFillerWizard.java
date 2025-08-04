@@ -663,7 +663,7 @@ public class GapFillerWizard extends VortexWizard {
         // Add time step filler if selected
         if (insertTimeStepsCheckBox.isSelected()) {
             BatchGapFiller timeStepFiller = BatchGapFiller.builder()
-                    .source(destination)
+                    .source(source)
                     .variables(new ArrayList<>(variables))
                     .method(GapFillMethod.TIME_STEP)
                     .destination(destination)

@@ -15,24 +15,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Performs batch gap filling operations on gridded data.
  * Supports different gap filling methods and can process multiple variables.
  */
-public class BatchGapFiller implements Runnable {
+public class BatchGapFiller implements Runnable, AutoCloseable {
     private static final Logger LOGGER = Logger.getLogger(BatchGapFiller.class.getName());
     private static final PathMatcher DSS_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/*.{dss,DSS}");
 
-    final String source;
-    final Set<String> variables;
-    final String destination;
-    final Map<String, String> writeOptions;
-    private final GapFillMethod method;
-    final PropertyChangeSupport support;
+    protected final String source;
+    protected final List<String> variables;
+    protected final String destination;
+    protected final Map<String, String> writeOptions;
+    protected final GapFillMethod method;
+    protected final PropertyChangeSupport support;
+    protected final boolean useParallelProcessing;
+    protected ExecutorService executorService;
 
     /**
      * Creates a new BatchGapFiller with the specified configuration.
@@ -42,10 +48,15 @@ public class BatchGapFiller implements Runnable {
     protected BatchGapFiller(Builder builder) {
         this.source = Objects.requireNonNull(builder.source, "Source path cannot be null");
         this.destination = Objects.requireNonNull(builder.destination, "Destination path cannot be null");
-        this.variables = new HashSet<>(builder.variables);
-        this.writeOptions = new HashMap<>(builder.writeOptions);
+        this.variables = List.copyOf(condenseVariables(builder.variables));
+        this.writeOptions = Map.copyOf(builder.writeOptions);
         this.method = builder.method;
+        this.useParallelProcessing = builder.useParallelProcessing;
         this.support = new PropertyChangeSupport(this);
+
+        if (useParallelProcessing) {
+            this.executorService = Executors.newWorkStealingPool();
+        }
     }
 
     /**
@@ -58,6 +69,7 @@ public class BatchGapFiller implements Runnable {
         private String destination;
         private final Map<String, String> writeOptions = new HashMap<>();
         private GapFillMethod method = GapFillMethod.LINEAR_INTERPOLATION; // Default method
+        private boolean useParallelProcessing = false;
 
         /**
          * Sets the source path for input data.
@@ -131,6 +143,17 @@ public class BatchGapFiller implements Runnable {
         }
 
         /**
+         * Enables parallel processing for improved performance on multi-core systems.
+         *
+         * @param useParallelProcessing Whether to use parallel processing
+         * @return This builder instance
+         */
+        public Builder useParallelProcessing(boolean useParallelProcessing) {
+            this.useParallelProcessing = useParallelProcessing;
+            return this;
+        }
+
+        /**
          * Builds and returns a BatchGapFiller instance with the configured parameters.
          *
          * @return A new BatchGapFiller instance
@@ -141,7 +164,11 @@ public class BatchGapFiller implements Runnable {
 
             if (isSelectAll) {
                 variables.clear();
-                variables.addAll(DataReader.getVariables(source));
+                try {
+                    variables.addAll(DataReader.getVariables(source));
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Failed to read variables from source: " + e.getMessage(), e);
+                }
             }
 
             return createGapFiller();
@@ -167,6 +194,12 @@ public class BatchGapFiller implements Runnable {
 
             if (method == null) {
                 throw new IllegalArgumentException("Gap filling method cannot be null");
+            }
+
+            // Validate source path exists
+            Path sourcePath = Path.of(source);
+            if (!Files.exists(sourcePath)) {
+                throw new IllegalArgumentException("Source path does not exist: " + source);
             }
         }
 
@@ -206,7 +239,9 @@ public class BatchGapFiller implements Runnable {
             Set<String> processableVars = getProcessableVariables(datasetVars);
 
             if (processableVars.isEmpty()) {
-                LOGGER.warning("No matching variables found for processing");
+                String message = MessageStore.INSTANCE.getMessage("gap_filler_error_no_matching_vars");
+                LOGGER.warning(message);
+                support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
                 notifyCompletion(0, stopwatch);
                 return;
             }
@@ -215,9 +250,10 @@ public class BatchGapFiller implements Runnable {
             notifyCompletion(processedCount, stopwatch);
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error during batch gap filling", e);
+            String message = MessageStore.INSTANCE.getMessage("gap_filler_error_generic");
+            LOGGER.log(Level.SEVERE, message, e);
             support.firePropertyChange(VortexProperty.ERROR.toString(), null,
-                    "Error during batch gap filling: " + e.getMessage());
+                    message + ": " + e.getMessage());
         }
     }
 
@@ -249,11 +285,13 @@ public class BatchGapFiller implements Runnable {
      *
      * @return Set of available variable names
      */
-    private Set<String> getAvailableVariables() {
+    protected Set<String> getAvailableVariables() {
         try {
-            return DataReader.getVariables(source);
+            Set<String> variables = DataReader.getVariables(source);
+            return condenseVariables(variables);
         } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Error getting variables from source", e);
+            String message = MessageStore.INSTANCE.getMessage("gap_filler_error_getting_vars");
+            LOGGER.log(Level.WARNING, message, e);
             return Collections.emptySet();
         }
     }
@@ -264,16 +302,18 @@ public class BatchGapFiller implements Runnable {
      * @param datasetVars Variables available in the dataset
      * @return Set of variables that can be processed
      */
-    private Set<String> getProcessableVariables(Set<String> datasetVars) {
-        Set<String> processableVars = new HashSet<>();
-        for (String variable : variables) {
-            if (datasetVars.contains(variable)) {
-                processableVars.add(variable);
-            } else {
-                LOGGER.warning(() -> "Variable not found in dataset: " + variable);
-            }
-        }
-        return processableVars;
+    protected Set<String> getProcessableVariables(Set<String> datasetVars) {
+        return variables.stream()
+                .filter(variable -> {
+                    if (datasetVars.contains(variable)) {
+                        return true;
+                    } else {
+                        String message = MessageStore.INSTANCE.getMessage("gap_filler_error_var_not_found");
+                        LOGGER.warning(() -> message + ": " + variable);
+                        return false;
+                    }
+                })
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -282,24 +322,61 @@ public class BatchGapFiller implements Runnable {
      * @param processableVars Variables to process
      * @return Number of grids processed
      */
-    private int processVariables(Set<String> processableVars) {
+    protected int processVariables(Set<String> processableVars) {
         AtomicInteger processed = new AtomicInteger(0);
         int totalVariables = processableVars.size();
-        int currentVariable = 0;
+        AtomicInteger currentVariable = new AtomicInteger(0);
 
-        for (String variable : processableVars) {
-            currentVariable++;
-            try {
-                processed.addAndGet(processVariable(variable));
+        // Use either sequential or parallel processing based on configuration
+        if (useParallelProcessing) {
+            // Thread-safe map to track failures
+            Map<String, Throwable> failures = new ConcurrentHashMap<>();
 
-                // Update progress after each variable
-                int progressPercent = (currentVariable * 100) / totalVariables;
-                support.firePropertyChange("progress", null, progressPercent);
+            // Process variables in parallel
+            processableVars.parallelStream().forEach(variable -> {
+                try {
+                    int variableProcessed = processVariable(variable);
+                    processed.addAndGet(variableProcessed);
 
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, e, () -> "Error processing variable: " + variable);
+                    // Update progress after each variable
+                    int completedVars = currentVariable.incrementAndGet();
+                    int progressPercent = (completedVars * 100) / totalVariables;
+                    support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
+
+                } catch (Exception e) {
+                    failures.put(variable, e);
+                    String template = MessageStore.INSTANCE.getMessage("gap_filler_error_var");
+                    String message = String.format(template, variable);
+                    LOGGER.log(Level.SEVERE, e, () -> message);
+                }
+            });
+
+            // Report any failures
+            if (!failures.isEmpty()) {
+                String failedVars = String.join(", ", failures.keySet());
+                String template = MessageStore.INSTANCE.getMessage("gap_filler_error_vars");
+                String message = String.format(template, failedVars);
+                support.firePropertyChange(VortexProperty.WARNING.toString(), null, message);
+            }
+        } else {
+            // Process variables sequentially
+            for (String variable : processableVars) {
+                try {
+                    processed.addAndGet(processVariable(variable));
+
+                    // Update progress after each variable
+                    int progressPercent = (currentVariable.incrementAndGet() * 100) / totalVariables;
+                    support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
+
+                } catch (Exception e) {
+                    String template = MessageStore.INSTANCE.getMessage("gap_filler_error_var");
+                    String message = String.format(template, variable);
+                    LOGGER.log(Level.SEVERE, e, () -> message);
+                    support.firePropertyChange(VortexProperty.WARNING.toString(), null, message);
+                }
             }
         }
+
         return processed.get();
     }
 
@@ -308,8 +385,9 @@ public class BatchGapFiller implements Runnable {
      *
      * @param variable The variable to process
      * @return Number of grids processed for this variable
+     * @throws Exception If an error occurs during processing
      */
-    private int processVariable(String variable) throws Exception {
+    protected int processVariable(String variable) throws Exception {
         int processedCount = 0;
         GapFiller gapFiller = GapFiller.of(method);
 
@@ -319,7 +397,6 @@ public class BatchGapFiller implements Runnable {
                 .build()) {
 
             int count = reader.getDtoCount();
-            LOGGER.fine(() -> "Processing " + count + " grids for variable: " + variable);
 
             for (int i = 0; i < count; i++) {
                 VortexGrid grid = (VortexGrid) reader.getDto(i);
@@ -327,13 +404,11 @@ public class BatchGapFiller implements Runnable {
 
                 writeGrid(filledGrid);
                 processedCount++;
-
-                // Update status periodically
-                if (processedCount % 10 == 0) {
-                    support.firePropertyChange(VortexProperty.STATUS.toString(), null,
-                            "Processed " + processedCount + " grids for " + variable);
-                }
             }
+
+            String template = MessageStore.INSTANCE.getMessage("gap_filler_status_processed_var");
+            String message = String.format(template, count, variable);
+            LOGGER.fine(() -> message);
         }
         return processedCount;
     }
@@ -344,7 +419,7 @@ public class BatchGapFiller implements Runnable {
      * @param grid The grid to write
      * @throws Exception If an error occurs during writing
      */
-    private void writeGrid(VortexGrid grid) throws Exception {
+    protected void writeGrid(VortexGrid grid) throws Exception {
         List<VortexData> filled = List.of(grid);
 
         DataWriter writer = DataWriter.builder()
@@ -359,10 +434,18 @@ public class BatchGapFiller implements Runnable {
     /**
      * Notifies listeners that gap filling has started.
      */
-    private void notifyStart() {
-        String templateBegin = MessageStore.getInstance().getMessage("gap_filler_begin");
-        String messageBegin = String.format(templateBegin);
-        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
+    protected void notifyStart() {
+        String message = notifyStartMessage();
+        support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
+    }
+
+    /**
+     * Start message
+     *
+     * @return The start processing message
+     */
+    protected String notifyStartMessage() {
+        return MessageStore.getInstance().getMessage("gap_filler_status_begin");
     }
 
     /**
@@ -371,43 +454,49 @@ public class BatchGapFiller implements Runnable {
      * @param processed Number of grids processed
      * @param stopwatch Stopwatch measuring execution time
      */
-    private void notifyCompletion(int processed, Stopwatch stopwatch) {
+    protected void notifyCompletion(int processed, Stopwatch stopwatch) {
         stopwatch.end();
 
-        // Log completion time
-        String timeMessage = "Batch gap-filler time: " + stopwatch;
-        LOGGER.info(timeMessage);
-
         // Notify completion
-        String templateEnd = MessageStore.getInstance().getMessage("gap_filler_end");
-        String messageEnd = String.format(templateEnd, processed, destination);
-        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
+        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null,
+                notifyCompleteMessage(processed));
 
         // Notify about execution time
-        String templateTime = MessageStore.getInstance().getMessage("gap_filler_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String template = MessageStore.getInstance().getMessage("gap_filler_status_time");
+        String messageTime = String.format(template, stopwatch);
+        LOGGER.info(messageTime);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
 
         // Ensure progress shows 100%
-        support.firePropertyChange("progress", null, 100);
+        support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, 100);
+    }
+
+    protected String notifyCompleteMessage(int processed) {
+        String templateEnd = MessageStore.getInstance().getMessage("gap_filler_status_end");
+        return String.format(templateEnd, processed, destination);
     }
 
     /**
      * Condenses DSS variables by removing time parts from DSS pathnames.
      * This is useful for processing multiple time steps of the same variable.
      */
-    protected void condenseVariables() {
+    protected Set<String> condenseVariables(Set<String> variables) {
         if (DSS_MATCHER.matches(Path.of(source))) {
-            Set<String> condensed = new HashSet<>();
+            Set<String> condensed = variables.stream()
+                    .map(BatchGapFiller::removeTime)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
 
-            for (String dssPathname : variables) {
-                String pathnameSansTime = removeTime(dssPathname);
-                condensed.add(pathnameSansTime);
+            if (!condensed.isEmpty()) {
+                String template = MessageStore.INSTANCE.getMessage("gap_filler_status_condensed");
+                String message = String.format(template, variables.size(), condensed.size());
+                LOGGER.fine(() -> message);
             }
 
-            variables.clear();
-            variables.addAll(condensed);
+            return condensed;
         }
+
+        return variables;
     }
 
     /**
@@ -465,6 +554,16 @@ public class BatchGapFiller implements Runnable {
     }
 
     /**
+     * Adds a PropertyChangeListener for a specific property.
+     *
+     * @param propertyName The name of the property
+     * @param listener     The PropertyChangeListener to add
+     */
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        support.addPropertyChangeListener(propertyName, listener);
+    }
+
+    /**
      * Removes a PropertyChangeListener for a specific property.
      *
      * @param propertyName The name of the property
@@ -472,5 +571,12 @@ public class BatchGapFiller implements Runnable {
      */
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         support.removePropertyChangeListener(propertyName, listener);
+    }
+
+    @Override
+    public void close() {
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdown();
+        }
     }
 }

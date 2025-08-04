@@ -1,11 +1,8 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.MessageStore;
-import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
-import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.time.Duration;
@@ -23,6 +20,7 @@ import java.util.logging.Logger;
 public class LinearInterpGapFiller extends BatchGapFiller {
 
     private static final Logger LOGGER = Logger.getLogger(LinearInterpGapFiller.class.getName());
+    private static final int BATCH_SIZE = 10; // Process grids in batches for better memory efficiency
 
     /**
      * Constructs a new LinearInterpGapFiller with the specified builder.
@@ -38,31 +36,39 @@ public class LinearInterpGapFiller extends BatchGapFiller {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        notifyStart();
-        condenseVariables();
+        try {
+            notifyStart();
 
-        AtomicInteger processed = new AtomicInteger();
+            Set<String> datasetVars = getAvailableVariables();
+            Set<String> processableVars = getProcessableVariables(datasetVars);
 
-        for (String variable : variables) {
-            try {
-                processVariable(variable, processed);
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error processing variable " + variable, e);
+            if (processableVars.isEmpty()) {
+                LOGGER.warning("No matching variables found for processing");
+                notifyCompletion(0, stopwatch);
+                return;
             }
-        }
 
-        stopwatch.end();
-        logAndNotifyCompletion(stopwatch, processed.get());
+            int processedCount = processVariables(processableVars);
+            notifyCompletion(processedCount, stopwatch);
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error during linear interpolation gap filling", e);
+            support.firePropertyChange(VortexProperty.ERROR.toString(), null,
+                    "Error during linear interpolation gap filling: " + e.getMessage());
+        }
     }
 
     /**
      * Process a single variable and fill gaps in its data.
      *
-     * @param variable  The variable name to process
-     * @param processed Counter for tracking processed grids
+     * @param variable The variable name to process
+     * @return Number of grids processed for this variable
      * @throws Exception If an error occurs during processing
      */
-    private void processVariable(String variable, AtomicInteger processed) throws Exception {
+    @Override
+    protected int processVariable(String variable) throws Exception {
+        AtomicInteger processedCount = new AtomicInteger(0);
+
         try (DataReader reader = DataReader.builder()
                 .path(source)
                 .variable(variable)
@@ -71,24 +77,67 @@ public class LinearInterpGapFiller extends BatchGapFiller {
             int dtoCount = reader.getDtoCount();
             if (dtoCount == 0) {
                 LOGGER.info("No data found for variable: " + variable);
-                return;
+                return 0;
             }
 
+            // First pass: analyze grid data and build metadata
+            LOGGER.fine(() -> "Analyzing " + dtoCount + " grids for variable: " + variable);
             GridMetadata metadata = analyzeGridData(reader, dtoCount);
 
-            for (int i = 0; i < dtoCount; i++) {
-                VortexGrid vortexGrid = (VortexGrid) reader.getDto(i);
+            // Second pass: process grids in batches for better memory efficiency
+            LOGGER.fine(() -> "Processing " + metadata.hasNoData.size() + " grids with gaps for variable: " + variable);
+            processGridsInBatches(reader, metadata, processedCount, variable);
+        }
 
-                // Only process grids that contain missing data
+        return processedCount.get();
+    }
+
+    /**
+     * Processes grids in batches to improve memory efficiency.
+     *
+     * @param reader         The data reader
+     * @param metadata       Metadata about the grid series
+     * @param processedCount Counter for processed grids
+     * @param variable       Current variable name (for logging)
+     * @throws Exception If an error occurs during processing
+     */
+    private void processGridsInBatches(DataReader reader, GridMetadata metadata,
+                                       AtomicInteger processedCount, String variable) throws Exception {
+        int dtoCount = reader.getDtoCount();
+
+        // Process in batches of BATCH_SIZE
+        for (int batchStart = 0; batchStart < dtoCount; batchStart += BATCH_SIZE) {
+            int batchEnd = Math.min(batchStart + BATCH_SIZE, dtoCount);
+
+            // Load batch of grids
+            Map<Integer, VortexGrid> gridBatch = new HashMap<>();
+            for (int i = batchStart; i < batchEnd; i++) {
+                gridBatch.put(i, (VortexGrid) reader.getDto(i));
+            }
+
+            // Process each grid in the batch
+            for (int i = batchStart; i < batchEnd; i++) {
+                VortexGrid grid = gridBatch.get(i);
+
+                // Only process grids that need gap filling
                 if (metadata.hasNoData.contains(i)) {
-                    VortexGrid filledGrid = fillGridGaps(vortexGrid, i, reader, metadata);
+                    VortexGrid filledGrid = fillGridGaps(grid, i, gridBatch, metadata, reader);
                     writeGrid(filledGrid);
                 } else {
-                    writeGrid(vortexGrid);
+                    writeGrid(grid);
                 }
 
-                processed.incrementAndGet();
+                processedCount.incrementAndGet();
+
+                // Update status periodically
+                if (processedCount.get() % 10 == 0) {
+                    support.firePropertyChange(VortexProperty.STATUS.toString(), null,
+                            "Processed " + processedCount.get() + " grids for " + variable);
+                }
             }
+
+            // Clear batch to free memory
+            gridBatch.clear();
         }
     }
 
@@ -116,6 +165,9 @@ public class LinearInterpGapFiller extends BatchGapFiller {
                 if (Double.compare(noDataValue, data[j]) == 0) {
                     metadata.isNoData[i][j] = 1;
                     gridHasNoData = true;
+
+                    // Track cells that need interpolation across the time series
+                    metadata.cellsNeedingInterpolation.add(j);
                 }
             }
 
@@ -124,10 +176,11 @@ public class LinearInterpGapFiller extends BatchGapFiller {
             }
 
             metadata.times[i] = vortexGrid.startTime();
+            metadata.noDataValues[i] = noDataValue;
 
             // Ensure all grids have the same interval
             metadata.intervals.add(vortexGrid.interval());
-            if (metadata.intervals.size() != 1) {
+            if (metadata.intervals.size() > 1) {
                 throw new IllegalStateException(
                         "Inconsistent data intervals detected. All grids must have the same interval.");
             }
@@ -141,42 +194,47 @@ public class LinearInterpGapFiller extends BatchGapFiller {
      *
      * @param vortexGrid The grid to fill
      * @param gridIndex  The index of the current grid
-     * @param reader     The data reader (to access surrounding grids)
+     * @param gridBatch  A batch of grids that includes the current one (for local access)
      * @param metadata   Metadata about the grid series
+     * @param reader     The data reader (to access grids outside the current batch)
      * @return A new grid with gaps filled where possible
      * @throws Exception If an error occurs during processing
      */
     private VortexGrid fillGridGaps(VortexGrid vortexGrid, int gridIndex,
-                                    DataReader reader, GridMetadata metadata) throws Exception {
+                                    Map<Integer, VortexGrid> gridBatch,
+                                    GridMetadata metadata, DataReader reader) throws Exception {
         float[] data = vortexGrid.data().clone();  // Clone to avoid modifying original
         byte[] isNoDataI = metadata.isNoData[gridIndex];
         int cellCount = 0;
 
-        for (int cellIndex = 0; cellIndex < isNoDataI.length; cellIndex++) {
+        // Process only cells that need interpolation (performance optimization)
+        for (int cellIndex : metadata.cellsNeedingInterpolation) {
             if (isNoDataI[cellIndex] == 1) {
                 // Find previous valid data point
-                int prevIndex = findPreviousValidIndex(gridIndex, cellIndex, metadata);
-                if (prevIndex < 0) continue;  // No valid previous data
+                TimeValuePair previous = findPreviousValidValue(gridIndex, cellIndex, metadata, gridBatch, reader);
+                if (previous == null) continue;  // No valid previous data
 
                 // Find next valid data point
-                int nextIndex = findNextValidIndex(gridIndex, cellIndex, metadata);
-                if (nextIndex < 0) continue;  // No valid next data
+                TimeValuePair next = findNextValidValue(gridIndex, cellIndex, metadata, gridBatch, reader);
+                if (next == null) continue;  // No valid next data
 
                 // Perform interpolation
                 data[cellIndex] = interpolateCell(
                         metadata.times[gridIndex],
-                        metadata.times[prevIndex],
-                        ((VortexGrid) reader.getDto(prevIndex)).data()[cellIndex],
-                        metadata.times[nextIndex],
-                        ((VortexGrid) reader.getDto(nextIndex)).data()[cellIndex]
+                        previous.time,
+                        previous.value,
+                        next.time,
+                        next.value
                 );
 
                 cellCount++;
             }
         }
 
-        LOGGER.fine(String.format("Filled %d cells in grid at time %s",
-                cellCount, vortexGrid.startTime()));
+        if (cellCount > 0) {
+            LOGGER.fine(String.format("Filled %d cells in grid at time %s",
+                    cellCount, vortexGrid.startTime()));
+        }
 
         return VortexGrid.toBuilder(vortexGrid)
                 .data(data)
@@ -184,37 +242,71 @@ public class LinearInterpGapFiller extends BatchGapFiller {
     }
 
     /**
-     * Finds the index of the previous grid with valid data for a specific cell.
+     * Finds the previous valid value for a specific cell.
      *
      * @param currentIndex The current grid index
      * @param cellIndex    The cell index to check
      * @param metadata     The metadata containing no-data flags
-     * @return The index of the previous valid grid, or -1 if none found
+     * @param gridBatch    Currently loaded grids for quick access
+     * @param reader       The data reader for loading additional grids if needed
+     * @return A TimeValuePair containing the previous valid value and its time, or null if none found
+     * @throws Exception If an error occurs during grid access
      */
-    private int findPreviousValidIndex(int currentIndex, int cellIndex, GridMetadata metadata) {
+    private TimeValuePair findPreviousValidValue(int currentIndex, int cellIndex,
+                                                 GridMetadata metadata,
+                                                 Map<Integer, VortexGrid> gridBatch,
+                                                 DataReader reader) throws Exception {
         for (int i = currentIndex - 1; i >= 0; i--) {
             if (metadata.isNoData[i][cellIndex] == 0) {
-                return i;
+                float value;
+
+                // Try to get value from batch first (faster)
+                if (gridBatch.containsKey(i)) {
+                    value = gridBatch.get(i).data()[cellIndex];
+                } else {
+                    // Need to load grid from reader
+                    VortexGrid grid = (VortexGrid) reader.getDto(i);
+                    value = grid.data()[cellIndex];
+                }
+
+                return new TimeValuePair(metadata.times[i], value);
             }
         }
-        return -1;
+        return null;
     }
 
     /**
-     * Finds the index of the next grid with valid data for a specific cell.
+     * Finds the next valid value for a specific cell.
      *
      * @param currentIndex The current grid index
      * @param cellIndex    The cell index to check
      * @param metadata     The metadata containing no-data flags
-     * @return The index of the next valid grid, or -1 if none found
+     * @param gridBatch    Currently loaded grids for quick access
+     * @param reader       The data reader for loading additional grids if needed
+     * @return A TimeValuePair containing the next valid value and its time, or null if none found
+     * @throws Exception If an error occurs during grid access
      */
-    private int findNextValidIndex(int currentIndex, int cellIndex, GridMetadata metadata) {
+    private TimeValuePair findNextValidValue(int currentIndex, int cellIndex,
+                                             GridMetadata metadata,
+                                             Map<Integer, VortexGrid> gridBatch,
+                                             DataReader reader) throws Exception {
         for (int i = currentIndex + 1; i < metadata.isNoData.length; i++) {
             if (metadata.isNoData[i][cellIndex] == 0) {
-                return i;
+                float value;
+
+                // Try to get value from batch first (faster)
+                if (gridBatch.containsKey(i)) {
+                    value = gridBatch.get(i).data()[cellIndex];
+                } else {
+                    // Need to load grid from reader
+                    VortexGrid grid = (VortexGrid) reader.getDto(i);
+                    value = grid.data()[cellIndex];
+                }
+
+                return new TimeValuePair(metadata.times[i], value);
             }
         }
-        return -1;
+        return null;
     }
 
     /**
@@ -229,57 +321,11 @@ public class LinearInterpGapFiller extends BatchGapFiller {
      */
     private float interpolateCell(ZonedDateTime currentTime, ZonedDateTime prevTime,
                                   float prevValue, ZonedDateTime nextTime, float nextValue) {
-        float x = currentTime.toEpochSecond();
-        float x1 = prevTime.toEpochSecond();
-        float x2 = nextTime.toEpochSecond();
+        long x = currentTime.toEpochSecond();
+        long x1 = prevTime.toEpochSecond();
+        long x2 = nextTime.toEpochSecond();
 
         return interpolate(x, x1, prevValue, x2, nextValue);
-    }
-
-    /**
-     * Writes a grid to the output destination.
-     *
-     * @param grid The grid to write
-     * @throws Exception If an error occurs during writing
-     */
-    private void writeGrid(VortexGrid grid) throws Exception {
-        List<VortexData> grids = Collections.singletonList(grid);
-
-        DataWriter writer = DataWriter.builder()
-                .data(grids)
-                .destination(destination)
-                .options(writeOptions)
-                .build();
-
-        writer.write();
-    }
-
-    /**
-     * Notifies listeners that the gap filling process has started.
-     */
-    private void notifyStart() {
-        String template = MessageStore.getInstance().getMessage("gap_filler_begin");
-        String message = String.format(template);
-        support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
-    }
-
-    /**
-     * Logs completion information and notifies listeners.
-     *
-     * @param stopwatch The stopwatch tracking execution time
-     * @param processed The number of grids processed
-     */
-    private void logAndNotifyCompletion(Stopwatch stopwatch, int processed) {
-        String timeMessage = "Batch gap-filler time: " + stopwatch;
-        LOGGER.info(timeMessage);
-
-        String templateEnd = MessageStore.getInstance().getMessage("gap_filler_end");
-        String messageEnd = String.format(templateEnd, processed, destination);
-        support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
-
-        String templateTime = MessageStore.getInstance().getMessage("gap_filler_time");
-        String messageTime = String.format(templateTime, stopwatch);
-        support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     /**
@@ -293,11 +339,17 @@ public class LinearInterpGapFiller extends BatchGapFiller {
      * @return The interpolated value at x
      * @throws IllegalArgumentException If x1 equals x2 (division by zero)
      */
-    private static float interpolate(float x, float x1, float y1, float x2, float y2) {
+    private static float interpolate(long x, long x1, float y1, long x2, float y2) {
         if (x1 == x2) {
             throw new IllegalArgumentException("x1 and x2 cannot be the same value (would cause division by zero)");
         }
         return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
+    }
+
+    /**
+     * Class to hold a time and value pair for interpolation.
+     */
+    private record TimeValuePair(ZonedDateTime time, float value) {
     }
 
     /**
@@ -306,14 +358,72 @@ public class LinearInterpGapFiller extends BatchGapFiller {
     private static class GridMetadata {
         final ZonedDateTime[] times;
         final byte[][] isNoData;
+        final double[] noDataValues;
         final Set<Integer> hasNoData;
+        final Set<Integer> cellsNeedingInterpolation;
         final Set<Duration> intervals;
 
         GridMetadata(int size) {
             times = new ZonedDateTime[size];
             isNoData = new byte[size][];
+            noDataValues = new double[size];
             hasNoData = new LinkedHashSet<>();
+            cellsNeedingInterpolation = new HashSet<>();
             intervals = new HashSet<>();
+        }
+    }
+
+    /**
+     * Optional advanced gap filling using both temporal and spatial interpolation.
+     * This method can be used for more complex gap filling scenarios.
+     *
+     * @param vortexGrid The grid to fill
+     * @param metadata   Metadata about the grid series
+     * @return A filled grid
+     */
+    private VortexGrid advancedGapFilling(VortexGrid vortexGrid, GridMetadata metadata) {
+        // This is a placeholder for potential future enhancement
+        // Implement a more sophisticated algorithm that combines:
+        // 1. Temporal interpolation (as currently implemented)
+        // 2. Spatial interpolation (using neighboring cells)
+        // 3. Pattern-based filling (using historical patterns)
+
+        // For now, just return the original grid
+        return vortexGrid;
+    }
+
+    /**
+     * Cache for storing pre-computed valid cell indices to improve performance
+     * for subsequent grid processing.
+     */
+    private static class CellCache {
+        private final Map<Integer, Set<Integer>> validCellsByGridIndex = new HashMap<>();
+
+        /**
+         * Gets valid cells for a specific grid index.
+         *
+         * @param gridIndex The grid index
+         * @return Set of valid cell indices, or null if not cached
+         */
+        public Set<Integer> getValidCells(int gridIndex) {
+            return validCellsByGridIndex.get(gridIndex);
+        }
+
+        /**
+         * Adds a set of valid cells for a grid index.
+         *
+         * @param gridIndex  The grid index
+         * @param validCells Set of valid cell indices
+         */
+        public void addValidCells(int gridIndex, Set<Integer> validCells) {
+            validCellsByGridIndex.put(gridIndex, validCells);
+        }
+
+        /**
+         * Clears the cache.
+         */
+        public void clear() {
+            validCellsByGridIndex.clear();
         }
     }
 }
