@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  * This class processes grid data and performs temporal interpolation between available data points
  * to estimate values for missing cells.
  */
-public class LinearInterpGapFiller extends BatchGapFiller {
+class LinearInterpGapFiller extends BatchGapFiller {
 
     private static final Logger LOGGER = Logger.getLogger(LinearInterpGapFiller.class.getName());
     private static final int BATCH_SIZE = 10; // Process grids in batches for better memory efficiency

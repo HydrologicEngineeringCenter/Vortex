@@ -25,7 +25,7 @@ import static mil.army.usace.hec.vortex.util.FilenameUtil.isSameFile;
  * the corresponding grids through interpolation or other methods.
  * </p>
  */
-public class TimeStepFiller extends BatchGapFiller {
+class TimeStepFiller extends BatchGapFiller {
     private static final Logger LOGGER = Logger.getLogger(TimeStepFiller.class.getName());
 
     // Constants for configuration
