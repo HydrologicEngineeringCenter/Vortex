@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.math;
 
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
@@ -43,7 +44,9 @@ public class LinearInterpGapFiller extends BatchGapFiller {
             Set<String> processableVars = getProcessableVariables(datasetVars);
 
             if (processableVars.isEmpty()) {
-                LOGGER.warning("No matching variables found for processing");
+                String message = MessageStore.INSTANCE.getMessage("gap_filler_error_no_matching_vars");
+                LOGGER.warning(() -> message);
+                support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
                 notifyCompletion(0, stopwatch);
                 return;
             }
@@ -52,10 +55,26 @@ public class LinearInterpGapFiller extends BatchGapFiller {
             notifyCompletion(processedCount, stopwatch);
 
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error during linear interpolation gap filling", e);
-            support.firePropertyChange(VortexProperty.ERROR.toString(), null,
-                    "Error during linear interpolation gap filling: " + e.getMessage());
+            String message = MessageStore.INSTANCE.getMessage("linear_interp_filler_error_generic");
+            LOGGER.log(Level.SEVERE, message, e);
+            support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
         }
+    }
+
+    /**
+     * Start message
+     *
+     * @return The start processing message
+     */
+    @Override
+    protected String notifyStartMessage() {
+        return MessageStore.getInstance().getMessage("linear_interp_filler_begin");
+    }
+
+    @Override
+    protected String notifyCompleteMessage(int processed) {
+        String templateEnd = MessageStore.getInstance().getMessage("linear_interp_filler_end");
+        return String.format(templateEnd, processed, destination);
     }
 
     /**
@@ -128,12 +147,6 @@ public class LinearInterpGapFiller extends BatchGapFiller {
                 }
 
                 processedCount.incrementAndGet();
-
-                // Update status periodically
-                if (processedCount.get() % 10 == 0) {
-                    support.firePropertyChange(VortexProperty.STATUS.toString(), null,
-                            "Processed " + processedCount.get() + " grids for " + variable);
-                }
             }
 
             // Clear batch to free memory
@@ -147,9 +160,8 @@ public class LinearInterpGapFiller extends BatchGapFiller {
      * @param reader   The data reader
      * @param dtoCount The number of grids to process
      * @return Metadata about the grid series
-     * @throws Exception If data is inconsistent or cannot be read
      */
-    private GridMetadata analyzeGridData(DataReader reader, int dtoCount) throws Exception {
+    private GridMetadata analyzeGridData(DataReader reader, int dtoCount) {
         GridMetadata metadata = new GridMetadata(dtoCount);
 
         for (int i = 0; i < dtoCount; i++) {
@@ -181,8 +193,9 @@ public class LinearInterpGapFiller extends BatchGapFiller {
             // Ensure all grids have the same interval
             metadata.intervals.add(vortexGrid.interval());
             if (metadata.intervals.size() > 1) {
-                throw new IllegalStateException(
-                        "Inconsistent data intervals detected. All grids must have the same interval.");
+                String message = MessageStore.INSTANCE.getMessage("linear_interp_filler_error_intervals");
+                support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
+                throw new IllegalStateException(message);
             }
         }
 
@@ -284,12 +297,11 @@ public class LinearInterpGapFiller extends BatchGapFiller {
      * @param gridBatch    Currently loaded grids for quick access
      * @param reader       The data reader for loading additional grids if needed
      * @return A TimeValuePair containing the next valid value and its time, or null if none found
-     * @throws Exception If an error occurs during grid access
      */
     private TimeValuePair findNextValidValue(int currentIndex, int cellIndex,
                                              GridMetadata metadata,
                                              Map<Integer, VortexGrid> gridBatch,
-                                             DataReader reader) throws Exception {
+                                             DataReader reader) {
         for (int i = currentIndex + 1; i < metadata.isNoData.length; i++) {
             if (metadata.isNoData[i][cellIndex] == 0) {
                 float value;
@@ -370,60 +382,6 @@ public class LinearInterpGapFiller extends BatchGapFiller {
             hasNoData = new LinkedHashSet<>();
             cellsNeedingInterpolation = new HashSet<>();
             intervals = new HashSet<>();
-        }
-    }
-
-    /**
-     * Optional advanced gap filling using both temporal and spatial interpolation.
-     * This method can be used for more complex gap filling scenarios.
-     *
-     * @param vortexGrid The grid to fill
-     * @param metadata   Metadata about the grid series
-     * @return A filled grid
-     */
-    private VortexGrid advancedGapFilling(VortexGrid vortexGrid, GridMetadata metadata) {
-        // This is a placeholder for potential future enhancement
-        // Implement a more sophisticated algorithm that combines:
-        // 1. Temporal interpolation (as currently implemented)
-        // 2. Spatial interpolation (using neighboring cells)
-        // 3. Pattern-based filling (using historical patterns)
-
-        // For now, just return the original grid
-        return vortexGrid;
-    }
-
-    /**
-     * Cache for storing pre-computed valid cell indices to improve performance
-     * for subsequent grid processing.
-     */
-    private static class CellCache {
-        private final Map<Integer, Set<Integer>> validCellsByGridIndex = new HashMap<>();
-
-        /**
-         * Gets valid cells for a specific grid index.
-         *
-         * @param gridIndex The grid index
-         * @return Set of valid cell indices, or null if not cached
-         */
-        public Set<Integer> getValidCells(int gridIndex) {
-            return validCellsByGridIndex.get(gridIndex);
-        }
-
-        /**
-         * Adds a set of valid cells for a grid index.
-         *
-         * @param gridIndex  The grid index
-         * @param validCells Set of valid cell indices
-         */
-        public void addValidCells(int gridIndex, Set<Integer> validCells) {
-            validCellsByGridIndex.put(gridIndex, validCells);
-        }
-
-        /**
-         * Clears the cache.
-         */
-        public void clear() {
-            validCellsByGridIndex.clear();
         }
     }
 }
