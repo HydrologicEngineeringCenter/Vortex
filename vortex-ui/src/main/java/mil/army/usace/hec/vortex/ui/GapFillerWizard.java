@@ -29,6 +29,7 @@ public class GapFillerWizard extends VortexWizard {
     // UI Constants
     private static final int ROW_HEIGHT = (int) new JTextField().getPreferredSize().getHeight();
     private static final int PAD = 2;
+    private static final int BORDER_PAD = 5;
     private static final Dimension PANEL_DIMENSION = new Dimension(Integer.MAX_VALUE, (ROW_HEIGHT + 2 * PAD) * 2);
 
     // Text constants from properties
@@ -321,6 +322,8 @@ public class GapFillerWizard extends VortexWizard {
         // Add temporal fill panel
         panel.add(createTemporalFillPanel());
 
+        panel.setBorder(BorderFactory.createEmptyBorder(BORDER_PAD, BORDER_PAD, BORDER_PAD, BORDER_PAD));
+
         return panel;
     }
 
@@ -445,6 +448,8 @@ public class GapFillerWizard extends VortexWizard {
 
         panel.add(insertTimeStepsCheckBox);
         panel.setToolTipText(timeStepsTT);
+
+        panel.setBorder(BorderFactory.createEmptyBorder(BORDER_PAD, BORDER_PAD, BORDER_PAD, BORDER_PAD));
 
         return panel;
     }
