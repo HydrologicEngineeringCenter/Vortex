@@ -324,8 +324,6 @@ public class BatchGapFiller implements Runnable, AutoCloseable {
      */
     protected int processVariables(Set<String> processableVars) {
         AtomicInteger processed = new AtomicInteger(0);
-        int totalVariables = processableVars.size();
-        AtomicInteger currentVariable = new AtomicInteger(0);
 
         // Use either sequential or parallel processing based on configuration
         if (useParallelProcessing) {
@@ -337,12 +335,6 @@ public class BatchGapFiller implements Runnable, AutoCloseable {
                 try {
                     int variableProcessed = processVariable(variable);
                     processed.addAndGet(variableProcessed);
-
-                    // Update progress after each variable
-                    int completedVars = currentVariable.incrementAndGet();
-                    int progressPercent = (completedVars * 100) / totalVariables;
-                    support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
-
                 } catch (Exception e) {
                     failures.put(variable, e);
                     String template = MessageStore.INSTANCE.getMessage("gap_filler_error_var");
@@ -363,11 +355,6 @@ public class BatchGapFiller implements Runnable, AutoCloseable {
             for (String variable : processableVars) {
                 try {
                     processed.addAndGet(processVariable(variable));
-
-                    // Update progress after each variable
-                    int progressPercent = (currentVariable.incrementAndGet() * 100) / totalVariables;
-                    support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
-
                 } catch (Exception e) {
                     String template = MessageStore.INSTANCE.getMessage("gap_filler_error_var");
                     String message = String.format(template, variable);
@@ -388,7 +375,7 @@ public class BatchGapFiller implements Runnable, AutoCloseable {
      * @throws Exception If an error occurs during processing
      */
     protected int processVariable(String variable) throws Exception {
-        int processedCount = 0;
+        int processed = 0;
         GapFiller gapFiller = GapFiller.of(method);
 
         try (DataReader reader = DataReader.builder()
@@ -398,19 +385,27 @@ public class BatchGapFiller implements Runnable, AutoCloseable {
 
             int count = reader.getDtoCount();
 
+            int variableIndex = variables.indexOf(variable);
+            float variableProgress = (float) variableIndex / variables.size();
+
             for (int i = 0; i < count; i++) {
                 VortexGrid grid = (VortexGrid) reader.getDto(i);
                 VortexGrid filledGrid = gapFiller.fill(grid);
 
                 writeGrid(filledGrid);
-                processedCount++;
+                processed++;
+
+                // Update progress for missing time steps
+                float gridProgress = (float) processed / count / variables.size();
+                int progressPercent = (int) ((variableProgress + gridProgress) * 100);
+                support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
             }
 
             String template = MessageStore.INSTANCE.getMessage("gap_filler_status_processed_var");
             String message = String.format(template, count, variable);
             LOGGER.fine(() -> message);
         }
-        return processedCount;
+        return processed;
     }
 
     /**
@@ -466,9 +461,6 @@ public class BatchGapFiller implements Runnable, AutoCloseable {
         String messageTime = String.format(template, stopwatch);
         LOGGER.info(messageTime);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
-
-        // Ensure progress shows 100%
-        support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, 100);
     }
 
     protected String notifyCompleteMessage(int processed) {

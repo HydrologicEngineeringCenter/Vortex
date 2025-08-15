@@ -45,19 +45,20 @@ class TimeStepFiller extends BatchGapFiller {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
+        support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, 0);
+
         notifyStart();
 
         try {
             boolean isSourceEqualToDestination = isSameFile(source, destination);
             Set<String> condensed = condenseVariables(Set.copyOf(variables));
 
-            AtomicInteger processed = new AtomicInteger();
-
+            int processed = 0;
             for (String variable : condensed) {
-                processVariable(variable, isSourceEqualToDestination);
+                processed += processVariable(variable, isSourceEqualToDestination);
             }
 
-            notifyCompletion(processed.get(), stopwatch);
+            notifyCompletion(processed, stopwatch);
 
         } catch (Exception e) {
             String errorMessage = "Error during time step filling";
@@ -89,12 +90,12 @@ class TimeStepFiller extends BatchGapFiller {
      * @param variable                   The variable to process
      * @param isSourceEqualToDestination Whether source and destination are the same
      */
-    private void processVariable(String variable, boolean isSourceEqualToDestination) {
+    private int processVariable(String variable, boolean isSourceEqualToDestination) {
         try {
             // Step 1: Analyze the time series to identify available times and intervals
             TimeSeriesInfo timeSeriesInfo = analyzeTimeSeries(variable);
             if (!validateTimeSeriesInfo(timeSeriesInfo)) {
-                return;
+                return 0;
             }
 
             // Step 2: Copy existing grids to destination if needed
@@ -108,7 +109,7 @@ class TimeStepFiller extends BatchGapFiller {
                 String message = "No missing time steps found for variable: " + variable;
                 LOGGER.info(() -> message);
                 support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
-                return;
+                return 0;
             }
 
             // Warn if there are too many missing time steps
@@ -120,13 +121,15 @@ class TimeStepFiller extends BatchGapFiller {
             }
 
             // Step 4: Generate missing grids
-            generateMissingGrids(variable, timeSeriesInfo, missingTimes);
+            return generateMissingGrids(variable, timeSeriesInfo, missingTimes);
         } catch (Exception e) {
             String errorMessage = "Error processing variable: " + variable;
             LOGGER.log(Level.SEVERE, e, e::getMessage);
             support.firePropertyChange(VortexProperty.WARNING.toString(), null,
                     errorMessage + ": " + e.getMessage());
         }
+
+        return 0;
     }
 
     /**
@@ -201,8 +204,6 @@ class TimeStepFiller extends BatchGapFiller {
      * @throws Exception If writing fails
      */
     private void copyExistingGrids(String variable) throws Exception {
-        AtomicInteger processed = new AtomicInteger();
-
         try (DataReader reader = DataReader.builder()
                 .path(source)
                 .variable(variable)
@@ -219,14 +220,6 @@ class TimeStepFiller extends BatchGapFiller {
                         .build();
 
                 writer.write();
-
-                processed.incrementAndGet();
-
-                int variableIndex = variables.indexOf(variable);
-                float variableProgress = (float) variableIndex / variables.size();
-                float gridProgress = (float) processed.get() / dtoCount / variables.size();
-                int progressPercent = (int) ((variableProgress + gridProgress) * 100);
-                support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
             }
         }
     }
@@ -268,7 +261,7 @@ class TimeStepFiller extends BatchGapFiller {
      * @param missingTimes List of missing time points
      * @throws Exception If grid generation fails
      */
-    private void generateMissingGrids(String variable, TimeSeriesInfo info,
+    private int generateMissingGrids(String variable, TimeSeriesInfo info,
                                       List<ZonedDateTime> missingTimes) throws Exception {
         AtomicInteger processed = new AtomicInteger();
 
@@ -297,9 +290,11 @@ class TimeStepFiller extends BatchGapFiller {
                 float variableProgress = (float) variableIndex / variables.size();
                 float gridProgress = (float) processed.get() / totalMissing / variables.size();
                 int progressPercent = (int) ((variableProgress + gridProgress) * 100);
-                support.firePropertyChange("progress", null, progressPercent);
+                support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
             }
         }
+
+        return processed.get();
     }
 
     /**
