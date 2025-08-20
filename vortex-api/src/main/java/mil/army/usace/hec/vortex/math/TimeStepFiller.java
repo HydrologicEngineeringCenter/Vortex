@@ -1,13 +1,11 @@
 package mil.army.usace.hec.vortex.math;
 
 import mil.army.usace.hec.vortex.MessageStore;
-import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.io.TemporalDataReader;
-import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -42,30 +40,24 @@ class TimeStepFiller extends BatchGapFiller {
 
     @Override
     public void run() {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.start();
+        boolean isSourceEqualToDestination = isSameFile(source, destination);
 
-        support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, 0);
-
-        notifyStart();
-
-        try {
-            boolean isSourceEqualToDestination = isSameFile(source, destination);
-            Set<String> condensed = condenseVariables(Set.copyOf(variables));
-
-            int processed = 0;
-            for (String variable : condensed) {
-                processed += processVariable(variable, isSourceEqualToDestination);
+        // Copy existing grids to destination if needed
+        if (!isSourceEqualToDestination) {
+            Set<String> vars = condenseVariables(Set.copyOf(variables));
+            for (String variable : vars) {
+                try {
+                    copyExistingGrids(variable);
+                } catch (Exception e) {
+                    String template = MessageStore.INSTANCE.getMessage("time_step_filler_error_copy");
+                    String message = String.format(template, source, destination);
+                    LOGGER.log(Level.SEVERE, message, e);
+                    support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
+                }
             }
-
-            notifyCompletion(processed, stopwatch);
-
-        } catch (Exception e) {
-            String errorMessage = "Error during time step filling";
-            LOGGER.log(Level.SEVERE, errorMessage, e);
-            support.firePropertyChange(VortexProperty.ERROR.toString(), null,
-                    errorMessage + ": " + e.getMessage());
         }
+
+        super.run();
     }
 
     /**
@@ -88,9 +80,9 @@ class TimeStepFiller extends BatchGapFiller {
      * Process a single variable to fill in missing time steps.
      *
      * @param variable                   The variable to process
-     * @param isSourceEqualToDestination Whether source and destination are the same
      */
-    private int processVariable(String variable, boolean isSourceEqualToDestination) {
+    @Override
+    protected int processVariable(String variable) {
         try {
             // Step 1: Analyze the time series to identify available times and intervals
             TimeSeriesInfo timeSeriesInfo = analyzeTimeSeries(variable);
@@ -98,15 +90,11 @@ class TimeStepFiller extends BatchGapFiller {
                 return 0;
             }
 
-            // Step 2: Copy existing grids to destination if needed
-            if (!isSourceEqualToDestination) {
-                copyExistingGrids(variable);
-            }
-
-            // Step 3: Identify missing time steps
+            // Step 2: Identify missing time steps
             List<ZonedDateTime> missingTimes = findMissingTimeSteps(timeSeriesInfo);
             if (missingTimes.isEmpty()) {
-                String message = "No missing time steps found for variable: " + variable;
+                String template = MessageStore.INSTANCE.getMessage("time_step_filler_info_none");
+                String message = String.format(template, variable);
                 LOGGER.info(() -> message);
                 support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
                 return 0;
@@ -114,19 +102,19 @@ class TimeStepFiller extends BatchGapFiller {
 
             // Warn if there are too many missing time steps
             if (missingTimes.size() > MAX_TIME_STEPS_WARNING) {
-                String message = String.format("Large number of missing time steps (%d) for variable %s",
-                        missingTimes.size(), variable);
+                String template = MessageStore.INSTANCE.getMessage("time_step_filler_warning_count");
+                String message = String.format(template, missingTimes.size(), variable);
                 LOGGER.warning(() -> message);
                 support.firePropertyChange(VortexProperty.WARNING.toString(), null, message);
             }
 
-            // Step 4: Generate missing grids
+            // Step 3: Generate missing grids
             return generateMissingGrids(variable, timeSeriesInfo, missingTimes);
         } catch (Exception e) {
-            String errorMessage = "Error processing variable: " + variable;
+            String template = MessageStore.INSTANCE.getMessage("time_step_filler_error_var");
+            String message = String.format(template, variable);
             LOGGER.log(Level.SEVERE, e, e::getMessage);
-            support.firePropertyChange(VortexProperty.WARNING.toString(), null,
-                    errorMessage + ": " + e.getMessage());
+            support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
         }
 
         return 0;
@@ -149,7 +137,10 @@ class TimeStepFiller extends BatchGapFiller {
 
             int dtoCount = reader.getDtoCount();
             if (dtoCount == 0) {
-                throw new IllegalStateException("No data found for variable: " + variable);
+                String template = MessageStore.INSTANCE.getMessage("time_step_filler_error_no_data");
+                String message = String.format(template, variable);
+                support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
+                throw new IllegalStateException(message);
             }
 
             // Extract time information from each grid
@@ -174,13 +165,18 @@ class TimeStepFiller extends BatchGapFiller {
     private boolean validateTimeSeriesInfo(TimeSeriesInfo info) {
         // Check that we have at least 2 time points
         if (info.startTimes.size() < 2) {
-            LOGGER.severe("Insufficient time points for time step analysis (minimum 2 required)");
+            String message = MessageStore.INSTANCE.getMessage("time_step_filler_error_insufficient_intervals");
+            support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
+            LOGGER.severe(() -> message);
             return false;
         }
 
         // Check for consistent intervals
         if (info.intervals.size() != 1) {
-            LOGGER.severe("Data interval must be consistent. Found " + info.intervals.size() + " different intervals.");
+            String template = MessageStore.INSTANCE.getMessage("time_step_filler_error_intervals");
+            String message = String.format(template, info.intervals.size());
+            support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
+            LOGGER.severe(() -> message);
             return false;
         }
 
@@ -189,7 +185,9 @@ class TimeStepFiller extends BatchGapFiller {
         if (info.timeStep.isZero()) {
             info.timeStep = getMostCommonInterval(info.startTimes);
             if (info.timeStep == null) {
-                LOGGER.severe("Could not determine time step - inconsistent intervals detected");
+                String message = MessageStore.INSTANCE.getMessage("time_step_filler_error_inconsistent_intervals");
+                support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
+                LOGGER.severe(() -> message);
                 return false;
             }
         }
@@ -298,25 +296,6 @@ class TimeStepFiller extends BatchGapFiller {
     }
 
     /**
-     * Writes a grid to the destination.
-     *
-     * @param grid The grid to write
-     * @throws Exception If writing fails
-     */
-    @Override
-    protected void writeGrid(VortexGrid grid) throws Exception {
-        List<VortexData> grids = List.of(grid);
-
-        DataWriter writer = DataWriter.builder()
-                .data(grids)
-                .destination(destination)
-                .options(writeOptions)
-                .build();
-
-        writer.write();
-    }
-
-    /**
      * Calculates the most common time interval between consecutive time points.
      *
      * @param times The list of time points
@@ -349,10 +328,10 @@ class TimeStepFiller extends BatchGapFiller {
      * Inner class to hold time series information.
      */
     private static class TimeSeriesInfo {
-        final List<ZonedDateTime> startTimes = new ArrayList<>();
-        final Set<Duration> intervals = new HashSet<>();
-        Duration timeStep;
-        DataReader sourceReader;
+        private final List<ZonedDateTime> startTimes = new ArrayList<>();
+        private final Set<Duration> intervals = new HashSet<>();
+        private Duration timeStep;
+        private DataReader sourceReader;
 
         /**
          * Adds a time point to the collection.
@@ -360,7 +339,7 @@ class TimeStepFiller extends BatchGapFiller {
          * @param startTime The start time
          * @param interval  The interval
          */
-        void addTimePoint(ZonedDateTime startTime, Duration interval) {
+        private void addTimePoint(ZonedDateTime startTime, Duration interval) {
             startTimes.add(startTime);
             intervals.add(interval);
         }

@@ -4,13 +4,11 @@ import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
-import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -30,35 +28,6 @@ class LinearInterpGapFiller extends BatchGapFiller {
      */
     LinearInterpGapFiller(Builder builder) {
         super(builder);
-    }
-
-    @Override
-    public void run() {
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.start();
-
-        try {
-            notifyStart();
-
-            Set<String> datasetVars = getAvailableVariables();
-            Set<String> processableVars = getProcessableVariables(datasetVars);
-
-            if (processableVars.isEmpty()) {
-                String message = MessageStore.INSTANCE.getMessage("gap_filler_error_no_matching_vars");
-                LOGGER.warning(() -> message);
-                support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
-                notifyCompletion(0, stopwatch);
-                return;
-            }
-
-            int processedCount = processVariables(processableVars);
-            notifyCompletion(processedCount, stopwatch);
-
-        } catch (Exception e) {
-            String message = MessageStore.INSTANCE.getMessage("linear_interp_filler_error_generic");
-            LOGGER.log(Level.SEVERE, message, e);
-            support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
-        }
     }
 
     /**
@@ -95,17 +64,24 @@ class LinearInterpGapFiller extends BatchGapFiller {
 
             int dtoCount = reader.getDtoCount();
             if (dtoCount == 0) {
-                LOGGER.info("No data found for variable: " + variable);
+                String template = MessageStore.INSTANCE.getMessage("linear_interp_filler_error_no_data");
+                String message = String.format(template, variable);
+                LOGGER.info(() -> message);
+                support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
                 return 0;
             }
 
             // First pass: analyze grid data and build metadata
-            LOGGER.fine(() -> "Analyzing " + dtoCount + " grids for variable: " + variable);
+            String template1 = MessageStore.INSTANCE.getMessage("linear_interp_filler_info_analyzing");
+            String message1 = String.format(template1, dtoCount, variable);
+            LOGGER.fine(() -> message1);
             GridMetadata metadata = analyzeGridData(reader, dtoCount);
 
             // Second pass: process grids in batches for better memory efficiency
-            LOGGER.fine(() -> "Processing " + metadata.hasNoData.size() + " grids with gaps for variable: " + variable);
-            processGridsInBatches(reader, metadata, processedCount, variable);
+            String template2 = MessageStore.INSTANCE.getMessage("linear_interp_filler_info_processing");
+            String message2 = String.format(template2, metadata.hasNoData.size(), variable);
+            LOGGER.fine(() -> message2);
+            processGridsInBatches(reader, metadata, processedCount);
         }
 
         return processedCount.get();
@@ -117,11 +93,10 @@ class LinearInterpGapFiller extends BatchGapFiller {
      * @param reader         The data reader
      * @param metadata       Metadata about the grid series
      * @param processedCount Counter for processed grids
-     * @param variable       Current variable name (for logging)
      * @throws Exception If an error occurs during processing
      */
     private void processGridsInBatches(DataReader reader, GridMetadata metadata,
-                                       AtomicInteger processedCount, String variable) throws Exception {
+                                       AtomicInteger processedCount) throws Exception {
         int dtoCount = reader.getDtoCount();
 
         // Process in batches of BATCH_SIZE
@@ -245,8 +220,9 @@ class LinearInterpGapFiller extends BatchGapFiller {
         }
 
         if (cellCount > 0) {
-            LOGGER.fine(String.format("Filled %d cells in grid at time %s",
-                    cellCount, vortexGrid.startTime()));
+            String template = MessageStore.INSTANCE.getMessage("linear_interp_filler_info_filled");
+            String message = String.format(template, cellCount, vortexGrid.startTime());
+            LOGGER.fine(() -> message);
         }
 
         return VortexGrid.toBuilder(vortexGrid)
