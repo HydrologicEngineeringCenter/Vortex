@@ -373,7 +373,7 @@ class GridDatasetReader extends NetcdfDataReader {
     private List<VortexDataInterval> getTimeRecordsWithTimeAxis1D(CoordinateAxis1DTime tAxis) {
         List<VortexDataInterval> list = new ArrayList<>();
         if (!tAxis.isInterval() && !isSpecialTimeBounds()) {
-            return getTimeInstants(tAxis);
+            return getCoordinateBounds(tAxis);
         }
 
         for (int i = 0; i < (int) tAxis.getSize(); i++) {
@@ -417,11 +417,17 @@ class GridDatasetReader extends NetcdfDataReader {
         return specialFileType != null && specialFileType != UNDEFINED;
     }
 
-    private List<VortexDataInterval> getTimeInstants(CoordinateAxis1DTime timeAxis) {
-        return timeAxis.getCalendarDates().stream()
-                .map(TimeConverter::toZonedDateTime)
-                .map(t -> VortexDataInterval.of(t, t))
-                .toList();
+    private List<VortexDataInterval> getCoordinateBounds(CoordinateAxis1DTime timeAxis) {
+        List<VortexDataInterval> list = new ArrayList<>();
+        for (int i = 0; i < timeAxis.getSize(); i++) {
+            CalendarDate[] dates = timeAxis.getCoordBoundsDate(i);
+            ZonedDateTime startTime = TimeConverter.toZonedDateTime(dates[0]);
+            ZonedDateTime endTime = TimeConverter.toZonedDateTime(dates[1]);
+            VortexDataInterval interval = new VortexDataInterval(startTime, endTime);
+            list.add(interval);
+        }
+
+        return List.copyOf(list);
     }
 
     @Override
