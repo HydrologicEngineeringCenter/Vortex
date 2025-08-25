@@ -693,7 +693,11 @@ public class GapFillerWizard extends VortexWizard {
                 progressMessagePanel.setValue(progressValue);
             }
         } else {
-            String value = String.valueOf(evt.getNewValue());
+            Object obj = evt.getNewValue();
+            if (obj == null)
+                return;
+
+            String value = String.valueOf(obj);
             progressMessagePanel.write(value);
         }
     }

@@ -72,6 +72,9 @@ class TimeStepFiller extends BatchGapFiller {
 
     @Override
     protected String notifyCompleteMessage(int processed) {
+        if (processed <= 0)
+            return null;
+
         String templateEnd = MessageStore.getInstance().getMessage("time_step_filler_end");
         return String.format(templateEnd, processed, destination);
     }
