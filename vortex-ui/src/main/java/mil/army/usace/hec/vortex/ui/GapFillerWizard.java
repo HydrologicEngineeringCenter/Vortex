@@ -689,7 +689,7 @@ public class GapFillerWizard extends VortexWizard {
      * @param evt The property change event
      */
     private void handlePropertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equalsIgnoreCase(VortexProperty.STATUS.toString())) {
+        if (evt.getPropertyName().equalsIgnoreCase(VortexProperty.PROGRESS.toString())) {
             if (evt.getNewValue() instanceof Integer progressValue) {
                 progressMessagePanel.setValue(progressValue);
             }
