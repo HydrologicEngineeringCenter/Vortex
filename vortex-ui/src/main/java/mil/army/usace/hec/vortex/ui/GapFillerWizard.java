@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.ui;
 
+import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.math.BatchGapFiller;
 import mil.army.usace.hec.vortex.math.GapFillMethod;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
@@ -688,7 +689,7 @@ public class GapFillerWizard extends VortexWizard {
      * @param evt The property change event
      */
     private void handlePropertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equalsIgnoreCase("progress")) {
+        if (evt.getPropertyName().equalsIgnoreCase(VortexProperty.STATUS.toString())) {
             if (evt.getNewValue() instanceof Integer progressValue) {
                 progressMessagePanel.setValue(progressValue);
             }
