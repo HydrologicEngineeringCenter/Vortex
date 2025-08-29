@@ -120,6 +120,10 @@ public abstract class DataReader implements AutoCloseable {
 
     public abstract Validation isValid();
 
+    public String getVariableName() {
+        return variableName;
+    }
+
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         support.addPropertyChangeListener(pcl);
     }

@@ -20,6 +20,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static mil.army.usace.hec.vortex.util.FilenameUtil.isSameFile;
+
 /**
  * Performs batch gap filling operations on gridded data.
  * Supports different gap filling methods and can process multiple variables.
@@ -31,6 +33,7 @@ public class BatchGapFiller implements Runnable {
     protected final String source;
     protected final List<String> variables;
     protected final String destination;
+    protected final boolean isSourceEqualToDestination;
     protected final Map<String, String> writeOptions;
     protected final GapFillMethod method;
     protected final PropertyChangeSupport support;
@@ -43,6 +46,7 @@ public class BatchGapFiller implements Runnable {
     protected BatchGapFiller(Builder builder) {
         source = Objects.requireNonNull(builder.source, "Source path cannot be null");
         destination = Objects.requireNonNull(builder.destination, "Destination path cannot be null");
+        isSourceEqualToDestination = isSameFile(source, destination);
         variables = List.copyOf(condenseVariables(builder.variables));
         writeOptions = Map.copyOf(builder.writeOptions);
         method = builder.method;
@@ -173,12 +177,6 @@ public class BatchGapFiller implements Runnable {
             if (method == null) {
                 throw new IllegalArgumentException("Gap filling method cannot be null");
             }
-
-            // Validate source path exists
-            Path sourcePath = Path.of(source);
-            if (!Files.exists(sourcePath)) {
-                throw new IllegalArgumentException("Source path does not exist: " + source);
-            }
         }
 
         /**
@@ -241,11 +239,6 @@ public class BatchGapFiller implements Runnable {
      * @throws IllegalStateException If paths are invalid
      */
     private void validateSourceAndDestination() {
-        Path sourcePath = Path.of(source);
-        if (!Files.exists(sourcePath)) {
-            throw new IllegalStateException("Source path does not exist: " + source);
-        }
-
         // Ensure destination directory exists or can be created
         Path destinationPath = Path.of(destination);
         if (!Files.exists(destinationPath.getParent())) {
@@ -327,6 +320,8 @@ public class BatchGapFiller implements Runnable {
      */
     protected int processVariable(String variable) throws Exception {
         int processed = 0;
+        int gapFilled = 0;
+
         GapFiller gapFiller = GapFiller.of(method);
 
         try (DataReader reader = DataReader.builder()
@@ -343,7 +338,15 @@ public class BatchGapFiller implements Runnable {
                 VortexGrid grid = (VortexGrid) reader.getDto(i);
                 VortexGrid filledGrid = gapFiller.fill(grid);
 
-                writeGrid(filledGrid);
+                boolean isGapFilled = !Objects.equals(grid, filledGrid);
+
+                if (isGapFilled) {
+                    writeGrid(filledGrid);
+                    gapFilled++;
+                } else if (!isSourceEqualToDestination) {
+                    writeGrid(filledGrid);
+                }
+
                 processed++;
 
                 // Update progress for missing time steps
@@ -356,7 +359,7 @@ public class BatchGapFiller implements Runnable {
             String message = String.format(template, count, variable);
             LOGGER.fine(() -> message);
         }
-        return processed;
+        return gapFilled;
     }
 
     /**
