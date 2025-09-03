@@ -222,7 +222,8 @@ class LinearInterpGapFiller extends BatchGapFiller {
         for (int i = 0; i < dtoCount; i++) {
             VortexGrid vortexGrid = (VortexGrid) reader.getDto(i);
 
-            metadata.startTimes.add(i, vortexGrid.startTime());
+            metadata.indices.add(i);
+            metadata.startTimes.add(vortexGrid.startTime());
 
             float[] data = vortexGrid.data();
             metadata.sizes.add(data.length);
