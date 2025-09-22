@@ -256,7 +256,7 @@ class NetcdfDataReaderTest {
 
         VortexData vortexData = reader.getDto(0);
         VortexGrid vortexGrid = (VortexGrid) vortexData;
-        assertEquals(ZonedDateTime.of(2021, 7, 5, 23, 58, 0, 0, ZoneOffset.ofHours(0)), vortexGrid.startTime());
+        assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)), vortexGrid.startTime());
         assertEquals(ZonedDateTime.of(2021, 7, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)), vortexGrid.endTime());
     }
 
