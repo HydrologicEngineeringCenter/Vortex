@@ -114,28 +114,30 @@ public class ImageExporterWizard extends VortexWizard {
 		/* Add buttonPanel to SanitizerWizard */
 		this.add(buttonPanel, BorderLayout.SOUTH);
 	}
-	
+
 	private void nextAction() {
-		if(!validateCurrentStep()) return;
+		if (!validateCurrentStep()) return;
 		submitCurrentStep();
 		cardNumber++;
 		backButton.setEnabled(true);
-		
-		if(cardNumber == 2) {
-			backButton.setEnabled(false);
-			nextButton.setEnabled(false);
-		} // If: Step Four (Processing...) Then disable Back and Next button
-		
-		if(cardNumber == 3) {
-			backButton.setVisible(false);
-			nextButton.setText(TextProperties.getInstance().getProperty("ImageExporterWiz_Restart"));
-			nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Restart_TT"));
-			nextButton.setEnabled(true);
-			cancelButton.setText(TextProperties.getInstance().getProperty("ImageExporterWiz_Close"));
-			cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Close_TT"));
-		} // If: Step Five (Change Cancel to Close)
-		
+		updateButtonState();
 		cardLayout.next(contentCards);
+	}
+
+	private void updateButtonState() {
+		backButton.setEnabled(cardNumber == 1);
+		nextButton.setEnabled(cardNumber < 2);
+		cancelButton.setEnabled(cardNumber < 2);
+	}
+
+	private void setButtonsForRestartOrClose() {
+		backButton.setVisible(false);
+		nextButton.setText(TextProperties.getInstance().getProperty("ImageExporterWiz_Restart"));
+		nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Restart_TT"));
+		nextButton.setEnabled(true);
+		cancelButton.setText(TextProperties.getInstance().getProperty("ImageExporterWiz_Close"));
+		cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Close_TT"));
+		cancelButton.setEnabled(true);
 	}
 	
 	private void backAction() {
@@ -439,6 +441,11 @@ public class ImageExporterWizard extends VortexWizard {
 			protected Void doInBackground() {
 				batchExporter.run();
 				return null;
+			}
+
+			@Override
+			protected void done() {
+				setButtonsForRestartOrClose();
 			}
 		};
 

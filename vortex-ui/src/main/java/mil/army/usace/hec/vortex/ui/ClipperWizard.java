@@ -114,26 +114,28 @@ public class ClipperWizard extends VortexWizard {
     }
 
     private void nextAction() {
-        if(!validateCurrentStep()) return;
+        if (!validateCurrentStep()) return;
         submitCurrentStep();
         cardNumber++;
         backButton.setEnabled(true);
-
-        if(cardNumber == 3) {
-            backButton.setEnabled(false);
-            nextButton.setEnabled(false);
-        } // If: Step Four (Processing...) Then disable Back and Next button
-
-        if(cardNumber == 4) {
-            backButton.setVisible(false);
-            nextButton.setText(TextProperties.getInstance().getProperty("ClipperWiz_Restart"));
-            nextButton.setToolTipText(TextProperties.getInstance().getProperty("ClipperWiz_Restart_TT"));
-            nextButton.setEnabled(true);
-            cancelButton.setText(TextProperties.getInstance().getProperty("ClipperWiz_Close"));
-            cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ClipperWiz_Close_TT"));
-        } // If: Step Five (Change Cancel to Close)
-
+        updateButtonState();
         cardLayout.next(contentCards);
+    }
+
+    private void updateButtonState() {
+        backButton.setEnabled(cardNumber > 0 && cardNumber < 3);
+        nextButton.setEnabled(cardNumber < 3);
+        cancelButton.setEnabled(cardNumber < 3);
+    }
+
+    private void setButtonsForRestartOrClose() {
+        backButton.setVisible(false);
+        nextButton.setText(TextProperties.getInstance().getProperty("ClipperWiz_Restart"));
+        nextButton.setToolTipText(TextProperties.getInstance().getProperty("ClipperWiz_Restart_TT"));
+        nextButton.setEnabled(true);
+        cancelButton.setText(TextProperties.getInstance().getProperty("ClipperWiz_Close"));
+        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ClipperWiz_Close_TT"));
+        cancelButton.setEnabled(true);
     }
 
     private void backAction() {
@@ -372,6 +374,11 @@ public class ClipperWizard extends VortexWizard {
             protected Void doInBackground() {
                 batchSubsetter.run();
                 return null;
+            }
+
+            @Override
+            protected void done() {
+                setButtonsForRestartOrClose();
             }
         };
 

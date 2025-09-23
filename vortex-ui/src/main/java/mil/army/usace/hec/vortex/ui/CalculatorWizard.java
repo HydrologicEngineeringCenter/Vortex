@@ -145,22 +145,24 @@ public class CalculatorWizard extends VortexWizard {
         submitCurrentStep();
         cardNumber++;
         backButton.setEnabled(true);
-
-        if (cardNumber == 4) {
-            backButton.setEnabled(false);
-            nextButton.setEnabled(false);
-        } // If: Step Four (Processing...) Then disable Back and Next button
-
-        if (cardNumber == 5) {
-            backButton.setVisible(false);
-            nextButton.setText(TextProperties.getInstance().getProperty("CalculatorWiz_Restart"));
-            nextButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Restart_TT"));
-            nextButton.setEnabled(true);
-            cancelButton.setText(TextProperties.getInstance().getProperty("CalculatorWiz_Close"));
-            cancelButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Close_TT"));
-        } // If: Step Five (Change Cancel to Close)
-
+        updateButtonState();
         cardLayout.next(contentCards);
+    }
+
+    private void updateButtonState() {
+        backButton.setEnabled(cardNumber > 0 && cardNumber < 4);
+        nextButton.setEnabled(cardNumber < 4);
+        cancelButton.setEnabled(cardNumber < 4);
+    }
+
+    private void setButtonsForRestartOrClose() {
+        backButton.setVisible(false);
+        nextButton.setText(TextProperties.getInstance().getProperty("CalculatorWiz_Restart"));
+        nextButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Restart_TT"));
+        nextButton.setEnabled(true);
+        cancelButton.setText(TextProperties.getInstance().getProperty("CalculatorWiz_Close"));
+        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Close_TT"));
+        cancelButton.setEnabled(true);
     }
 
     private void backAction() {
@@ -685,6 +687,11 @@ public class CalculatorWizard extends VortexWizard {
             protected Void doInBackground() {
                 runnable.run();
                 return null;
+            }
+
+            @Override
+            protected void done() {
+                setButtonsForRestartOrClose();
             }
         };
 

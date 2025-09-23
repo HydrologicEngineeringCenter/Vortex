@@ -180,27 +180,24 @@ public class GapFillerWizard extends VortexWizard {
         if (!validateCurrentStep()) return;
         submitCurrentStep();
         cardNumber++;
-        updateButtonStates();
+        updateButtonState();
         cardLayout.next(contentCards);
     }
 
-    /**
-     * Updates button states based on the current card number.
-     */
-    private void updateButtonStates() {
-        backButton.setEnabled(cardNumber > 0);
+    private void updateButtonState() {
+        backButton.setEnabled(cardNumber > 0 && cardNumber < 4);
+        nextButton.setEnabled(cardNumber < 4);
+        cancelButton.setEnabled(cardNumber < 4);
+    }
 
-        if (cardNumber == 4) {
-            backButton.setEnabled(false);
-            nextButton.setEnabled(false);
-        } else if (cardNumber == 5) {
-            backButton.setVisible(false);
-            nextButton.setText(RESTART_BUTTON);
-            nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Restart_TT"));
-            nextButton.setEnabled(true);
-            cancelButton.setText(CLOSE_BUTTON);
-            cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Close_TT"));
-        }
+    private void setButtonsForRestartOrClose() {
+        backButton.setVisible(false);
+        nextButton.setText(RESTART_BUTTON);
+        nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Restart_TT"));
+        nextButton.setEnabled(true);
+        cancelButton.setText(CLOSE_BUTTON);
+        cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("GapFillerWiz_Close_TT"));
+        cancelButton.setEnabled(true);
     }
 
     /**
@@ -718,8 +715,7 @@ public class GapFillerWizard extends VortexWizard {
 
             @Override
             protected void done() {
-                // Gap-fillers do not currently report progress. Manually set to 100 when done.
-                progressMessagePanel.setValue(100);
+                setButtonsForRestartOrClose();
             }
         };
         task.execute();

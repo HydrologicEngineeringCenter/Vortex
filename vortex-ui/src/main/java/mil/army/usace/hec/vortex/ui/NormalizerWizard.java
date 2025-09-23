@@ -124,17 +124,28 @@ public class NormalizerWizard extends VortexWizard {
     }
 
     private void nextAction() {
-        if(!validateCurrentStep()) return;
+        if (!validateCurrentStep()) return;
         submitCurrentStep();
         cardNumber++;
         backButton.setEnabled(true);
-
-        if(cardNumber == 4) {
-            backButton.setEnabled(false);
-            nextButton.setEnabled(false);
-        } // If: Step Five (Processing...) Then disable Back and Next button
-
+        updateButtonState();
         cardLayout.next(contentCards);
+    }
+
+    private void updateButtonState() {
+        backButton.setEnabled(cardNumber > 0 && cardNumber < 4);
+        nextButton.setEnabled(cardNumber < 4);
+        cancelButton.setEnabled(cardNumber < 4);
+    }
+
+    private void setButtonsForRestartOrClose() {
+        backButton.setVisible(false);
+        nextButton.setText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Restart"));
+        nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Restart_TT"));
+        nextButton.setEnabled(true);
+        cancelButton.setText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Close"));
+        cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Close_TT"));
+        cancelButton.setEnabled(true);
     }
 
     private void backAction() {
@@ -805,6 +816,7 @@ public class NormalizerWizard extends VortexWizard {
             public void done() {
                 handlers.forEach(Handler::close);
                 progressMessagePanel.flush();
+                setButtonsForRestartOrClose();
             }
         };
 

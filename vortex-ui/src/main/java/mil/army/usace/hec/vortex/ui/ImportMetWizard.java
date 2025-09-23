@@ -128,26 +128,27 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private void nextAction() {
-        if(!validateCurrentStep()) return;
+        if (!validateCurrentStep()) return;
         submitCurrentStep();
         cardNumber++;
-        backButton.setEnabled(true);
-
-        if(cardNumber == 4) {
-            backButton.setEnabled(false);
-            nextButton.setEnabled(false);
-        } // If: Step Five (Processing...) Then disable Back and Next button
-
-        if(cardNumber == 5) {
-            backButton.setVisible(false);
-            nextButton.setText(TextProperties.getInstance().getProperty("ImportMetWizRestart"));
-            nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizRestartTT"));
-            nextButton.setEnabled(true);
-            cancelButton.setText(TextProperties.getInstance().getProperty("ImportMetWizClose"));
-            cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizCloseTT"));
-        } // If: Step Six (Change Cancel to Close)
-
+        updateButtonState();
         cardLayout.next(contentCards);
+    }
+
+    private void updateButtonState() {
+        backButton.setEnabled(cardNumber > 0 && cardNumber < 4);
+        nextButton.setEnabled(cardNumber < 4);
+        cancelButton.setEnabled(cardNumber < 4);
+    }
+
+    private void setButtonsForRestartOrClose() {
+        backButton.setVisible(false);
+        nextButton.setText(TextProperties.INSTANCE.getProperty("ImportMetWizRestart"));
+        nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("ImportMetWizRestartTT"));
+        nextButton.setEnabled(true);
+        cancelButton.setText(TextProperties.INSTANCE.getProperty("ImportMetWizClose"));
+        cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("ImportMetWizCloseTT"));
+        cancelButton.setEnabled(true);
     }
 
     private void backAction() {
@@ -368,7 +369,9 @@ public class ImportMetWizard extends VortexWizard {
             }
 
             @Override
-            protected void done() { nextAction(); }
+            protected void done() {
+                nextAction();
+            }
         };
 
         task.execute();
@@ -491,6 +494,11 @@ public class ImportMetWizard extends VortexWizard {
             protected Void doInBackground() {
                 importer.process();
                 return null;
+            }
+
+            @Override
+            protected void done() {
+                setButtonsForRestartOrClose();
             }
         };
 
