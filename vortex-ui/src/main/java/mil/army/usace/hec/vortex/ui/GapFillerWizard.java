@@ -716,6 +716,7 @@ public class GapFillerWizard extends VortexWizard {
             @Override
             protected void done() {
                 setButtonsForRestartOrClose();
+                progressMessagePanel.setValue(100);
             }
         };
         task.execute();

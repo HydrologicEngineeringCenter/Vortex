@@ -535,6 +535,7 @@ public class GridToPointWizard extends VortexWizard {
             @Override
             protected void done() {
                 setButtonsForRestartOrClose();
+                progressMessagePanel.setValue(100);
             }
         };
 

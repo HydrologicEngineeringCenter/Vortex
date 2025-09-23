@@ -446,6 +446,7 @@ public class ImageExporterWizard extends VortexWizard {
 			@Override
 			protected void done() {
 				setButtonsForRestartOrClose();
+				progressMessagePanel.setValue(100);
 			}
 		};
 

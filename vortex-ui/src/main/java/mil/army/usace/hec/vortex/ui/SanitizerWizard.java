@@ -522,6 +522,7 @@ public class SanitizerWizard extends VortexWizard {
             @Override
             protected void done() {
                 setButtonsForRestartOrClose();
+                progressMessagePanel.setValue(100);
             }
         };
 

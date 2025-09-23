@@ -692,6 +692,7 @@ public class CalculatorWizard extends VortexWizard {
             @Override
             protected void done() {
                 setButtonsForRestartOrClose();
+                progressMessagePanel.setValue(100);
             }
         };
 

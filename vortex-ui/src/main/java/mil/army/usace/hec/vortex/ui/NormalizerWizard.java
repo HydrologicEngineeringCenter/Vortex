@@ -817,6 +817,7 @@ public class NormalizerWizard extends VortexWizard {
                 handlers.forEach(Handler::close);
                 progressMessagePanel.flush();
                 setButtonsForRestartOrClose();
+                progressMessagePanel.setValue(100);
             }
         };
 
