@@ -35,7 +35,7 @@ For sample data retrieval scripts for QPE, RTMA, and HRRR data, see the [data re
 
 ## Scripting
 
-The Vortex API can be called via jython [scripts](https://github.com/HydrologicEngineeringCenter/Vortex/wiki/Vortex-scripting-example) for batch processing.
+The Vortex API can be called via jython [scripts](https://github.com/HydrologicEngineeringCenter/Vortex/wiki/Vortex-importer-scripting-example) for batch processing.
 
 ## Building from source
 
