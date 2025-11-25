@@ -252,7 +252,42 @@ public class WktFactory {
             srs.delete();
 
             return wkt;
+        } else if (projection instanceof TransverseMercator in) {
+            SpatialReference srs = new SpatialReference();
+            setGcsParameters(in, srs);
+            List<Parameter> parameters = projection.getProjectionParameters();
 
+            Map<String, Double> numericParameters = parameters.stream()
+                    .filter(p -> !p.isString())
+                    .collect(Collectors.toMap(Parameter::getName, Parameter::getNumericValue));
+
+            Map<String, String> stringParameters = parameters.stream()
+                    .filter(Parameter::isString)
+                    .filter(p -> Objects.nonNull(p.getStringValue()))
+                    .collect(Collectors.toMap(Parameter::getName, Parameter::getStringValue));
+
+            int factor = Objects.equals(stringParameters.get("units"), "km") ? 1000 : 1;
+
+            double centerLatitude = numericParameters.get("latitude_of_projection_origin");
+            double centerLongitude = numericParameters.get("longitude_of_central_meridian");
+            double scaleFactor = numericParameters.get("scale_factor_at_central_meridian");
+            double falseEasting = numericParameters.get("false_easting") * factor;
+            double falseNorthing = numericParameters.get("false_northing") * factor;
+
+            srs.SetTM(
+                    centerLatitude,
+                    centerLongitude,
+                    scaleFactor,
+                    falseEasting,
+                    falseNorthing
+            );
+            srs.SetLinearUnits(SRS_UL_METER, 1.0);
+
+            String wkt = srs.ExportToPrettyWkt();
+
+            srs.delete();
+
+            return wkt;
         } else if (projection instanceof TransverseMercatorProjection in) {
             SpatialReference srs = new SpatialReference();
             setGcsParameters(in, srs);
@@ -289,7 +324,6 @@ public class WktFactory {
             srs.delete();
 
             return wkt;
-
         } else {
             logger.severe(() -> "Projection " + projection + " not supported");
             return "";
