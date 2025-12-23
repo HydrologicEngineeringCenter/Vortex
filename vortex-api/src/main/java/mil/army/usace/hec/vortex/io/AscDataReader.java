@@ -4,6 +4,7 @@ import mil.army.usace.hec.vortex.GdalRegister;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.util.FilenameUtil;
+import mil.army.usace.hec.vortex.util.PrismVariable;
 import org.gdal.gdal.Band;
 import org.gdal.gdal.Dataset;
 import org.gdal.gdal.gdal;
@@ -106,6 +107,27 @@ class AscDataReader extends DataReader {
                 isPrismTemporalDaily.set(true);
             if (fileName.matches("prism.*vpdmax.*(stable|provisional|early).*m3.*"))
                 isPrismTemporalMonthly.set(true);
+        } else if (fileName.matches("prism_.*(15s|30s|25m).*")) {
+            // Remove extension and path
+            String basename = fileName
+                    .replace(".tif", "")
+                    .replace(".tiff", "");
+
+            Pattern pattern = Pattern.compile("(\\d{8}|\\d{6}|\\d{4})(?:_|\\.|$)");
+            Matcher matcher = pattern.matcher(basename);
+            if (matcher.find()) {
+                String dateStr = matcher.group(1);
+                int length = dateStr.length();
+                if (length == 8)
+                    isPrismTemporalDaily.set(true);
+                if (length == 6)
+                    isPrismTemporalMonthly.set(true);
+            }
+
+            String varName = PrismVariable.parse(fileName).toString();
+            shortName = varName;
+            fullName = varName;
+            description = varName;
         } else if (fileName.matches("qpf.*1hr.*")) {
             shortName = "precipitation";
             fullName = "precipitation";
@@ -129,12 +151,15 @@ class AscDataReader extends DataReader {
         ZonedDateTime endTime;
         Duration interval;
         if (isPrismTemporalDaily.get()) {
-            String string1 = path;
-            String string2 = string1.substring(0, string1.lastIndexOf('_'));
-            String string3 = string2.substring(string2.length() - 8);
+            Pattern pattern = Pattern.compile("\\d{8}");
+            Matcher matcher = pattern.matcher(path);
+            String dateString = "";
+            while (matcher.find()) {
+                dateString = matcher.group(0);
+            }
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            LocalDate date = LocalDate.parse(string3, formatter);
+            LocalDate date = LocalDate.parse(dateString, formatter);
             startTime = ZonedDateTime.of(LocalDateTime.of(date, LocalTime.of(0, 0)), ZoneId.of("UTC")).minusHours(12);
             endTime = ZonedDateTime.of(LocalDateTime.of(date.plusDays(1), LocalTime.of(0, 0)), ZoneId.of("UTC")).minusHours(12);
             interval = Duration.between(startTime, endTime);
