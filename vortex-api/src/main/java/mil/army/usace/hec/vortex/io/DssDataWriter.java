@@ -220,28 +220,24 @@ class DssDataWriter extends DataWriter {
 
     private static DssDataType getDssDataType(String description, Duration interval) {
         VortexVariable variable = VortexVariable.fromName(description);
-        if (variable == PRECIPITATION)
-            return DssDataType.PER_CUM;
-        if (variable == TEMPERATURE)
-            return DssDataType.INST_VAL;
-        if (variable == SHORTWAVE_RADIATION)
-            return DssDataType.PER_AVER;
-        if (variable == WINDSPEED)
-            return DssDataType.INST_VAL;
-        if (variable == SNOW_WATER_EQUIVALENT) {
-            if (interval.equals(Duration.ZERO)) {
-                return DssDataType.INST_VAL;
-            } else {
-                return DssDataType.PER_AVER;
-            }
-        }
-        if (variable == PRECIPITATION_FREQUENCY) {
-            return DssDataType.INST_VAL;
-        } else if (variable == ALBEDO) {
-            return DssDataType.INST_VAL;
-        } else {
-            return DssDataType.INVAL;
-        }
+
+        return switch (variable) {
+            case PRECIPITATION -> DssDataType.PER_CUM;
+
+            case PRECIPITATION_FREQUENCY, ALBEDO -> DssDataType.INST_VAL;
+
+            case TEMPERATURE,
+                 HUMIDITY,
+                 SHORTWAVE_RADIATION,
+                 LONGWAVE_RADIATION,
+                 PRESSURE,
+                 WINDSPEED,
+                 SNOW_WATER_EQUIVALENT -> interval.isZero()
+                    ? DssDataType.INST_VAL
+                    : DssDataType.PER_AVER;
+
+            default -> DssDataType.INVAL;
+        };
     }
 
     private static DSSPathname updatePathname(DSSPathname pathnameIn, Map<String, String> options) {

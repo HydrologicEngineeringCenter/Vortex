@@ -28,7 +28,7 @@ import java.util.logging.Logger;
 abstract class NetcdfDataReader extends DataReader {
     private static final Logger logger = Logger.getLogger(NetcdfDataReader.class.getName());
 
-    private static final PathMatcher NC_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/*.{nc|NC|nc4|NC4}");
+    private static final PathMatcher NC_MATCHER = FileSystems.getDefault().getPathMatcher("regex:(?i).*\\.nc4?");
     private static final String TIME_BOUNDS = "time_bnds";
 
     /* Factory Method */
