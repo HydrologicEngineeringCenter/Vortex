@@ -72,11 +72,7 @@ abstract class NetcdfDataReader extends DataReader {
                 if (isSelectableVariable(variable)) {
                     VariableDS variableDS = (VariableDS) variable;
                     List<CoordinateSystem> coordinateSystems = variableDS.getCoordinateSystems();
-
-                    boolean isLatLon = ncd.findCoordinateAxis(AxisType.Lon) != null
-                            && ncd.findCoordinateAxis(AxisType.Lat) != null;
-
-                    if (!coordinateSystems.isEmpty() || isLatLon) {
+                    if (!coordinateSystems.isEmpty()) {
                         variableNames.add(variable.getFullName());
                     }
                 }
@@ -126,8 +122,10 @@ abstract class NetcdfDataReader extends DataReader {
 
     private static boolean isSelectableVariable(Variable variable) {
         boolean isVariableDS = variable instanceof VariableDS;
-        boolean isNotAxis = !(variable instanceof CoordinateAxis);
-        return isVariableDS && isNotAxis;
+        boolean isLatLon = variable.findDimensionIndex("latitude") >= 0
+                && variable.findDimensionIndex("longitude") >= 0;
+
+        return isVariableDS || isLatLon;
     }
 
     static Grid scaleGrid(Grid grid, Unit<?> cellUnits, Unit<?> csUnits) {
