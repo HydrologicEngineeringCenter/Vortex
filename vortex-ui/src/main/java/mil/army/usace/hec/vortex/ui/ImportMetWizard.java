@@ -299,7 +299,10 @@ public class ImportMetWizard extends VortexWizard {
         boolean isValid = true;
         Set<String> messages = new LinkedHashSet<>();
         for (String file : files) {
+            Set<String> availableVariables = DataReader.getVariables(file.trim());
             for (String variable : variables) {
+                if (!availableVariables.contains(variable))
+                    continue;
                 try (DataReader reader = DataReader.builder().path(file.trim()).variable(variable).build()) {
                     Validation validation = reader.isValid();
                     if (!validation.isValid()) isValid = false;
