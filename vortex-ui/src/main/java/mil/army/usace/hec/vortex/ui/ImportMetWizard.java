@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
 import com.formdev.flatlaf.FlatLightLaf;
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
@@ -309,7 +310,10 @@ public class ImportMetWizard extends VortexWizard {
                     messages.addAll(validation.getMessages());
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, e, e::getMessage);
-                    return false;
+                    String template = MessageStore.getInstance().getMessage("error_tar_file");
+                    String message = String.format(template);
+                    messages.add(message);
+                    isValid = false;
                 }
             }
         }

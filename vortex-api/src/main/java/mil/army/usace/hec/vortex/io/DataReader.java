@@ -73,6 +73,10 @@ public abstract class DataReader implements AutoCloseable {
                 return new DssDataReader(this);
             }
 
+            if (path.endsWith(".tar")) {
+                throw new IllegalStateException("DataReader cannot parse non-SNODAS tar file");
+            }
+
             return NetcdfDataReader.createInstance(path, variableName);
         } // build()
     } // DataReaderBuilder class
