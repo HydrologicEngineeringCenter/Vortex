@@ -44,6 +44,11 @@ class GridDatasetReader extends NetcdfDataReader {
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
 
+    /**
+     * CAUTION: Do not add new entries to this enum. Running regex patterns against filenames for every file
+     * is computationally expensive. Instead, direct the user to use the "time_bnds" override approach described at:
+     * <a href="https://github.com/HydrologicEngineeringCenter/Vortex/wiki/Importing-NetCDF-datasets-without-%22time_bnds%22-variable">...</a>
+     */
     enum SpecialFileType {
         ABRSC_GAUGE(".*gaugecorr.*qpe.*01h.*grib2", ".*"),
         ABRSC_RADAR(".*radaronly.*qpe.*01h.*grib2", ".*"),
