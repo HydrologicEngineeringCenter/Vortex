@@ -73,6 +73,10 @@ public abstract class DataReader implements AutoCloseable {
                 return new DssDataReader(this);
             }
 
+            if (path.matches(".*\\.(tar|tar\\.gz|zip)")) {
+                throw new UnrecognizedArchiveException(path);
+            }
+
             return NetcdfDataReader.createInstance(path, variableName);
         } // build()
     } // DataReaderBuilder class

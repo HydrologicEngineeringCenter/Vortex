@@ -1,9 +1,11 @@
 package mil.army.usace.hec.vortex.ui;
 
 import com.formdev.flatlaf.FlatLightLaf;
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.io.UnrecognizedArchiveException;
 import mil.army.usace.hec.vortex.io.Validation;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import mil.army.usace.hec.vortex.util.DssUtil;
@@ -307,9 +309,15 @@ public class ImportMetWizard extends VortexWizard {
                     Validation validation = reader.isValid();
                     if (!validation.isValid()) isValid = false;
                     messages.addAll(validation.getMessages());
+                } catch (UnrecognizedArchiveException uae) {
+                    logger.log(Level.SEVERE, uae, uae::getMessage);
+                    String template = MessageStore.getInstance().getMessage("error_archive_file");
+                    String arg0 = uae.getMessage();
+                    String message = String.format(template, arg0);
+                    messages.add(message);
+                    isValid = false;
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, e, e::getMessage);
-                    return false;
+                    isValid = false;
                 }
             }
         }
