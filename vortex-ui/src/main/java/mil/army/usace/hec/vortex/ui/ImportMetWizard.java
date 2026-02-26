@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
 import com.formdev.flatlaf.FlatLightLaf;
+import mil.army.usace.hec.vortex.MessageStore;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
@@ -230,12 +231,27 @@ public class ImportMetWizard extends VortexWizard {
         DefaultListModel<String> addFilesListModel = getDefaultListModel(addFilesList);
         if(addFilesListModel == null) { return false; }
 
-        if(Collections.list(addFilesListModel.elements()).isEmpty()) {
+        List<String> files = Collections.list(addFilesListModel.elements());
+
+        if(files.isEmpty()) {
             /* Popup Alert of Missing Inputs */
             JOptionPane.showMessageDialog(this, "Input dataset is required.",
                     "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
             return false;
         } // If: addFilesList is empty
+
+        String errorTemplate = MessageStore.getInstance().getMessage("error_archive_file");
+
+        List<String> messages = files.stream()
+                .filter(DataReader::isArchive)
+                .filter(f -> !DataReader.isSupportedArchive(f))
+                .map(f -> String.format(errorTemplate, f))
+                .collect(Collectors.toList());
+
+        if (!messages.isEmpty()) {
+            showUnsupportedArchiveError(messages);
+            return false;
+        }
 
         return true;
     }
@@ -1062,6 +1078,26 @@ public class ImportMetWizard extends VortexWizard {
             String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
             FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));
         }
+    }
+
+    private void showUnsupportedArchiveError(List<String> errors) {
+        String suggestion = MessageStore.getInstance().getMessage("error_archive_file_suggestion");
+
+        List<String> lines = new ArrayList<>(errors);
+        lines.add(suggestion);
+
+        JTextArea textArea = new JTextArea(String.join("\n", lines));
+        textArea.setEditable(false);
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(400, 200));
+
+        JOptionPane.showMessageDialog(
+                this,
+                scrollPane,
+                "Error: Unsupported Archive Format",
+                JOptionPane.ERROR_MESSAGE
+        );
     }
 
     /* Add main for quick UI Testing */

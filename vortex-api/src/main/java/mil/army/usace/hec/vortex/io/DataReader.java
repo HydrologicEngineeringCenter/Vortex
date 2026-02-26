@@ -8,8 +8,20 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public abstract class DataReader implements AutoCloseable {
+    private static final Pattern SUPPORTED_ARCHIVE_PATTERN = Pattern.compile(
+            "snodas.*\\.tar$|bil\\.zip$|asc\\.zip$",
+            Pattern.CASE_INSENSITIVE
+    );
+
+    private static final Set<String> ARCHIVE_EXTENSIONS = Set.of(
+            ".zip", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz2",
+            ".tar.xz", ".txz", ".tar.zst", ".tzst", ".tar.z",
+            ".7z", ".rar", ".gz", ".bz2", ".xz", ".zst", ".lz4"
+    );
+
     final PropertyChangeSupport support;
 
     final String path;
@@ -116,6 +128,21 @@ public abstract class DataReader implements AutoCloseable {
         String fileName = new File(pathToFile).getName().toLowerCase();
 
         return !fileName.matches(".*\\.(asc|tif|tiff|bil|bil.zip|asc.zip)$");
+    }
+
+    public static boolean isArchive(String pathToFile) {
+        if (pathToFile == null) return false;
+
+        String lower = pathToFile.toLowerCase();
+
+        return ARCHIVE_EXTENSIONS.stream().anyMatch(lower::endsWith);
+    }
+
+    public static boolean isSupportedArchive(String pathToFile) {
+        if (pathToFile == null)
+            return false;
+
+        return SUPPORTED_ARCHIVE_PATTERN.matcher(pathToFile).matches();
     }
 
     public abstract Validation isValid();
