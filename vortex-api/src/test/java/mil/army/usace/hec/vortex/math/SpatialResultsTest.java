@@ -68,6 +68,52 @@ class SpatialResultsTest {
      * For Mores Creek Energy Budget snow modeling.
      */
     @Test
+    void ebSweDataWriterTest(){
+        String outputDirectory = "C:\\Projects\\SIRO\\HMS\\MoresCreek\\maps\\WY2023-2025_EB_HRRR_2000m\\";
+        String inputDirectory = "C:\\Projects\\SIRO\\HMS\\MoresCreek\\results\\WY2023-2025_EB_HRRR_2000m\\";
+        String inFile = inputDirectory + "eb_swe.dss";
+
+        Map<String, String> variablesAndOutputFileNames = Map.ofEntries(
+                Map.entry("//WY2023-2025_EB/SWE/08DEC2022:0000/08DEC2022:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2022_12_08T0000_2022_12_08T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/09FEB2023:0000/09FEB2023:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2023_02_09T0000_2023_02_09T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/16MAR2023:0000/16MAR2023:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2023_03_16T0000_2023_03_16T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/05APR2023:0000/05APR2023:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2023_04_05T0000_2023_04_05T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/28DEC2023:0000/28DEC2023:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2023_12_28T0000_2023_12_28T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/15JAN2024:0000/15JAN2024:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2024_01_15T0000_2024_01_15T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/13FEB2024:0000/13FEB2024:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2024_02_13T0000_2024_02_13T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/15MAR2024:0000/15MAR2024:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2024_03_15T0000_2024_03_15T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/18APR2024:0000/18APR2024:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2024_04_18T0000_2024_04_18T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/13JAN2025:0000/13JAN2025:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2025_01_13T0000_2025_01_13T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/29JAN2025:0000/29JAN2025:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2025_01_29T0000_2025_01_29T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/04APR2025:0000/04APR2025:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2025_04_04T0000_2025_04_04T2400"),
+                Map.entry("//WY2023-2025_EB/SWE/01MAY2025:0000/01MAY2025:2400/RUN:WY2023-2025_EB_HRRR/","EB_swe_2025_05_01T0000_2025_05_01T2400"));
+
+        for (String variable : variablesAndOutputFileNames.keySet()) {
+            String outputFileName = outputDirectory + variablesAndOutputFileNames.get(variable) + ".tif";
+
+            DataReader reader = DataReader.builder()
+                    .path(inFile)
+                    .variable(variable)
+                    .build();
+
+            List<VortexData> dtos = new ArrayList<>(reader.getDtos());
+
+            Path destination = Paths.get(outputFileName);
+
+            DataWriter writer = DataWriter.builder()
+                    .destination(destination)
+                    .data(dtos)
+                    .build();
+
+            writer.write();
+        }
+    }
+
+    /**
+     * Reads selected snow depth gridded datasets from a DSS file and writes each selection to an output GeoTIFF.
+     * For Mores Creek Energy Budget snow modeling.
+     */
+    @Test
     void ebSnowDepthDataWriterTest(){
         String outputDirectory = "C:\\Projects\\SIRO\\HMS\\MoresCreek\\maps\\WY2023-2025_EB_HRRR_2000m\\";
         String inputDirectory = "C:\\Projects\\SIRO\\HMS\\MoresCreek\\results\\WY2023-2025_EB_HRRR_2000m\\";
