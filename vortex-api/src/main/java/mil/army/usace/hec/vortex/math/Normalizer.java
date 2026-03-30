@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
@@ -144,7 +144,7 @@ public class Normalizer implements Runnable {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        String messageBegin = MessageStore.INSTANCE.getMessage("normalizer_begin");
+        String messageBegin = Message.format("normalizer_begin");
         logger.info(() -> messageBegin);
 
         List<VortexData> source = new ArrayList<>();
@@ -180,8 +180,7 @@ public class Normalizer implements Runnable {
                     .collect(Collectors.toList());
 
             if (sourceFiltered.isEmpty()) {
-                String template = MessageStore.INSTANCE.getMessage("normalizer_empty_spatial_grids");
-                String message = String.format(template, formatter.format(start), formatter.format(end));
+                String message = Message.format("normalizer_empty_spatial_grids", formatter.format(start), formatter.format(end));
                 logger.warning(() -> message);
             }
 
@@ -194,8 +193,7 @@ public class Normalizer implements Runnable {
                     .toList();
 
             if (normalsFiltered.isEmpty()){
-                String template = MessageStore.INSTANCE.getMessage("normalizer_empty_volume_grids");
-                String message = String.format(template, formatter.format(start), formatter.format(end));
+                String message = Message.format("normalizer_empty_volume_grids", formatter.format(start), formatter.format(end));
                 logger.warning(() -> message);
             }
 
@@ -225,13 +223,11 @@ public class Normalizer implements Runnable {
             count.addAndGet(output.size());
         }
 
-        String templateEnd = MessageStore.INSTANCE.getMessage("normalizer_end");
-        String messageEnd = String.format(templateEnd, count.get(), destination);
+        String messageEnd = Message.format("normalizer_end", count.get(), destination);
         logger.info(() -> messageEnd);
 
         stopwatch.end();
-        String templateTime = MessageStore.INSTANCE.getMessage("normalizer_time");
-        String timeMessage = String.format(templateTime, stopwatch);
+        String timeMessage = Message.format("normalizer_time", stopwatch);
         logger.info(timeMessage);
     }
 

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CalculatorWizard extends ProcessingWizard {
-    private static final String ERROR_TITLE = "Error";
+    private static final String ERROR_TITLE = Text.format("Error_Title");
 
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private JPanel constantOrRasterSelectionPanel;
@@ -125,11 +125,11 @@ public class CalculatorWizard extends ProcessingWizard {
 
     /* Step 2: Constant or Raster Selection */
     private void initConstantOrRasterSelectionPanel() {
-        JLabel calcTypeLabel = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_Type_L"));
+        JLabel calcTypeLabel = new JLabel(Text.format("CalculatorWiz_Type_L"));
         calcTypeLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
 
-        constantRadioButton = new JRadioButton(TextProperties.getInstance().getProperty("CalculatorWiz_ConstantType_L"));
-        JRadioButton rasterRadioButton = new JRadioButton(TextProperties.getInstance().getProperty("CalculatorWiz_RasterType_L"));
+        constantRadioButton = new JRadioButton(Text.format("CalculatorWiz_ConstantType_L"));
+        JRadioButton rasterRadioButton = new JRadioButton(Text.format("CalculatorWiz_RasterType_L"));
 
         ButtonGroup buttonGroup = new ButtonGroup();
         buttonGroup.add(constantRadioButton);
@@ -183,7 +183,7 @@ public class CalculatorWizard extends ProcessingWizard {
         String subtractText = subtractTextField.getText();
 
         if (multiplyText.isEmpty() && divideText.isEmpty() && addText.isEmpty() && subtractText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "One constant value entry required",
+            JOptionPane.showMessageDialog(this, Text.format("CalculatorWiz_OneConstantRequired"),
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -193,7 +193,7 @@ public class CalculatorWizard extends ProcessingWizard {
         if (!addText.isEmpty()) count++;
         if (!subtractText.isEmpty()) count++;
         if (count != 1) {
-            JOptionPane.showMessageDialog(this, "Only one constant value entry allowed",
+            JOptionPane.showMessageDialog(this, Text.format("CalculatorWiz_OneConstantAllowed"),
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -203,7 +203,7 @@ public class CalculatorWizard extends ProcessingWizard {
     private boolean validateRasterParameters() {
         Path pathToRaster = Path.of(rasterTextField.getText());
         if (Files.isRegularFile(pathToRaster) && Files.notExists(pathToRaster)) {
-            JOptionPane.showMessageDialog(this, "Raster does not exist",
+            JOptionPane.showMessageDialog(this, Text.format("CalculatorWiz_RasterNotExist"),
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -211,7 +211,7 @@ public class CalculatorWizard extends ProcessingWizard {
     }
 
     private JPanel constantCalculationPanel() {
-        JLabel setConstantLabel = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_SetConstant_L"));
+        JLabel setConstantLabel = new JLabel(Text.format("CalculatorWiz_SetConstant_L"));
         setConstantLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
         JLabel multiplyLabel = new JLabel(Operation.MULTIPLY.getDisplayString());
@@ -276,7 +276,7 @@ public class CalculatorWizard extends ProcessingWizard {
     }
 
     private JPanel operationSelectionPanel() {
-        JLabel operationLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizResamplingMethodL"));
+        JLabel operationLabel = new JLabel(Text.format("ImportMetWizResamplingMethodL"));
         JPanel operationLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         operationLabelPanel.add(operationLabel);
 
@@ -293,7 +293,7 @@ public class CalculatorWizard extends ProcessingWizard {
     }
 
     private JPanel rasterSelectionPanel() {
-        JLabel label = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_Raster_L"));
+        JLabel label = new JLabel(Text.format("CalculatorWiz_Raster_L"));
         JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         labelPanel.add(label);
 
@@ -345,7 +345,7 @@ public class CalculatorWizard extends ProcessingWizard {
     private boolean validateStepFour() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if (destinationFile == null || destinationFile.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
             return false;
         }

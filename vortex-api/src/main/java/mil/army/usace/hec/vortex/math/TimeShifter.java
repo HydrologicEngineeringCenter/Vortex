@@ -159,8 +159,7 @@ public class TimeShifter implements Runnable {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        String templateBegin = MessageStore.getInstance().getMessage("time_shifter_begin");
-        String messageBegin = String.format(templateBegin);
+        String messageBegin = Message.format("time_shifter_begin");
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         AtomicInteger processed = new AtomicInteger();
@@ -200,12 +199,10 @@ public class TimeShifter implements Runnable {
         String timeMessage = "Batch shift time: " + stopwatch;
         logger.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("time_shifter_end");
-        String messageEnd = String.format(templateEnd, processed, destination);
+        String messageEnd = Message.format("time_shifter_end", processed, destination);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("time_shifter_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String messageTime = Message.format("time_shifter_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 

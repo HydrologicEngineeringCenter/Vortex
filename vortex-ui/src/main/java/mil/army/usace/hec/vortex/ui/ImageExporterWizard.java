@@ -140,7 +140,7 @@ public class ImageExporterWizard extends ProcessingWizard {
 	}
 
     private JPanel destinationSelectionPanel() {
-		JLabel destinationDirectoryLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_DestinationDirectory_L"));
+		JLabel destinationDirectoryLabel = new JLabel(Text.format("ImageExporterWiz_DestinationDirectory_L"));
 		JPanel destinationDirectoryLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		destinationDirectoryLabelPanel.add(destinationDirectoryLabel);
 
@@ -190,7 +190,7 @@ public class ImageExporterWizard extends ProcessingWizard {
 	}
 
     private JPanel filenamePrefixPanel() {
-		JLabel filenamePrefixLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_FilenamePrefix_L"));
+		JLabel filenamePrefixLabel = new JLabel(Text.format("ImageExporterWiz_FilenamePrefix_L"));
 		JPanel filenamePrefixLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		filenamePrefixLabelPanel.add(filenamePrefixLabel);
 
@@ -212,7 +212,7 @@ public class ImageExporterWizard extends ProcessingWizard {
 	}
 
     private JPanel formatPanel() {
-		JLabel formatLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_Format_L"));
+		JLabel formatLabel = new JLabel(Text.format("ImageExporterWiz_Format_L"));
 		JPanel formatLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		formatLabelPanel.add(formatLabel);
 
@@ -237,8 +237,8 @@ public class ImageExporterWizard extends ProcessingWizard {
     private boolean validateDestination() {
 		String destinationFile = destinationDirectoryTextField.getText();
 		if(destinationFile == null || destinationFile.isEmpty() ) {
-			JOptionPane.showMessageDialog(this, "Destination file is required.",
-					"Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+					Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
 		return true;

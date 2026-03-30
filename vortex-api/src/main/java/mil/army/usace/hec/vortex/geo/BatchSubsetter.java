@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.geo;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
@@ -132,8 +132,7 @@ public class BatchSubsetter implements Runnable {
         AtomicInteger processed = new AtomicInteger();
         int totalCount = units.size();
 
-        String templateBegin = MessageStore.getInstance().getMessage("clipper_begin");
-        String messageBegin = String.format(templateBegin, totalCount);
+        String messageBegin = Message.format("clipper_begin", totalCount);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         units.parallelStream().forEach(unit -> {
@@ -146,12 +145,10 @@ public class BatchSubsetter implements Runnable {
         String timeMessage = "Batch subset time: " + stopwatch;
         LOGGER.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("clipper_end");
-        String messageEnd = String.format(templateEnd, processed, destination);
+        String messageEnd = Message.format("clipper_end", processed, destination);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("clipper_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String messageTime = Message.format("clipper_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 

@@ -153,7 +153,7 @@ public class GridToPointWizard extends ProcessingWizard {
     }
 
     private JPanel dataSourceSectionPanel() {
-        JLabel dataSourceLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWizZonesShapefileL"));
+        JLabel dataSourceLabel = new JLabel(Text.format("GridToPointWizZonesShapefileL"));
         JPanel dataSourceLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dataSourceLabelPanel.add(dataSourceLabel);
 
@@ -172,7 +172,7 @@ public class GridToPointWizard extends ProcessingWizard {
         dataSourceBrowseButton.addActionListener(evt -> dataSourceBrowseAction(dataSourceBrowseButton));
         dataSourceTextFieldPanel.add(dataSourceBrowseButton);
 
-        JLabel fieldLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWizFieldL"));
+        JLabel fieldLabel = new JLabel(Text.format("GridToPointWizFieldL"));
         JPanel fieldLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         fieldLabelPanel.add(fieldLabel);
 
@@ -221,15 +221,15 @@ public class GridToPointWizard extends ProcessingWizard {
     private boolean validateStepTwo() {
         Path pathToShp = Path.of(zonesShapefile.getText());
         if (!Files.isRegularFile(pathToShp) || Files.notExists(pathToShp)) {
-            JOptionPane.showMessageDialog(this, "Zones shapefile is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("GridToPointWiz_ZonesRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
         String fieldSelection = String.valueOf(fieldComboBox.getSelectedItem());
         if (fieldSelection.equals("null") || fieldSelection.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Shapefile field selection is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("GridToPointWiz_FieldRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
@@ -240,17 +240,17 @@ public class GridToPointWizard extends ProcessingWizard {
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
 
-        JLabel statisticsLabel = new JLabel(TextProperties.getInstance().getProperty("GridToPointWizStatisticsL"));
+        JLabel statisticsLabel = new JLabel(Text.format("GridToPointWizStatisticsL"));
         statisticsLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-        averageCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizAverageL"),true);
-        minCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMinL"),false);
-        maxCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMaxL"),false);
-        medianCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizMedianL"),false);
-        pct25thCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWiz25thPctL"),false);
-        pct75thCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWiz75thPctL"),false);
-        pctCellsGreaterZeroCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizPctCellsGreaterZeroL"),false);
-        pctCellsGreater25thPctBox = new JCheckBox(TextProperties.getInstance().getProperty("GridToPointWizPctCellsGreater25thPctL"),false);
+        averageCheckBox = new JCheckBox(Text.format("GridToPointWizAverageL"),true);
+        minCheckBox = new JCheckBox(Text.format("GridToPointWizMinL"),false);
+        maxCheckBox = new JCheckBox(Text.format("GridToPointWizMaxL"),false);
+        medianCheckBox = new JCheckBox(Text.format("GridToPointWizMedianL"),false);
+        pct25thCheckBox = new JCheckBox(Text.format("GridToPointWiz25thPctL"),false);
+        pct75thCheckBox = new JCheckBox(Text.format("GridToPointWiz75thPctL"),false);
+        pctCellsGreaterZeroCheckBox = new JCheckBox(Text.format("GridToPointWizPctCellsGreaterZeroL"),false);
+        pctCellsGreater25thPctBox = new JCheckBox(Text.format("GridToPointWizPctCellsGreater25thPctL"),false);
 
         Box optionsBox = Box.createVerticalBox();
         optionsBox.add(averageCheckBox);
@@ -284,8 +284,8 @@ public class GridToPointWizard extends ProcessingWizard {
 
         if (!isStatisticSelected) {
             JOptionPane.showMessageDialog(this,
-                    TextProperties.getInstance().getProperty("GridToPointWizNoStatisticsSelected"),
-                    TextProperties.getInstance().getProperty("GridToPointWizInvalid"),
+                    Text.format("GridToPointWizNoStatisticsSelected"),
+                    Text.format("GridToPointWizInvalid"),
                     JOptionPane.ERROR_MESSAGE);
             return false;
         } else {
@@ -306,8 +306,8 @@ public class GridToPointWizard extends ProcessingWizard {
     private boolean validateStepFour() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if(destinationFile == null || destinationFile.isEmpty() ) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 

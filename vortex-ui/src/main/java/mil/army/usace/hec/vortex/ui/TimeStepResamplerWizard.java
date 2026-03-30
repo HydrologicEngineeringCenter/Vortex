@@ -96,11 +96,11 @@ public class TimeStepResamplerWizard extends ProcessingWizard {
     }
 
     private JPanel stepTwoPanel() {
-        JLabel instructionLabel = new JLabel(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Instruction_L"));
+        JLabel instructionLabel = new JLabel(Text.format("TimeStepResamplerWiz_Instruction_L"));
         JPanel instructionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         instructionPanel.add(instructionLabel);
 
-        JLabel timeStepLabel = new JLabel(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_TimeStep_L"));
+        JLabel timeStepLabel = new JLabel(Text.format("TimeStepResamplerWiz_TimeStep_L"));
         timeStepComboBox = new TimeStepComboBox();
 
         JPanel selectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -136,8 +136,8 @@ public class TimeStepResamplerWizard extends ProcessingWizard {
 
     private boolean validateTimeStep() {
         if (timeStepComboBox.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "A time step must be selected.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("TimeStepResamplerWiz_TimeStepRequired"),
+                    Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -151,8 +151,8 @@ public class TimeStepResamplerWizard extends ProcessingWizard {
     private boolean validateDestination() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if (destinationFile == null || destinationFile.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;

@@ -9,7 +9,7 @@ public class ResamplingMethodSelectionPanel extends JPanel {
     private final ResamplingMethodComboBox resamplingMethodComboBox;
 
     public ResamplingMethodSelectionPanel() {
-        JLabel resamplingMethodLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizResamplingMethodL"));
+        JLabel resamplingMethodLabel = new JLabel(Text.format("ImportMetWizResamplingMethodL"));
         JPanel resamplingMethodLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         resamplingMethodLabelPanel.add(resamplingMethodLabel);
 

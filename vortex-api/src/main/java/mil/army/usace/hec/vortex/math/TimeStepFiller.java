@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.io.DataReader;
 
@@ -35,7 +35,7 @@ class TimeStepFiller extends LinearInterpGapFiller {
      */
     @Override
     protected String notifyStartMessage() {
-        return MessageStore.getInstance().getMessage("time_step_filler_begin");
+        return Message.format("time_step_filler_begin");
     }
 
     @Override
@@ -43,8 +43,7 @@ class TimeStepFiller extends LinearInterpGapFiller {
         if (processed <= 0)
             return null;
 
-        String templateEnd = MessageStore.getInstance().getMessage("time_step_filler_end");
-        return String.format(templateEnd, processed, destination);
+        return Message.format("time_step_filler_end", processed, destination);
     }
 
     /**

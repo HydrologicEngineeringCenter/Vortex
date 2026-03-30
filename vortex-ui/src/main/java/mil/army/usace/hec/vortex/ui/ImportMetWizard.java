@@ -1,7 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
@@ -156,12 +156,12 @@ public class ImportMetWizard extends ProcessingWizard {
         List<String> files = Collections.list(addFilesListModel.elements());
 
         if (files.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Input dataset is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_InputRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
-        String errorTemplate = MessageStore.getInstance().getMessage("error_archive_file");
+        String errorTemplate = Message.format("error_archive_file");
 
         List<String> messages = files.stream()
                 .filter(DataReader::isArchive)
@@ -184,8 +184,8 @@ public class ImportMetWizard extends ProcessingWizard {
         }
 
         if (defaultListModel.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "At least one variable must be selected.",
-                    "Error: No Variables Selected", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_NoVariablesSelected"),
+                    Text.format("Error_NoVariables_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
@@ -198,14 +198,14 @@ public class ImportMetWizard extends ProcessingWizard {
         String destinationPath = destinationSelectionPanel.getDestinationTextField().getText();
 
         if (destinationPath.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
         if (!destinationPath.matches(".*(dss|nc[34]?)")) {
-            JOptionPane.showMessageDialog(this, "Invalid file extension.",
-                    "Error: Unsupported File Type", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("ImportMetWiz_InvalidExtension"),
+                    Text.format("ImportMetWiz_UnsupportedFileType_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
@@ -253,13 +253,13 @@ public class ImportMetWizard extends ProcessingWizard {
 
         String message = String.join(System.lineSeparator(), messages);
         if (!isValid) {
-            String title = TextProperties.getInstance().getProperty("Error_Title");
+            String title = Text.format("Error_Title");
             JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
         if (!messages.isEmpty()) {
-            String title = TextProperties.getInstance().getProperty("Warning_Title");
+            String title = Text.format("Warning_Title");
             return JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(this, message, title,
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         }
@@ -411,7 +411,7 @@ public class ImportMetWizard extends ProcessingWizard {
         JPanel stepOnePanel = new JPanel(new BorderLayout());
         stepOnePanel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
 
-        JLabel addFilesLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizAddFiles"));
+        JLabel addFilesLabel = new JLabel(Text.format("ImportMetWizAddFiles"));
         addFilesLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
         stepOnePanel.add(addFilesLabel, BorderLayout.NORTH);
 
@@ -448,7 +448,7 @@ public class ImportMetWizard extends ProcessingWizard {
         JPanel stepTwoPanel = new JPanel(new BorderLayout());
         stepTwoPanel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
 
-        JLabel selectVariablesLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizSelectVariables"));
+        JLabel selectVariablesLabel = new JLabel(Text.format("ImportMetWizSelectVariables"));
         selectVariablesLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
         stepTwoPanel.add(selectVariablesLabel, BorderLayout.NORTH);
 
@@ -551,7 +551,7 @@ public class ImportMetWizard extends ProcessingWizard {
     }
 
     private JPanel dataSourceSectionPanel() {
-        JLabel dataSourceLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizClippingDatasourceL"));
+        JLabel dataSourceLabel = new JLabel(Text.format("ImportMetWizClippingDatasourceL"));
         JPanel dataSourceLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dataSourceLabelPanel.add(dataSourceLabel);
 
@@ -582,7 +582,7 @@ public class ImportMetWizard extends ProcessingWizard {
     }
 
     private JPanel targetWktSectionPanel() {
-        JLabel targetWktLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizTargetWktL"));
+        JLabel targetWktLabel = new JLabel(Text.format("ImportMetWizTargetWktL"));
         JPanel targetWktLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         targetWktLabelPanel.add(targetWktLabel);
 
@@ -627,7 +627,7 @@ public class ImportMetWizard extends ProcessingWizard {
     }
 
     private JPanel targetCellSizeSectionPanel() {
-        JLabel targetCellSizeLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizTargetCellSizeL"));
+        JLabel targetCellSizeLabel = new JLabel(Text.format("ImportMetWizTargetCellSizeL"));
         JPanel targetCellSizeLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         targetCellSizeLabelPanel.add(targetCellSizeLabel);
 
@@ -835,18 +835,18 @@ public class ImportMetWizard extends ProcessingWizard {
         projectionDialog.setLocationRelativeTo(this);
 
         JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        contentPanel.add(new JLabel(TextProperties.getInstance().getProperty("ImportMetWizSelectProjection")));
+        contentPanel.add(new JLabel(Text.format("ImportMetWizSelectProjection")));
         contentPanel.add(projectionComboBox);
         projectionDialog.add(BorderLayout.CENTER, contentPanel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton projectionOkButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizOk"));
+        JButton projectionOkButton = new JButton(Text.format("ImportMetWizOk"));
         projectionOkButton.addActionListener(evt -> {
             targetWktTextArea.setText(projectionComboBox.getWkt());
             projectionDialog.setVisible(false);
             projectionDialog.dispose();
         });
-        JButton projectionCancelButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizCancel"));
+        JButton projectionCancelButton = new JButton(Text.format("ImportMetWizCancel"));
         projectionCancelButton.addActionListener(evt -> { projectionDialog.setVisible(false); projectionDialog.dispose();});
         buttonPanel.add(projectionOkButton);
         buttonPanel.add(projectionCancelButton);
@@ -867,19 +867,19 @@ public class ImportMetWizard extends ProcessingWizard {
         cellSizeDialog.setLocationRelativeTo(this);
 
         JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        contentPanel.add(new JLabel(TextProperties.getInstance().getProperty("ImportMetWizSelectCellSize")));
+        contentPanel.add(new JLabel(Text.format("ImportMetWizSelectCellSize")));
         contentPanel.add(cellSizeComboBox);
         cellSizeDialog.add(BorderLayout.CENTER, contentPanel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton projectionOkButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizOk"));
+        JButton projectionOkButton = new JButton(Text.format("ImportMetWizOk"));
         projectionOkButton.addActionListener(evt -> {
             String chosenCellSize = String.valueOf(cellSizeComboBox.getSelectedItem());
             targetCellSizeTextField.setText(chosenCellSize);
             cellSizeDialog.setVisible(false);
             cellSizeDialog.dispose();
         });
-        JButton projectionCancelButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizCancel"));
+        JButton projectionCancelButton = new JButton(Text.format("ImportMetWizCancel"));
         projectionCancelButton.addActionListener(evt -> { cellSizeDialog.setVisible(false); cellSizeDialog.dispose();});
         buttonPanel.add(projectionOkButton);
         buttonPanel.add(projectionCancelButton);
@@ -899,7 +899,7 @@ public class ImportMetWizard extends ProcessingWizard {
     }
 
     private void showUnsupportedArchiveError(List<String> errors) {
-        String suggestion = MessageStore.getInstance().getMessage("error_archive_file_suggestion");
+        String suggestion = Message.format("error_archive_file_suggestion");
 
         List<String> lines = new ArrayList<>(errors);
         lines.add(suggestion);
@@ -913,7 +913,7 @@ public class ImportMetWizard extends ProcessingWizard {
         JOptionPane.showMessageDialog(
                 this,
                 scrollPane,
-                "Error: Unsupported Archive Format",
+                Text.format("ImportMetWiz_UnsupportedArchive_Title"),
                 JOptionPane.ERROR_MESSAGE
         );
     }

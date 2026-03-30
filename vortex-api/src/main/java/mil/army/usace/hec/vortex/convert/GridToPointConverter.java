@@ -140,8 +140,7 @@ public class GridToPointConverter implements Runnable {
 
         int totalCount = variables.size();
 
-        String templateBegin = MessageStore.getInstance().getMessage("grid_to_point_converter_begin");
-        String messageBegin = String.format(templateBegin, totalCount);
+        String messageBegin = Message.format("grid_to_point_converter_begin", totalCount);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         AtomicInteger processed = new AtomicInteger();
@@ -199,12 +198,10 @@ public class GridToPointConverter implements Runnable {
         String timeMessage = "Batch grid-to-point time: " + stopwatch;
         LOGGER.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("grid_to_point_converter_end");
-        String messageEnd = String.format(templateEnd, processed, destination);
+        String messageEnd = Message.format("grid_to_point_converter_end", processed, destination);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("grid_to_point_converter_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String messageTime = Message.format("grid_to_point_converter_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 

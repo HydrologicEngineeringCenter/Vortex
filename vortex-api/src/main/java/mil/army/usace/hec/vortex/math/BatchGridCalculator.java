@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
@@ -155,8 +155,7 @@ public class BatchGridCalculator implements Runnable {
         AtomicInteger processed = new AtomicInteger();
         int totalCount = units.size();
 
-        String templateBegin = MessageStore.getInstance().getMessage("calculator_begin");
-        String messageBegin = String.format(templateBegin, totalCount);
+        String messageBegin = Message.format("calculator_begin", totalCount);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         units.parallelStream().forEach(unit -> {
@@ -172,12 +171,10 @@ public class BatchGridCalculator implements Runnable {
         String timeMessage = "Batch grid calculator time: " + stopwatch;
         logger.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("calculator_end");
-        String messageEnd = String.format(templateEnd, processed, destination);
+        String messageEnd = Message.format("calculator_end", processed, destination);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("calculator_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String messageTime = Message.format("calculator_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 

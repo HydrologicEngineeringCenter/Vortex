@@ -1,7 +1,7 @@
 package mil.army.usace.hec.vortex.ui.util;
 
 import mil.army.usace.hec.vortex.ui.IconResources;
-import mil.army.usace.hec.vortex.ui.TextProperties;
+import mil.army.usace.hec.vortex.ui.Text;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,14 +17,14 @@ import java.util.logging.Logger;
 
 public class FileSaveUtil {
     private static final Logger logger = Logger.getLogger(FileSaveUtil.class.getName());
-    public static final String FILE_NOT_FOUND = TextProperties.getInstance().getProperty("FileSavedDialogWarning_NoFile");
+    public static final String FILE_NOT_FOUND = Text.format("FileSavedDialogWarning_NoFile");
 
     /* File Saved Dialog UI */
     private static JPanel fileSavedPanel(Path filePath) {
         JPanel contentPanel = new JPanel();
         contentPanel.setSize(new Dimension(400, 64));
 
-        JLabel messageLabel = new JLabel(TextProperties.getInstance().getProperty("FileSavedDialogMessage"));
+        JLabel messageLabel = new JLabel(Text.format("FileSavedDialogMessage"));
         contentPanel.add(messageLabel);
         contentPanel.add(outputLinkPanel(filePath));
         return contentPanel;
@@ -53,7 +53,7 @@ public class FileSaveUtil {
 
     private static JButton copyButton(JTextField textField) {
         JButton copyButton = new JButton(IconResources.loadIcon("images/Copy16.gif"));
-        copyButton.setToolTipText(TextProperties.getInstance().getProperty("FileSavedDialogCopyButton_TT"));
+        copyButton.setToolTipText(Text.format("FileSavedDialogCopyButton_TT"));
         SwingUtil.setButtonSize(copyButton, textField);
         copyButton.addMouseListener(copyMouseAdapter(textField));
         return copyButton;
@@ -61,7 +61,7 @@ public class FileSaveUtil {
 
     private static JButton openButton(JTextField textField) {
         JButton openButton = new JButton(IconResources.loadIcon("images/Open16.gif"));
-        openButton.setToolTipText(TextProperties.getInstance().getProperty("FileSavedDialogOpenButton_TT"));
+        openButton.setToolTipText(Text.format("FileSavedDialogOpenButton_TT"));
         SwingUtil.setButtonSize(openButton, textField);
         openButton.addActionListener(evt -> {
             Path savedFile = Path.of(textField.getText());
@@ -79,7 +79,7 @@ public class FileSaveUtil {
                 clipboard.setContents(stringSelection, null);
 
                 JToolTip toolTip = textField.createToolTip();
-                toolTip.setTipText(TextProperties.getInstance().getProperty("FileSavedDialogCopied"));
+                toolTip.setTipText(Text.format("FileSavedDialogCopied"));
                 Popup copiedPopup = PopupFactory.getSharedInstance().getPopup(textField, toolTip,
                         e.getX() + e.getComponent().getLocationOnScreen().x + 10,
                         e.getY() + e.getComponent().getLocationOnScreen().y + 10);
@@ -114,8 +114,8 @@ public class FileSaveUtil {
             return true;
         }
 
-        String title = TextProperties.getInstance().getProperty("FileOverrideDialogTitle");
-        String message = filePath + " " + TextProperties.getInstance().getProperty("FileOverrideDialogMessage");
+        String title = Text.format("FileOverrideDialogTitle");
+        String message = filePath + " " + Text.format("FileOverrideDialogMessage");
         JOptionPane optionPane = new JOptionPane(message, JOptionPane.WARNING_MESSAGE, JOptionPane.YES_NO_OPTION);
 
         JDialog dialog = optionPane.createDialog(window, title);
@@ -133,7 +133,7 @@ public class FileSaveUtil {
             return;
         }
 
-        String title = TextProperties.getInstance().getProperty("FileSavedDialogTitle");
+        String title = Text.format("FileSavedDialogTitle");
         JOptionPane optionPane = new JOptionPane(fileSavedPanel(filePath));
 
         JDialog dialog = optionPane.createDialog(window, title);
@@ -149,7 +149,7 @@ public class FileSaveUtil {
             return;
         }
 
-        String title = TextProperties.getInstance().getProperty("FileSavedDialogTitle");
+        String title = Text.format("FileSavedDialogTitle");
         JOptionPane optionPane = new JOptionPane(fileSavedPanel(directoryPath));
 
         JDialog dialog = optionPane.createDialog(window, title);

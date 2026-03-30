@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
@@ -25,8 +25,7 @@ class ConcurrentBatchImporter extends BatchImporter {
             totalCount += importableUnit.getDtoCount();
         }
 
-        String templateBegin = MessageStore.getInstance().getMessage("import_begin");
-        String messageBegin = String.format(templateBegin, totalCount);
+        String messageBegin = Message.format("import_begin", totalCount);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         importableUnits.parallelStream().forEach(importableUnit -> {
@@ -38,12 +37,10 @@ class ConcurrentBatchImporter extends BatchImporter {
         String timeMessage = "Batch import time: " + stopwatch;
         logger.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("import_end");
-        String messageEnd = String.format(templateEnd, totalCount, destination);
+        String messageEnd = Message.format("import_end", totalCount, destination);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("import_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String messageTime = Message.format("import_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 }

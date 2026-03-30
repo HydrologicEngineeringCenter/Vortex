@@ -95,7 +95,7 @@ public class NormalizerWizard extends ProcessingWizard {
         endDateTextField.resetTextField();
         endTimeTextField.resetTextField();
         normalIntervalTextField.resetTextField();
-        timeUnitComboBox.setSelectedItem(TextProperties.getInstance().getProperty("NormalizerWiz_TimeUnit_Days"));
+        timeUnitComboBox.setSelectedItem(Text.format("NormalizerWiz_TimeUnit_Days"));
 
         /* Clearing Step Four Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
@@ -157,8 +157,8 @@ public class NormalizerWizard extends ProcessingWizard {
     private boolean validateStepTwo() {
         /* Popup Alert of Missing Inputs */
         if(normalFileTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Input dataset is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_InputRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
 
             return false;
         }
@@ -166,8 +166,8 @@ public class NormalizerWizard extends ProcessingWizard {
         /* Popup Alert of No Variables Selected */
         DefaultListModel<String> chosenGridsModel = Util.getDefaultListModel(chosenNormalGridsList);
         if(chosenGridsModel == null || chosenGridsModel.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "At least one variable must be selected.",
-                    "Error: No Variables Selected", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_NoVariablesSelected"),
+                    Text.format("Error_NoVariables_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
@@ -176,7 +176,7 @@ public class NormalizerWizard extends ProcessingWizard {
 
     private JPanel stepTwoNormalFilePanel() {
         /* selectNormalFileLabel */
-        JLabel selectNormalFileLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_SelectNormalFile_L"));
+        JLabel selectNormalFileLabel = new JLabel(Text.format("NormalizerWiz_SelectNormalFile_L"));
         selectNormalFileLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
 
         /* TextField and Browse Panel */
@@ -206,7 +206,7 @@ public class NormalizerWizard extends ProcessingWizard {
 
     private JPanel stepTwoNormalGridsPanel() {
         /* selectNormalGridsLabel */
-        JLabel selectNormalGridsLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_SelectNormalGrids_L"));
+        JLabel selectNormalGridsLabel = new JLabel(Text.format("NormalizerWiz_SelectNormalGrids_L"));
         selectNormalGridsLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
 
         /* Available Normal Grids List */
@@ -431,8 +431,8 @@ public class NormalizerWizard extends ProcessingWizard {
             LocalDate startD = LocalDate.parse(startDateTextField.getText(), dateFormatter);
             startDateTime = ZonedDateTime.of(LocalDateTime.of(startD, startTime), ZoneId.of("UTC"));
         } catch (DateTimeParseException e){
-            JOptionPane.showMessageDialog(this, "Could not parse start date/time.",
-                    "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("NormalizerWiz_ParseStartError"),
+                    Text.format("Error_ParseException_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
@@ -441,16 +441,16 @@ public class NormalizerWizard extends ProcessingWizard {
             LocalDate endD = LocalDate.parse(endDateTextField.getText(), dateFormatter);
             endDateTime = ZonedDateTime.of(LocalDateTime.of(endD, endTime), ZoneId.of("UTC"));
         } catch (DateTimeParseException e){
-            JOptionPane.showMessageDialog(this, "Could not parse end date/time.",
-                    "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("NormalizerWiz_ParseEndError"),
+                    Text.format("Error_ParseException_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
         try {
             Integer.parseInt(normalIntervalTextField.getText());
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Could not parse end interval.",
-                    "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("NormalizerWiz_ParseIntervalError"),
+                    Text.format("Error_ParseException_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;
@@ -458,14 +458,14 @@ public class NormalizerWizard extends ProcessingWizard {
 
     private JPanel stepThreeNormalPeriodPanel() {
         /* normalPeriodLabel */
-        JLabel normalPeriodLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_SetNormalPeriod_L"));
+        JLabel normalPeriodLabel = new JLabel(Text.format("NormalizerWiz_SetNormalPeriod_L"));
         normalPeriodLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
 
         /* normalPeriod - Start Panel */
-        JLabel normalPeriodStartLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_NormalPeriodStart_L"));
-        startDateTextField = new InputHintTextField(TextProperties.getInstance().getProperty("NormalizerWiz_NormalPeriodStartDate_Default"));
+        JLabel normalPeriodStartLabel = new JLabel(Text.format("NormalizerWiz_NormalPeriodStart_L"));
+        startDateTextField = new InputHintTextField(Text.format("NormalizerWiz_NormalPeriodStartDate_Default"));
         startDateTextField.setColumns(16);
-        startTimeTextField = new InputHintTextField(TextProperties.getInstance().getProperty("NormalizerWiz_NormalPeriodStartTime_Default"));
+        startTimeTextField = new InputHintTextField(Text.format("NormalizerWiz_NormalPeriodStartTime_Default"));
         startTimeTextField.setColumns(4);
 
         JPanel normalPeriodStartPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -475,10 +475,10 @@ public class NormalizerWizard extends ProcessingWizard {
         normalPeriodStartPanel.add(startTimeTextField);
 
         /* normalPeriod - End Panel */
-        JLabel normalPeriodEndLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_NormalPeriodEnd_L"));
-        endDateTextField = new InputHintTextField(TextProperties.getInstance().getProperty("NormalizerWiz_NormalPeriodEndDate_Default"));
+        JLabel normalPeriodEndLabel = new JLabel(Text.format("NormalizerWiz_NormalPeriodEnd_L"));
+        endDateTextField = new InputHintTextField(Text.format("NormalizerWiz_NormalPeriodEndDate_Default"));
         endDateTextField.setColumns(16);
-        endTimeTextField = new InputHintTextField(TextProperties.getInstance().getProperty("NormalizerWiz_NormalPeriodEndTime_Default"));
+        endTimeTextField = new InputHintTextField(Text.format("NormalizerWiz_NormalPeriodEndTime_Default"));
         endTimeTextField.setColumns(4);
 
         JPanel normalPeriodEndPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -504,12 +504,12 @@ public class NormalizerWizard extends ProcessingWizard {
 
     private JPanel stepThreeNormalIntervalPanel() {
         /* normalIntervalLabel */
-        JLabel normalIntervalLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_SetNormalInterval_L"));
+        JLabel normalIntervalLabel = new JLabel(Text.format("NormalizerWiz_SetNormalInterval_L"));
         normalIntervalLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
 
         /* normalInterval - Interval Panel */
-        JLabel normalIntervalIntervalLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_NormalIntervalInterval_L"));
-        normalIntervalTextField = new InputHintTextField(TextProperties.getInstance().getProperty("NormalizerWiz_Interval_Default"));
+        JLabel normalIntervalIntervalLabel = new JLabel(Text.format("NormalizerWiz_NormalIntervalInterval_L"));
+        normalIntervalTextField = new InputHintTextField(Text.format("NormalizerWiz_Interval_Default"));
         normalIntervalTextField.setColumns(10);
 
         JPanel normalIntervalIntervalPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -518,17 +518,17 @@ public class NormalizerWizard extends ProcessingWizard {
         normalIntervalIntervalPanel.add(normalIntervalTextField);
 
         /* normalInterval - Time Unit Panel */
-        JLabel normalIntervalTimeUnitLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_NormalIntervalTimeUnitEnd_L"));
+        JLabel normalIntervalTimeUnitLabel = new JLabel(Text.format("NormalizerWiz_NormalIntervalTimeUnitEnd_L"));
 
         Vector<String> timeUnitOptions = new Vector<>();
-        timeUnitOptions.add(TextProperties.getInstance().getProperty("NormalizerWiz_TimeUnit_Days"));
-        timeUnitOptions.add(TextProperties.getInstance().getProperty("NormalizerWiz_TimeUnit_Hours"));
-        timeUnitOptions.add(TextProperties.getInstance().getProperty("NormalizerWiz_TimeUnit_Minutes"));
-        timeUnitOptions.add(TextProperties.getInstance().getProperty("NormalizerWiz_TimeUnit_Seconds"));
+        timeUnitOptions.add(Text.format("NormalizerWiz_TimeUnit_Days"));
+        timeUnitOptions.add(Text.format("NormalizerWiz_TimeUnit_Hours"));
+        timeUnitOptions.add(Text.format("NormalizerWiz_TimeUnit_Minutes"));
+        timeUnitOptions.add(Text.format("NormalizerWiz_TimeUnit_Seconds"));
 
         timeUnitComboBox = new JComboBox<>();
         timeUnitComboBox.setModel(new DefaultComboBoxModel<>(timeUnitOptions));
-        timeUnitComboBox.setSelectedItem(TextProperties.getInstance().getProperty("NormalizerWiz_TimeUnit_Days"));
+        timeUnitComboBox.setSelectedItem(Text.format("NormalizerWiz_TimeUnit_Days"));
 
         JPanel normalIntervalTimeUnitPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         normalIntervalTimeUnitPanel.add(normalIntervalTimeUnitLabel);
@@ -557,8 +557,8 @@ public class NormalizerWizard extends ProcessingWizard {
     private boolean validateStepFour() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if(destinationFile == null || destinationFile.isEmpty() ) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 

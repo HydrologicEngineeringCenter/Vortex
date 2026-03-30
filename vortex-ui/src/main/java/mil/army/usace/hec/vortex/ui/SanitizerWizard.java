@@ -138,15 +138,15 @@ public class SanitizerWizard extends ProcessingWizard {
             try {
                 Double.parseDouble(lowerThresholdTextField.getText());
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Could not parse lower threshold value.",
-                       "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("SanitizerWiz_ParseLowerThreshold"),
+                       Text.format("Error_ParseException_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             try {
                 Double.parseDouble(lowerReplacementTextField.getText());
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Could not parse lower replacement value.",
-                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("SanitizerWiz_ParseLowerReplacement"),
+                        Text.format("Error_ParseException_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         }
@@ -155,15 +155,15 @@ public class SanitizerWizard extends ProcessingWizard {
             try {
                 Double.parseDouble(upperThresholdTextField.getText());
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Could not parse upper threshold value.",
-                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("SanitizerWiz_ParseUpperThreshold"),
+                        Text.format("Error_ParseException_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             try {
                 Double.parseDouble(upperReplacementTextField.getText());
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Could not parse upper replacement value.",
-                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("SanitizerWiz_ParseUpperReplacement"),
+                        Text.format("Error_ParseException_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         }
@@ -171,9 +171,9 @@ public class SanitizerWizard extends ProcessingWizard {
     }
 
     private JPanel stepTwoSanitizeValuesBelowPanel() {
-        lowerThresholdCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("SanitizerWiz_LowerThresholdCheckbox_L"),false);
+        lowerThresholdCheckBox = new JCheckBox(Text.format("SanitizerWiz_LowerThresholdCheckbox_L"),false);
 
-        JLabel replaceLowerValuesLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_LowerThreshold_L"));
+        JLabel replaceLowerValuesLabel = new JLabel(Text.format("SanitizerWiz_LowerThreshold_L"));
         replaceLowerValuesLabel.setBorder(new EmptyBorder(0,15,0,0));
         lowerThresholdTextField = new JTextField(16);
 
@@ -182,7 +182,7 @@ public class SanitizerWizard extends ProcessingWizard {
         replaceLowerValuesPanel.add(Box.createRigidArea(new Dimension(15,0)));
         replaceLowerValuesPanel.add(lowerThresholdTextField);
 
-        JLabel replacementValueLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_LowerReplacement_L"));
+        JLabel replacementValueLabel = new JLabel(Text.format("SanitizerWiz_LowerReplacement_L"));
         replacementValueLabel.setBorder(new EmptyBorder(0,15,0,0));
         lowerReplacementTextField = new JTextField(16);
 
@@ -208,9 +208,9 @@ public class SanitizerWizard extends ProcessingWizard {
     }
 
     private JPanel stepTwoSanitizeValuesAbovePanel() {
-        upperThresholdCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("SanitizerWiz_UpperThresholdCheckbox_L"));
+        upperThresholdCheckBox = new JCheckBox(Text.format("SanitizerWiz_UpperThresholdCheckbox_L"));
 
-        JLabel replaceUpperValuesLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_UpperThreshold_L"));
+        JLabel replaceUpperValuesLabel = new JLabel(Text.format("SanitizerWiz_UpperThreshold_L"));
         replaceUpperValuesLabel.setBorder(new EmptyBorder(0,15,0,0));
         upperThresholdTextField = new JTextField(16);
 
@@ -219,7 +219,7 @@ public class SanitizerWizard extends ProcessingWizard {
         replaceUpperValuesPanel.add(Box.createRigidArea(new Dimension(15,0)));
         replaceUpperValuesPanel.add(upperThresholdTextField);
 
-        JLabel replacementValueLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_UpperReplacement_L"));
+        JLabel replacementValueLabel = new JLabel(Text.format("SanitizerWiz_UpperReplacement_L"));
         replacementValueLabel.setBorder(new EmptyBorder(0,15,0,0));
         upperReplacementTextField = new JTextField(16);
 
@@ -252,8 +252,8 @@ public class SanitizerWizard extends ProcessingWizard {
     private boolean validateDestination() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if(destinationFile == null || destinationFile.isEmpty() ) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;

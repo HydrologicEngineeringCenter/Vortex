@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.geo.Grid;
@@ -168,16 +168,12 @@ abstract class NetcdfDataReader extends DataReader {
             if (NC_MATCHER.matches(pathToFile)) {
                 Variable variable = dataset.findVariable(TIME_BOUNDS);
                 if (variable == null) {
-                    String template = MessageStore.getInstance().getMessage("warn_nc_time_bnds");
-                    String filename = pathToFile.getFileName().toString();
-                    Object[] args = new Object[]{filename};
-                    String message = String.format(template, args);
+                    String message = Message.format("warn_nc_time_bnds");
                     return Validation.of(true, message);
                 }
             }
         } catch (IOException e) {
-            String template = MessageStore.getInstance().getMessage("error_invalid_file");
-            String message = String.format(template, path);
+            String message = Message.format("error_invalid_file", path);
             return Validation.of(false, message);
         }
         return Validation.of(true);

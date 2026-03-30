@@ -132,28 +132,28 @@ public class TimeShifterWizard extends ProcessingWizard {
 
     private boolean validateShiftConfig() {
         if (!startTimeCheckBox.isSelected() && !endTimeCheckBox.isSelected()) {
-            String message = "Start time, end time, or both start time and end time must be selected.";
-            JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+            String message = Text.format("TimeShifterWiz_SelectTimeError");
+            JOptionPane.showMessageDialog(this, message, Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
         if (startTimeCheckBox.isSelected()) {
             String intervalText = startTimeShiftTextField.getText();
             if (intervalText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Shift value required.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("TimeShifterWiz_ShiftValueRequired"), Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             double interval;
             try {
                 interval = Double.parseDouble(intervalText);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Could not parse start time interval.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("TimeShifterWiz_ParseStartInterval"), Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             ShiftTimeUnit timeUnit = startTimeShiftUnitComboBox.getSelected();
             if (!validateInterval(interval, timeUnit)) {
-                JOptionPane.showMessageDialog(this, "Specified start time shift cannot be converted to an even number of seconds.",
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("TimeShifterWiz_StartShiftNotEvenSeconds"),
+                        Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         }
@@ -161,20 +161,20 @@ public class TimeShifterWizard extends ProcessingWizard {
         if (endTimeCheckBox.isSelected()) {
             String intervalText = endTimeShiftTextField.getText();
             if (intervalText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Shift value required.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("TimeShifterWiz_ShiftValueRequired"), Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             double interval;
             try {
                 interval = Double.parseDouble(intervalText);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Could not parse end time interval.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("TimeShifterWiz_ParseEndInterval"), Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
             ShiftTimeUnit timeUnit = endTimeShiftUnitComboBox.getSelected();
             if (!validateInterval(interval, timeUnit)) {
-                JOptionPane.showMessageDialog(this, "Specified end time shift cannot be converted to an even number of seconds.",
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, Text.format("TimeShifterWiz_EndShiftNotEvenSeconds"),
+                        Text.format("Error_Title"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         }
@@ -183,7 +183,7 @@ public class TimeShifterWizard extends ProcessingWizard {
     }
 
     private JPanel stepTwoIntervalPanel() {
-        startTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("TimeShifterWiz_ShiftStart_L"));
+        startTimeCheckBox = new JCheckBox(Text.format("TimeShifterWiz_ShiftStart_L"));
         startTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         startTimeCheckBox.setSelected(true);
 
@@ -193,7 +193,7 @@ public class TimeShifterWizard extends ProcessingWizard {
         JPanel startTimeShiftPanel = startTimeShiftPanel();
         startTimeCheckBox.addActionListener(e -> startTimeShiftPanel.setVisible(startTimeCheckBox.isSelected()));
 
-        endTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("TimeShifterWiz_EndStart_L"));
+        endTimeCheckBox = new JCheckBox(Text.format("TimeShifterWiz_EndStart_L"));
         endTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         endTimeCheckBox.setSelected(true);
 
@@ -214,7 +214,7 @@ public class TimeShifterWizard extends ProcessingWizard {
     }
 
     private JPanel startTimeShiftPanel() {
-        JLabel startTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("TimeShifterWiz_StartTimeShift_L"));
+        JLabel startTimeShiftLabel = new JLabel(Text.format("TimeShifterWiz_StartTimeShift_L"));
         startTimeShiftTextField = new JTextField(25);
         startTimeShiftUnitComboBox = new ShiftTimeUnitComboBox();
         startTimeShiftUnitComboBox.setEnabled(true);
@@ -231,7 +231,7 @@ public class TimeShifterWizard extends ProcessingWizard {
     }
 
     private JPanel endTimeShiftPanel() {
-        JLabel endTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("TimeShifterWiz_EndTimeShift_L"));
+        JLabel endTimeShiftLabel = new JLabel(Text.format("TimeShifterWiz_EndTimeShift_L"));
         endTimeShiftTextField = new JTextField(25);
         endTimeShiftUnitComboBox = new ShiftTimeUnitComboBox();
         endTimeShiftUnitComboBox.setEnabled(true);
@@ -255,8 +255,8 @@ public class TimeShifterWizard extends ProcessingWizard {
     private boolean validateDestination() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if(destinationFile == null || destinationFile.isEmpty() ) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;

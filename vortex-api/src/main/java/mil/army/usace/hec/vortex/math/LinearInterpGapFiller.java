@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
@@ -42,7 +42,7 @@ class LinearInterpGapFiller extends BatchGapFiller {
      */
     @Override
     protected String notifyStartMessage() {
-        return MessageStore.getInstance().getMessage("linear_interp_filler_begin");
+        return Message.format("linear_interp_filler_begin");
     }
 
     @Override
@@ -50,8 +50,7 @@ class LinearInterpGapFiller extends BatchGapFiller {
         if (processed <= 0)
             return null;
 
-        String templateEnd = MessageStore.getInstance().getMessage("linear_interp_filler_end");
-        return String.format(templateEnd, processed, destination);
+        return Message.format("linear_interp_filler_end", processed, destination);
     }
 
     /**
@@ -72,22 +71,19 @@ class LinearInterpGapFiller extends BatchGapFiller {
 
             int dtoCount = reader.getDtoCount();
             if (dtoCount == 0) {
-                String template = MessageStore.INSTANCE.getMessage("linear_interp_filler_error_no_data");
-                String message = String.format(template, variable);
+                String message = Message.format("linear_interp_filler_error_no_data", variable);
                 LOGGER.info(() -> message);
                 support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
                 return 0;
             }
 
             // First pass: analyze grid data and build metadata
-            String template1 = MessageStore.INSTANCE.getMessage("linear_interp_filler_info_analyzing");
-            String message1 = String.format(template1, dtoCount, variable);
+            String message1 = Message.format("linear_interp_filler_info_analyzing", dtoCount, variable);
             LOGGER.fine(() -> message1);
             GridMetadata metadata = analyzeGridData(reader);
 
             if (metadata.hasNoData.isEmpty()) {
-                String template2 = MessageStore.INSTANCE.getMessage("linear_interp_filler_info_none");
-                String message2 = String.format(template2, variable);
+                String message2 = Message.format("linear_interp_filler_info_none", variable);
                 LOGGER.fine(() -> message2);
                 support.firePropertyChange(VortexProperty.STATUS.toString(), null, message2);
 
@@ -96,16 +92,14 @@ class LinearInterpGapFiller extends BatchGapFiller {
                     try {
                         copyExistingGrids(variable);
                     } catch (Exception e) {
-                        String template = MessageStore.INSTANCE.getMessage("time_step_filler_error_copy");
-                        String message = String.format(template, source, destination);
+                        String message = Message.format("time_step_filler_error_copy", source, destination);
                         LOGGER.log(Level.SEVERE, message, e);
                         support.firePropertyChange(VortexProperty.ERROR.toString(), null, message);
                     }
                 }
             } else {
                 // Second pass: process grids
-                String template2 = MessageStore.INSTANCE.getMessage("linear_interp_filler_info_processing");
-                String message2 = String.format(template2, metadata.hasNoData.size(), variable);
+                String message2 = Message.format("linear_interp_filler_info_processing", metadata.hasNoData.size(), variable);
                 LOGGER.fine(() -> message2);
                 processGrids(reader, metadata, processedCount);
             }
@@ -299,8 +293,7 @@ class LinearInterpGapFiller extends BatchGapFiller {
         }
 
         if (cellCount > 0) {
-            String template = MessageStore.INSTANCE.getMessage("linear_interp_filler_info_filled");
-            String message = String.format(template, cellCount, vortexGrid.startTime());
+            String message = Message.format("linear_interp_filler_info_filled", cellCount, vortexGrid.startTime());
             LOGGER.fine(() -> message);
         }
 

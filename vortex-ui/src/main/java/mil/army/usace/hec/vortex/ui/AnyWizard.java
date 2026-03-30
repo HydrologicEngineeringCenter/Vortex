@@ -24,7 +24,7 @@ public class AnyWizard extends VortexWizard {
 
     @Override
     public void buildAndShowUI() {
-        setTitle(TextProperties.getInstance().getProperty("AnyWiz_Title"));
+        setTitle(Text.format("AnyWiz_Title"));
         setIconImage(IconResources.loadImage("images/vortex_black.png"));
         setMinimumSize(new Dimension(600, 400));
         setLocation(getPersistedLocation());
@@ -32,7 +32,7 @@ public class AnyWizard extends VortexWizard {
         setLayout(new BorderLayout());
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        JLabel selectionLabel = new JLabel(TextProperties.getInstance().getProperty("AnyWiz_Select_L"));
+        JLabel selectionLabel = new JLabel(Text.format("AnyWiz_Select_L"));
         selectionLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
         add(selectionLabel, BorderLayout.NORTH);
 
@@ -44,15 +44,15 @@ public class AnyWizard extends VortexWizard {
     }
 
     private void initializeSelectionPanel() {
-        JRadioButton importerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Importer_L"));
-        calculatorButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Calculator_L"));
-        clipperButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Clipper_L"));
-        gapFillerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_GapFiller_L"));
-        gridToPointButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_GridToPoint_L"));
-        imageExporterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_ImageExporter_L"));
-        sanitizerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Sanitizer_L"));
-        timeShifterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_TimeShifter_L"));
-        timeStepResamplerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_TimeStepResampler_L"));
+        JRadioButton importerButton = new JRadioButton(Text.format("AnyWiz_Importer_L"));
+        calculatorButton = new JRadioButton(Text.format("AnyWiz_Calculator_L"));
+        clipperButton = new JRadioButton(Text.format("AnyWiz_Clipper_L"));
+        gapFillerButton = new JRadioButton(Text.format("AnyWiz_GapFiller_L"));
+        gridToPointButton = new JRadioButton(Text.format("AnyWiz_GridToPoint_L"));
+        imageExporterButton = new JRadioButton(Text.format("AnyWiz_ImageExporter_L"));
+        sanitizerButton = new JRadioButton(Text.format("AnyWiz_Sanitizer_L"));
+        timeShifterButton = new JRadioButton(Text.format("AnyWiz_TimeShifter_L"));
+        timeStepResamplerButton = new JRadioButton(Text.format("AnyWiz_TimeStepResampler_L"));
 
         // Select importer by default
         importerButton.setSelected(true);
@@ -86,11 +86,11 @@ public class AnyWizard extends VortexWizard {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
         /* Continue Button */
-        JButton nextButton = new JButton(TextProperties.getInstance().getProperty("AnyWiz_Continue_L"));
+        JButton nextButton = new JButton(Text.format("AnyWiz_Continue_L"));
         nextButton.addActionListener(evt -> continueAction());
 
         /* Cancel Button */
-        JButton cancelButton = new JButton(TextProperties.getInstance().getProperty("AnyWiz_Cancel_L"));
+        JButton cancelButton = new JButton(Text.format("AnyWiz_Cancel_L"));
         cancelButton.addActionListener(evt -> closeAction());
 
         /* Adding Buttons to NavigationPanel */

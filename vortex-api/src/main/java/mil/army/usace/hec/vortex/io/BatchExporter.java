@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.io;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
@@ -99,8 +99,7 @@ public class BatchExporter implements Runnable {
 
         AtomicInteger processed = new AtomicInteger();
 
-        String templateBegin = MessageStore.getInstance().getMessage("exporter_begin");
-        String messageBegin = String.format(templateBegin, totalCount);
+        String messageBegin = Message.format("exporter_begin", totalCount);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         for (DataReader dataReader : dataReaders) {
@@ -125,12 +124,10 @@ public class BatchExporter implements Runnable {
         String timeMessage = "Batch export time: " + stopwatch;
         LOGGER.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("exporter_end");
-        String messageEnd = String.format(templateEnd, processed, destinationDir);
+        String messageEnd = Message.format("exporter_end", processed, destinationDir);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("exporter_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String messageTime = Message.format("exporter_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 

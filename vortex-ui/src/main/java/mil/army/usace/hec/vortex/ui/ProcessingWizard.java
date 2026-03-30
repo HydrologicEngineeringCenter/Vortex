@@ -12,16 +12,16 @@ import java.util.List;
 
 abstract class ProcessingWizard extends VortexWizard {
 
-    private static final String BACK = TextProperties.getInstance().getProperty("VortexWiz_Back");
-    private static final String BACK_TT = TextProperties.getInstance().getProperty("VortexWiz_Back_TT");
-    private static final String NEXT = TextProperties.getInstance().getProperty("VortexWiz_Next");
-    private static final String NEXT_TT = TextProperties.getInstance().getProperty("VortexWiz_Next_TT");
-    private static final String CANCEL = TextProperties.getInstance().getProperty("VortexWiz_Cancel");
-    private static final String CANCEL_TT = TextProperties.getInstance().getProperty("VortexWiz_Cancel_TT");
-    private static final String RESTART = TextProperties.getInstance().getProperty("VortexWiz_Restart");
-    private static final String RESTART_TT = TextProperties.getInstance().getProperty("VortexWiz_Restart_TT");
-    private static final String CLOSE = TextProperties.getInstance().getProperty("VortexWiz_Close");
-    private static final String CLOSE_TT = TextProperties.getInstance().getProperty("VortexWiz_Close_TT");
+    private static final String BACK = Text.format("VortexWiz_Back");
+    private static final String BACK_TT = Text.format("VortexWiz_Back_TT");
+    private static final String NEXT = Text.format("VortexWiz_Next");
+    private static final String NEXT_TT = Text.format("VortexWiz_Next_TT");
+    private static final String CANCEL = Text.format("VortexWiz_Cancel");
+    private static final String CANCEL_TT = Text.format("VortexWiz_Cancel_TT");
+    private static final String RESTART = Text.format("VortexWiz_Restart");
+    private static final String RESTART_TT = Text.format("VortexWiz_Restart_TT");
+    private static final String CLOSE = Text.format("VortexWiz_Close");
+    private static final String CLOSE_TT = Text.format("VortexWiz_Close_TT");
 
     protected final Frame frame;
     protected final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
@@ -71,7 +71,7 @@ abstract class ProcessingWizard extends VortexWizard {
 
     @Override
     public void buildAndShowUI() {
-        setTitle(TextProperties.getInstance().getProperty(getTitlePropertyKey()));
+        setTitle(Text.format(getTitlePropertyKey()));
         setIconImage(IconResources.loadImage("images/vortex_black.png"));
         setMinimumSize(new Dimension(600, 400));
         setLocation(getPersistedLocation());

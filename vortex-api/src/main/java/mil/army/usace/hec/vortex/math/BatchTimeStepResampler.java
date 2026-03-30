@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
@@ -101,8 +101,7 @@ public class BatchTimeStepResampler implements Runnable {
         AtomicInteger processed = new AtomicInteger();
         int totalCount = condensedVariables.size();
 
-        String templateBegin = MessageStore.getInstance().getMessage("time_step_resampler_begin");
-        String messageBegin = String.format(templateBegin, totalCount);
+        String messageBegin = Message.format("time_step_resampler_begin", totalCount);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
         Duration interval = Duration.ofMinutes(timeStep.intervalInMinutes());
@@ -157,12 +156,10 @@ public class BatchTimeStepResampler implements Runnable {
         String timeMessage = "Batch time-step resampler time: " + stopwatch;
         logger.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("time_step_resampler_end");
-        String messageEnd = String.format(templateEnd, processed, destination);
+        String messageEnd = Message.format("time_step_resampler_end", processed, destination);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("time_step_resampler_time");
-        String messageTime = String.format(templateTime, stopwatch);
+        String messageTime = Message.format("time_step_resampler_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 

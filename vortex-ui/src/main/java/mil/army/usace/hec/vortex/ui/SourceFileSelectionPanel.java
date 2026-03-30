@@ -51,7 +51,7 @@ public class SourceFileSelectionPanel extends JPanel {
 
     private JPanel sourceFilePanel() {
         /* selectSourceFileLabel */
-        JLabel selectSourceFileLabel = new JLabel(TextProperties.getInstance().getProperty("SourceFilePanel_SelectSourceFile_L"));
+        JLabel selectSourceFileLabel = new JLabel(Text.format("SourceFilePanel_SelectSourceFile_L"));
         selectSourceFileLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
 
         /* TextField and Browse Panel */
@@ -81,7 +81,7 @@ public class SourceFileSelectionPanel extends JPanel {
 
     private JPanel sourceGridPanel() {
         /* selectSourceGridsLabel */
-        JLabel selectSourceGridsLabel = new JLabel(TextProperties.getInstance().getProperty("SourceFilePanel_SelectSourceGrids_L"));
+        JLabel selectSourceGridsLabel = new JLabel(Text.format("SourceFilePanel_SelectSourceGrids_L"));
         selectSourceGridsLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
 
         /* Available Source Grids List */
@@ -254,8 +254,8 @@ public class SourceFileSelectionPanel extends JPanel {
     public boolean validateInput() {
         /* Popup Alert of Missing Inputs */
         if(sourceFileTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Input dataset is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_InputRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
 
             return false;
         }
@@ -263,8 +263,8 @@ public class SourceFileSelectionPanel extends JPanel {
         /* Popup Alert of No Variables Selected */
         DefaultListModel<String> chosenGridsModel = Util.getDefaultListModel(chosenSourceGridsList);
         if(chosenGridsModel == null || chosenGridsModel.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "At least one variable must be selected.",
-                    "Error: No Variables Selected", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_NoVariablesSelected"),
+                    Text.format("Error_NoVariables_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
 

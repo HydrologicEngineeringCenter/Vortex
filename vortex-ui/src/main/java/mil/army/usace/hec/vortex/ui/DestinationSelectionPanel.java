@@ -65,7 +65,7 @@ public class DestinationSelectionPanel extends JPanel {
 
     private JPanel dssFileSelectionPanel() {
         /* Select Destination section (of stepFourPanel) */
-        JLabel selectDestinationLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_SelectDestination_L"));
+        JLabel selectDestinationLabel = new JLabel(Text.format("NormalizerWiz_SelectDestination_L"));
         JPanel selectDestinationLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         selectDestinationLabelPanel.add(selectDestinationLabel);
 
@@ -134,7 +134,7 @@ public class DestinationSelectionPanel extends JPanel {
         JPanel partAPanel = new JPanel();
         partAPanel.setLayout(new BoxLayout(partAPanel, BoxLayout.X_AXIS));
         partAPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partAPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartA_L")));
+        partAPanel.add(new JLabel(Text.format("NormalizerWiz_PartA_L")));
         partAPanel.add(dssFieldA);
         dssPartsPanel.add(partAPanel, dssPartsConstraints);
 
@@ -144,7 +144,7 @@ public class DestinationSelectionPanel extends JPanel {
         JPanel partBPanel = new JPanel();
         partBPanel.setLayout(new BoxLayout(partBPanel, BoxLayout.X_AXIS));
         partBPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partBPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartB_L")));
+        partBPanel.add(new JLabel(Text.format("NormalizerWiz_PartB_L")));
         partBPanel.add(dssFieldB);
         dssPartsPanel.add(partBPanel, dssPartsConstraints);
 
@@ -154,7 +154,7 @@ public class DestinationSelectionPanel extends JPanel {
         JPanel partCPanel = new JPanel();
         partCPanel.setLayout(new BoxLayout(partCPanel, BoxLayout.X_AXIS));
         partCPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partCPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartC_L")));
+        partCPanel.add(new JLabel(Text.format("NormalizerWiz_PartC_L")));
         partCPanel.add(dssFieldC);
         dssPartsPanel.add(partCPanel, dssPartsConstraints);
 
@@ -165,7 +165,7 @@ public class DestinationSelectionPanel extends JPanel {
         JPanel partDPanel = new JPanel();
         partDPanel.setLayout(new BoxLayout(partDPanel, BoxLayout.X_AXIS));
         partDPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partDPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartD_L")));
+        partDPanel.add(new JLabel(Text.format("NormalizerWiz_PartD_L")));
         partDPanel.add(dssFieldD);
         dssPartsPanel.add(partDPanel, dssPartsConstraints);
 
@@ -175,7 +175,7 @@ public class DestinationSelectionPanel extends JPanel {
         JPanel partEPanel = new JPanel();
         partEPanel.setLayout(new BoxLayout(partEPanel, BoxLayout.X_AXIS));
         partEPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partEPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartE_L")));
+        partEPanel.add(new JLabel(Text.format("NormalizerWiz_PartE_L")));
         partEPanel.add(dssFieldE);
         dssPartsPanel.add(partEPanel, dssPartsConstraints);
 
@@ -185,7 +185,7 @@ public class DestinationSelectionPanel extends JPanel {
         JPanel partFPanel = new JPanel();
         partFPanel.setLayout(new BoxLayout(partFPanel, BoxLayout.X_AXIS));
         partFPanel.add(Box.createRigidArea(new Dimension(4,0)));
-        partFPanel.add(new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_PartF_L")));
+        partFPanel.add(new JLabel(Text.format("NormalizerWiz_PartF_L")));
         partFPanel.add(Box.createRigidArea(new Dimension(1,0)));
         partFPanel.add(dssFieldF);
         dssPartsPanel.add(partFPanel, dssPartsConstraints);
@@ -205,7 +205,7 @@ public class DestinationSelectionPanel extends JPanel {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.add(netcdfOverwriteButton);
         panel.add(netcdfAppendButton);
-        String title = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfWriteOption_Title");
+        String title = Text.format("DestinationPanel_NetcdfWriteOption_Title");
         panel.setBorder(BorderFactory.createTitledBorder(title));
         return panel;
     }
@@ -213,14 +213,14 @@ public class DestinationSelectionPanel extends JPanel {
     private void initNetcdfOverwriteRadio() {
         ButtonGroup buttonGroup = new ButtonGroup();
 
-        String overwriteLabel = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfOverwrite_L");
-        String overwriteTooltip = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfOverwrite_TT");
+        String overwriteLabel = Text.format("DestinationPanel_NetcdfOverwrite_L");
+        String overwriteTooltip = Text.format("DestinationPanel_NetcdfOverwrite_TT");
         netcdfOverwriteButton = new JRadioButton(overwriteLabel);
         netcdfOverwriteButton.setToolTipText(overwriteTooltip);
         netcdfOverwriteButton.setSelected(true);
 
-        String appendLabel = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfAppend_L");
-        String appendTooltip = TextProperties.getInstance().getProperty("DestinationPanel_NetcdfAppend_TT");
+        String appendLabel = Text.format("DestinationPanel_NetcdfAppend_L");
+        String appendTooltip = Text.format("DestinationPanel_NetcdfAppend_TT");
         netcdfAppendButton = new JRadioButton(appendLabel);
         netcdfAppendButton.setToolTipText(appendTooltip);
 
@@ -231,11 +231,11 @@ public class DestinationSelectionPanel extends JPanel {
     private JPanel overridePanel() {
         JPanel overridePanel = new JPanel(new GridBagLayout());
 
-        JCheckBox unitCheckBox = new JCheckBox("Override DSS units");
+        JCheckBox unitCheckBox = new JCheckBox(Text.format("DestinationPanel_OverrideDssUnits"));
         overridePanel.add(unitCheckBox, overrideConstraints(0,0));
         overridePanel.add(Box.createHorizontalGlue(), overrideConstraints(0,2));
 
-        JLabel unitsLabel = new JLabel("Units string:");
+        JLabel unitsLabel = new JLabel(Text.format("DestinationPanel_UnitsString_L"));
         unitsLabel.setBorder(BorderFactory.createEmptyBorder(0,50,0,0));
         overridePanel.add(unitsLabel, overrideConstraints(1,0));
         unitsTextField = new JTextField();
@@ -244,11 +244,11 @@ public class DestinationSelectionPanel extends JPanel {
         overridePanel.add(unitsTextField, overrideConstraints(1,1));
         overridePanel.add(Box.createHorizontalGlue(), overrideConstraints(1,3));
 
-        JCheckBox typeCheckBox = new JCheckBox("Override DSS data type");
+        JCheckBox typeCheckBox = new JCheckBox(Text.format("DestinationPanel_OverrideDssDataType"));
         overridePanel.add(typeCheckBox, overrideConstraints(2,0));
         overridePanel.add(Box.createHorizontalGlue(), overrideConstraints(2,2));
 
-        JLabel typeLabel = new JLabel("Data type:");
+        JLabel typeLabel = new JLabel(Text.format("DestinationPanel_DataType_L"));
         typeLabel.setBorder(BorderFactory.createEmptyBorder(0,50,0,0));
         overridePanel.add(typeLabel, overrideConstraints(3,0));
         DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();

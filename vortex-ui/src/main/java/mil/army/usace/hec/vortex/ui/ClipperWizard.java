@@ -118,7 +118,7 @@ public class ClipperWizard extends ProcessingWizard {
     }
 
     private JPanel dataSourceSectionPanel() {
-        JLabel dataSourceLabel = new JLabel(TextProperties.getInstance().getProperty("ClipperWizClippingDatasourceL"));
+        JLabel dataSourceLabel = new JLabel(Text.format("ClipperWizClippingDatasourceL"));
         JPanel dataSourceLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dataSourceLabelPanel.add(dataSourceLabel);
 
@@ -152,8 +152,8 @@ public class ClipperWizard extends ProcessingWizard {
     private boolean validateDestination() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if(destinationFile == null || destinationFile.isEmpty() ) {
-            JOptionPane.showMessageDialog(this, "Destination file is required.",
-                    "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Text.format("Error_DestinationRequired"),
+                    Text.format("Error_MissingField_Title"), JOptionPane.ERROR_MESSAGE);
             return false;
         }
         return true;

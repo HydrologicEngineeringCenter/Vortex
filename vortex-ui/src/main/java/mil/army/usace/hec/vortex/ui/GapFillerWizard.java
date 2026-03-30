@@ -25,9 +25,9 @@ public class GapFillerWizard extends ProcessingWizard {
     private static final int ROW_HEIGHT = (int) new JTextField().getPreferredSize().getHeight();
     private static final Dimension PANEL_DIMENSION = new Dimension(Integer.MAX_VALUE, (ROW_HEIGHT + 2 * PAD) * 2);
 
-    private static final String FOCAL_MEAN_LABEL = TextProperties.INSTANCE.getProperty("GapFillerWiz_FocalMean_L");
-    private static final String LINEAR_INTERP_LABEL = TextProperties.INSTANCE.getProperty("GapFillerWiz_LinearInterp_L");
-    private static final String INSERT_TIME_STEPS_LABEL = TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_L");
+    private static final String FOCAL_MEAN_LABEL = Text.format("GapFillerWiz_FocalMean_L");
+    private static final String LINEAR_INTERP_LABEL = Text.format("GapFillerWiz_LinearInterp_L");
+    private static final String INSERT_TIME_STEPS_LABEL = Text.format("GapFillerWiz_TimeSteps_L");
 
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
@@ -93,8 +93,8 @@ public class GapFillerWizard extends ProcessingWizard {
                             Thread.currentThread().interrupt();
                         }
                         LOGGER.log(Level.SEVERE, "Error during processing", e);
-                        String title = TextProperties.INSTANCE.getProperty("GapFillerWiz_ProcessingError_Title");
-                        String message = TextProperties.INSTANCE.getProperty("GapFillerWiz_ProcessingError_Message");
+                        String title = Text.format("GapFillerWiz_ProcessingError_Title");
+                        String message = Text.format("GapFillerWiz_ProcessingError_Message");
                         SwingUtilities.invokeLater(() ->
                                 JOptionPane.showMessageDialog(GapFillerWizard.this, message + " " + e.getMessage(), title, JOptionPane.ERROR_MESSAGE)
                         );
@@ -145,11 +145,11 @@ public class GapFillerWizard extends ProcessingWizard {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel selectInterpolationLabel = new JLabel(TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_Select_L"));
+        JLabel selectInterpolationLabel = new JLabel(Text.format("GapFillerWiz_SpatialFill_Select_L"));
         selectInterpolationLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectInterpolationLabel.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
 
-        JLabel selectInterpolationDescLabel = new JLabel(TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_Select_Desc"));
+        JLabel selectInterpolationDescLabel = new JLabel(Text.format("GapFillerWiz_SpatialFill_Select_Desc"));
         selectInterpolationDescLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectInterpolationDescLabel.setBorder(new EmptyBorder(PAD, 4 * PAD, PAD, PAD));
 
@@ -165,8 +165,8 @@ public class GapFillerWizard extends ProcessingWizard {
 
     private JPanel createSpatialFillPanel() {
         JPanel spatialFillPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        String spatialFillTitle = TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_Title");
-        String spatialFillTT = TextProperties.INSTANCE.getProperty("GapFillerWiz_SpatialFill_TT");
+        String spatialFillTitle = Text.format("GapFillerWiz_SpatialFill_Title");
+        String spatialFillTT = Text.format("GapFillerWiz_SpatialFill_TT");
         spatialFillPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), spatialFillTitle));
         spatialFillPanel.setToolTipText(spatialFillTT);
@@ -185,8 +185,8 @@ public class GapFillerWizard extends ProcessingWizard {
 
     private JPanel createTemporalFillPanel() {
         JPanel temporalFillPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        String temporalFillTitle = TextProperties.INSTANCE.getProperty("GapFillerWiz_TemporalFill_Title");
-        String temporalFillTT = TextProperties.INSTANCE.getProperty("GapFillerWiz_TemporalFill_TT");
+        String temporalFillTitle = Text.format("GapFillerWiz_TemporalFill_Title");
+        String temporalFillTT = Text.format("GapFillerWiz_TemporalFill_TT");
         temporalFillPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), temporalFillTitle));
         temporalFillPanel.setToolTipText(temporalFillTT);
@@ -201,8 +201,8 @@ public class GapFillerWizard extends ProcessingWizard {
 
     private boolean validateMethod() {
         if (getSelectedButtonText(methodButtonGroup) == null) {
-            String title = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoMethodSelected_Title");
-            String message = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoMethodSelected_Error");
+            String title = Text.format("GapFillerWiz_NoMethodSelected_Title");
+            String message = Text.format("GapFillerWiz_NoMethodSelected_Error");
             JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -216,7 +216,7 @@ public class GapFillerWizard extends ProcessingWizard {
         panel.add(createTimeStepExplanationPanel());
         panel.add(Box.createVerticalStrut(10));
 
-        String timeStepsTT = TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_TT");
+        String timeStepsTT = Text.format("GapFillerWiz_TimeSteps_TT");
         insertTimeStepsCheckBox = new JCheckBox(INSERT_TIME_STEPS_LABEL);
         insertTimeStepsCheckBox.setToolTipText(timeStepsTT);
         insertTimeStepsCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -232,11 +232,11 @@ public class GapFillerWizard extends ProcessingWizard {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel selectAddMissingLabel = new JLabel(TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_Option_L"));
+        JLabel selectAddMissingLabel = new JLabel(Text.format("GapFillerWiz_TimeSteps_Option_L"));
         selectAddMissingLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectAddMissingLabel.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
 
-        JLabel selectAddMissingDescLabel = new JLabel(TextProperties.INSTANCE.getProperty("GapFillerWiz_TimeSteps_Option_Desc"));
+        JLabel selectAddMissingDescLabel = new JLabel(Text.format("GapFillerWiz_TimeSteps_Option_Desc"));
         selectAddMissingDescLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         selectAddMissingDescLabel.setBorder(new EmptyBorder(PAD, 4 * PAD, PAD, PAD));
 
@@ -254,8 +254,8 @@ public class GapFillerWizard extends ProcessingWizard {
     private boolean validateDestination() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if (destinationFile == null || destinationFile.isEmpty()) {
-            String title = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoDestination_Title");
-            String message = TextProperties.INSTANCE.getProperty("GapFillerWiz_NoDestination_Error");
+            String title = Text.format("GapFillerWiz_NoDestination_Title");
+            String message = Text.format("GapFillerWiz_NoDestination_Error");
             JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
             return false;
         }

@@ -1,6 +1,6 @@
 package mil.army.usace.hec.vortex.math;
 
-import mil.army.usace.hec.vortex.MessageStore;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
@@ -212,7 +212,7 @@ public class BatchGapFiller implements Runnable {
             Set<String> processableVars = getProcessableVariables(datasetVars);
 
             if (processableVars.isEmpty()) {
-                String message = MessageStore.INSTANCE.getMessage("gap_filler_error_no_matching_vars");
+                String message = Message.format("gap_filler_error_no_matching_vars");
                 LOGGER.warning(message);
                 support.firePropertyChange(VortexProperty.STATUS.toString(), null, message);
                 notifyCompletion(0, stopwatch);
@@ -223,7 +223,7 @@ public class BatchGapFiller implements Runnable {
             notifyCompletion(processedCount, stopwatch);
 
         } catch (Exception e) {
-            String message = MessageStore.INSTANCE.getMessage("gap_filler_error_generic");
+            String message = Message.format("gap_filler_error_generic");
             LOGGER.log(Level.SEVERE, message, e);
             support.firePropertyChange(VortexProperty.ERROR.toString(), null,
                     message + ": " + e.getMessage());
@@ -258,7 +258,7 @@ public class BatchGapFiller implements Runnable {
             Set<String> variables = DataReader.getVariables(source);
             return condenseVariables(variables);
         } catch (Exception e) {
-            String message = MessageStore.INSTANCE.getMessage("gap_filler_error_getting_vars");
+            String message = Message.format("gap_filler_error_getting_vars");
             LOGGER.log(Level.WARNING, message, e);
             return Collections.emptySet();
         }
@@ -276,7 +276,7 @@ public class BatchGapFiller implements Runnable {
                     if (datasetVars.contains(variable)) {
                         return true;
                     } else {
-                        String message = MessageStore.INSTANCE.getMessage("gap_filler_error_var_not_found");
+                        String message = Message.format("gap_filler_error_var_not_found");
                         LOGGER.warning(() -> message + ": " + variable);
                         return false;
                     }
@@ -298,8 +298,7 @@ public class BatchGapFiller implements Runnable {
             try {
                 processed.addAndGet(processVariable(variable));
             } catch (Exception e) {
-                String template = MessageStore.INSTANCE.getMessage("gap_filler_error_var");
-                String message = String.format(template, variable);
+                String message = Message.format("gap_filler_error_var", variable);
                 LOGGER.log(Level.SEVERE, e, () -> message);
                 support.firePropertyChange(VortexProperty.WARNING.toString(), null, message);
             }
@@ -352,8 +351,7 @@ public class BatchGapFiller implements Runnable {
                 support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progressPercent);
             }
 
-            String template = MessageStore.INSTANCE.getMessage("gap_filler_status_processed_var");
-            String message = String.format(template, count, variable);
+            String message = Message.format("gap_filler_status_processed_var", count, variable);
             LOGGER.fine(() -> message);
         }
         return gapFilled;
@@ -390,7 +388,7 @@ public class BatchGapFiller implements Runnable {
      * @return The start processing message
      */
     protected String notifyStartMessage() {
-        return MessageStore.getInstance().getMessage("gap_filler_status_begin");
+        return Message.format("gap_filler_status_begin");
     }
 
     /**
@@ -407,15 +405,13 @@ public class BatchGapFiller implements Runnable {
                 notifyCompleteMessage(processed));
 
         // Notify about execution time
-        String template = MessageStore.getInstance().getMessage("gap_filler_status_time");
-        String messageTime = String.format(template, stopwatch);
+        String messageTime = Message.format("gap_filler_status_time", stopwatch);
         LOGGER.info(messageTime);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
     protected String notifyCompleteMessage(int processed) {
-        String templateEnd = MessageStore.getInstance().getMessage("gap_filler_status_end");
-        return String.format(templateEnd, processed, destination);
+        return Message.format("gap_filler_status_end", processed, destination);
     }
 
     protected Set<String> condenseVariables(Set<String> variables) {

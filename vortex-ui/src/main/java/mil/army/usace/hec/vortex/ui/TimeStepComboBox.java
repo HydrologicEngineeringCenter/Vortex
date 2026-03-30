@@ -35,12 +35,10 @@ class TimeStepComboBox extends JComboBox<String> {
     private final Map<String, TimeStep> displayToTimeStep = new LinkedHashMap<>();
 
     TimeStepComboBox() {
-        TextProperties textProps = TextProperties.getInstance();
-
         Arrays.stream(TimeStep.values()).forEach(ts -> {
             String key = INTERVAL_TO_KEY.get(ts.intervalInMinutes());
             if (key == null) return;
-            String displayText = textProps.getProperty(key);
+            String displayText = Text.format(key);
             if (displayText == null) return;
             displayToTimeStep.put(displayText, ts);
         });
