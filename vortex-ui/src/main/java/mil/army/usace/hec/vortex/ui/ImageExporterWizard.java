@@ -1,6 +1,5 @@
 package mil.army.usace.hec.vortex.ui;
 
-import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.BatchExporter;
 import mil.army.usace.hec.vortex.io.ImageFileType;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
@@ -8,289 +7,168 @@ import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.List;
 
-public class ImageExporterWizard extends VortexWizard {
-	private final Frame frame;
+public class ImageExporterWizard extends ProcessingWizard {
 	private SourceFileSelectionPanel sourceFileSelectionPanel;
-	
-	private Container contentCards;
-	private CardLayout cardLayout;
-	private JButton backButton;
-	private JButton nextButton;
-	private JButton cancelButton;
-	private int cardNumber;
-	
+
 	private JTextField sourceFileTextField;
 	private JTextField destinationDirectoryTextField;
 	private JTextField filenamePrefixTextField;
 	private JComboBox<ImageFileType> formatComboBox;
 	private JList<String> chosenSourceGridsList;
 
-	private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
-	
-	private static final String NEXT = TextProperties.getInstance().getProperty("ImageExporterWiz_Next");
-	private static final boolean IS_VALID = true;
-	
-	private static final Logger logger = Logger.getLogger(ImageExporterWizard.class.getName());
-	
 	public ImageExporterWizard(Frame frame) {
-		super();
-		this.frame = frame;
-		this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		this.addWindowListener(new java.awt.event.WindowAdapter() {
-			@Override
-			public void windowClosing(java.awt.event.WindowEvent e) {
-				closeAction();
-			}
-		});
-	}
-	
-	public void buildAndShowUI() {
-		/* Setting Wizard's names and layout */
-		this.setTitle(TextProperties.getInstance().getProperty("ImageExporterWiz_Title"));
-		this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-		setMinimumSize(new Dimension(600, 400));
-		setLocation(getPersistedLocation());
-		if (frame != null) setLocationRelativeTo(frame);
-		setSize(getPersistedSize());
-		this.setLayout(new BorderLayout());
-		
-		/* Initializing Card Container */
-		initializeContentCards();
-		
-		/* Initializing Button Panel (Back, Next, Cancel) */
-		initializeButtonPanel();
-		
-		/* Add contentCards to wizard, and then show wizard */
-		this.add(contentCards, BorderLayout.CENTER);
-		this.setVisible(true);
-	}
-	
-	private void initializeContentCards() {
-		contentCards = new Container();
-		cardLayout = new CardLayout();
-		contentCards.setLayout(cardLayout);
-		cardNumber = 0;
-		
-		/* Adding Step Content Panels to contentCards */
-		contentCards.add("Step One", stepOnePanel());
-		contentCards.add("Step Two", stepTwoPanel());
-		contentCards.add("Step Three", stepThreePanel());
-		contentCards.add("Step Four", stepFourPanel());
-	}
-	
-	private void initializeButtonPanel() {
-		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		
-		/* Back Button */
-		backButton = new JButton(TextProperties.getInstance().getProperty("ImageExporterWiz_Back"));
-		backButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Back_TT"));
-		backButton.setEnabled(false);
-		backButton.addActionListener(evt -> backAction());
-		
-		/* Next Button */
-		nextButton = new JButton(NEXT);
-		nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Next_TT"));
-		nextButton.addActionListener(evt -> {
-			if(nextButton.getText().equals(TextProperties.getInstance().getProperty("ImageExporterWiz_Restart"))) { restartAction(); }
-			else if(nextButton.getText().equals(NEXT)) { nextAction(); }
-		});
-		
-		/* Cancel Button */
-		cancelButton = new JButton(TextProperties.getInstance().getProperty("ImageExporterWiz_Cancel"));
-		cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Cancel_TT"));
-		cancelButton.addActionListener(evt -> closeAction());
-		
-		/* Adding Buttons to NavigationPanel */
-		buttonPanel.add(backButton);
-		buttonPanel.add(nextButton);
-		buttonPanel.add(cancelButton);
-		
-		/* Add buttonPanel to SanitizerWizard */
-		this.add(buttonPanel, BorderLayout.SOUTH);
-	}
+        super(frame);
+    }
 
-	private void nextAction() {
-		if (!validateCurrentStep()) return;
-		submitCurrentStep();
-		cardNumber++;
-		backButton.setEnabled(true);
-		updateButtonState();
-		cardLayout.next(contentCards);
-	}
+    @Override
+    protected String getTitlePropertyKey() {
+        return "ImageExporterWiz_Title";
+    }
 
-	private void updateButtonState() {
-		backButton.setEnabled(cardNumber == 1);
-		nextButton.setEnabled(cardNumber < 2);
-		cancelButton.setEnabled(cardNumber < 2);
-	}
+    @Override
+    protected List<JPanel> createStepPanels() {
+        return List.of(
+                stepOnePanel(),
+                stepTwoPanel(),
+                createProgressPanel(),
+                createProgressPanel()
+        );
+    }
 
-	private void setButtonsForRestartOrClose() {
-		backButton.setVisible(false);
-		nextButton.setText(TextProperties.getInstance().getProperty("ImageExporterWiz_Restart"));
-		nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Restart_TT"));
-		nextButton.setEnabled(true);
-		cancelButton.setText(TextProperties.getInstance().getProperty("ImageExporterWiz_Close"));
-		cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Close_TT"));
-		cancelButton.setEnabled(true);
-	}
-	
-	private void backAction() {
-		cardNumber--;
-		if(cardNumber == 0) {
-			backButton.setEnabled(false);
-		}
-		cardLayout.previous(contentCards);
-	}
-	
-	private void restartAction() {
-		cardNumber = 0;
-		cardLayout.first(contentCards);
-		
-		/* Resetting Buttons */
-		backButton.setVisible(true);
-		backButton.setEnabled(false);
-		
-		nextButton.setEnabled(true);
-		nextButton.setText(NEXT);
-		nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Next_TT"));
-		
-		cancelButton.setText(TextProperties.getInstance().getProperty("ImageExporterWiz_Cancel"));
-		cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImageExporterWiz_Cancel_TT"));
-		
-		/* Clearing Step One Panel */
+    @Override
+    protected int getLastInteractiveStep() {
+        return 1;
+    }
+
+    @Override
+    protected boolean validateStep(int stepIndex) {
+        return switch (stepIndex) {
+            case 0 -> sourceFileSelectionPanel.validateInput();
+            case 1 -> validateDestination();
+            default -> true;
+        };
+    }
+
+    @Override
+    protected void submitStep(int stepIndex) {
+        switch (stepIndex) {
+            case 0 -> submitStepOne();
+            case 1 -> {
+                SwingWorker<Void, Void> task = new SwingWorker<>() {
+                    @Override
+                    protected Void doInBackground() {
+                        exportImageTask();
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        nextAction();
+                    }
+                };
+                task.execute();
+            }
+        }
+    }
+
+    @Override
+    protected void clearWizardState() {
 		sourceFileSelectionPanel.clear();
-		
-		/* Clearing Step Two Panel */
 		destinationDirectoryTextField.setText("");
 		filenamePrefixTextField.setText("");
-		
-		/* Clearing Step Three Panel */
-		progressMessagePanel.clear();
 	}
-	
-	private boolean validateCurrentStep() {
-		switch(cardNumber) {
-			case 0: return validateStepOne();
-			case 1: return validateStepTwo();
-			case 2: return IS_VALID;
-			default: return unknownStepError();
-		}
+
+    @Override
+    protected void showSaveResult() {
+        String savedFile = destinationDirectoryTextField.getText();
+        FileSaveUtil.showDirectoryLocation(this, Path.of(savedFile));
 	}
-	
-	private void submitCurrentStep() {
-		switch(cardNumber) {
-			case 0: submitStepOne(); break;
-			case 1: submitStepTwo(); break;
-			case 2: submitStepThree(); break;
-			default: unknownStepError(); break;
-		}
-	}
-	
-	private boolean unknownStepError() {
-		logger.log(Level.SEVERE, "Unknown Step in Wizard");
-		return false;
-	}
-	
+
 	private JPanel stepOnePanel() {
 		sourceFileSelectionPanel = new SourceFileSelectionPanel(ImageExporterWizard.class.getName());
 		sourceFileTextField = sourceFileSelectionPanel.getSourceFileTextField();
 		chosenSourceGridsList = sourceFileSelectionPanel.getChosenSourceGridsList();
 		return sourceFileSelectionPanel;
 	}
-	
-	private boolean validateStepOne() {
-		return sourceFileSelectionPanel.validateInput();
-	}
-	
+
 	private void submitStepOne() {
 		String sourceFile = sourceFileTextField.getText();
-		String fileSeparator = System.getProperty("file.separator");
+		String fileSeparator = FileSystems.getDefault().getSeparator();
 		String prefix = sourceFile.substring(sourceFile.lastIndexOf(fileSeparator) + 1);
 		String prefixSansExt = prefix.substring(0, prefix.lastIndexOf('.'));
 		destinationDirectoryTextField.setText(sourceFile.substring(0, sourceFile.lastIndexOf(fileSeparator)));
 		filenamePrefixTextField.setText(prefixSansExt);
 	}
-	
+
 	private JPanel stepTwoPanel() {
-		/* Destination directory Panel */
 		JPanel destinationSelectionPanel = destinationSelectionPanel();
-		
-		/* Filename Prefix Panel */
 		JPanel filenamePrefixPanel = filenamePrefixPanel();
-		
-		/* Format Panel */
-		JPanel formatPanel = formatPanel();		
-		
-		/* Setting GridBagLayout for stepTwoPanel */
+        JPanel formatPanel = formatPanel();
+
 		GridBagLayout gridBagLayout = new GridBagLayout();
-		
-		/* Adding Panels to stepTwoPanel */
 		JPanel stepTwoPanel = new JPanel(gridBagLayout);
 		stepTwoPanel.setBorder(BorderFactory.createEmptyBorder(5,9,5,8));
-		
-		GridBagConstraints gridBagConstraints = new GridBagConstraints();
+
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
 		gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
 		gridBagConstraints.anchor = GridBagConstraints.NORTHWEST;
 		gridBagConstraints.insets = new Insets(0, 0, 5, 0);
 		gridBagConstraints.gridx = 0;
 		gridBagConstraints.weightx = 1;
 		gridBagConstraints.weighty = 0;
-		
-		gridBagConstraints.gridy = 0;
+
+        gridBagConstraints.gridy = 0;
 		stepTwoPanel.add(destinationSelectionPanel, gridBagConstraints);
-		
-		gridBagConstraints.gridy = 1;
+
+        gridBagConstraints.gridy = 1;
 		stepTwoPanel.add(filenamePrefixPanel, gridBagConstraints);
-		
-		gridBagConstraints.gridy = 2;
+
+        gridBagConstraints.gridy = 2;
 		stepTwoPanel.add(formatPanel, gridBagConstraints);
-		
-		gridBagConstraints.gridy = 3;
+
+        gridBagConstraints.gridy = 3;
 		gridBagConstraints.weighty = 1;
 		gridBagConstraints.fill = GridBagConstraints.BOTH;
 		stepTwoPanel.add(new JPanel(), gridBagConstraints);
-		
-		return stepTwoPanel;
+
+        return stepTwoPanel;
 	}
-	
-	private JPanel destinationSelectionPanel() {
+
+    private JPanel destinationSelectionPanel() {
 		JLabel destinationDirectoryLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_DestinationDirectory_L"));
 		JPanel destinationDirectoryLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		destinationDirectoryLabelPanel.add(destinationDirectoryLabel);
-		
-		JPanel destinationDirectoryTextFieldPanel = new JPanel();
+
+        JPanel destinationDirectoryTextFieldPanel = new JPanel();
 		destinationDirectoryTextFieldPanel.setLayout(new BoxLayout(destinationDirectoryTextFieldPanel, BoxLayout.X_AXIS));
-		
 		destinationDirectoryTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
-		
-		destinationDirectoryTextField = new JTextField();
+
+        destinationDirectoryTextField = new JTextField();
 		destinationDirectoryTextField.setColumns(0);
 		destinationDirectoryTextField.setText(sourceFileTextField.getText());
 		destinationDirectoryTextFieldPanel.add(destinationDirectoryTextField);
-		
 		destinationDirectoryTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
-		
-		FileBrowseButton selectDestinationBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
+
+        FileBrowseButton selectDestinationBrowseButton = new FileBrowseButton(this.getClass().getName(), "");
 		selectDestinationBrowseButton.setIcon(IconResources.loadIcon("images/Open16.gif"));
 		selectDestinationBrowseButton.setPreferredSize(new Dimension(22,22));
 		selectDestinationBrowseButton.addActionListener(evt -> selectDestinationBrowseAction(selectDestinationBrowseButton));
 		destinationDirectoryTextFieldPanel.add(selectDestinationBrowseButton);
-		
-		JPanel selectDestinationSectionPanel = new JPanel();
+
+        JPanel selectDestinationSectionPanel = new JPanel();
 		selectDestinationSectionPanel.setLayout(new BoxLayout(selectDestinationSectionPanel, BoxLayout.Y_AXIS));
 		selectDestinationSectionPanel.add(destinationDirectoryLabelPanel);
 		selectDestinationSectionPanel.add(destinationDirectoryTextFieldPanel);
-		
-		return selectDestinationSectionPanel;
+
+        return selectDestinationSectionPanel;
 	}
-	
-	private void selectDestinationBrowseAction(FileBrowseButton fileBrowseButton) {
+
+    private void selectDestinationBrowseAction(FileBrowseButton fileBrowseButton) {
 		JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		if (fileBrowseButton.getPersistedBrowseLocation() != null && fileBrowseButton.getPersistedBrowseLocation().exists()){
@@ -298,119 +176,75 @@ public class ImageExporterWizard extends VortexWizard {
 		} else {
 			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 		}
-		
-		// Pop up fileChooser dialog
-		int userChoice = fileChooser.showOpenDialog(frame);
-		
-		// Deal with user's choice
-		if(userChoice == JFileChooser.APPROVE_OPTION) {
+
+        int userChoice = fileChooser.showOpenDialog(frame);
+
+        if(userChoice == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getCurrentDirectory();
 			String selectedPath = selectedFile.getAbsolutePath();
-			selectedPath = selectedPath + System.getProperty("file.separator");
+			selectedPath = selectedPath + FileSystems.getDefault().getSeparator();
 			destinationDirectoryTextField.setText(selectedPath);
 			File finalFile = new File(selectedPath);
 			fileBrowseButton.setPersistedBrowseLocation(finalFile);
 		}
 	}
-	
-	private JPanel filenamePrefixPanel() {
+
+    private JPanel filenamePrefixPanel() {
 		JLabel filenamePrefixLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_FilenamePrefix_L"));
 		JPanel filenamePrefixLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		filenamePrefixLabelPanel.add(filenamePrefixLabel);
-		
-		JPanel filenamePrefixTextFieldPanel = new JPanel();
+
+        JPanel filenamePrefixTextFieldPanel = new JPanel();
 		filenamePrefixTextFieldPanel.setLayout(new BoxLayout(filenamePrefixTextFieldPanel, BoxLayout.X_AXIS));
-		
 		filenamePrefixTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
-		
-		filenamePrefixTextField = new JTextField();
+
+        filenamePrefixTextField = new JTextField();
 		filenamePrefixTextField.setColumns(0);
 		filenamePrefixTextFieldPanel.add(filenamePrefixTextField);
-		
 		filenamePrefixTextFieldPanel.add(Box.createRigidArea(new Dimension(4,0)));
-		
-		JPanel filenamePrefixPanel = new JPanel();
+
+        JPanel filenamePrefixPanel = new JPanel();
 		filenamePrefixPanel.setLayout(new BoxLayout(filenamePrefixPanel, BoxLayout.Y_AXIS));
 		filenamePrefixPanel.add(filenamePrefixLabelPanel);
 		filenamePrefixPanel.add(filenamePrefixTextFieldPanel);
-		
-		return filenamePrefixPanel;
+
+        return filenamePrefixPanel;
 	}
-	
-	private JPanel formatPanel() {
+
+    private JPanel formatPanel() {
 		JLabel formatLabel = new JLabel(TextProperties.getInstance().getProperty("ImageExporterWiz_Format_L"));
 		JPanel formatLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		formatLabelPanel.add(formatLabel);
-		
-		JPanel formatComboBoxPanel = new JPanel();
+
+        JPanel formatComboBoxPanel = new JPanel();
 		formatComboBoxPanel.setLayout(new BoxLayout(formatComboBoxPanel, BoxLayout.X_AXIS));
-		
 		formatComboBoxPanel.add(Box.createRigidArea(new Dimension(4,0)));
-		
-		ImageFileType[] fileTypes = ImageFileType.values();
+
+        ImageFileType[] fileTypes = ImageFileType.values();
 		formatComboBox = new JComboBox<>(fileTypes);
 		formatComboBox.setSelectedIndex(0);
 		formatComboBoxPanel.add(formatComboBox);
-		
 		formatComboBoxPanel.add(Box.createRigidArea(new Dimension(4,0)));
-		
-		JPanel formatPanel = new JPanel();
+
+        JPanel formatPanel = new JPanel();
 		formatPanel.setLayout(new BoxLayout(formatPanel, BoxLayout.Y_AXIS));
 		formatPanel.add(formatLabelPanel);
 		formatPanel.add(formatComboBoxPanel);
-		
-		return formatPanel;
+
+        return formatPanel;
 	}
-	
-	private boolean validateStepTwo() {
+
+    private boolean validateDestination() {
 		String destinationFile = destinationDirectoryTextField.getText();
 		if(destinationFile == null || destinationFile.isEmpty() ) {
 			JOptionPane.showMessageDialog(this, "Destination file is required.",
 					"Error: Missing Field", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
-		
 		return true;
 	}
-	
-	private void submitStepTwo() {
-		SwingWorker<Void, Void> task = new SwingWorker<>() {
-			@Override
-			protected Void doInBackground() {
-				exportImageTask();
-				return null;
-			}
-			
-			@Override
-			protected void done() {
-				nextAction();
-			}
-		};
-		
-		task.execute();
-	}
-	
-	private ImageFileType getFileType() {
-		return (ImageFileType) formatComboBox.getSelectedItem();
-	}
-	
-	private JPanel stepThreePanel() {
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.add(progressMessagePanel, BorderLayout.CENTER);
-		return panel;
-	}
-	
-	private void submitStepThree() { 
-		//No validation required for this step 
-	}
-	
-	private JPanel stepFourPanel() {
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.add(progressMessagePanel, BorderLayout.CENTER);
-		return panel;
-	}
-	
-	private void exportImageTask() {
+
+    private void exportImageTask() {
 		String pathToSource = sourceFileTextField.getText();
 		List<String> chosenSourceGrids = getItemsInList(chosenSourceGridsList);
 		if (chosenSourceGrids == null) return;
@@ -421,20 +255,10 @@ public class ImageExporterWizard extends VortexWizard {
 				.variables(variables)
 				.filenamePrefix(filenamePrefixTextField.getText())
 				.destinationDir(destinationDirectoryTextField.getText())
-				.imageFileType(getFileType())
+                .imageFileType((ImageFileType) formatComboBox.getSelectedItem())
 				.build();
 
-		batchExporter.addPropertyChangeListener(evt -> {
-			VortexProperty property = VortexProperty.parse(evt.getPropertyName());
-			if (VortexProperty.PROGRESS == property) {
-				if (!(evt.getNewValue() instanceof Integer)) return;
-				int progressValue = (int) evt.getNewValue();
-				progressMessagePanel.setValue(progressValue);
-			} else {
-				String value = String.valueOf(evt.getNewValue());
-				progressMessagePanel.write(value);
-			}
-		});
+        batchExporter.addPropertyChangeListener(createProgressListener());
 
 		SwingWorker<Void, Void> task = new SwingWorker<>() {
 			@Override
@@ -452,26 +276,12 @@ public class ImageExporterWizard extends VortexWizard {
 
 		task.execute();
 	}
-	
-	private List<String> getItemsInList(JList<String> list) {
-		DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
-		if(defaultRightModel == null) { return Collections.emptyList(); }
-		return Collections.list(defaultRightModel.elements());
-	}
-	
-	private void closeAction() {
-		ImageExporterWizard.this.setVisible(false);
-		ImageExporterWizard.this.dispose();
-		String savedFile = destinationDirectoryTextField.getText();
-		FileSaveUtil.showDirectoryLocation(ImageExporterWizard.this, Path.of(savedFile));
-	}
-	
-	/* Add main for quick UI Testing */
-	public static void main(String[] args) {
+
+    public static void main(String[] args) {
 		try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) { e.printStackTrace(); }
-		
-		ImageExporterWizard imageExporterWizard = new ImageExporterWizard(null);
+
+        ImageExporterWizard imageExporterWizard = new ImageExporterWizard(null);
 		imageExporterWizard.buildAndShowUI();
 	}
 }

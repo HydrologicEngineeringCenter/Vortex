@@ -1,12 +1,10 @@
 package mil.army.usace.hec.vortex.ui;
 
-import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.geo.ResamplingMethod;
 import mil.army.usace.hec.vortex.math.BatchCalculator;
 import mil.army.usace.hec.vortex.math.BatchGridCalculator;
 import mil.army.usace.hec.vortex.math.Operation;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
-import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -15,29 +13,15 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Map;
 
-public class CalculatorWizard extends VortexWizard {
-    private static final Logger logger = Logger.getLogger(CalculatorWizard.class.getName());
-    private static final String NEXT = TextProperties.getInstance().getProperty("CalculatorWiz_Next");
-    private static final boolean IS_VALID = true;
+public class CalculatorWizard extends ProcessingWizard {
     private static final String ERROR_TITLE = "Error";
 
-    private final Frame frame;
-
-    private Container contentCards;
-    private CardLayout cardLayout;
-    private JButton backButton;
-    private JButton nextButton;
-    private JButton cancelButton;
-    private int cardNumber;
-
-    private SourceFileSelectionPanel sourceFileSelectionPanel; // Step 1
-    private JPanel constantOrRasterSelectionPanel; // Step 2
-    private JPanel calculationSelectionPanel; // Step 3 (Constant or Raster)
-    private DestinationSelectionPanel destinationSelectionPanel; // Step 4
+    private SourceFileSelectionPanel sourceFileSelectionPanel;
+    private JPanel constantOrRasterSelectionPanel;
+    private JPanel calculationSelectionPanel;
+    private DestinationSelectionPanel destinationSelectionPanel;
 
     private JRadioButton constantRadioButton;
     private JTextField sourceFileTextField;
@@ -50,213 +34,85 @@ public class CalculatorWizard extends VortexWizard {
     private ResamplingMethodSelectionPanel resamplingPanel;
     private JList<String> chosenSourceGridsList;
 
-    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
-
     public CalculatorWizard(Frame frame) {
-        super();
-        this.frame = frame;
-        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        this.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                closeAction();
-            }
-        });
+        super(frame);
     }
 
-    public void buildAndShowUI() {
-        /* Setting Wizard's names and layout */
-        this.setTitle(TextProperties.getInstance().getProperty("CalculatorWiz_Title"));
-        this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        setMinimumSize(new Dimension(600, 400));
-        setLocation(getPersistedLocation());
-        if (frame != null) setLocationRelativeTo(frame);
-        setSize(getPersistedSize());
-        this.setLayout(new BorderLayout());
-
-        /* Initializing Card Container */
-        initializeContentCards();
-
-        /* Initializing Button Panel (Back, Next, Cancel) */
-        initializeButtonPanel();
-
-        /* Add contentCards to wizard, and then show wizard */
-        this.add(contentCards, BorderLayout.CENTER);
-        this.setVisible(true);
+    @Override
+    protected String getTitlePropertyKey() {
+        return "CalculatorWiz_Title";
     }
 
-    private void initializeContentCards() {
-        contentCards = new Container();
-        cardLayout = new CardLayout();
-        contentCards.setLayout(cardLayout);
-        cardNumber = 0;
-
-        /* Initialize Panels */
+    @Override
+    protected List<JPanel> createStepPanels() {
         initSourceFileSelectionPanel();
         initConstantOrRasterSelectionPanel();
         initCalculationSelectionPanel();
         initDestinationSelectionPanel();
 
-        /* Adding Step Content Panels to contentCards */
-        contentCards.add("Step One", sourceFileSelectionPanel);
-        contentCards.add("Step Two", constantOrRasterSelectionPanel);
-        contentCards.add("Step Three", calculationSelectionPanel);
-        contentCards.add("Step Four", destinationSelectionPanel);
-        contentCards.add("Step Five", initProgressBarPanel());
-        contentCards.add("Step Six", initCompletedPanel());
+        JPanel progressPanel = createProgressPanel();
+        JPanel completedPanel = createProgressPanel();
+
+        return List.of(
+                sourceFileSelectionPanel,
+                constantOrRasterSelectionPanel,
+                calculationSelectionPanel,
+                destinationSelectionPanel,
+                progressPanel,
+                completedPanel
+        );
     }
 
-    private void initializeButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        /* Back Button */
-        backButton = new JButton(TextProperties.getInstance().getProperty("CalculatorWiz_Back"));
-        backButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Back_TT"));
-        backButton.setEnabled(false);
-        backButton.addActionListener(evt -> backAction());
-
-        /* Next Button */
-        nextButton = new JButton(NEXT);
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Next_TT"));
-        nextButton.addActionListener(evt -> {
-            if (nextButton.getText().equals(TextProperties.getInstance().getProperty("CalculatorWiz_Restart"))) {
-                restartAction();
-            } else if (nextButton.getText().equals(NEXT)) {
-                nextAction();
-            }
-        });
-
-        /* Cancel Button */
-        cancelButton = new JButton(TextProperties.getInstance().getProperty("CalculatorWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Cancel_TT"));
-        cancelButton.addActionListener(evt -> closeAction());
-
-        /* Adding Buttons to NavigationPanel */
-        buttonPanel.add(backButton);
-        buttonPanel.add(nextButton);
-        buttonPanel.add(cancelButton);
-
-        /* Add buttonPanel to SanitizerWizard */
-        this.add(buttonPanel, BorderLayout.SOUTH);
+    @Override
+    protected int getLastInteractiveStep() {
+        return 3;
     }
 
-    private void nextAction() {
-        if (!validateCurrentStep()) return;
-        submitCurrentStep();
-        cardNumber++;
-        backButton.setEnabled(true);
-        updateButtonState();
-        cardLayout.next(contentCards);
+    @Override
+    protected boolean validateStep(int stepIndex) {
+        return switch (stepIndex) {
+            case 0 -> validateStepOne();
+            case 2 -> validateCalculationParameters();
+            case 3 -> validateStepFour();
+            default -> true;
+        };
     }
 
-    private void updateButtonState() {
-        backButton.setEnabled(cardNumber > 0 && cardNumber < 4);
-        nextButton.setEnabled(cardNumber < 4);
-        cancelButton.setEnabled(cardNumber < 4);
-    }
-
-    private void setButtonsForRestartOrClose() {
-        backButton.setVisible(false);
-        nextButton.setText(TextProperties.getInstance().getProperty("CalculatorWiz_Restart"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Restart_TT"));
-        nextButton.setEnabled(true);
-        cancelButton.setText(TextProperties.getInstance().getProperty("CalculatorWiz_Close"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Close_TT"));
-        cancelButton.setEnabled(true);
-    }
-
-    private void backAction() {
-        cardNumber--;
-        if (cardNumber == 0) {
-            backButton.setEnabled(false);
+    @Override
+    protected void submitStep(int stepIndex) {
+        switch (stepIndex) {
+            case 1 -> submitStepTwo();
+            case 3 -> submitStepFour();
+            default -> { /* no-op */ }
         }
-        cardLayout.previous(contentCards);
     }
 
-    private void restartAction() {
-        cardNumber = 0;
-        cardLayout.first(contentCards);
-
-        /* Reset Buttons */
-        backButton.setVisible(true);
-        backButton.setEnabled(false);
-
-        nextButton.setEnabled(true);
-        nextButton.setText(NEXT);
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Next_TT"));
-
-        cancelButton.setText(TextProperties.getInstance().getProperty("CalculatorWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("CalculatorWiz_Cancel_TT"));
-
-        /* Clear Step One Panel */
+    @Override
+    protected void clearWizardState() {
         sourceFileSelectionPanel.clear();
 
-        /* Clear Constant Panel */
         multiplyTextField.setText("");
         divideTextField.setText("");
         addTextField.setText("");
         subtractTextField.setText("");
 
-        /* Clear Raster Panel */
         operationComboBox.refresh();
         rasterTextField.setText("");
         resamplingPanel.refresh();
 
-        /* Clear Destination Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
         destinationSelectionPanel.getFieldA().setText("");
         destinationSelectionPanel.getFieldB().setText("");
         destinationSelectionPanel.getFieldF().setText("");
-
-        /* Clear Progress Panel */
-        progressMessagePanel.clear();
     }
 
-    private boolean validateCurrentStep() {
-        switch (cardNumber) {
-            case 0:
-                return validateStepOne();
-            case 1:
-                return validateStepTwo();
-            case 2:
-                return validateCalculationParameters();
-            case 3:
-                return validateStepFour();
-            case 4:
-                return IS_VALID;
-            default:
-                return unknownStepError();
-        }
+    @Override
+    protected void showSaveResult() {
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSaveUtil.showFileLocation(this, Path.of(savedFile));
     }
 
-    private void submitCurrentStep() {
-        switch (cardNumber) {
-            case 0:
-                submitStepOne();
-                break;
-            case 1:
-                submitStepTwo();
-                break;
-            case 2:
-                submitStepThree();
-                break;
-            case 3:
-                submitStepFour();
-                break;
-            case 4:
-                submitStepFive();
-                break;
-            default:
-                unknownStepError();
-                break;
-        }
-    }
-
-    private boolean unknownStepError() {
-        logger.log(Level.SEVERE, "Unknown Step in Wizard");
-        return false;
-    }
-
+    /* Step 1: Source File Selection */
     private void initSourceFileSelectionPanel() {
         sourceFileSelectionPanel = new SourceFileSelectionPanel(CalculatorWizard.class.getName());
         sourceFileTextField = sourceFileSelectionPanel.getSourceFileTextField();
@@ -267,12 +123,8 @@ public class CalculatorWizard extends VortexWizard {
         return sourceFileSelectionPanel.validateInput();
     }
 
-    private void submitStepOne() {
-        // No operations needed
-    }
-
+    /* Step 2: Constant or Raster Selection */
     private void initConstantOrRasterSelectionPanel() {
-        /* calcTypeLabel */
         JLabel calcTypeLabel = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_Type_L"));
         calcTypeLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
 
@@ -289,13 +141,8 @@ public class CalculatorWizard extends VortexWizard {
 
         constantOrRasterSelectionPanel = new JPanel();
         constantOrRasterSelectionPanel.setLayout(new BoxLayout(constantOrRasterSelectionPanel, BoxLayout.Y_AXIS));
-
         constantOrRasterSelectionPanel.add(calcTypeLabel);
         constantOrRasterSelectionPanel.add(buttonBox);
-    }
-
-    private boolean validateStepTwo() {
-        return true;
     }
 
     private void submitStepTwo() {
@@ -305,6 +152,7 @@ public class CalculatorWizard extends VortexWizard {
         calculationSelectionPanel.add(new JPanel(), getCalculationSelectionPanelGbc(1));
     }
 
+    /* Step 3: Calculation Selection */
     private void initCalculationSelectionPanel() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         calculationSelectionPanel = new JPanel(gridBagLayout);
@@ -334,22 +182,16 @@ public class CalculatorWizard extends VortexWizard {
         String addText = addTextField.getText();
         String subtractText = subtractTextField.getText();
 
-        /* Check for at least one entry */
         if (multiplyText.isEmpty() && divideText.isEmpty() && addText.isEmpty() && subtractText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "One constant value entry required",
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
             return false;
         }
 
-        /* Check for multiple entries */
-        if (!multiplyText.isEmpty())
-            count++;
-        if (!divideText.isEmpty())
-            count++;
-        if (!addText.isEmpty())
-            count++;
-        if (!subtractText.isEmpty())
-            count++;
+        if (!multiplyText.isEmpty()) count++;
+        if (!divideText.isEmpty()) count++;
+        if (!addText.isEmpty()) count++;
+        if (!subtractText.isEmpty()) count++;
         if (count != 1) {
             JOptionPane.showMessageDialog(this, "Only one constant value entry allowed",
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -368,16 +210,10 @@ public class CalculatorWizard extends VortexWizard {
         return true;
     }
 
-    private void submitStepThree() {
-        // No operations needed
-    }
-
     private JPanel constantCalculationPanel() {
-        /* constantLabel */
         JLabel setConstantLabel = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_SetConstant_L"));
         setConstantLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
-        /* Multiply Panel */
         JLabel multiplyLabel = new JLabel(Operation.MULTIPLY.getDisplayString());
         multiplyTextField = new JTextField(25);
 
@@ -386,7 +222,6 @@ public class CalculatorWizard extends VortexWizard {
         multiplyPanel.add(Box.createRigidArea(new Dimension(75, 0)));
         multiplyPanel.add(multiplyTextField);
 
-        /* Divide Panel */
         JLabel divideLabel = new JLabel(Operation.DIVIDE.getDisplayString());
         divideTextField = new JTextField(25);
 
@@ -395,7 +230,6 @@ public class CalculatorWizard extends VortexWizard {
         dividePanel.add(Box.createRigidArea(new Dimension(82, 0)));
         dividePanel.add(divideTextField);
 
-        /* Add Panel */
         JLabel addLabel = new JLabel(Operation.ADD.getDisplayString());
         addTextField = new JTextField(25);
 
@@ -404,7 +238,6 @@ public class CalculatorWizard extends VortexWizard {
         addPanel.add(Box.createRigidArea(new Dimension(92, 0)));
         addPanel.add(addTextField);
 
-        /* subtract Panel */
         JLabel subtractLabel = new JLabel(Operation.SUBTRACT.getDisplayString());
         subtractTextField = new JTextField(25);
 
@@ -413,7 +246,6 @@ public class CalculatorWizard extends VortexWizard {
         subtractPanel.add(Box.createRigidArea(new Dimension(70, 0)));
         subtractPanel.add(subtractTextField);
 
-        /* Adding constant panels together */
         JPanel setConstantPanel = new JPanel();
         setConstantPanel.setLayout(new BoxLayout(setConstantPanel, BoxLayout.Y_AXIS));
         setConstantPanel.add(multiplyPanel);
@@ -422,7 +254,6 @@ public class CalculatorWizard extends VortexWizard {
         setConstantPanel.add(subtractPanel);
         setConstantPanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0, 0));
 
-        /* Adding everything together */
         JPanel constantPanel = new JPanel(new BorderLayout());
         constantPanel.add(setConstantLabel, BorderLayout.NORTH);
         constantPanel.add(setConstantPanel, BorderLayout.CENTER);
@@ -431,13 +262,8 @@ public class CalculatorWizard extends VortexWizard {
     }
 
     private JPanel rasterCalculationPanel() {
-        //Operation
         JPanel operationPanel = operationSelectionPanel();
-
-        // Raster
         JPanel rasterSelectionPanel = rasterSelectionPanel();
-
-        // Resampling
         resamplingPanel = new ResamplingMethodSelectionPanel();
 
         JPanel panel = new JPanel();
@@ -467,20 +293,16 @@ public class CalculatorWizard extends VortexWizard {
     }
 
     private JPanel rasterSelectionPanel() {
-        /* Select Destination section (of stepFourPanel) */
         JLabel label = new JLabel(TextProperties.getInstance().getProperty("CalculatorWiz_Raster_L"));
         JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         labelPanel.add(label);
 
         JPanel textFieldPanel = new JPanel();
         textFieldPanel.setLayout(new BoxLayout(textFieldPanel, BoxLayout.X_AXIS));
-
         textFieldPanel.add(Box.createRigidArea(new Dimension(4, 0)));
 
         rasterTextField = new JTextField();
-
         textFieldPanel.add(rasterTextField);
-
         textFieldPanel.add(Box.createRigidArea(new Dimension(4, 0)));
 
         FileBrowseButton browseButton = new FileBrowseButton(getClass().getName(), "");
@@ -500,15 +322,12 @@ public class CalculatorWizard extends VortexWizard {
     private void selectDestinationBrowseAction(FileBrowseButton fileBrowseButton) {
         JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
 
-        // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilter rasterFilter = new FileNameExtensionFilter("Raster Files (*.tif, *.tiff, *.asc)", "tif", "tiff", "asc");
         fileChooser.addChoosableFileFilter(rasterFilter);
 
-        // Pop up fileChooser dialog
         int userChoice = fileChooser.showOpenDialog(this);
 
-        // Deal with user's choice
         if (userChoice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
             String selectedPath = selectedFile.getAbsolutePath();
@@ -518,6 +337,7 @@ public class CalculatorWizard extends VortexWizard {
         }
     }
 
+    /* Step 4: Destination Selection */
     private void initDestinationSelectionPanel() {
         destinationSelectionPanel = new DestinationSelectionPanel(this);
     }
@@ -529,7 +349,6 @@ public class CalculatorWizard extends VortexWizard {
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
             return false;
         }
-
         return true;
     }
 
@@ -557,37 +376,7 @@ public class CalculatorWizard extends VortexWizard {
 
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
-        /* Setting parts */
-        Map<String, Set<String>> pathnameParts = DssUtil.getPathnameParts(selectedSourceGrids);
-        List<String> partAList = new ArrayList<>(pathnameParts.get("aParts"));
-        List<String> partBList = new ArrayList<>(pathnameParts.get("bParts"));
-        List<String> partCList = new ArrayList<>(pathnameParts.get("cParts"));
-        List<String> partFList = new ArrayList<>(pathnameParts.get("fParts"));
-        String partA = (partAList.size() == 1) ? partAList.get(0) : "*";
-        String partB = (partBList.size() == 1) ? partBList.get(0) : "*";
-        String partC = (partCList.size() == 1) ? partCList.get(0) : "PRECIPITATION";
-        String partF = (partFList.size() == 1) ? partFList.get(0) : "*";
-
-        Map<String, String> writeOptions = new HashMap<>();
-        String dssFieldA = destinationSelectionPanel.getFieldA().getText();
-        String dssFieldB = destinationSelectionPanel.getFieldB().getText();
-        String dssFieldC = destinationSelectionPanel.getFieldC().getText();
-        String dssFieldF = destinationSelectionPanel.getFieldF().getText();
-
-        if (destination.toLowerCase().endsWith(".dss")) {
-            writeOptions.put("partA", (dssFieldA.isEmpty()) ? partA : dssFieldA);
-            writeOptions.put("partB", (dssFieldB.isEmpty()) ? partB : dssFieldB);
-            writeOptions.put("partC", (dssFieldC.isEmpty()) ? partC : dssFieldC);
-            writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
-        }
-
-        String unitsString = destinationSelectionPanel.getUnitsString();
-        if (!unitsString.isEmpty())
-            writeOptions.put("units", unitsString);
-
-        String dataType = destinationSelectionPanel.getDataType();
-        if (dataType != null && !dataType.isEmpty())
-            writeOptions.put("dataType", dataType);
+        Map<String, String> writeOptions = DssWriteOptionsBuilder.buildWriteOptions(selectedSourceGrids, destinationSelectionPanel);
 
         Runnable runnable;
 
@@ -636,25 +425,13 @@ public class CalculatorWizard extends VortexWizard {
                     .writeOptions(writeOptions)
                     .build();
 
-            batchCalculator.addPropertyChangeListener(evt -> {
-                VortexProperty property = VortexProperty.parse(evt.getPropertyName());
-                if (VortexProperty.PROGRESS == property) {
-                    if (!(evt.getNewValue() instanceof Integer)) return;
-                    int progressValue = (int) evt.getNewValue();
-                    progressMessagePanel.setValue(progressValue);
-                } else {
-                    String value = String.valueOf(evt.getNewValue());
-                    progressMessagePanel.write(value);
-                }
-            });
+            batchCalculator.addPropertyChangeListener(createProgressListener());
 
             runnable = batchCalculator;
 
         } else {
             String pathToRaster = rasterTextField.getText();
-
             ResamplingMethod resamplingMethod = resamplingPanel.getSelected();
-
             Operation operation = operationComboBox.getSelected();
 
             BatchGridCalculator batchGridCalculator = BatchGridCalculator.builder()
@@ -667,17 +444,7 @@ public class CalculatorWizard extends VortexWizard {
                     .writeOptions(writeOptions)
                     .build();
 
-            batchGridCalculator.addPropertyChangeListener(evt -> {
-                VortexProperty property = VortexProperty.parse(evt.getPropertyName());
-                if (VortexProperty.PROGRESS == property) {
-                    if (!(evt.getNewValue() instanceof Integer)) return;
-                    int progressValue = (int) evt.getNewValue();
-                    progressMessagePanel.setValue(progressValue);
-                } else {
-                    String value = String.valueOf(evt.getNewValue());
-                    progressMessagePanel.write(value);
-                }
-            });
+            batchGridCalculator.addPropertyChangeListener(createProgressListener());
 
             runnable = batchGridCalculator;
         }
@@ -699,37 +466,6 @@ public class CalculatorWizard extends VortexWizard {
         task.execute();
     }
 
-    private JPanel initProgressBarPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private void submitStepFive() {
-        // No operations needed
-    }
-
-    private JPanel initCompletedPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private List<String> getItemsInList(JList<String> list) {
-        DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
-        if (defaultRightModel == null) {
-            return Collections.emptyList();
-        }
-        return Collections.list(defaultRightModel.elements());
-    }
-
-    private void closeAction() {
-        CalculatorWizard.this.setVisible(false);
-        CalculatorWizard.this.dispose();
-        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSaveUtil.showFileLocation(CalculatorWizard.this, Path.of(savedFile));
-    }
-
     /* Add main for quick UI Testing */
     public static void main(String[] args) {
         try {
@@ -739,7 +475,7 @@ public class CalculatorWizard extends VortexWizard {
             e.printStackTrace();
         }
 
-        CalculatorWizard sanitizerWizard = new CalculatorWizard(null);
-        sanitizerWizard.buildAndShowUI();
+        CalculatorWizard calculatorWizard = new CalculatorWizard(null);
+        calculatorWizard.buildAndShowUI();
     }
 }

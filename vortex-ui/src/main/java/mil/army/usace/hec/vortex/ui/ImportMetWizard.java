@@ -7,7 +7,6 @@ import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.Validation;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
-import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,17 +24,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class ImportMetWizard extends VortexWizard {
+public class ImportMetWizard extends ProcessingWizard {
     private static final Logger logger = Logger.getLogger(ImportMetWizard.class.getName());
 
-    private final Frame frame;
     private DestinationSelectionPanel destinationSelectionPanel;
-
-    private Container contentCards;
-    private CardLayout cardLayout;
-    private JButton backButton, nextButton, cancelButton;
-
-    private int cardNumber;
 
     private JList<String> addFilesList, leftVariablesList, rightVariablesList;
     private JTextField dataSourceTextField;
@@ -44,142 +36,78 @@ public class ImportMetWizard extends VortexWizard {
     private JTextArea targetWktTextArea;
     private ResamplingMethodSelectionPanel resamplingPanel;
 
-    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
-
     private final AtomicBoolean importComplete = new AtomicBoolean();
 
-    public ImportMetWizard (Frame frame) {
-        super();
-        this.frame = frame;
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                closeAction();
+    public ImportMetWizard(Frame frame) {
+        super(frame);
+    }
+
+    @Override
+    protected String getTitlePropertyKey() {
+        return "ImportMetWizNameTitle";
+    }
+
+    @Override
+    protected List<JPanel> createStepPanels() {
+        return List.of(
+                stepOnePanel(),
+                stepTwoPanel(),
+                stepThreePanel(),
+                stepFourPanel(),
+                createProgressPanel(),
+                createProgressPanel()
+        );
+    }
+
+    @Override
+    protected int getLastInteractiveStep() {
+        return 3;
+    }
+
+    @Override
+    protected boolean validateStep(int stepIndex) {
+        return switch (stepIndex) {
+            case 0 -> validateStepOne();
+            case 1 -> validateStepTwo();
+            case 2 -> validateStepThree();
+            case 3 -> validateStepFour();
+            case 4 -> true;
+            default -> {
+                logger.log(Level.SEVERE, "Unknown Step in Wizard");
+                yield false;
             }
-        });
+        };
     }
 
-    public void buildAndShowUI() {
+    @Override
+    protected void submitStep(int stepIndex) {
+        switch (stepIndex) {
+            case 0:
+                submitStepOne();
+                break;
+            case 3:
+                SwingWorker<Void, Void> task = new SwingWorker<>() {
+                    @Override
+                    protected Void doInBackground() {
+                        importerTask();
+                        return null;
+                    }
 
-        /* Setting Wizard's names and layout */
-        this.setTitle(TextProperties.getInstance().getProperty("ImportMetWizNameTitle"));
-        this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        setMinimumSize(new Dimension(600, 400));
-        setLocation(getPersistedLocation());
-        if (frame != null) setLocationRelativeTo(frame);
-        setSize(getPersistedSize());
-        this.setLayout(new BorderLayout());
-
-        /* Initializing Card Container */
-        initializeContentCards();
-
-        /* Initializing Button Panel (Back, Next, Cancel) */
-        initializeButtonPanel();
-
-        /* Add contentCards to wizard, and then show wizard */
-        this.add(contentCards, BorderLayout.CENTER);
-        this.setVisible(true);
-    }
-
-    private void initializeContentCards() {
-        contentCards = new Container();
-        cardLayout = new CardLayout();
-        contentCards.setLayout(cardLayout);
-        cardNumber = 0;
-
-        /* Adding Step Content Panels to contentCards */
-        contentCards.add("Step One", stepOnePanel());
-        contentCards.add("Step Two", stepTwoPanel());
-        contentCards.add("Step Three", stepThreePanel());
-        contentCards.add("Step Four", stepFourPanel());
-        contentCards.add("Step Five", stepFivePanel());
-        contentCards.add("Step Six", stepSixPanel());
-    }
-
-    private void initializeButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        /* Back Button */
-        backButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizBack"));
-        backButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizBackTT"));
-        backButton.setEnabled(false);
-        backButton.addActionListener(evt -> backAction());
-
-        /* Next Button */
-        nextButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizNext"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizNextTT"));
-        nextButton.addActionListener(evt -> {
-            if(nextButton.getText().equals(TextProperties.getInstance().getProperty("ImportMetWizRestart"))) { restartWizard(); }
-            else if(nextButton.getText().equals(TextProperties.getInstance().getProperty("ImportMetWizNext"))) { nextAction(); }
-        });
-
-        /* Cancel Button */
-        cancelButton = new JButton(TextProperties.getInstance().getProperty("ImportMetWizCancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizCancelTT"));
-        cancelButton.addActionListener(evt -> closeAction());
-
-        /* Adding Buttons to NavigationPanel */
-        buttonPanel.add(backButton);
-        buttonPanel.add(nextButton);
-        buttonPanel.add(cancelButton);
-
-        /* Add buttonPanel to ImportMetWizard */
-        this.add(buttonPanel, BorderLayout.SOUTH);
-    }
-
-    private void nextAction() {
-        if (!validateCurrentStep()) return;
-        submitCurrentStep();
-        cardNumber++;
-        updateButtonState();
-        cardLayout.next(contentCards);
-    }
-
-    private void updateButtonState() {
-        backButton.setEnabled(cardNumber > 0 && cardNumber < 4);
-        nextButton.setEnabled(cardNumber < 4);
-        cancelButton.setEnabled(cardNumber < 4);
-    }
-
-    private void setButtonsForRestartOrClose() {
-        backButton.setVisible(false);
-        nextButton.setText(TextProperties.INSTANCE.getProperty("ImportMetWizRestart"));
-        nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("ImportMetWizRestartTT"));
-        nextButton.setEnabled(true);
-        cancelButton.setText(TextProperties.INSTANCE.getProperty("ImportMetWizClose"));
-        cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("ImportMetWizCloseTT"));
-        cancelButton.setEnabled(true);
-    }
-
-    private void backAction() {
-        cardNumber--;
-        if(cardNumber == 0) {
-            backButton.setEnabled(false);
-            DefaultListModel<String> leftVariablesModel = getDefaultListModel(leftVariablesList);
-            if(leftVariablesModel != null) { leftVariablesModel.clear(); }
-            DefaultListModel<String> rightVariablesModel = getDefaultListModel(rightVariablesList);
-            if(rightVariablesModel != null) { rightVariablesModel.clear(); }
+                    @Override
+                    protected void done() {
+                        nextAction();
+                    }
+                };
+                task.execute();
+                break;
+            default:
+                break;
         }
-        cardLayout.previous(contentCards);
     }
 
-    private void restartWizard() {
+    @Override
+    protected void clearWizardState() {
         importComplete.set(false);
-
-        cardNumber = 0;
-        cardLayout.first(contentCards);
-
-        /* Resetting Buttons */
-        backButton.setVisible(true);
-        backButton.setEnabled(false);
-
-        nextButton.setEnabled(true);
-        nextButton.setText(TextProperties.getInstance().getProperty("ImportMetWizNext"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizNextTT"));
-
-        cancelButton.setText(TextProperties.getInstance().getProperty("ImportMetWizCancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("ImportMetWizCancelTT"));
 
         /* Clearing Step One Panel */
         Objects.requireNonNullElse(getDefaultListModel(addFilesList), new DefaultListModel<>()).clear();
@@ -199,46 +127,39 @@ public class ImportMetWizard extends VortexWizard {
         destinationSelectionPanel.getFieldA().setText("");
         destinationSelectionPanel.getFieldB().setText("");
         destinationSelectionPanel.getFieldF().setText("");
-
-        /* Clear progress message panel */
-        progressMessagePanel.clear();
     }
 
-    private boolean validateCurrentStep() {
-        switch(cardNumber) {
-            case 0: return validateStepOne();
-            case 1: return validateStepTwo();
-            case 2: return validateStepThree();
-            case 3: return validateStepFour();
-            case 4: return validateStepFive();
-            default: return unknownStepError();
+    @Override
+    protected void showSaveResult() {
+        if (importComplete.get()) {
+            String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+            FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));
         }
     }
 
-    private void submitCurrentStep() {
-        switch(cardNumber) {
-            case 0: submitStepOne(); break;
-            case 1: submitStepTwo(); break;
-            case 2: submitStepThree(); break;
-            case 3: submitStepFour(); break;
-            case 4: submitStepFive(); break;
-            default: unknownStepError(); break;
+    @Override
+    protected void onBackAction(int newCardNumber) {
+        if (newCardNumber == 0) {
+            DefaultListModel<String> leftVariablesModel = getDefaultListModel(leftVariablesList);
+            if (leftVariablesModel != null) leftVariablesModel.clear();
+            DefaultListModel<String> rightVariablesModel = getDefaultListModel(rightVariablesList);
+            if (rightVariablesModel != null) rightVariablesModel.clear();
         }
     }
 
     private boolean validateStepOne() {
-        /* Invalid if addFilesList is empty */
         DefaultListModel<String> addFilesListModel = getDefaultListModel(addFilesList);
-        if(addFilesListModel == null) { return false; }
+        if (addFilesListModel == null) {
+            return false;
+        }
 
         List<String> files = Collections.list(addFilesListModel.elements());
 
-        if(files.isEmpty()) {
-            /* Popup Alert of Missing Inputs */
+        if (files.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Input dataset is required.",
                     "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
             return false;
-        } // If: addFilesList is empty
+        }
 
         String errorTemplate = MessageStore.getInstance().getMessage("error_archive_file");
 
@@ -258,14 +179,15 @@ public class ImportMetWizard extends VortexWizard {
 
     private boolean validateStepTwo() {
         DefaultListModel<String> defaultListModel = getDefaultListModel(rightVariablesList);
-        if(defaultListModel == null) { return false; }
+        if (defaultListModel == null) {
+            return false;
+        }
 
-        if(defaultListModel.isEmpty()) {
-            /* Popup Alert of No Variables Selected */
+        if (defaultListModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "At least one variable must be selected.",
                     "Error: No Variables Selected", JOptionPane.ERROR_MESSAGE);
             return false;
-        } // If: No Variables Selected
+        }
 
         return true;
     }
@@ -275,40 +197,39 @@ public class ImportMetWizard extends VortexWizard {
     private boolean validateStepFour() {
         String destinationPath = destinationSelectionPanel.getDestinationTextField().getText();
 
-        if(destinationPath.isEmpty()) {
-            /* Popup Alert of Missing Inputs */
+        if (destinationPath.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Destination file is required.",
                     "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
             return false;
-        } // If: Missing Destination File
+        }
 
-        if(!destinationPath.matches(".*(dss|nc[34]?)")) {
+        if (!destinationPath.matches(".*(dss|nc[34]?)")) {
             JOptionPane.showMessageDialog(this, "Invalid file extension.",
                     "Error: Unsupported File Type", JOptionPane.ERROR_MESSAGE);
             return false;
-        } // If: Path doesn't end with .dss or .nc
+        }
 
-        if(destinationPath.endsWith(".dss")) {
-            /* Checks if that DSS file exists */
+        if (destinationPath.endsWith(".dss")) {
             File dssFile = new File(destinationPath);
-            if(!dssFile.exists()) {
+            if (!dssFile.exists()) {
                 try {
                     boolean success = dssFile.createNewFile();
-                    if(success) { logger.log(Level.INFO, "Created DSS File: " + dssFile); }
-                } catch (IOException e) { e.printStackTrace(); }
-            } // If: DSS file does not exist, make a new one
-        } // If: Path does end with .dss
+                    if (success) {
+                        logger.log(Level.INFO, "Created DSS File: " + dssFile);
+                    }
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "DSS File not created: " + dssFile);
+                }
+            }
+        }
 
         return validateSelections();
     }
-
-    private boolean validateStepFive() { return true; }
 
     private boolean validateSelections() {
         DefaultListModel<String> defaultAddFilesModel = getDefaultListModel(addFilesList);
         List<String> files = Collections.list(Optional.ofNullable(defaultAddFilesModel).orElse(new DefaultListModel<>()).elements());
 
-        /* Getting selected variables */
         DefaultListModel<String> defaultSelectedVariablesModel = getDefaultListModel(rightVariablesList);
         List<String> variables = Collections.list(Optional.ofNullable(defaultSelectedVariablesModel).orElse(new DefaultListModel<>()).elements());
 
@@ -347,17 +268,14 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private void submitStepOne() {
-        /* Wait Cursor */
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        /* Goal: Get Available Variables to put into Step Two's Variable List */
         DefaultListModel<String> defaultListModel = getDefaultListModel(addFilesList);
-        if(defaultListModel == null) { return; }
+        if (defaultListModel == null) {
+            return;
+        }
         List<String> fileList = Collections.list(defaultListModel.elements());
 
-        /* Getting Available Variables using Vortex API's DataReader */
-        /* Sorting Variables by Parts if Files were DSS files */
-        /* MUST be a LinkedHashSet to preserve order */
         Set<String> variables = fileList.stream()
                 .map(DataReader::getVariables)
                 .flatMap(Collection::stream)
@@ -366,66 +284,44 @@ public class ImportMetWizard extends VortexWizard {
 
         sortDssVariables(variables);
 
-        /* Putting Available Variables to Step Two's Variable List */
         DefaultListModel<String> variableDefaultListModel = getDefaultListModel(leftVariablesList);
-        if(variableDefaultListModel == null) { return; }
+        if (variableDefaultListModel == null) {
+            return;
+        }
         variableDefaultListModel.addAll(variables);
 
-        /* Normal Cursor */
         this.setCursor(Cursor.getDefaultCursor());
     }
-
-    private void submitStepTwo() { }
-
-    private void submitStepThree() { }
-
-    private void submitStepFour() {
-        SwingWorker<Void, Void> task = new SwingWorker<>() {
-            @Override
-            protected Void doInBackground() {
-                importerTask();
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                nextAction();
-            }
-        };
-
-        task.execute();
-    }
-
-    private void submitStepFive() { }
 
     private void importerTask() {
         /* Getting inFiles */
         DefaultListModel<String> defaultAddFilesModel = getDefaultListModel(addFilesList);
-        if(defaultAddFilesModel == null) { return; }
-        List<String> inFilesList =  Collections.list(defaultAddFilesModel.elements());
+        if (defaultAddFilesModel == null) {
+            return;
+        }
+        List<String> inFilesList = Collections.list(defaultAddFilesModel.elements());
         inFilesList = inFilesList.stream().map(String::trim).collect(Collectors.toList());
 
         /* Getting selected variables */
         DefaultListModel<String> defaultSelectedVariablesModel = getDefaultListModel(rightVariablesList);
-        if(defaultSelectedVariablesModel == null) { return; }
+        if (defaultSelectedVariablesModel == null) {
+            return;
+        }
         List<String> selectedVariables = Collections.list(defaultSelectedVariablesModel.elements());
 
         /* Getting geoOptions */
         Map<String, String> geoOptions = new HashMap<>();
 
-        // Clipping Datasource
         String clippingDatasource = dataSourceTextField.getText();
         if (!clippingDatasource.isEmpty()) {
             geoOptions.put("pathToShp", clippingDatasource);
         }
 
-        // Target Wkt
         String targetWkt = targetWktTextArea.getText();
         if (!targetWkt.isEmpty()) {
             geoOptions.put("targetWkt", targetWkt);
         }
 
-        // Target Cell Size
         String targetCellSize = targetCellSizeTextField.getText();
         if (!targetCellSize.isEmpty()) {
             geoOptions.put("targetCellSize", targetCellSize);
@@ -433,47 +329,17 @@ public class ImportMetWizard extends VortexWizard {
             geoOptions.put("targetCellSizeUnits", targetCellSizeUnits);
         }
 
-        // Resampling Method
         geoOptions.put("resamplingMethod", resamplingPanel.getSelected().toString());
 
         /* Getting Destination */
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
-        /* Setting parts */
-        Map<String, Set<String>> pathnameParts = DssUtil.getPathnameParts(selectedVariables);
-        List<String> partAList = new ArrayList<>(pathnameParts.get("aParts"));
-        List<String> partBList = new ArrayList<>(pathnameParts.get("bParts"));
-        List<String> partCList = new ArrayList<>(pathnameParts.get("cParts"));
-        List<String> partFList = new ArrayList<>(pathnameParts.get("fParts"));
-        String partA = (partAList.size() == 1) ? partAList.get(0) : "*";
-        String partB = (partBList.size() == 1) ? partBList.get(0) : "*";
-        String partC = (partCList.size() == 1) ? partCList.get(0) : "*";
-        String partF = (partFList.size() == 1) ? partFList.get(0) : "*";
-
-        Map<String, String> writeOptions = new HashMap<>();
-        String dssFieldA = destinationSelectionPanel.getFieldA().getText();
-        String dssFieldB = destinationSelectionPanel.getFieldB().getText();
-        String dssFieldC = destinationSelectionPanel.getFieldC().getText();
-        String dssFieldF = destinationSelectionPanel.getFieldF().getText();
-
-        if (destination.toLowerCase().endsWith(".dss")) {
-            writeOptions.put("partA", (dssFieldA.isEmpty()) ? partA : dssFieldA);
-            writeOptions.put("partB", (dssFieldB.isEmpty()) ? partB : dssFieldB);
-            writeOptions.put("partC", (dssFieldC.isEmpty()) ? partC : dssFieldC);
-            writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
-        }
+        /* Building write options */
+        Map<String, String> writeOptions = DssWriteOptionsBuilder.buildWriteOptions(selectedVariables, destinationSelectionPanel, "*");
 
         if (destination.toLowerCase().endsWith(".nc")) {
             writeOptions.put("isOverwrite", String.valueOf(destinationSelectionPanel.isOverwrite()));
         }
-
-        String unitsString = destinationSelectionPanel.getUnitsString();
-        if (!unitsString.isEmpty())
-            writeOptions.put("units", unitsString);
-
-        String dataType = destinationSelectionPanel.getDataType();
-        if (dataType != null && !dataType.isEmpty())
-            writeOptions.put("dataType", dataType);
 
         BatchImporter importer = BatchImporter.builder()
                 .inFiles(inFilesList)
@@ -525,41 +391,36 @@ public class ImportMetWizard extends VortexWizard {
         task.execute();
     }
 
-    private boolean unknownStepError() {
-        logger.log(Level.SEVERE, "Unknown Step in Wizard");
-        return false;
-    }
-
     private void sortDssVariables(Set<String> variableList) {
         DefaultListModel<String> defaultListModel = getDefaultListModel(addFilesList);
-        if(defaultListModel == null) { return; }
+        if (defaultListModel == null) {
+            return;
+        }
         List<String> fileList = Collections.list(defaultListModel.elements());
 
         Set<String> extensions = fileList.stream()
                 .map(file -> file.substring(file.length() - 3))
                 .collect(Collectors.toSet());
 
-        if(extensions.size() == 1 && extensions.iterator().next().equals("dss")) {
+        if (extensions.size() == 1 && extensions.iterator().next().equals("dss")) {
             Util.sortDssVariables(variableList);
-        } // If: Only one DSS file. Then sort variables by part
+        }
     }
 
     private JPanel stepOnePanel() {
         JPanel stepOnePanel = new JPanel(new BorderLayout());
         stepOnePanel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
 
-        /* addFilesLabel */
         JLabel addFilesLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizAddFiles"));
         addFilesLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
         stepOnePanel.add(addFilesLabel, BorderLayout.NORTH);
 
-        /* JList */
         DefaultListModel<String> addFilesListModel = new DefaultListModel<>();
         addFilesList = new JList<>(addFilesListModel);
         addFilesList.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode() == KeyEvent.VK_DELETE) {
+                if (e.getKeyCode() == KeyEvent.VK_DELETE) {
                     addFilesListModel.remove(addFilesList.getSelectedIndex());
                     addFilesList.revalidate();
                     addFilesList.repaint();
@@ -570,7 +431,6 @@ public class ImportMetWizard extends VortexWizard {
         JScrollPane scrollPane = new JScrollPane(addFilesList);
         stepOnePanel.add(scrollPane, BorderLayout.CENTER);
 
-        /* Browse Button */
         JPanel browsePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0,0));
         String uniqueId = this.getClass().getName() + ".addFiles";
         FileBrowseButton browseButton = new FileBrowseButton(uniqueId, "");
@@ -588,36 +448,36 @@ public class ImportMetWizard extends VortexWizard {
         JPanel stepTwoPanel = new JPanel(new BorderLayout());
         stepTwoPanel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
 
-        /* selectVariablesLabel */
         JLabel selectVariablesLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizSelectVariables"));
         selectVariablesLabel.setBorder(BorderFactory.createEmptyBorder(0,0,5,0));
         stepTwoPanel.add(selectVariablesLabel, BorderLayout.NORTH);
 
-        /* Left Variables List */
         DefaultListModel<String> leftVariablesListModel = new DefaultListModel<>();
         leftVariablesList = new JList<>(leftVariablesListModel);
         leftVariablesList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) { updateVariablesAction(VariableChooserAction.ADD); }
+                if (e.getClickCount() == 2) {
+                    updateVariablesAction(VariableChooserAction.ADD);
+                }
             }
         });
         JScrollPane leftScrollPanel = new JScrollPane();
         leftScrollPanel.setViewportView(leftVariablesList);
 
-        /* Right Variables List */
         DefaultListModel<String> rightVariablesListModel = new DefaultListModel<>();
         rightVariablesList = new JList<>(rightVariablesListModel);
         rightVariablesList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(e.getClickCount() == 2) { updateVariablesAction(VariableChooserAction.REMOVE); }
+                if (e.getClickCount() == 2) {
+                    updateVariablesAction(VariableChooserAction.REMOVE);
+                }
             }
         });
         JScrollPane rightScrollPanel = new JScrollPane();
         rightScrollPanel.setViewportView(rightVariablesList);
 
-        /* Transfer Buttons Panel */
         JPanel transferButtonsPanel = new JPanel();
         transferButtonsPanel.setLayout(new BoxLayout(transferButtonsPanel, BoxLayout.Y_AXIS));
         JButton addVariableButton = new JButton(IconResources.loadIcon("images/right-arrow-24.png"));
@@ -632,7 +492,6 @@ public class ImportMetWizard extends VortexWizard {
         transferButtonsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         transferButtonsPanel.add(removeVariableButton);
 
-        /* Adding all components to Step Two's main content */
         JPanel mainContentPanel = new JPanel();
         mainContentPanel.setLayout(new BoxLayout(mainContentPanel, BoxLayout.X_AXIS));
         mainContentPanel.add(leftScrollPanel);
@@ -642,7 +501,6 @@ public class ImportMetWizard extends VortexWizard {
         mainContentPanel.add(rightScrollPanel);
         stepTwoPanel.add(mainContentPanel, BorderLayout.CENTER);
 
-        /* Setting Preferred Sizes of Components */
         int mainContentWidth = mainContentPanel.getPreferredSize().width;
         int scrollPanelWidth = mainContentWidth * 45 / 100;
         leftScrollPanel.setPreferredSize(new Dimension(scrollPanelWidth, 0));
@@ -667,23 +525,19 @@ public class ImportMetWizard extends VortexWizard {
         gridBagConstraints.insets = new Insets(0, 0, 5, 0);
         gridBagConstraints.gridx = 0;
 
-        /* Data Source Section Panel */
         gridBagConstraints.gridy = 0;
         stepThreePanel.add(dataSourceSectionPanel(), gridBagConstraints);
 
-        /* Target Wkt Section Panel */
         gridBagConstraints.gridy = 1;
         gridBagConstraints.weighty = 1;
         gridBagConstraints.fill = GridBagConstraints.BOTH;
         stepThreePanel.add(targetWktSectionPanel(), gridBagConstraints);
 
-        /* Target Cell Size Section Panel */
         gridBagConstraints.gridy = 2;
         gridBagConstraints.weighty = 0;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         stepThreePanel.add(targetCellSizeSectionPanel(), gridBagConstraints);
 
-        /* Resampling Method Section Panel */
         gridBagConstraints.gridy = 3;
         resamplingPanel = new ResamplingMethodSelectionPanel();
         stepThreePanel.add(resamplingPanel, gridBagConstraints);
@@ -696,20 +550,7 @@ public class ImportMetWizard extends VortexWizard {
         return destinationSelectionPanel;
     }
 
-    private JPanel stepFivePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private JPanel stepSixPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
     private JPanel dataSourceSectionPanel() {
-        /* Clipping DataSource section (of stepThreePanel) */
         JLabel dataSourceLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizClippingDatasourceL"));
         JPanel dataSourceLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         dataSourceLabelPanel.add(dataSourceLabel);
@@ -741,7 +582,6 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private JPanel targetWktSectionPanel() {
-        /* Target Wkt section (of stepThreePanel) */
         JLabel targetWktLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizTargetWktL"));
         JPanel targetWktLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         targetWktLabelPanel.add(targetWktLabel);
@@ -787,7 +627,6 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private JPanel targetCellSizeSectionPanel() {
-        /* Target Cell Size section (of stepThreePanel) */
         JLabel targetCellSizeLabel = new JLabel(TextProperties.getInstance().getProperty("ImportMetWizTargetCellSizeL"));
         JPanel targetCellSizeLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         targetCellSizeLabelPanel.add(targetCellSizeLabel);
@@ -879,7 +718,6 @@ public class ImportMetWizard extends VortexWizard {
     }
 
     private Map<String, List<String>> generateSortedLists(Set<String> available, Set<String> selected) {
-
         sortDssVariables(available);
         sortDssVariables(selected);
 
@@ -894,7 +732,6 @@ public class ImportMetWizard extends VortexWizard {
         JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
         fileChooser.setMultiSelectionEnabled(true);
 
-        // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilterEnhanced recognizedFilter = new FileNameExtensionFilterEnhanced(
                 "All recognized files", ".nc", ".nc4", ".hdf", ".hdf5", ".h5",
@@ -935,64 +772,55 @@ public class ImportMetWizard extends VortexWizard {
                 "All files", "");
         fileChooser.addChoosableFileFilter(allFilesFilter);
 
-        // Pop up fileChooser dialog
         int userChoice = fileChooser.showOpenDialog(this);
 
-        // Deal with user's choice
-        if(userChoice == JFileChooser.APPROVE_OPTION) {
+        if (userChoice == JFileChooser.APPROVE_OPTION) {
             File[] selectedFiles = fileChooser.getSelectedFiles();
             ListModel<String> listModel = addFilesList.getModel();
-            if(listModel instanceof DefaultListModel) {
-                DefaultListModel<String> defaultListModel = (DefaultListModel<String>) listModel;
+            if (listModel instanceof DefaultListModel<String> defaultListModel) {
                 List<String> elementList = Collections.list(defaultListModel.elements());
-                for(File file : selectedFiles) {
-                    if(!elementList.contains(file.getAbsolutePath()))
+                for (File file : selectedFiles) {
+                    if (!elementList.contains(file.getAbsolutePath()))
                         defaultListModel.addElement(file.getAbsolutePath());
                 }
                 fileBrowseButton.setPersistedBrowseLocation(selectedFiles[0]);
             }
-        } // If: User selected OK -> Add to 'AddFiles' List
+        }
     }
 
     private void dataSourceBrowseAction(FileBrowseButton fileBrowseButton) {
         JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
 
-        // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilterEnhanced acceptableExtension = new FileNameExtensionFilterEnhanced("Shapefiles (*.shp)", ".shp");
         fileChooser.addChoosableFileFilter(acceptableExtension);
 
-        // Pop up fileChooser dialog
         int userChoice = fileChooser.showOpenDialog(this);
 
-        // Deal with user's choice
-        if(userChoice == JFileChooser.APPROVE_OPTION) {
+        if (userChoice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
             dataSourceTextField.setText(selectedFile.getAbsolutePath());
             fileBrowseButton.setPersistedBrowseLocation(selectedFile);
-        } // If: User selected OK -> Add to 'AddFiles' List
+        }
     }
 
     private void targetWktBrowseAction(FileBrowseButton fileBrowseButton) {
         JFileChooser fileChooser = new JFileChooser(fileBrowseButton.getPersistedBrowseLocation());
 
-        // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilterEnhanced acceptableExtension = new FileNameExtensionFilterEnhanced("Projection Files (*.prj)", ".prj");
         fileChooser.setFileFilter(acceptableExtension);
 
-        // Pop up fileChooser dialog
         int userChoice = fileChooser.showOpenDialog(this);
 
-        // Deal with user's choice
-        if(userChoice == JFileChooser.APPROVE_OPTION) {
+        if (userChoice == JFileChooser.APPROVE_OPTION) {
             try {
                 File selectedFile = fileChooser.getSelectedFile();
                 String wkt = Files.readString(Paths.get(selectedFile.getAbsolutePath()));
                 targetWktTextArea.setText(wkt);
                 fileBrowseButton.setPersistedBrowseLocation(selectedFile);
             } catch (IOException e) { logger.log(Level.WARNING, e.toString()); }
-        } // If: User selected OK -> Add to 'AddFiles' List
+        }
     }
 
     private void targetWktProjectionAction() {
@@ -1062,22 +890,12 @@ public class ImportMetWizard extends VortexWizard {
 
     private DefaultListModel<String> getDefaultListModel(JList<String> list) {
         ListModel<String> listModel = list.getModel();
-        if(!(listModel instanceof DefaultListModel)) {
+        if (!(listModel instanceof DefaultListModel)) {
             logger.log(Level.SEVERE, list.getName() + " may have not been initialized");
             return null;
-        } // If: listModel is not a DefaultListModel -- should not be happening
+        }
 
         return (DefaultListModel<String>) listModel;
-    }
-
-    private void closeAction() {
-        setVisible(false);
-        dispose();
-        boolean isSuccessful = importComplete.get();
-        if (isSuccessful) {
-            String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-            FileSaveUtil.showFileLocation(ImportMetWizard.this, Path.of(savedFile));
-        }
     }
 
     private void showUnsupportedArchiveError(List<String> errors) {

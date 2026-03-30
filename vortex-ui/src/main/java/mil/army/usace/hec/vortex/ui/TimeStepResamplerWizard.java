@@ -1,225 +1,93 @@
 package mil.army.usace.hec.vortex.ui;
 
-import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.math.BatchTimeStepResampler;
 import mil.army.usace.hec.vortex.math.TimeStep;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
-import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class TimeStepResamplerWizard extends VortexWizard {
-    private static final Logger logger = Logger.getLogger(TimeStepResamplerWizard.class.getName());
-
-    private final Frame frame;
+public class TimeStepResamplerWizard extends ProcessingWizard {
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
 
-    private Container contentCards;
-    private CardLayout cardLayout;
-    private JButton backButton, nextButton, cancelButton;
-    private int cardNumber;
-
     private JTextField sourceFileTextField;
     private JList<String> chosenSourceGridsList;
-
     private TimeStepComboBox timeStepComboBox;
 
-    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
-
     public TimeStepResamplerWizard(Frame frame) {
-        super();
-        this.frame = frame;
-        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        this.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                closeAction();
-            }
-        });
+        super(frame);
     }
 
     @Override
-    public void buildAndShowUI() {
-        /* Setting Wizard's names and layout */
-        this.setTitle(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Title"));
-        this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        setMinimumSize(new Dimension(600, 400));
-        setLocation(getPersistedLocation());
-        if (frame != null) setLocationRelativeTo(frame);
-        setSize(getPersistedSize());
-        this.setLayout(new BorderLayout());
-
-        /* Initializing Card Container */
-        initializeContentCards();
-
-        /* Initializing Button Panel (Back, Next, Cancel) */
-        initializeButtonPanel();
-
-        /* Add contentCards to wizard, and then show wizard */
-        this.add(contentCards, BorderLayout.CENTER);
-        this.setVisible(true);
+    protected String getTitlePropertyKey() {
+        return "TimeStepResamplerWiz_Title";
     }
 
-    private void initializeContentCards() {
-        contentCards = new Container();
-        cardLayout = new CardLayout();
-        contentCards.setLayout(cardLayout);
-        cardNumber = 0;
-
-        /* Adding Step Content Panels to contentCards */
-        contentCards.add("Step One", stepOnePanel());
-        contentCards.add("Step Two", stepTwoPanel());
-        contentCards.add("Step Three", stepThreePanel());
-        contentCards.add("Step Four", stepFourPanel());
-        contentCards.add("Step Five", stepFivePanel());
+    @Override
+    protected List<JPanel> createStepPanels() {
+        return List.of(
+                stepOnePanel(),
+                stepTwoPanel(),
+                stepThreePanel(),
+                createProgressPanel(),
+                createProgressPanel()
+        );
     }
 
-    private void initializeButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        /* Back Button */
-        backButton = new JButton(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Back"));
-        backButton.setToolTipText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Back_TT"));
-        backButton.setEnabled(false);
-        backButton.addActionListener(evt -> backAction());
-
-        /* Next Button */
-        nextButton = new JButton(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Next_TT"));
-        nextButton.addActionListener(evt -> {
-            if (nextButton.getText().equals(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Restart"))) {
-                restartAction();
-            } else if (nextButton.getText().equals(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Next"))) {
-                nextAction();
-            }
-        });
-
-        /* Cancel Button */
-        cancelButton = new JButton(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Cancel_TT"));
-        cancelButton.addActionListener(evt -> closeAction());
-
-        /* Adding Buttons to NavigationPanel */
-        buttonPanel.add(backButton);
-        buttonPanel.add(nextButton);
-        buttonPanel.add(cancelButton);
-
-        /* Add buttonPanel to TimeStepResamplerWizard */
-        this.add(buttonPanel, BorderLayout.SOUTH);
+    @Override
+    protected int getLastInteractiveStep() {
+        return 2;
     }
 
-    private void nextAction() {
-        if (!validateCurrentStep()) return;
-        submitCurrentStep();
-        cardNumber++;
-        backButton.setEnabled(true);
-        updateButtonState();
-        cardLayout.next(contentCards);
+    @Override
+    protected boolean validateStep(int stepIndex) {
+        return switch (stepIndex) {
+            case 0 -> sourceFileSelectionPanel.validateInput();
+            case 1 -> validateTimeStep();
+            case 2 -> validateDestination();
+            default -> true;
+        };
     }
 
-    private void updateButtonState() {
-        backButton.setEnabled(cardNumber > 0 && cardNumber < 3);
-        nextButton.setEnabled(cardNumber < 3);
-        cancelButton.setEnabled(cardNumber < 3);
-    }
+    @Override
+    protected void submitStep(int stepIndex) {
+        if (stepIndex == 2) {
+            SwingWorker<Void, Void> task = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() {
+                    timeStepResamplerTask();
+                    return null;
+                }
 
-    private void setButtonsForRestartOrClose() {
-        backButton.setVisible(false);
-        nextButton.setText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Restart"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Restart_TT"));
-        nextButton.setEnabled(true);
-        cancelButton.setText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Close"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Close_TT"));
-        cancelButton.setEnabled(true);
-    }
-
-    private void backAction() {
-        cardNumber--;
-        if (cardNumber == 0) {
-            backButton.setEnabled(false);
+                @Override
+                protected void done() {
+                    nextAction();
+                }
+            };
+            task.execute();
         }
-        cardLayout.previous(contentCards);
     }
 
-    private void restartAction() {
-        cardNumber = 0;
-        cardLayout.first(contentCards);
-
-        /* Resetting Buttons */
-        backButton.setVisible(true);
-        backButton.setEnabled(false);
-
-        nextButton.setEnabled(true);
-        nextButton.setText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Next_TT"));
-
-        cancelButton.setText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Cancel_TT"));
-
-        /* Clearing Step One Panel */
+    @Override
+    protected void clearWizardState() {
         sourceFileSelectionPanel.clear();
-
-        /* Clearing Step Two Panel */
         timeStepComboBox.setSelectedIndex(10);
-
-        /* Clearing Step Three Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
         destinationSelectionPanel.getFieldA().setText("");
         destinationSelectionPanel.getFieldB().setText("");
         destinationSelectionPanel.getFieldF().setText("");
-
-        /* Clearing Step Four Panel */
-        progressMessagePanel.clear();
     }
 
-    private boolean validateCurrentStep() {
-        switch (cardNumber) {
-            case 0:
-                return validateStepOne();
-            case 1:
-                return validateStepTwo();
-            case 2:
-                return validateStepThree();
-            case 3:
-                return validateStepFour();
-            default:
-                return unknownStepError();
-        }
+    @Override
+    protected void showSaveResult() {
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSaveUtil.showFileLocation(this, Path.of(savedFile));
     }
 
-    private void submitCurrentStep() {
-        switch (cardNumber) {
-            case 0:
-                submitStepOne();
-                break;
-            case 1:
-                submitStepTwo();
-                break;
-            case 2:
-                submitStepThree();
-                break;
-            case 3:
-                submitStepFour();
-                break;
-            default:
-                unknownStepError();
-                break;
-        }
-    }
-
-    private boolean unknownStepError() {
-        logger.log(Level.SEVERE, "Unknown Step in Wizard");
-        return false;
-    }
-
-    /* Step One: Source File Selection */
     private JPanel stepOnePanel() {
         sourceFileSelectionPanel = new SourceFileSelectionPanel(TimeStepResamplerWizard.class.getName());
         sourceFileTextField = sourceFileSelectionPanel.getSourceFileTextField();
@@ -227,14 +95,6 @@ public class TimeStepResamplerWizard extends VortexWizard {
         return sourceFileSelectionPanel;
     }
 
-    private boolean validateStepOne() {
-        return sourceFileSelectionPanel.validateInput();
-    }
-
-    private void submitStepOne() {
-    }
-
-    /* Step Two: Time Step Configuration */
     private JPanel stepTwoPanel() {
         JLabel instructionLabel = new JLabel(TextProperties.getInstance().getProperty("TimeStepResamplerWiz_Instruction_L"));
         JPanel instructionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -274,7 +134,7 @@ public class TimeStepResamplerWizard extends VortexWizard {
         return stepTwoPanel;
     }
 
-    private boolean validateStepTwo() {
+    private boolean validateTimeStep() {
         if (timeStepComboBox.getSelectedItem() == null) {
             JOptionPane.showMessageDialog(this, "A time step must be selected.",
                     "Error", JOptionPane.ERROR_MESSAGE);
@@ -283,41 +143,19 @@ public class TimeStepResamplerWizard extends VortexWizard {
         return true;
     }
 
-    private void submitStepTwo() {
-    }
-
-    /* Step Three: Destination Selection */
     private JPanel stepThreePanel() {
         destinationSelectionPanel = new DestinationSelectionPanel(this);
         return destinationSelectionPanel;
     }
 
-    private boolean validateStepThree() {
+    private boolean validateDestination() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if (destinationFile == null || destinationFile.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Destination file is required.",
                     "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-
         return true;
-    }
-
-    private void submitStepThree() {
-        SwingWorker<Void, Void> task = new SwingWorker<>() {
-            @Override
-            protected Void doInBackground() {
-                timeStepResamplerTask();
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                nextAction();
-            }
-        };
-
-        task.execute();
     }
 
     private void timeStepResamplerTask() {
@@ -327,40 +165,9 @@ public class TimeStepResamplerWizard extends VortexWizard {
         Set<String> sourceGrids = new HashSet<>(chosenSourceList);
 
         TimeStep selectedTimeStep = timeStepComboBox.getSelected();
-
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
-        /* Setting parts */
-        Map<String, Set<String>> pathnameParts = DssUtil.getPathnameParts(chosenSourceList);
-        List<String> partAList = new ArrayList<>(pathnameParts.get("aParts"));
-        List<String> partBList = new ArrayList<>(pathnameParts.get("bParts"));
-        List<String> partCList = new ArrayList<>(pathnameParts.get("cParts"));
-        List<String> partFList = new ArrayList<>(pathnameParts.get("fParts"));
-        String partA = (partAList.size() == 1) ? partAList.get(0) : "*";
-        String partB = (partBList.size() == 1) ? partBList.get(0) : "*";
-        String partC = (partCList.size() == 1) ? partCList.get(0) : "PRECIPITATION";
-        String partF = (partFList.size() == 1) ? partFList.get(0) : "*";
-
-        Map<String, String> writeOptions = new HashMap<>();
-        String dssFieldA = destinationSelectionPanel.getFieldA().getText();
-        String dssFieldB = destinationSelectionPanel.getFieldB().getText();
-        String dssFieldC = destinationSelectionPanel.getFieldC().getText();
-        String dssFieldF = destinationSelectionPanel.getFieldF().getText();
-
-        if (destination.toLowerCase().endsWith(".dss")) {
-            writeOptions.put("partA", (dssFieldA.isEmpty()) ? partA : dssFieldA);
-            writeOptions.put("partB", (dssFieldB.isEmpty()) ? partB : dssFieldB);
-            writeOptions.put("partC", (dssFieldC.isEmpty()) ? partC : dssFieldC);
-            writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
-        }
-
-        String unitsString = destinationSelectionPanel.getUnitsString();
-        if (!unitsString.isEmpty())
-            writeOptions.put("units", unitsString);
-
-        String dataType = destinationSelectionPanel.getDataType();
-        if (dataType != null && !dataType.isEmpty())
-            writeOptions.put("dataType", dataType);
+        Map<String, String> writeOptions = DssWriteOptionsBuilder.buildWriteOptions(chosenSourceList, destinationSelectionPanel);
 
         BatchTimeStepResampler batchTimeStepResampler = BatchTimeStepResampler.builder()
                 .pathToInput(pathToSource)
@@ -371,14 +178,12 @@ public class TimeStepResamplerWizard extends VortexWizard {
                 .build();
 
         batchTimeStepResampler.addPropertyChangeListener(evt -> SwingUtilities.invokeLater(() -> {
-            VortexProperty property = VortexProperty.parse(evt.getPropertyName());
-            if (VortexProperty.PROGRESS == property) {
+            var property = mil.army.usace.hec.vortex.VortexProperty.parse(evt.getPropertyName());
+            if (mil.army.usace.hec.vortex.VortexProperty.PROGRESS == property) {
                 if (!(evt.getNewValue() instanceof Integer)) return;
-                int progressValue = (int) evt.getNewValue();
-                progressMessagePanel.setValue(progressValue);
+                progressMessagePanel.setValue((int) evt.getNewValue());
             } else {
-                String value = String.valueOf(evt.getNewValue());
-                progressMessagePanel.write(value);
+                progressMessagePanel.write(String.valueOf(evt.getNewValue()));
             }
         }));
 
@@ -398,43 +203,6 @@ public class TimeStepResamplerWizard extends VortexWizard {
         task.execute();
     }
 
-    /* Step Four: Progress */
-    private JPanel stepFourPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private boolean validateStepFour() {
-        return true;
-    }
-
-    private void submitStepFour() {
-    }
-
-    /* Step Five: Results */
-    private JPanel stepFivePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private List<String> getItemsInList(JList<String> list) {
-        DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
-        if (defaultRightModel == null) {
-            return null;
-        }
-        return Collections.list(defaultRightModel.elements());
-    }
-
-    private void closeAction() {
-        TimeStepResamplerWizard.this.setVisible(false);
-        TimeStepResamplerWizard.this.dispose();
-        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSaveUtil.showFileLocation(TimeStepResamplerWizard.this, Path.of(savedFile));
-    }
-
-    /* Add main for quick UI Testing */
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

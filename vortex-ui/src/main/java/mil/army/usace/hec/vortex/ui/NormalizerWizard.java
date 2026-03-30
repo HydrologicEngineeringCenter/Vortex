@@ -4,7 +4,6 @@ import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.math.Normalizer;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
-import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,17 +19,11 @@ import java.util.List;
 import java.util.*;
 import java.util.logging.*;
 
-public class NormalizerWizard extends VortexWizard {
+public class NormalizerWizard extends ProcessingWizard {
     private static final Logger logger = Logger.getLogger(NormalizerWizard.class.getName());
 
-    private final Frame frame;
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
-    
-    private Container contentCards;
-    private CardLayout cardLayout;
-    private JButton backButton, nextButton, cancelButton;
-    private int cardNumber;
 
     private JTextField sourceFileTextField, normalFileTextField;
     private InputHintTextField startDateTextField, startTimeTextField;
@@ -42,145 +35,52 @@ public class NormalizerWizard extends VortexWizard {
 
     private ZonedDateTime startDateTime, endDateTime;
 
-    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
-
     public NormalizerWizard(Frame frame) {
-        super();
-        this.frame = frame;
-        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        this.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                closeAction();
-            }
-        });
+        super(frame);
     }
 
-    public void buildAndShowUI() {
-        /* Setting Wizard's names and layout */
-        this.setTitle(TextProperties.getInstance().getProperty("NormalizerWiz_Title"));
-        this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        setMinimumSize(new Dimension(600, 400));
-        setLocation(getPersistedLocation());
-        if (frame != null) setLocationRelativeTo(frame);
-        setSize(getPersistedSize());
-        this.setLayout(new BorderLayout());
-
-        /* Initializing Card Container */
-        initializeContentCards();
-
-        /* Initializing Button Panel (Back, Next, Cancel) */
-        initializeButtonPanel();
-
-        /* Add contentCards to wizard, and then show wizard */
-        this.add(contentCards, BorderLayout.CENTER);
-        this.setVisible(true);
+    @Override
+    protected String getTitlePropertyKey() {
+        return "NormalizerWiz_Title";
     }
 
-    private void initializeContentCards() {
-        contentCards = new Container();
-        cardLayout = new CardLayout();
-        contentCards.setLayout(cardLayout);
-        cardNumber = 0;
-
-        /* Adding Step Content Panels to contentCards */
-        contentCards.add("Step One", stepOnePanel());
-        contentCards.add("Step Two", stepTwoPanel());
-        contentCards.add("Step Three", stepThreePanel());
-        contentCards.add("Step Four", stepFourPanel());
-        contentCards.add("Step Five", stepFivePanel());
-        contentCards.add("Step Six", stepSixPanel());
+    @Override
+    protected List<JPanel> createStepPanels() {
+        return List.of(
+                stepOnePanel(),
+                stepTwoPanel(),
+                stepThreePanel(),
+                stepFourPanel(),
+                createProgressPanel(),
+                createProgressPanel()
+        );
     }
 
-    private void initializeButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        /* Back Button */
-        backButton = new JButton(TextProperties.getInstance().getProperty("NormalizerWiz_Back"));
-        backButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Back_TT"));
-        backButton.setEnabled(false);
-        backButton.addActionListener(evt -> backAction());
-
-        /* Next Button */
-        nextButton = new JButton(TextProperties.getInstance().getProperty("NormalizerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Next_TT"));
-        nextButton.addActionListener(evt -> {
-            if(nextButton.getText().equals(TextProperties.getInstance().getProperty("NormalizerWiz_Restart"))) { restartAction(); }
-            else if(nextButton.getText().equals(TextProperties.getInstance().getProperty("NormalizerWiz_Next"))) { nextAction(); }
-        });
-
-        /* Cancel Button */
-        cancelButton = new JButton(TextProperties.getInstance().getProperty("NormalizerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Cancel_TT"));
-        cancelButton.addActionListener(evt -> closeAction());
-
-        /* Adding Buttons to NavigationPanel */
-        buttonPanel.add(backButton);
-        buttonPanel.add(nextButton);
-        buttonPanel.add(cancelButton);
-
-        /* Add buttonPanel to NormalizerWizard */
-        this.add(buttonPanel, BorderLayout.SOUTH);
+    @Override
+    protected int getLastInteractiveStep() {
+        return 3;
     }
 
-    private void nextAction() {
-        if (!validateCurrentStep()) return;
-        submitCurrentStep();
-        cardNumber++;
-        backButton.setEnabled(true);
-        updateButtonState();
-        cardLayout.next(contentCards);
+    @Override
+    protected boolean validateStep(int stepIndex) {
+        return switch (stepIndex) {
+            case 0 -> validateStepOne();
+            case 1 -> validateStepTwo();
+            case 2 -> validateStepThree();
+            case 3 -> validateStepFour();
+            default -> true;
+        };
     }
 
-    private void updateButtonState() {
-        backButton.setEnabled(cardNumber > 0 && cardNumber < 4);
-        nextButton.setEnabled(cardNumber < 4);
-        cancelButton.setEnabled(cardNumber < 4);
-    }
-
-    private void setButtonsForRestartOrClose() {
-        backButton.setVisible(false);
-        nextButton.setText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Restart"));
-        nextButton.setToolTipText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Restart_TT"));
-        nextButton.setEnabled(true);
-        cancelButton.setText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Close"));
-        cancelButton.setToolTipText(TextProperties.INSTANCE.getProperty("NormalizerWiz_Close_TT"));
-        cancelButton.setEnabled(true);
-    }
-
-    private void backAction() {
-        cardNumber--;
-        if(cardNumber == 0) {
-            backButton.setEnabled(false);
+    @Override
+    protected void submitStep(int stepIndex) {
+        if (stepIndex == 3) {
+            submitStepFour();
         }
-        cardLayout.previous(contentCards);
     }
 
-    private void normalizerEndUI() {
-        backButton.setVisible(false);
-        nextButton.setText(TextProperties.getInstance().getProperty("NormalizerWiz_Restart"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Restart_TT"));
-        nextButton.setEnabled(true);
-        cancelButton.setText(TextProperties.getInstance().getProperty("NormalizerWiz_Close"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Close_TT"));
-        cardLayout.next(contentCards);
-    }
-
-    private void restartAction() {
-        cardNumber = 0;
-        cardLayout.first(contentCards);
-
-        /* Resetting Buttons */
-        backButton.setVisible(true);
-        backButton.setEnabled(false);
-
-        nextButton.setEnabled(true);
-        nextButton.setText(TextProperties.getInstance().getProperty("NormalizerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Next_TT"));
-
-        cancelButton.setText(TextProperties.getInstance().getProperty("NormalizerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("NormalizerWiz_Cancel_TT"));
-
+    @Override
+    protected void clearWizardState() {
         /* Clearing Step One Panel */
         sourceFileSelectionPanel.clear();
 
@@ -202,36 +102,12 @@ public class NormalizerWizard extends VortexWizard {
         destinationSelectionPanel.getFieldA().setText("");
         destinationSelectionPanel.getFieldB().setText("");
         destinationSelectionPanel.getFieldF().setText("");
-
-        /* Clearing Step Five Panel */
-        progressMessagePanel.clear();
     }
 
-    private boolean validateCurrentStep() {
-        switch(cardNumber) {
-            case 0: return validateStepOne();
-            case 1: return validateStepTwo();
-            case 2: return validateStepThree();
-            case 3: return validateStepFour();
-            case 4: return validateStepFive();
-            default: return unknownStepError();
-        }
-    }
-
-    private void submitCurrentStep() {
-        switch(cardNumber) {
-            case 0: submitStepOne(); break;
-            case 1: submitStepTwo(); break;
-            case 2: submitStepThree(); break;
-            case 3: submitStepFour(); break;
-            case 4: submitStepFive(); break;
-            default: unknownStepError(); break;
-        }
-    }
-
-    private boolean unknownStepError() {
-        logger.log(Level.SEVERE, "Unknown Step in Wizard");
-        return false;
+    @Override
+    protected void showSaveResult() {
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSaveUtil.showFileLocation(this, Path.of(savedFile));
     }
 
     private JPanel stepOnePanel() {
@@ -244,8 +120,6 @@ public class NormalizerWizard extends VortexWizard {
     private boolean validateStepOne() {
         return sourceFileSelectionPanel.validateInput();
     }
-
-    private void submitStepOne() {}
 
     private JPanel stepTwoPanel() {
         /* selectNormalFilePanel and selectNormalGridsPanel*/
@@ -299,8 +173,6 @@ public class NormalizerWizard extends VortexWizard {
 
         return true;
     }
-
-    private void submitStepTwo() {}
 
     private JPanel stepTwoNormalFilePanel() {
         /* selectNormalFileLabel */
@@ -584,8 +456,6 @@ public class NormalizerWizard extends VortexWizard {
         return true;
     }
 
-    private void submitStepThree() {}
-
     private JPanel stepThreeNormalPeriodPanel() {
         /* normalPeriodLabel */
         JLabel normalPeriodLabel = new JLabel(TextProperties.getInstance().getProperty("NormalizerWiz_SetNormalPeriod_L"));
@@ -704,7 +574,9 @@ public class NormalizerWizard extends VortexWizard {
             }
 
             @Override
-            protected void done() { normalizerEndUI(); }
+            protected void done() {
+                nextAction();
+            }
         };
 
         task.execute();
@@ -726,57 +598,18 @@ public class NormalizerWizard extends VortexWizard {
         String intervalType = selectedTimeUnit.toString();
         String intervalAmount = normalIntervalTextField.getText();
 
-        Duration interval;
-        switch (intervalType) {
-            case "Days":
-                interval = Duration.ofDays(Integer.parseInt(intervalAmount));
-                break;
-            case "Hours":
-                interval = Duration.ofHours(Integer.parseInt(intervalAmount));
-                break;
-            case "Seconds":
-                interval = Duration.ofSeconds(Integer.parseInt(intervalAmount));
-                break;
-            default:
-                interval = Duration.ofMinutes(Integer.parseInt(intervalAmount));
-                break;
-        }
+        Duration interval = switch (intervalType) {
+            case "Days" -> Duration.ofDays(Integer.parseInt(intervalAmount));
+            case "Hours" -> Duration.ofHours(Integer.parseInt(intervalAmount));
+            case "Seconds" -> Duration.ofSeconds(Integer.parseInt(intervalAmount));
+            default -> Duration.ofMinutes(Integer.parseInt(intervalAmount));
+        };
 
         String destination = destinationSelectionPanel.getDestinationTextField().getText();
 
-        /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
         if(chosenSourceList == null) return;
-        Map<String, Set<String>> pathnameParts = DssUtil.getPathnameParts(chosenSourceList);
-        List<String> partAList = new ArrayList<>(pathnameParts.get("aParts"));
-        List<String> partBList = new ArrayList<>(pathnameParts.get("bParts"));
-        List<String> partCList = new ArrayList<>(pathnameParts.get("cParts"));
-        List<String> partFList = new ArrayList<>(pathnameParts.get("fParts"));
-        String partA = (partAList.size() == 1) ? partAList.get(0) : "*";
-        String partB = (partBList.size() == 1) ? partBList.get(0) : "*";
-        String partC = (partCList.size() == 1) ? partCList.get(0) : "*";
-        String partF = (partFList.size() == 1) ? partFList.get(0) : "*";
-
-        Map<String, String> writeOptions = new HashMap<>();
-        String dssFieldA = destinationSelectionPanel.getFieldA().getText();
-        String dssFieldB = destinationSelectionPanel.getFieldB().getText();
-        String dssFieldC = destinationSelectionPanel.getFieldC().getText();
-        String dssFieldF = destinationSelectionPanel.getFieldF().getText();
-
-        if (destination.toLowerCase().endsWith(".dss")) {
-            writeOptions.put("partA", (dssFieldA.isEmpty()) ? partA : dssFieldA);
-            writeOptions.put("partB", (dssFieldB.isEmpty()) ? partB : dssFieldB);
-            writeOptions.put("partC", (dssFieldC.isEmpty()) ? partC : dssFieldC);
-            writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
-        }
-
-        String unitsString = destinationSelectionPanel.getUnitsString();
-        if (!unitsString.isEmpty())
-            writeOptions.put("units", unitsString);
-
-        String dataType = destinationSelectionPanel.getDataType();
-        if (dataType != null && !dataType.isEmpty())
-            writeOptions.put("dataType", dataType);
+        Map<String, String> writeOptions = DssWriteOptionsBuilder.buildWriteOptions(chosenSourceList, destinationSelectionPanel, "*");
 
         List<Handler> handlers = handlersForNormalizer();
 
@@ -861,35 +694,6 @@ public class NormalizerWizard extends VortexWizard {
         handlers.add(handler);
 
         return handlers;
-    }
-
-    private JPanel stepFivePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private boolean validateStepFive() { return true; }
-
-    private void submitStepFive() {}
-
-    private JPanel stepSixPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private List<String> getItemsInList(JList<String> list) {
-        DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
-        if(defaultRightModel == null) { return null; }
-        return Collections.list(defaultRightModel.elements());
-    }
-
-    private void closeAction() {
-        NormalizerWizard.this.setVisible(false);
-        NormalizerWizard.this.dispose();
-        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSaveUtil.showFileLocation(NormalizerWizard.this, Path.of(savedFile));
     }
 
     /* Add main for quick UI Testing */

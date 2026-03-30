@@ -1,30 +1,18 @@
 package mil.army.usace.hec.vortex.ui;
 
-import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.math.BatchSanitizer;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
-import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.List;
 
-public class SanitizerWizard extends VortexWizard {
-    private static final Logger logger = Logger.getLogger(SanitizerWizard.class.getName());
-
-    private final Frame frame;
+public class SanitizerWizard extends ProcessingWizard {
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
-
-    private Container contentCards;
-    private CardLayout cardLayout;
-    private JButton backButton, nextButton, cancelButton;
-    private int cardNumber;
 
     private JTextField sourceFileTextField;
     private JCheckBox lowerThresholdCheckBox;
@@ -35,176 +23,77 @@ public class SanitizerWizard extends VortexWizard {
     private JTextField upperReplacementTextField;
     private JList<String> chosenSourceGridsList;
 
-    private final ProgressMessagePanel progressMessagePanel = new ProgressMessagePanel();
-
     public SanitizerWizard(Frame frame) {
-        super();
-        this.frame = frame;
-        this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        this.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                closeAction();
-            }
-        });
+        super(frame);
     }
 
-    public void buildAndShowUI() {
-        /* Setting Wizard's names and layout */
-        this.setTitle(TextProperties.getInstance().getProperty("SanitizerWiz_Title"));
-        this.setIconImage(IconResources.loadImage("images/vortex_black.png"));
-        setMinimumSize(new Dimension(600, 400));
-        setLocation(getPersistedLocation());
-        if (frame != null) setLocationRelativeTo(frame);
-        setSize(getPersistedSize());
-        this.setLayout(new BorderLayout());
-
-        /* Initializing Card Container */
-        initializeContentCards();
-
-        /* Initializing Button Panel (Back, Next, Cancel) */
-        initializeButtonPanel();
-
-        /* Add contentCards to wizard, and then show wizard */
-        this.add(contentCards, BorderLayout.CENTER);
-        this.setVisible(true);
+    @Override
+    protected String getTitlePropertyKey() {
+        return "SanitizerWiz_Title";
     }
 
-    private void initializeContentCards() {
-        contentCards = new Container();
-        cardLayout = new CardLayout();
-        contentCards.setLayout(cardLayout);
-        cardNumber = 0;
-
-        /* Adding Step Content Panels to contentCards */
-        contentCards.add("Step One", stepOnePanel());
-        contentCards.add("Step Two", stepTwoPanel());
-        contentCards.add("Step Three", stepThreePanel());
-        contentCards.add("Step Four", stepFourPanel());
-        contentCards.add("Step Five", stepFivePanel());
+    @Override
+    protected List<JPanel> createStepPanels() {
+        return List.of(
+                stepOnePanel(),
+                stepTwoPanel(),
+                stepThreePanel(),
+                createProgressPanel(),
+                createProgressPanel()
+        );
     }
 
-    private void initializeButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        /* Back Button */
-        backButton = new JButton(TextProperties.getInstance().getProperty("SanitizerWiz_Back"));
-        backButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Back_TT"));
-        backButton.setEnabled(false);
-        backButton.addActionListener(evt -> backAction());
-
-        /* Next Button */
-        nextButton = new JButton(TextProperties.getInstance().getProperty("SanitizerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Next_TT"));
-        nextButton.addActionListener(evt -> {
-            if(nextButton.getText().equals(TextProperties.getInstance().getProperty("SanitizerWiz_Restart"))) { restartAction(); }
-            else if(nextButton.getText().equals(TextProperties.getInstance().getProperty("SanitizerWiz_Next"))) { nextAction(); }
-        });
-
-        /* Cancel Button */
-        cancelButton = new JButton(TextProperties.getInstance().getProperty("SanitizerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Cancel_TT"));
-        cancelButton.addActionListener(evt -> closeAction());
-
-        /* Adding Buttons to NavigationPanel */
-        buttonPanel.add(backButton);
-        buttonPanel.add(nextButton);
-        buttonPanel.add(cancelButton);
-
-        /* Add buttonPanel to SanitizerWizard */
-        this.add(buttonPanel, BorderLayout.SOUTH);
+    @Override
+    protected int getLastInteractiveStep() {
+        return 2;
     }
 
-    private void nextAction() {
-        if (!validateCurrentStep()) return;
-        submitCurrentStep();
-        cardNumber++;
-        backButton.setEnabled(true);
-        updateButtonState();
-        cardLayout.next(contentCards);
+    @Override
+    protected boolean validateStep(int stepIndex) {
+        return switch (stepIndex) {
+            case 0 -> sourceFileSelectionPanel.validateInput();
+            case 1 -> validateThresholds();
+            case 2 -> validateDestination();
+            default -> true;
+        };
     }
 
-    private void updateButtonState() {
-        backButton.setEnabled(cardNumber > 0 && cardNumber < 3);
-        nextButton.setEnabled(cardNumber < 3);
-        cancelButton.setEnabled(cardNumber < 3);
-    }
+    @Override
+    protected void submitStep(int stepIndex) {
+        if (stepIndex == 2) {
+            SwingWorker<Void, Void> task = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() {
+                    sanitizerTask();
+                    return null;
+                }
 
-    private void setButtonsForRestartOrClose() {
-        backButton.setVisible(false);
-        nextButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Restart"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Restart_TT"));
-        nextButton.setEnabled(true);
-        cancelButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Close"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Close_TT"));
-        cancelButton.setEnabled(true);
-    }
-
-    private void backAction() {
-        cardNumber--;
-        if(cardNumber == 0) {
-            backButton.setEnabled(false);
+                @Override
+                protected void done() {
+                    nextAction();
+                }
+            };
+            task.execute();
         }
-        cardLayout.previous(contentCards);
     }
 
-    private void restartAction() {
-        cardNumber = 0;
-        cardLayout.first(contentCards);
-
-        /* Resetting Buttons */
-        backButton.setVisible(true);
-        backButton.setEnabled(false);
-
-        nextButton.setEnabled(true);
-        nextButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Next"));
-        nextButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Next_TT"));
-
-        cancelButton.setText(TextProperties.getInstance().getProperty("SanitizerWiz_Cancel"));
-        cancelButton.setToolTipText(TextProperties.getInstance().getProperty("SanitizerWiz_Cancel_TT"));
-
-        /* Clearing Step One Panel */
+    @Override
+    protected void clearWizardState() {
         sourceFileSelectionPanel.clear();
-
-        /* Clearing Step Two Panel */
         lowerThresholdTextField.setText("");
         lowerReplacementTextField.setText("");
         upperThresholdTextField.setText("");
         upperReplacementTextField.setText("");
-
-        /* Clearing Step Three Panel */
         destinationSelectionPanel.getDestinationTextField().setText("");
         destinationSelectionPanel.getFieldA().setText("");
         destinationSelectionPanel.getFieldB().setText("");
         destinationSelectionPanel.getFieldF().setText("");
-
-        /* Clearing Step Four Panel */
-        progressMessagePanel.clear();
     }
 
-    private boolean validateCurrentStep() {
-        switch(cardNumber) {
-            case 0: return validateStepOne();
-            case 1: return validateStepTwo();
-            case 2: return validateStepThree();
-            case 3: return validateStepFour();
-            default: return unknownStepError();
-        }
-    }
-
-    private void submitCurrentStep() {
-        switch(cardNumber) {
-            case 0: submitStepOne(); break;
-            case 1: submitStepTwo(); break;
-            case 2: submitStepThree(); break;
-            case 3: submitStepFour(); break;
-            default: unknownStepError(); break;
-        }
-    }
-
-    private boolean unknownStepError() {
-        logger.log(Level.SEVERE, "Unknown Step in Wizard");
-        return false;
+    @Override
+    protected void showSaveResult() {
+        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
+        FileSaveUtil.showFileLocation(this, Path.of(savedFile));
     }
 
     private JPanel stepOnePanel() {
@@ -214,21 +103,11 @@ public class SanitizerWizard extends VortexWizard {
         return sourceFileSelectionPanel;
     }
 
-    private boolean validateStepOne() {
-        return sourceFileSelectionPanel.validateInput();
-    }
-
-    private void submitStepOne() {}
-
     private JPanel stepTwoPanel() {
-        /* selectSanitizeFilePanel and selectSanitizeGridsPanel*/
         JPanel selectBelowThresholdPanel = stepTwoSanitizeValuesBelowPanel();
         JPanel selectAboveThresholdPanel = stepTwoSanitizeValuesAbovePanel();
 
-        /* Setting GridBagLayout for stepTwoPanel */
         GridBagLayout gridBagLayout = new GridBagLayout();
-
-        /* Adding Panels to stepTwoPanel */
         JPanel stepTwoPanel = new JPanel(gridBagLayout);
         stepTwoPanel.setBorder(BorderFactory.createEmptyBorder(5,9,5,8));
 
@@ -254,11 +133,10 @@ public class SanitizerWizard extends VortexWizard {
         return stepTwoPanel;
     }
 
-    private boolean validateStepTwo() {
-        //Is the lower threshold box checked
+    private boolean validateThresholds() {
         if (lowerThresholdCheckBox.isSelected()) {
             try {
-                Double.parseDouble(lowerThresholdTextField.getText ());
+                Double.parseDouble(lowerThresholdTextField.getText());
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Could not parse lower threshold value.",
                        "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
@@ -273,7 +151,6 @@ public class SanitizerWizard extends VortexWizard {
             }
         }
 
-        //Is the upper threshold box checked
         if (upperThresholdCheckBox.isSelected()) {
             try {
                 Double.parseDouble(upperThresholdTextField.getText());
@@ -282,7 +159,6 @@ public class SanitizerWizard extends VortexWizard {
                         "Error: Parse Exception", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
-
             try {
                 Double.parseDouble(upperReplacementTextField.getText());
             } catch (NumberFormatException e) {
@@ -294,13 +170,9 @@ public class SanitizerWizard extends VortexWizard {
         return true;
     }
 
-    private void submitStepTwo() {}
-
     private JPanel stepTwoSanitizeValuesBelowPanel() {
-        // create valuesBelowThresholdCheckbox
         lowerThresholdCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("SanitizerWiz_LowerThresholdCheckbox_L"),false);
 
-        /* create Replace values panel */
         JLabel replaceLowerValuesLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_LowerThreshold_L"));
         replaceLowerValuesLabel.setBorder(new EmptyBorder(0,15,0,0));
         lowerThresholdTextField = new JTextField(16);
@@ -310,7 +182,6 @@ public class SanitizerWizard extends VortexWizard {
         replaceLowerValuesPanel.add(Box.createRigidArea(new Dimension(15,0)));
         replaceLowerValuesPanel.add(lowerThresholdTextField);
 
-        /* create Replacement value panel */
         JLabel replacementValueLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_LowerReplacement_L"));
         replacementValueLabel.setBorder(new EmptyBorder(0,15,0,0));
         lowerReplacementTextField = new JTextField(16);
@@ -320,7 +191,6 @@ public class SanitizerWizard extends VortexWizard {
         replacementLowerValuePanel.add(Box.createRigidArea(new Dimension(68,0)));
         replacementLowerValuePanel.add(lowerReplacementTextField);
 
-        /* Adding text boxes together */
         JPanel lowerTextFieldsPanel = new JPanel();
         lowerTextFieldsPanel.setLayout(new BoxLayout(lowerTextFieldsPanel, BoxLayout.Y_AXIS));
         lowerTextFieldsPanel.add(replaceLowerValuesPanel);
@@ -328,10 +198,8 @@ public class SanitizerWizard extends VortexWizard {
         lowerTextFieldsPanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0, 0));
         lowerTextFieldsPanel.setVisible(false);
 
-        /* Getting the status of the checkbox */
         lowerThresholdCheckBox.addActionListener(e -> lowerTextFieldsPanel.setVisible(lowerThresholdCheckBox.isSelected()));
 
-        /* Adding everything together */
         JPanel valuesLowerPanel = new JPanel(new BorderLayout());
         valuesLowerPanel.add(lowerThresholdCheckBox, BorderLayout.NORTH);
         valuesLowerPanel.add(lowerTextFieldsPanel, BorderLayout.CENTER);
@@ -340,10 +208,8 @@ public class SanitizerWizard extends VortexWizard {
     }
 
     private JPanel stepTwoSanitizeValuesAbovePanel() {
-        // create valuesAboveThresholdCheckbox
         upperThresholdCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("SanitizerWiz_UpperThresholdCheckbox_L"));
 
-        /* create Replace values panel */
         JLabel replaceUpperValuesLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_UpperThreshold_L"));
         replaceUpperValuesLabel.setBorder(new EmptyBorder(0,15,0,0));
         upperThresholdTextField = new JTextField(16);
@@ -353,7 +219,6 @@ public class SanitizerWizard extends VortexWizard {
         replaceUpperValuesPanel.add(Box.createRigidArea(new Dimension(15,0)));
         replaceUpperValuesPanel.add(upperThresholdTextField);
 
-        /* create Replacement value panel */
         JLabel replacementValueLabel = new JLabel(TextProperties.getInstance().getProperty("SanitizerWiz_UpperReplacement_L"));
         replacementValueLabel.setBorder(new EmptyBorder(0,15,0,0));
         upperReplacementTextField = new JTextField(16);
@@ -363,7 +228,6 @@ public class SanitizerWizard extends VortexWizard {
         replacementUpperValuePanel.add(Box.createRigidArea(new Dimension(86,0)));
         replacementUpperValuePanel.add(upperReplacementTextField);
 
-        /* Adding text boxes together */
         JPanel upperTextFieldsPanel = new JPanel();
         upperTextFieldsPanel.setLayout(new BoxLayout(upperTextFieldsPanel, BoxLayout.Y_AXIS));
         upperTextFieldsPanel.add(replaceUpperValuesPanel);
@@ -371,10 +235,8 @@ public class SanitizerWizard extends VortexWizard {
         upperTextFieldsPanel.setBorder(BorderFactory.createEmptyBorder(0, -5, 0, 0));
         upperTextFieldsPanel.setVisible(false);
 
-        /* Getting the status of the checkbox */
         upperThresholdCheckBox.addActionListener(e -> upperTextFieldsPanel.setVisible(upperThresholdCheckBox.isSelected()));
 
-        /* Adding everything together */
         JPanel valuesUpperPanel = new JPanel(new BorderLayout());
         valuesUpperPanel.add(upperThresholdCheckBox, BorderLayout.NORTH);
         valuesUpperPanel.add(upperTextFieldsPanel, BorderLayout.CENTER);
@@ -387,32 +249,14 @@ public class SanitizerWizard extends VortexWizard {
         return destinationSelectionPanel;
     }
 
-    private boolean validateStepThree() {
+    private boolean validateDestination() {
         String destinationFile = destinationSelectionPanel.getDestinationTextField().getText();
         if(destinationFile == null || destinationFile.isEmpty() ) {
             JOptionPane.showMessageDialog(this, "Destination file is required.",
                     "Error: Missing Field", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-
         return true;
-    }
-
-    private void submitStepThree() {
-        SwingWorker<Void, Void> task = new SwingWorker<>() {
-            @Override
-            protected Void doInBackground() {
-                sanitizerTask();
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                nextAction();
-            }
-        };
-
-        task.execute();
     }
 
     private void sanitizerTask() {
@@ -443,41 +287,9 @@ public class SanitizerWizard extends VortexWizard {
             maximumReplacementValue = Float.NaN;
         }
 
-        String destination = destinationSelectionPanel.getDestinationTextField().getText();
-
-        /* Setting parts */
         List<String> chosenSourceList = getItemsInList(chosenSourceGridsList);
         if(chosenSourceList == null) return;
-        Map<String, Set<String>> pathnameParts = DssUtil.getPathnameParts(chosenSourceList);
-        List<String> partAList = new ArrayList<>(pathnameParts.get("aParts"));
-        List<String> partBList = new ArrayList<>(pathnameParts.get("bParts"));
-        List<String> partCList = new ArrayList<>(pathnameParts.get("cParts"));
-        List<String> partFList = new ArrayList<>(pathnameParts.get("fParts"));
-        String partA = (partAList.size() == 1) ? partAList.get(0) : "*";
-        String partB = (partBList.size() == 1) ? partBList.get(0) : "*";
-        String partC = (partCList.size() == 1) ? partCList.get(0) : "PRECIPITATION";
-        String partF = (partFList.size() == 1) ? partFList.get(0) : "*";
-
-        Map<String, String> writeOptions = new HashMap<>();
-        String dssFieldA = destinationSelectionPanel.getFieldA().getText();
-        String dssFieldB = destinationSelectionPanel.getFieldB().getText();
-        String dssFieldC = destinationSelectionPanel.getFieldC().getText();
-        String dssFieldF = destinationSelectionPanel.getFieldF().getText();
-
-        if (destination.toLowerCase().endsWith(".dss")) {
-            writeOptions.put("partA", (dssFieldA.isEmpty()) ? partA : dssFieldA);
-            writeOptions.put("partB", (dssFieldB.isEmpty()) ? partB : dssFieldB);
-            writeOptions.put("partC", (dssFieldC.isEmpty()) ? partC : dssFieldC);
-            writeOptions.put("partF", (dssFieldF.isEmpty()) ? partF : dssFieldF);
-        }
-
-        String unitsString = destinationSelectionPanel.getUnitsString();
-        if (!unitsString.isEmpty())
-            writeOptions.put("units", unitsString);
-
-        String dataType = destinationSelectionPanel.getDataType();
-        if (dataType != null && !dataType.isEmpty())
-            writeOptions.put("dataType", dataType);
+        Map<String, String> writeOptions = DssWriteOptionsBuilder.buildWriteOptions(chosenSourceList, destinationSelectionPanel);
 
         if (lowerThresholdCheckBox.isSelected()) {
             writeOptions.put("minThreshold", lowerThresholdTextField.getText());
@@ -500,17 +312,7 @@ public class SanitizerWizard extends VortexWizard {
                 .writeOptions(writeOptions)
                 .build();
 
-        batchSanitizer.addPropertyChangeListener(evt -> {
-            VortexProperty property = VortexProperty.parse(evt.getPropertyName());
-            if (VortexProperty.PROGRESS == property) {
-                if (!(evt.getNewValue() instanceof Integer)) return;
-                int progressValue = (int) evt.getNewValue();
-                progressMessagePanel.setValue(progressValue);
-            } else {
-                String value = String.valueOf(evt.getNewValue());
-                progressMessagePanel.write(value);
-            }
-        });
+        batchSanitizer.addPropertyChangeListener(createProgressListener());
 
         SwingWorker<Void, Void> task = new SwingWorker<>() {
             @Override
@@ -529,36 +331,6 @@ public class SanitizerWizard extends VortexWizard {
         task.execute();
     }
 
-    private JPanel stepFourPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private boolean validateStepFour() { return true; }
-
-    private void submitStepFour() {}
-
-    private JPanel stepFivePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(progressMessagePanel, BorderLayout.CENTER);
-        return panel;
-    }
-
-    private List<String> getItemsInList(JList<String> list) {
-        DefaultListModel<String> defaultRightModel = Util.getDefaultListModel(list);
-        if(defaultRightModel == null) { return null; }
-        return Collections.list(defaultRightModel.elements());
-    }
-
-    private void closeAction() {
-        SanitizerWizard.this.setVisible(false);
-        SanitizerWizard.this.dispose();
-        String savedFile = destinationSelectionPanel.getDestinationTextField().getText();
-        FileSaveUtil.showFileLocation(SanitizerWizard.this, Path.of(savedFile));
-    }
-
-    /* Add main for quick UI Testing */
     public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
         catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) { e.printStackTrace(); }
