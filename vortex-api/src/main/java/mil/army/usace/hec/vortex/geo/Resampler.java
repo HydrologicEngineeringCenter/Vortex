@@ -15,7 +15,6 @@ import javax.measure.UnitConverter;
 import javax.measure.quantity.Length;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.gdal.gdalconst.gdalconstConstants.GDT_Float32;
@@ -258,20 +257,20 @@ public class Resampler {
         if (cellSize == null)
             return Double.NaN;
 
-        Unit<?> targetUnit = ReferenceUtils.getLinearUnits(targetWkt);
+        String wkt = targetWkt != null ? targetWkt : grid.wkt();
+        Unit<?> targetUnit = ReferenceUtils.getLinearUnits(wkt);
 
         Unit<Length> cellSizeUnit = cellSize.getUnit();
 
         if (!cellSizeUnit.isCompatible(targetUnit))
-            return Double.NaN;
+            throw new IllegalStateException("Cell size unit " + cellSizeUnit + " is not compatible with target unit " + targetUnit);
 
         try {
             UnitConverter converter = cellSizeUnit.getConverterToAny(targetUnit);
             double cellSizeValue = cellSize.getValue().doubleValue();
             return converter.convert(cellSizeValue);
         } catch (IncommensurableException e) {
-            logger.log(Level.SEVERE, e, e::getMessage);
-            return Double.NaN;
+            throw new IllegalStateException("Failed to convert cell size from " + cellSizeUnit + " to " + targetUnit, e);
         }
     }
 }
