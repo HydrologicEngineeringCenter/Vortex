@@ -346,7 +346,8 @@ class BatchImporterTest {
         List<String> inFiles = new ArrayList<>();
         inFiles.add(inFile);
 
-        Path pathToDestination = Paths.get(System.getProperty("java.io.tmpdir"), "irregularSpatial.dss");
+        File outFile = new File(getClass().getResource(
+                "/regression/irregularSpatial/irregularSpatial.dss").getFile());
 
         List<String> variables = new ArrayList<>();
         variables.add("pcp");
@@ -354,14 +355,14 @@ class BatchImporterTest {
         BatchImporter importer = BatchImporter.builder()
                 .inFiles(inFiles)
                 .variables(variables)
-                .destination(pathToDestination.toString())
+                .destination(outFile.toString())
                 .build();
 
         importer.process();
 
         int[] status = new int[1];
         GriddedData griddedData = new GriddedData();
-        griddedData.setDSSFileName(pathToDestination.toString());
+        griddedData.setDSSFileName(outFile.getPath());
         griddedData.setPathname("///PRECIPITATION/31DEC1949:2400///");
         GridData gridData = new GridData();
         griddedData.retrieveGriddedData(true, gridData, status);
@@ -376,14 +377,20 @@ class BatchImporterTest {
         Assertions.assertEquals(DssDataType.INST_VAL.value(), gridInfo.getDataType());
         Assertions.assertEquals(49.710297, gridInfo.getMaxValue(), 1E-2);
 
-        griddedData.done();
+        float[] data = gridData.getData();
 
-        try {
-            HecDataManager.close(pathToDestination.toString(), false);
-            Files.deleteIfExists(pathToDestination);
-        } catch (IOException e) {
-            Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        griddedData.setPathname("///PRECIPITATION/31DEC1949:2400//PERSISTED/");
+        GridData persistedGridData = new GridData();
+        griddedData.retrieveGriddedData(true, persistedGridData, status);
+        if (status[0] < 0) {
+            Assertions.fail();
         }
+
+        float[] persistedData = persistedGridData.getData();
+
+        assertArrayEquals(persistedData, data, 1E-4F);
+
+        griddedData.done();
     }
 
     @Test

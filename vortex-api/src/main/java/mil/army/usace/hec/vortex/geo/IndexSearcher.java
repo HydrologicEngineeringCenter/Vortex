@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.VortexProperty;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.index.strtree.STRtree;
 import ucar.nc2.dataset.CoordinateAxis;
 import ucar.nc2.dataset.CoordinateAxis1D;
 import ucar.nc2.dataset.CoordinateAxis2D;
@@ -9,7 +10,7 @@ import ucar.nc2.dt.GridCoordSystem;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,146 +18,131 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IndexSearcher {
     private static final GeometryFactory FACTORY = new GeometryFactory();
     private final Map<Coordinate, Integer> cache = new ConcurrentHashMap<>();
-    private final List<IndexedGeometry> indexedGeometries = new ArrayList<>();
-
-    private Geometry domain;
-
-    private int index;
+    private final STRtree spatialIndex = new STRtree();
+    private final Envelope domain = new Envelope();
 
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
 
     IndexSearcher(GridCoordSystem gcs) {
-
         CoordinateAxis xAxis = gcs.getXHorizAxis();
         CoordinateAxis yAxis = gcs.getYHorizAxis();
 
-        GeometryFactory factory = new GeometryFactory();
-
         if (xAxis instanceof CoordinateAxis1D xAxis1D
                 && yAxis instanceof CoordinateAxis1D yAxis1D) {
-
-            double[] edgesX = xAxis1D.getCoordEdges();
-            double[] edgesY = yAxis1D.getCoordEdges();
-
-            int index = 0;
-            for (int i = 0; i < edgesY.length - 1; i++) {
-                for (int j = 0; j < edgesX.length - 1; j++) {
-                    Coordinate[] coordinates = new Coordinate[5];
-                    coordinates[0] = new Coordinate(edgesX[i], edgesY[i]);
-                    coordinates[1] = new Coordinate(edgesX[i + 1], edgesY[i]);
-                    coordinates[2] = new Coordinate(edgesX[i + 1], edgesY[i + 1]);
-                    coordinates[3] = new Coordinate(edgesX[i], edgesY[i + 1]);
-                    coordinates[4] = new Coordinate(edgesX[i], edgesY[i]);
-                    LinearRing ring = factory.createLinearRing(coordinates);
-                    Geometry geometry = factory.createPolygon(ring);
-
-                    indexedGeometries.add(new IndexedGeometry(index, geometry));
-                    index++;
-                }
-            }
-
+            buildFrom1DAxes(xAxis1D, yAxis1D);
         } else if (xAxis instanceof CoordinateAxis2D xAxis2D
                 && yAxis instanceof CoordinateAxis2D yAxis2D) {
-
-            double[] edgesX = (double[]) xAxis2D.getEdges().copyTo1DJavaArray();
-            double[] edgesY = (double[]) yAxis2D.getEdges().copyTo1DJavaArray();
-
-            int nx = xAxis2D.getEdges().getShape()[1];
-
-            int index = 0;
-            for (int i = 0; i < edgesX.length - nx; i++) {
-                if ((i + 1) % nx == 0)
-                    continue;
-
-                Coordinate[] coordinates = new Coordinate[5];
-                coordinates[0] = new Coordinate(edgesX[i], edgesY[i]);
-                coordinates[1] = new Coordinate(edgesX[i + 1], edgesY[i + 1]);
-                coordinates[2] = new Coordinate(edgesX[i + nx + 1], edgesY[i + nx + 1]);
-                coordinates[3] = new Coordinate(edgesX[i + nx], edgesY[i + nx]);
-                coordinates[4] = new Coordinate(edgesX[i], edgesY[i]);
-                LinearRing ring = factory.createLinearRing(coordinates);
-                Geometry geometry = factory.createPolygon(ring);
-
-                indexedGeometries.add(new IndexedGeometry(index, geometry));
-                index++;
-            }
+            buildFrom2DAxes(xAxis2D, yAxis2D);
         } else {
             throw new IllegalStateException();
         }
 
-        initDomain();
+        spatialIndex.build();
+    }
+
+    private void buildFrom1DAxes(CoordinateAxis1D xAxis, CoordinateAxis1D yAxis) {
+        double[] edgesX = xAxis.getCoordEdges();
+        double[] edgesY = yAxis.getCoordEdges();
+
+        int index = 0;
+        for (int i = 0; i < edgesY.length - 1; i++) {
+            for (int j = 0; j < edgesX.length - 1; j++) {
+                Coordinate[] ring = createRing(
+                        edgesX[j], edgesY[i],
+                        edgesX[j + 1], edgesY[i],
+                        edgesX[j + 1], edgesY[i + 1],
+                        edgesX[j], edgesY[i + 1]);
+                insertCell(index++, ring);
+            }
+        }
+    }
+
+    private void buildFrom2DAxes(CoordinateAxis2D xAxis, CoordinateAxis2D yAxis) {
+        double[] edgesX = (double[]) xAxis.getEdges().copyTo1DJavaArray();
+        double[] edgesY = (double[]) yAxis.getEdges().copyTo1DJavaArray();
+        int nx = xAxis.getEdges().getShape()[1];
+
+        int index = 0;
+        for (int i = 0; i < edgesX.length - nx; i++) {
+            if ((i + 1) % nx == 0)
+                continue;
+
+            Coordinate[] ring = createRing(
+                    edgesX[i], edgesY[i],
+                    edgesX[i + 1], edgesY[i + 1],
+                    edgesX[i + nx + 1], edgesY[i + nx + 1],
+                    edgesX[i + nx], edgesY[i + nx]);
+            insertCell(index++, ring);
+        }
+    }
+
+    private static Coordinate[] createRing(double x0, double y0, double x1, double y1,
+                                           double x2, double y2, double x3, double y3) {
+        return new Coordinate[]{
+                new Coordinate(x0, y0), new Coordinate(x1, y1),
+                new Coordinate(x2, y2), new Coordinate(x3, y3),
+                new Coordinate(x0, y0)};
+    }
+
+    private void insertCell(int index, Coordinate[] ring) {
+        Geometry geometry = FACTORY.createPolygon(FACTORY.createLinearRing(ring));
+        Envelope envelope = geometry.getEnvelopeInternal();
+        spatialIndex.insert(envelope, new IndexedGeometry(index, geometry));
+        domain.expandToInclude(envelope);
     }
 
     public synchronized void cacheCoordinates(Coordinate[] coordinates) {
-        boolean isCoordinatesCached = true;
-        for (Coordinate coordinate : coordinates) {
-            if (!cache.containsKey(coordinate)) {
-                isCoordinatesCached = false;
-                break;
-            }
-        }
-
-        if (isCoordinatesCached)
+        boolean allCached = Arrays.stream(coordinates).allMatch(cache::containsKey);
+        if (allCached)
             return;
 
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, "ReIndexing");
 
         int count = coordinates.length;
+        int lastProgress = -1;
         for (int i = 0; i < count; i++) {
-            Coordinate coordinate = coordinates[i];
-            getIndex(coordinate);
+            getIndex(coordinates[i]);
             int progress = (int) (((float) i / count) * 100);
-            support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progress);
+            if (progress != lastProgress) {
+                support.firePropertyChange(VortexProperty.PROGRESS.toString(), null, progress);
+                lastProgress = progress;
+            }
         }
-    }
-
-    private void initDomain() {
-        List<Geometry> geometries = indexedGeometries.stream()
-                .map(IndexedGeometry::geometry)
-                .toList();
-
-        GeometryFactory factory =  new GeometryFactory();
-        GeometryCollection geometryCollection = (GeometryCollection) factory.buildGeometry(geometries);
-        domain = geometryCollection.union();
     }
 
     public synchronized int getIndex(double x, double y) {
         Coordinate coordinate = new Coordinate(x, y);
-
-        if (cache.containsKey(coordinate))
-            return cache.get(coordinate);
+        Integer cached = cache.get(coordinate);
+        if (cached != null)
+            return cached;
 
         return getIndex(coordinate);
     }
 
-    /**
-     * Gets index for coordinate. This method is to remain private and not synchronized.
-     */
     private int getIndex(Coordinate coordinate) {
-        Point point = FACTORY.createPoint(coordinate);
-
-        if (!domain.contains(point)) {
+        if (!domain.contains(coordinate)) {
             cache.put(coordinate, -1);
             return -1;
         }
 
-        int count = indexedGeometries.size();
+        Point point = FACTORY.createPoint(coordinate);
 
-        for (int i = 0; i < count; i++) {
-            int searchIndex = (index + i) % count;
-            IndexedGeometry indexedGeometry = indexedGeometries.get(searchIndex);
-            if (indexedGeometry.geometry().contains(point)) {
-                index = indexedGeometry.index();
-                break;
+        @SuppressWarnings("unchecked")
+        List<IndexedGeometry> candidates = spatialIndex.query(new Envelope(coordinate));
+
+        for (IndexedGeometry candidate : candidates) {
+            if (candidate.geometry().contains(point)) {
+                cache.put(coordinate, candidate.index());
+                return candidate.index();
             }
         }
 
-        cache.put(coordinate, index);
-
-        return index;
+        cache.put(coordinate, -1);
+        return -1;
     }
 
-    private record IndexedGeometry(int index, Geometry geometry) {}
+    private record IndexedGeometry(int index, Geometry geometry) {
+    }
 
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         support.addPropertyChangeListener(pcl);
