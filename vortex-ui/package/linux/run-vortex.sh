@@ -9,7 +9,6 @@ if [ -z "$1" ]; then
   echo "- '-importer' to import NetCDF, Grib, HDF, ASC, or HEC-DSS files, with options for clipping, re-projecting, and resampling data, and writes to HEC-DSS format."
   echo "- '-normalizer' to normalize volumes from one set of grids to another, e.g. normalize hourly QPE grids to daily PRISM grids."
   echo "- '-sanitizer' to screen and replace values above or below a threshold, with an option to override DSS grid units."
-  echo "- '-shifter' to rotate and shift grids spatially, with a scale parameter to scale grid values."
   echo "- '-time-shifter' to shift grids in time."
   exit 1
 fi

@@ -1,7 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.math.ShiftTimeUnit;
-import mil.army.usace.hec.vortex.math.Shifter;
+import mil.army.usace.hec.vortex.math.TimeShifter;
 import mil.army.usace.hec.vortex.ui.util.FileSaveUtil;
 
 import javax.swing.*;
@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.List;
 
-public class ShifterWizard extends ProcessingWizard {
+public class TimeShifterWizard extends ProcessingWizard {
     private SourceFileSelectionPanel sourceFileSelectionPanel;
     private DestinationSelectionPanel destinationSelectionPanel;
 
@@ -27,13 +27,13 @@ public class ShifterWizard extends ProcessingWizard {
 
     private JList<String> chosenSourceGridsList;
 
-    public ShifterWizard(Frame frame) {
+    public TimeShifterWizard(Frame frame) {
         super(frame);
     }
 
     @Override
     protected String getTitlePropertyKey() {
-        return "Time-ShifterWiz_Title";
+        return "TimeShifterWiz_Title";
     }
 
     @Override
@@ -98,7 +98,7 @@ public class ShifterWizard extends ProcessingWizard {
     }
 
     private JPanel stepOnePanel() {
-        sourceFileSelectionPanel = new SourceFileSelectionPanel(ShifterWizard.class.getName());
+        sourceFileSelectionPanel = new SourceFileSelectionPanel(TimeShifterWizard.class.getName());
         sourceFileTextField = sourceFileSelectionPanel.getSourceFileTextField();
         chosenSourceGridsList = sourceFileSelectionPanel.getChosenSourceGridsList();
         return sourceFileSelectionPanel;
@@ -183,7 +183,7 @@ public class ShifterWizard extends ProcessingWizard {
     }
 
     private JPanel stepTwoIntervalPanel() {
-        startTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("ShifterWiz_ShiftStart_L"));
+        startTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("TimeShifterWiz_ShiftStart_L"));
         startTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         startTimeCheckBox.setSelected(true);
 
@@ -193,7 +193,7 @@ public class ShifterWizard extends ProcessingWizard {
         JPanel startTimeShiftPanel = startTimeShiftPanel();
         startTimeCheckBox.addActionListener(e -> startTimeShiftPanel.setVisible(startTimeCheckBox.isSelected()));
 
-        endTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("ShifterWiz_EndStart_L"));
+        endTimeCheckBox = new JCheckBox(TextProperties.getInstance().getProperty("TimeShifterWiz_EndStart_L"));
         endTimeCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         endTimeCheckBox.setSelected(true);
 
@@ -214,7 +214,7 @@ public class ShifterWizard extends ProcessingWizard {
     }
 
     private JPanel startTimeShiftPanel() {
-        JLabel startTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("ShifterWiz_StartTimeShift_L"));
+        JLabel startTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("TimeShifterWiz_StartTimeShift_L"));
         startTimeShiftTextField = new JTextField(25);
         startTimeShiftUnitComboBox = new ShiftTimeUnitComboBox();
         startTimeShiftUnitComboBox.setEnabled(true);
@@ -231,7 +231,7 @@ public class ShifterWizard extends ProcessingWizard {
     }
 
     private JPanel endTimeShiftPanel() {
-        JLabel endTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("ShifterWiz_EndTimeShift_L"));
+        JLabel endTimeShiftLabel = new JLabel(TextProperties.getInstance().getProperty("TimeShifterWiz_EndTimeShift_L"));
         endTimeShiftTextField = new JTextField(25);
         endTimeShiftUnitComboBox = new ShiftTimeUnitComboBox();
         endTimeShiftUnitComboBox.setEnabled(true);
@@ -275,7 +275,7 @@ public class ShifterWizard extends ProcessingWizard {
         if(chosenSourceList == null) return;
         Map<String, String> writeOptions = DssWriteOptionsBuilder.buildWriteOptions(chosenSourceList, destinationSelectionPanel);
 
-        Shifter shift = Shifter.builder()
+        TimeShifter shift = TimeShifter.builder()
                 .pathToFile(pathToSource)
                 .grids(sourceGrids)
                 .shiftStart(startTimeShift)
@@ -337,7 +337,7 @@ public class ShifterWizard extends ProcessingWizard {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
         catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) { e.printStackTrace(); }
 
-        ShifterWizard sanitizerWizard = new ShifterWizard(null);
+        TimeShifterWizard sanitizerWizard = new TimeShifterWizard(null);
         sanitizerWizard.buildAndShowUI();
     }
 }

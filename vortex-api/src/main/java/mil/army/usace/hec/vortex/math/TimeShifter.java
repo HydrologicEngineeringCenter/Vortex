@@ -17,8 +17,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Shifter implements Runnable {
-    private static final Logger logger = Logger.getLogger(Shifter.class.getName());
+public class TimeShifter implements Runnable {
+    private static final Logger logger = Logger.getLogger(TimeShifter.class.getName());
 
     private final String pathToFile;
     private final Set<String> variables;
@@ -28,7 +28,7 @@ public class Shifter implements Runnable {
     private final Map<String, String> options;
     private final PropertyChangeSupport support;
 
-    private Shifter(Builder builder) {
+    private TimeShifter(Builder builder) {
         this.pathToFile = builder.pathToFile;
         this.variables = builder.grids;
         this.shiftStart = builder.shiftStart;
@@ -122,7 +122,7 @@ public class Shifter implements Runnable {
             return this;
         }
 
-        public Shifter build() {
+        public TimeShifter build() {
             if (methods.isEmpty())
                 throw new IllegalStateException("Methods must not be empty");
 
@@ -142,7 +142,7 @@ public class Shifter implements Runnable {
                 shiftEnd = shift;
             }
 
-            return new Shifter(this);
+            return new TimeShifter(this);
         }
     }
 
@@ -159,7 +159,7 @@ public class Shifter implements Runnable {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
-        String templateBegin = MessageStore.getInstance().getMessage("shifter_begin");
+        String templateBegin = MessageStore.getInstance().getMessage("time_shifter_begin");
         String messageBegin = String.format(templateBegin);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
@@ -200,11 +200,11 @@ public class Shifter implements Runnable {
         String timeMessage = "Batch shift time: " + stopwatch;
         logger.info(timeMessage);
 
-        String templateEnd = MessageStore.getInstance().getMessage("shifter_end");
+        String templateEnd = MessageStore.getInstance().getMessage("time_shifter_end");
         String messageEnd = String.format(templateEnd, processed, destination);
         support.firePropertyChange(VortexProperty.COMPLETE.toString(), null, messageEnd);
 
-        String templateTime = MessageStore.getInstance().getMessage("shifter_time");
+        String templateTime = MessageStore.getInstance().getMessage("time_shifter_time");
         String messageTime = String.format(templateTime, stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }

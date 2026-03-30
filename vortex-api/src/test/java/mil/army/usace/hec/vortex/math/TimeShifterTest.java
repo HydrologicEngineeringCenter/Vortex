@@ -16,24 +16,24 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ShifterTest {
+class TimeShifterTest {
 
     @Test
     void NumberOfGridsInEqualsNumberOfGridsOut(){
-        String source = new File(getClass().getResource("/shifter/shifter_in.dss").getFile()).toString();
+        String source = new File(getClass().getResource("/time-shifter/shifter_in.dss").getFile()).toString();
 
         Set<String> sourceVariables = DataReader.getVariables(source);
 
-        String destination = new File(getClass().getResource("/shifter/shifter_out.dss").getFile()).toString();
+        String destination = new File(getClass().getResource("/time-shifter/shifter_out.dss").getFile()).toString();
 
-        Shifter shifter = Shifter.builder()
+        TimeShifter timeShifter = TimeShifter.builder()
                 .shift(Duration.ofHours(-12))
                 .pathToFile(source)
                 .grids(sourceVariables)
                 .destination(destination)
                 .build();
 
-        shifter.shift();
+        timeShifter.shift();
 
         Set<String> destinationVariables = DataReader.getVariables(destination);
 
@@ -43,25 +43,25 @@ class ShifterTest {
     @Test
     void UaSweDataTypeInEqualsDataTypeOut(){
         URL inUrl = Objects.requireNonNull(getClass().getResource(
-                "/shifter/ua_swe_in.dss"));
+                "/time-shifter/ua_swe_in.dss"));
 
         String in = new File(inUrl.getFile()).toString();
 
         Set<String> variables = DataReader.getVariables(in);
 
         URL outUrl = Objects.requireNonNull(getClass().getResource(
-                "/shifter/ua_swe_out.dss"));
+                "/time-shifter/ua_swe_out.dss"));
 
         String out = new File(outUrl.getFile()).toString();
 
-        Shifter shifter = Shifter.builder()
+        TimeShifter timeShifter = TimeShifter.builder()
                 .shift(Duration.ofHours(-6))
                 .pathToFile(in)
                 .grids(variables)
                 .destination(out)
                 .build();
 
-        shifter.shift();
+        timeShifter.shift();
 
         int[] status = new int[1];
         GriddedData griddedData = new GriddedData();

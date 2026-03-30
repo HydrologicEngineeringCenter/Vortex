@@ -92,7 +92,7 @@ fun applicationTasks(): Map<String,String> {
         "importer" to "-importer",
         "normalizer" to "-normalizer",
         "sanitizer" to "-sanitizer",
-        "shifter" to "-shifter",
+        "time-shifter" to "-time-shifter",
         "time-step-resampler" to "-time-step-resampler"
     )
 }

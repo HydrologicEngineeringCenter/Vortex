@@ -14,7 +14,7 @@ public class AnyWizard extends VortexWizard {
     private JRadioButton gridToPointButton;
     private JRadioButton imageExporterButton;
     private JRadioButton sanitizerButton;
-    private JRadioButton shifterButton;
+    private JRadioButton timeShifterButton;
     private JRadioButton timeStepResamplerButton;
 
     AnyWizard(Frame frame) {
@@ -51,7 +51,7 @@ public class AnyWizard extends VortexWizard {
         gridToPointButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_GridToPoint_L"));
         imageExporterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_ImageExporter_L"));
         sanitizerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Sanitizer_L"));
-        shifterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Shifter_L"));
+        timeShifterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_TimeShifter_L"));
         timeStepResamplerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_TimeStepResampler_L"));
 
         // Select importer by default
@@ -65,7 +65,7 @@ public class AnyWizard extends VortexWizard {
         buttonGroup.add(gridToPointButton);
         buttonGroup.add(imageExporterButton);
         buttonGroup.add(sanitizerButton);
-        buttonGroup.add(shifterButton);
+        buttonGroup.add(timeShifterButton);
         buttonGroup.add(timeStepResamplerButton);
 
         Box buttonBox = Box.createVerticalBox();
@@ -76,7 +76,7 @@ public class AnyWizard extends VortexWizard {
         buttonBox.add(gridToPointButton);
         buttonBox.add(imageExporterButton);
         buttonBox.add(sanitizerButton);
-        buttonBox.add(shifterButton);
+        buttonBox.add(timeShifterButton);
         buttonBox.add(timeStepResamplerButton);
 
         add(buttonBox, BorderLayout.CENTER);
@@ -136,8 +136,8 @@ public class AnyWizard extends VortexWizard {
             return new ImageExporterWizard(frame);
         else if (sanitizerButton.isSelected())
             return new SanitizerWizard(frame);
-        else if (shifterButton.isSelected())
-            return new ShifterWizard(frame);
+        else if (timeShifterButton.isSelected())
+            return new TimeShifterWizard(frame);
         else if (timeStepResamplerButton.isSelected())
             return new TimeStepResamplerWizard(frame);
         else

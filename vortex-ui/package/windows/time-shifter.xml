@@ -5,7 +5,7 @@
   <jar></jar>
   <outfile>C:\Projects\vortex\vortex-ui\package\windows\time-shifter.exe</outfile>
   <errTitle></errTitle>
-  <cmdLine>-shifter</cmdLine>
+  <cmdLine>-time-shifter</cmdLine>
   <chdir>.</chdir>
   <priority>normal</priority>
   <downloadUrl>http://java.com/download</downloadUrl>
