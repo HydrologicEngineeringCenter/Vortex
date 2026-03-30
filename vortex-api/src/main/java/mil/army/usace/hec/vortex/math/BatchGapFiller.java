@@ -6,14 +6,13 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
+import mil.army.usace.hec.vortex.util.DssUtil;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -28,8 +27,6 @@ import static mil.army.usace.hec.vortex.util.FilenameUtil.isSameFile;
  */
 public class BatchGapFiller implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(BatchGapFiller.class.getName());
-    private static final PathMatcher DSS_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/*.{dss,DSS}");
-
     protected final String source;
     protected final List<String> variables;
     protected final String destination;
@@ -421,63 +418,8 @@ public class BatchGapFiller implements Runnable {
         return String.format(templateEnd, processed, destination);
     }
 
-    /**
-     * Condenses DSS variables by removing time parts from DSS pathnames.
-     * This is useful for processing multiple time steps of the same variable.
-     */
     protected Set<String> condenseVariables(Set<String> variables) {
-        if (DSS_MATCHER.matches(Path.of(source))) {
-            Set<String> condensed = variables.stream()
-                    .map(BatchGapFiller::removeTime)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-
-            if (!condensed.isEmpty()) {
-                String template = MessageStore.INSTANCE.getMessage("gap_filler_status_condensed");
-                String message = String.format(template, variables.size(), condensed.size());
-                LOGGER.fine(() -> message);
-            }
-
-            return condensed;
-        }
-
-        return variables;
-    }
-
-    /**
-     * Removes the time part from a DSS pathname.
-     *
-     * @param dssPathname The DSS pathname to modify
-     * @return The pathname with time part replaced by "*"
-     */
-    private static String removeTime(String dssPathname) {
-        if (dssPathname == null) {
-            return null;
-        }
-
-        dssPathname = dssPathname.trim();
-
-        // Check if pathname starts and ends with '/'
-        if (!dssPathname.startsWith("/") || !dssPathname.endsWith("/")) {
-            return dssPathname;
-        }
-
-        // Remove the leading and trailing '/'
-        String trimmedPathname = dssPathname.substring(1, dssPathname.length() - 1);
-
-        // Split the pathname into parts using '/' as delimiter, include empty strings
-        // Also trim the parts
-        String[] parts = Arrays.stream(trimmedPathname.split("/", -1))
-                .map(String::trim)
-                .toArray(String[]::new);
-
-        // There should be exactly 6 parts for a valid DSS pathname
-        if (parts.length != 6) {
-            return dssPathname;
-        }
-
-        // Replace time parts with wildcards
-        return "/" + String.join("/", parts[0], parts[1], parts[2], "*", "*", parts[5]) + "/";
+        return DssUtil.condenseVariables(source, variables);
     }
 
     /**

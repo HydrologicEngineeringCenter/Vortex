@@ -12,9 +12,13 @@ import si.uom.NonSI;
 import tech.units.indriya.unit.Units;
 
 import javax.measure.Unit;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static javax.measure.MetricPrefix.KILO;
 import static javax.measure.MetricPrefix.MILLI;
@@ -26,6 +30,7 @@ import static tech.units.indriya.unit.Units.*;
 
 public class DssUtil {
     private static final int SECONDS_PER_MINUTE = 60;
+    private static final PathMatcher DSS_MATCHER = FileSystems.getDefault().getPathMatcher("glob:**/*.{dss,DSS}");
 
     // Map Unit<?> object to string (to be written to DSS)
     private static final Map<Unit<?>, String> UNITS_TO_STRING = Map.ofEntries(
@@ -76,6 +81,37 @@ public class DssUtil {
     );
 
     private DssUtil(){}
+
+    public static Set<String> condenseVariables(String source, Set<String> variables) {
+        if (DSS_MATCHER.matches(Path.of(source))) {
+            Set<String> condensed = variables.stream()
+                    .map(DssUtil::removeTimeParts)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            if (!condensed.isEmpty()) {
+                return condensed;
+            }
+        }
+
+        return variables;
+    }
+
+    private static String removeTimeParts(String dssPathname) {
+        if (dssPathname == null) return null;
+
+        dssPathname = dssPathname.trim();
+        if (!dssPathname.startsWith("/") || !dssPathname.endsWith("/")) return dssPathname;
+
+        String trimmedPathname = dssPathname.substring(1, dssPathname.length() - 1);
+        String[] parts = Arrays.stream(trimmedPathname.split("/", -1))
+                .map(String::trim)
+                .toArray(String[]::new);
+
+        if (parts.length != 6) return dssPathname;
+
+        return "/" + String.join("/", parts[0], parts[1], parts[2], "*", "*", parts[5]) + "/";
+    }
 
     public static Map<String, Set<String>> getPathnameParts(List<String> pathnames){
         Set<String> aParts = new HashSet<>();

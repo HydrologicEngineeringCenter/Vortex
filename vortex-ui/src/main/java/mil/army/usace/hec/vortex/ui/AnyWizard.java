@@ -15,6 +15,7 @@ public class AnyWizard extends VortexWizard {
     private JRadioButton imageExporterButton;
     private JRadioButton sanitizerButton;
     private JRadioButton shifterButton;
+    private JRadioButton timeStepResamplerButton;
 
     AnyWizard(Frame frame) {
         super();
@@ -51,6 +52,7 @@ public class AnyWizard extends VortexWizard {
         imageExporterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_ImageExporter_L"));
         sanitizerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Sanitizer_L"));
         shifterButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_Shifter_L"));
+        timeStepResamplerButton = new JRadioButton(TextProperties.getInstance().getProperty("AnyWiz_TimeStepResampler_L"));
 
         // Select importer by default
         importerButton.setSelected(true);
@@ -64,6 +66,7 @@ public class AnyWizard extends VortexWizard {
         buttonGroup.add(imageExporterButton);
         buttonGroup.add(sanitizerButton);
         buttonGroup.add(shifterButton);
+        buttonGroup.add(timeStepResamplerButton);
 
         Box buttonBox = Box.createVerticalBox();
         buttonBox.add(importerButton);
@@ -74,6 +77,7 @@ public class AnyWizard extends VortexWizard {
         buttonBox.add(imageExporterButton);
         buttonBox.add(sanitizerButton);
         buttonBox.add(shifterButton);
+        buttonBox.add(timeStepResamplerButton);
 
         add(buttonBox, BorderLayout.CENTER);
     }
@@ -134,6 +138,8 @@ public class AnyWizard extends VortexWizard {
             return new SanitizerWizard(frame);
         else if (shifterButton.isSelected())
             return new ShifterWizard(frame);
+        else if (timeStepResamplerButton.isSelected())
+            return new TimeStepResamplerWizard(frame);
         else
             return new ImportMetWizard(frame);
     }

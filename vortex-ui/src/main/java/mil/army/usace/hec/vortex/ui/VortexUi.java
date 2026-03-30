@@ -31,6 +31,8 @@ public class VortexUi {
             wizard = new SanitizerWizard(null);
         } else if (set.contains("-shifter")) {
             wizard = new ShifterWizard(null);
+        } else if (set.contains("-time-step-resampler")) {
+            wizard = new TimeStepResamplerWizard(null);
         } else {
             wizard = new AnyWizard(null);
         }
