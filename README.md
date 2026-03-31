@@ -17,9 +17,11 @@ The **image-exporter** utility exports gridded data to GeoTIFF or ASC raster for
 
 The **calculator** utility performs multiplication, division, addition, or subtraction to a series of grids.
 
-The **transposer** utility rotates and shifts grids spatially. The utility has a scale parameter to scale grid values.
+The **gap-filler** utility fills missing data in grids using spatial or temporal interpolation methods.
 
 The **time-shifter** utility shifts grids in time.
+
+The **time-step-resampler** utility resamples gridded data to a different time step.
 
 The **normalizer** utility normalizes volumes from one set of grids to another, e.g. normalize hourly QPE grids to daily [PRISM](http://www.prism.oregonstate.edu/) grids.
 
