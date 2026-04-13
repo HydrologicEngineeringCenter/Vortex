@@ -26,6 +26,7 @@ public class GapFillerWizard extends ProcessingWizard {
     private static final Dimension PANEL_DIMENSION = new Dimension(Integer.MAX_VALUE, (ROW_HEIGHT + 2 * PAD) * 2);
 
     private static final String FOCAL_MEAN_LABEL = Text.format("GapFillerWiz_FocalMean_L");
+    private static final String REGRESSION_LABEL = Text.format("GapFillerWiz_Regression_L");
     private static final String LINEAR_INTERP_LABEL = Text.format("GapFillerWiz_LinearInterp_L");
     private static final String INSERT_TIME_STEPS_LABEL = Text.format("GapFillerWiz_TimeSteps_L");
 
@@ -142,6 +143,7 @@ public class GapFillerWizard extends ProcessingWizard {
         panel.add(createInterpolationExplanationPanel());
         panel.add(createSpatialFillPanel());
         panel.add(createTemporalFillPanel());
+        panel.add(createSpatiotemporalFillPanel());
         panel.setBorder(BorderFactory.createEmptyBorder(BORDER_PAD, BORDER_PAD, BORDER_PAD, BORDER_PAD));
         return panel;
     }
@@ -202,6 +204,22 @@ public class GapFillerWizard extends ProcessingWizard {
         temporalFillPanel.add(linearInterpButton);
 
         return temporalFillPanel;
+    }
+
+    private JPanel createSpatiotemporalFillPanel() {
+        JPanel spatiotemporalFillPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        String spatiotemporalFillTitle = Text.format("GapFillerWiz_SpatiotemporalFill_Title");
+        String spatiotemporalFillTT = Text.format("GapFillerWiz_SpatiotemporalFill_TT");
+        spatiotemporalFillPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), spatiotemporalFillTitle));
+        spatiotemporalFillPanel.setToolTipText(spatiotemporalFillTT);
+
+        JRadioButton regressionButton = new JRadioButton(REGRESSION_LABEL);
+        regressionButton.setToolTipText(Text.format("GapFillerWiz_Regression_TT"));
+        methodButtonGroup.add(regressionButton);
+        spatiotemporalFillPanel.add(regressionButton);
+
+        return spatiotemporalFillPanel;
     }
 
     private boolean validateMethod() {
@@ -366,6 +384,7 @@ public class GapFillerWizard extends ProcessingWizard {
 
     private static GapFillMethod fromString(String str) {
         if (FOCAL_MEAN_LABEL.equals(str)) return GapFillMethod.FOCAL_MEAN;
+        if (REGRESSION_LABEL.equals(str)) return GapFillMethod.REGRESSION;
         if (LINEAR_INTERP_LABEL.equals(str)) return GapFillMethod.LINEAR_INTERPOLATION;
         return GapFillMethod.UNDEFINED;
     }

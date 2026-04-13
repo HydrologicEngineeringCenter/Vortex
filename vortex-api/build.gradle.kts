@@ -31,6 +31,7 @@ dependencies {
     // native fails at runtime on a symbol the native does not have.
     implementation("org.gdal:gdal:3.2.0")
     implementation("org.locationtech.jts:jts-core:1.19.0")
+    implementation("org.tribuo:tribuo-regression-tree:4.3.1")
     implementation("tech.units:indriya:2.1.4")
     implementation("systems.uom:systems-common:2.1")
     implementation("edu.ucar:cdm-core:5.5.3")
