@@ -5,6 +5,11 @@ plugins {
     id("nebula.release") version "19.0.10"
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 }
@@ -47,13 +52,13 @@ dependencies {
 tasks.register<Copy>("copyRuntimeLibs") {
     from(configurations.runtimeClasspath)
     include("*.jar")
-    into("$buildDir/distributions/${rootProject.name}-${project.version}/lib")
+    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/lib"))
 }
 
 tasks.register<Copy>("copyVortexUi") {
-    into("$buildDir/distributions/${rootProject.name}-${project.version}")
+    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
     into("lib") {
-        from(project(":vortex-ui").buildDir.toString() + "/libs")
+        from(project(":vortex-ui").layout.buildDirectory.dir("libs"))
         include("*.jar")
     }
     into("bin") {
@@ -84,26 +89,23 @@ tasks.register<Copy>("copyLicense") {
     from(project.rootDir) {
         include("LICENSE.md")
     }
-    into("${rootProject.projectDir}/build/distributions/${rootProject.name}-${project.version}")
+    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
 }
 
 tasks.register<Copy>("copyFatJar") {
-    from(
-        project(":vortex-api").buildDir.toString()
-                + "/libs"
-    ) {
+    from(project(":vortex-api").layout.buildDirectory.dir("libs")) {
         include("${rootProject.name}-all-${project.version}")
     }
-    into("${rootProject.projectDir}/build/distributions")
+    into(layout.buildDirectory.dir("distributions"))
 }
 
 tasks.register<Copy>("copyStartScripts") {
     if (OperatingSystem.current().isLinux()) {
         from("$projectDir/package/linux")
-        into("$buildDir/distributions/${rootProject.name}-${project.version}/bin")
+        into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/bin"))
     } else if (OperatingSystem.current().isMacOsX()) {
         from("$projectDir/package/macOS")
-        into("$buildDir/distributions/${rootProject.name}-${project.version}/bin")
+        into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/bin"))
     }
 }
 
@@ -138,35 +140,35 @@ tasks.getByName("refreshNatives") { finalizedBy("getNatives") }
 tasks.register<Copy>("copyNatives") {
     from("$projectDir/bin")
     exclude("jre")
-    into("$buildDir/distributions/${rootProject.name}-${project.version}/bin")
+    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/bin"))
 }
 
 tasks.getByName("copyNatives") { dependsOn("refreshNatives") }
 
 tasks.register<Copy>("copyJre") {
     from("$projectDir/bin/jre")
-    into("$buildDir/distributions/${rootProject.name}-${project.version}/jre")
+    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/jre"))
 }
 
 tasks.register<Tar>("zipLinux") {
     archiveFileName.set("${rootProject.name}-${project.version}-linux-x64" + ".tar.gz")
-    destinationDirectory.set(file("$buildDir/distributions"))
-    from(fileTree("$buildDir/distributions/${rootProject.name}-${project.version}"))
+    destinationDirectory.set(layout.buildDirectory.dir("distributions").get().asFile)
+    from(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
     into("${rootProject.name}-${project.version}")
     compression = Compression.GZIP
 }
 
 tasks.register<Zip>("zipWin") {
     archiveFileName.set("${rootProject.name}-${project.version}-win-x64" + ".zip")
-    destinationDirectory.set(file("$buildDir/distributions"))
-    from(fileTree("$buildDir/distributions/${rootProject.name}-${project.version}"))
+    destinationDirectory.set(layout.buildDirectory.dir("distributions").get().asFile)
+    from(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
     into("${rootProject.name}-${project.version}")
 }
 
 tasks.register<Zip>("zipMacOS") {
     archiveFileName.set("${rootProject.name}-${project.version}-macOS-x64" + ".zip")
-    destinationDirectory.set(file("$buildDir/distributions"))
-    from(fileTree("$buildDir/distributions/${rootProject.name}-${project.version}"))
+    destinationDirectory.set(layout.buildDirectory.dir("distributions").get().asFile)
+    from(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
     into("${rootProject.name}-${project.version}")
 }
 

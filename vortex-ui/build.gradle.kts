@@ -21,7 +21,9 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
 }
 
-base.archivesBaseName = "vortex-ui"
+tasks.jar {
+    archiveBaseName.set("vortex-ui")
+}
 project.version = project.version.toString()
 
 fun isWindows(): Boolean { return org.gradle.internal.os.OperatingSystem.current().isWindows }
@@ -100,7 +102,7 @@ fun applicationTasks(): Map<String,String> {
 applicationTasks().forEach { (taskName, className) ->
     task(taskName, JavaExec::class) {
         group = "application"
-        main = "mil.army.usace.hec.vortex.ui.VortexUi"
+        mainClass.set("mil.army.usace.hec.vortex.ui.VortexUi")
         args = listOf(className)
         classpath = sourceSets["main"].runtimeClasspath
         jvmArgs = uiJvmArgs()
@@ -109,7 +111,6 @@ applicationTasks().forEach { (taskName, className) ->
 }
 
 tasks.test {
-    useJUnit()
     jvmArgs = uiJvmArgs()
     environment = uiEnvironment()
 }

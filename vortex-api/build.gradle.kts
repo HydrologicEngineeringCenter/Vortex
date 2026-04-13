@@ -56,8 +56,6 @@ tasks.jar {
 }
 
 tasks.test {
-    useJUnit()
-
     if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
         environment = mapOf(
             "PATH" to "${rootProject.projectDir}/bin/gdal;${rootProject.projectDir}/bin/netcdf;${rootProject.projectDir}/bin/hdf",
