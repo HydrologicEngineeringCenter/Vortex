@@ -130,7 +130,7 @@ class TemporalDataReaderTest {
         String expectedAverageUnits = "DEG C";
         assertEquals(expectedAverageUnits, averageReader.getDataUnits().orElse(null));
 
-        String expectedInstantUnits = "UNSPECIF";
+        String expectedInstantUnits = "UNDEF";
         assertEquals(expectedInstantUnits, instantReader.getDataUnits().orElse(null));
     }
 
@@ -567,7 +567,7 @@ class TemporalDataReaderTest {
         return switch (type) {
             case ACCUMULATION -> "MM";
             case AVERAGE -> "DEG C";
-            case INSTANTANEOUS -> "UNSPECIF";
+            case INSTANTANEOUS -> "UNDEF";
             default -> "";
         };
     }

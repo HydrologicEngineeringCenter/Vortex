@@ -435,7 +435,7 @@ class BatchImporterTest {
         GridInfo gridInfo = gridData.getGridInfo();
         Assertions.assertEquals("", gridInfo.getStartTime());
         Assertions.assertEquals("", gridInfo.getEndTime());
-        Assertions.assertEquals("UNSPECIF", gridInfo.getDataUnits());
+        Assertions.assertEquals("UNDEF", gridInfo.getDataUnits());
         Assertions.assertEquals(DssDataType.INST_VAL.value(), gridInfo.getDataType());
         Assertions.assertEquals(98, gridInfo.getMaxValue());
         Assertions.assertEquals(21, gridInfo.getMinValue());

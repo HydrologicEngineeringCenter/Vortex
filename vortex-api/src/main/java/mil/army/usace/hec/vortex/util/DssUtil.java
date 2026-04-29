@@ -50,7 +50,7 @@ public class DssUtil {
             Map.entry(JOULE.divide(SQUARE_METRE), "J/M2"),
             Map.entry(UnitUtil.BTU_PER_FT2, "BTU/FT2"),
             Map.entry(WATT.divide(SQUARE_METRE), "WATT/M2"),
-            Map.entry(ONE, "UNSPECIF"),
+            Map.entry(ONE, "UNDEF"),
             Map.entry(MILLI(GRAM).divide(LITRE), "MG/L"),
             Map.entry(Units.PERCENT, "%"),
             Map.entry(HOUR, "HR"),
