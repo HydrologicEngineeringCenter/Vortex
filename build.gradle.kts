@@ -143,7 +143,7 @@ tasks.register<Copy>("copyNatives") {
     into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/bin"))
 }
 
-tasks.getByName("copyNatives") { dependsOn("refreshNatives") }
+tasks.getByName("copyNatives") { dependsOn("refreshNatives", "getNatives") }
 
 tasks.register<Copy>("copyJre") {
     from("$projectDir/bin/jre")
@@ -182,7 +182,7 @@ tasks.register("zip") {
     }
 }
 
-tasks.getByName("copyJre").dependsOn("refreshNatives")
+tasks.getByName("copyJre").dependsOn("refreshNatives", "getNatives")
 
 tasks.getByName("build").dependsOn("copyJre")
 tasks.getByName("build").dependsOn("copyRuntimeLibs")
