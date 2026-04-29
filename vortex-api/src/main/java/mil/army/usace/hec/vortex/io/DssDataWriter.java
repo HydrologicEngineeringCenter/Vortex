@@ -359,7 +359,8 @@ class DssDataWriter extends DataWriter {
                 }
             }
 
-            DssDataType type = getDssDataType(description, diff);
+            Duration gridDuration = Optional.ofNullable(vortexPoints.getFirst().interval()).orElse(Duration.ZERO);
+            DssDataType type = getDssDataType(description, gridDuration);
 
             List<TimeSeriesContainer> tscs = new ArrayList<>();
 
