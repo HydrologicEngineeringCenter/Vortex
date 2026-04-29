@@ -193,9 +193,13 @@ tasks.getByName("build").dependsOn("copyStartScripts")
 tasks.getByName("build").dependsOn("vortex-api:fatJar")
 tasks.getByName("build").dependsOn("copyFatJar")
 tasks.getByName("build").finalizedBy("zip")
-tasks.getByName("zip").dependsOn(
-    "copyJre", "copyRuntimeLibs", "copyNatives", "copyVortexUi", "copyLicense", "copyStartScripts"
+val distributionInputs = listOf(
+    "copyJre", "copyRuntimeLibs", "copyNatives", "copyVortexUi",
+    "copyLicense", "copyStartScripts", "copyFatJar"
 )
+listOf("zipWin", "zipLinux", "zipMacOS").forEach { zipTask ->
+    tasks.getByName(zipTask).dependsOn(distributionInputs)
+}
 
 tasks.matching { it.name.contains("final") }.forEach { it.dependsOn(":build") }
 tasks.matching { it.name.contains("final") }.forEach { it.dependsOn("vortex-api:publish") }
