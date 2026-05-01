@@ -3,6 +3,10 @@ plugins {
     id("maven-publish")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 repositories {
     maven(url = "https://artifacts.unidata.ucar.edu/repository/unidata-all/")
