@@ -25,7 +25,7 @@ class BatchGridCalculatorTest {
     }
 
     @Test
-    void multiply() {
+    void multiply() throws Exception {
         String pathToSource = TestUtil.getResourceFile("/normalizer/qpe.dss").toString();
 
         List<String> variables = new ArrayList<>();
@@ -71,7 +71,7 @@ class BatchGridCalculatorTest {
     }
 
     @Test
-    void divide() {
+    void divide() throws Exception {
         String pathToSource = TestUtil.getResourceFile("/normalizer/qpe.dss").toString();
 
         List<String> variables = new ArrayList<>();
@@ -117,7 +117,7 @@ class BatchGridCalculatorTest {
     }
 
     @Test
-    void add() {
+    void add() throws Exception {
         String pathToSource = TestUtil.getResourceFile("/normalizer/qpe.dss").toString();
 
         List<String> variables = new ArrayList<>();
@@ -163,7 +163,7 @@ class BatchGridCalculatorTest {
     }
 
     @Test
-    void subtract() {
+    void subtract() throws Exception {
         String pathToSource = TestUtil.getResourceFile("/normalizer/qpe.dss").toString();
 
         List<String> variables = new ArrayList<>();

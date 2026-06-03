@@ -14,11 +14,14 @@ class BilDataReaderTest {
         String path = new File(AscDataReaderTest.class.getResource(
                 "/regression/io/bil_reader/PRISM_ppt_stable_4kmD2_20170101_bil.bil").getFile()).toString();
 
-        DataReader reader = DataReader.builder()
-                .path(path)
-                .build();
-
-        grid = (VortexGrid) reader.getDtos().get(0);
+        try {
+            DataReader reader = DataReader.builder()
+                    .path(path)
+                    .build();
+            grid = (VortexGrid) reader.getDtos().get(0);
+        } catch (DataReadException e) {
+            throw new ExceptionInInitializerError(e);
+        }
     }
 
     @Test

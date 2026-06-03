@@ -24,7 +24,7 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
 
     @Override
     // Return a list of data-transferable-objects for the specified variable (SWE/Liquid Precipitaion/etc...)
-    public List<VortexData> getDtos() {
+    public List<VortexData> getDtos() throws DataReadException {
         // Get VirtualPath to Tar
         String folderName = Paths.get(this.path).getFileName().toString();
         folderName = folderName.substring(0, folderName.lastIndexOf(".tar")) + "_unzip";
@@ -56,36 +56,33 @@ class SnodasTarDataReader extends DataReader implements VirtualFileSystem{
     } // getDtoCount()
 
     @Override
-    public VortexData getDto(int idx) {
-         int count = -1;
-         String folderName = Paths.get(this.path).getFileName().toString();
-         folderName = folderName.substring(0, folderName.lastIndexOf(".tar")) + "_unzip";
-         String folderPath = Paths.get(this.path).getParent().toString() + File.separator + folderName + File.separator;
-         String pathToFolder = Paths.get(folderPath).getParent().toString();
-         File folder = new File(pathToFolder, folderName);
+    public VortexData getDto(int idx) throws DataReadException {
+        int count = 0;
+        String folderName = Paths.get(this.path).getFileName().toString();
+        folderName = folderName.substring(0, folderName.lastIndexOf(".tar")) + "_unzip";
+        String folderPath = Paths.get(this.path).getParent().toString() + File.separator + folderName + File.separator;
+        String pathToFolder = Paths.get(folderPath).getParent().toString();
+        File folder = new File(pathToFolder, folderName);
 
         for (File fileEntry : Objects.requireNonNull(folder.listFiles())) {
             String fileName = fileEntry.getName();
-            if(fileName.endsWith(".dat")) {
-                if (matchedVariable(fileName, this.variableName)) {
-                    count++; // First file, count = 0. Second, count = 1, etc...
-                    if (count == idx) {
-                        DataReader reader = DataReader.builder()
-                                .path(folder.getAbsolutePath() + File.separator + fileName)
-                                .variable(this.variableName)
-                                .build();
-
-                        return reader.getDto(0);
-                    }
+            if (fileName.endsWith(".dat") && matchedVariable(fileName, this.variableName)) {
+                if (count == idx) {
+                    DataReader reader = DataReader.builder()
+                            .path(folder.getAbsolutePath() + File.separator + fileName)
+                            .variable(this.variableName)
+                            .build();
+                    return reader.getDto(0);
                 }
+                count++;
             }
-        } // Looping through folder to get Dto
-
-        return null;
+        }
+        throw new IndexOutOfBoundsException("idx=" + idx + " but only " + count
+                + " matching .dat entries for variable '" + this.variableName + "'");
     } // getDto()
 
     @Override
-    public List<VortexDataInterval> getDataIntervals() {
+    public List<VortexDataInterval> getDataIntervals() throws DataReadException {
         return getDtos().stream()
                 .map(VortexDataInterval::of)
                 .toList();

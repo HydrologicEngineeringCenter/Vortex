@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 class TransposerTest {
 
     @Test
-    void testTranspose(){
+    void testTranspose() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/normalizer/qpe.dss").getFile()).toString();
         String variableName = "///PRECIPITATION/02JAN2017:1200/02JAN2017:1300//";
@@ -38,7 +38,7 @@ class TransposerTest {
     }
 
     @Test
-    void TransposeFtWorthGrid(){
+    void TransposeFtWorthGrid() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/transposer/precip2000_Jun.dss").getFile()).toString();
         String variableName = "/SHG/WGRFC/PRECIP/01JUN2000:0600/01JUN2000:0700/METVUE/";

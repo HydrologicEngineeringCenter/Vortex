@@ -15,7 +15,7 @@ class AscDataWriterTest {
     private final String tempDir = System.getProperty("java.io.tmpdir");
 
     @Test
-    void AscDataWriterWritesDssFile(){
+    void AscDataWriterWritesDssFile() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/normalizer/qpe.dss").getFile()).toString();
         String variableName = "///PRECIPITATION/02JAN2017:1200/02JAN2017:1300//";

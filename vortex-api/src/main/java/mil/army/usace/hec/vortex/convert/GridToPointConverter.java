@@ -4,6 +4,8 @@ import mil.army.usace.hec.vortex.*;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.geo.ZonalStatistics;
 import mil.army.usace.hec.vortex.geo.ZonalStatisticsCalculator;
+import mil.army.usace.hec.vortex.io.DataReadException;
+import mil.army.usace.hec.vortex.io.DataReadExceptions;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.util.Stopwatch;
@@ -118,10 +120,14 @@ public class GridToPointConverter implements Runnable {
 
     @Override
     public void run() {
-        convert();
+        try {
+            convert();
+        } catch (DataReadException e) {
+            DataReadExceptions.reportTo(LOGGER, support, e);
+        }
     }
 
-    public void convert() {
+    public void convert() throws DataReadException {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
@@ -145,7 +151,7 @@ public class GridToPointConverter implements Runnable {
 
         AtomicInteger processed = new AtomicInteger();
 
-        variables.forEach(variable -> {
+        for (String variable : variables) {
             DataReader reader = DataReader.builder()
                     .path(pathToGrids)
                     .variable(variable)
@@ -184,7 +190,7 @@ public class GridToPointConverter implements Runnable {
             }
             int newValue = (int) (((float) processed.incrementAndGet() / totalCount) * 100);
             support.firePropertyChange("progress", null, newValue);
-        });
+        }
 
         DataWriter writer = DataWriter.builder()
                 .destination(destination)

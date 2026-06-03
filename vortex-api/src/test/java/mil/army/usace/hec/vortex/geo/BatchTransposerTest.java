@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class BatchTransposerTest {
 
     @Test
-    void BatchTransposeFtWorthGrids(){
+    void BatchTransposeFtWorthGrids() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/transposer/precip2000_Jun.dss").getFile()).toString();
 

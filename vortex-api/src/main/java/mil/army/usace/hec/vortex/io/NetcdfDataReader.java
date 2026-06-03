@@ -32,11 +32,8 @@ abstract class NetcdfDataReader extends DataReader {
     private static final String TIME_BOUNDS = "time_bnds";
 
     /* Factory Method */
-    public static NetcdfDataReader createInstance(String pathToFile, String pathToData) {
-        NetcdfDataset dataset = getNetcdfDataset(pathToFile);
-        if (dataset == null) {
-            return null;
-        }
+    public static NetcdfDataReader createInstance(String pathToFile, String pathToData) throws DataReadException {
+        NetcdfDataset dataset = openDataset(pathToFile);
 
         GridDataset gridDataset = getGridDataset(dataset);
         if (gridDataset != null) {
@@ -48,7 +45,8 @@ abstract class NetcdfDataReader extends DataReader {
             return new VariableDsReader(dataset, variableDS, pathToData);
         }
 
-        return null;
+        throw DataReadException.ioError(pathToFile, pathToData,
+                "NetCDF dataset at " + pathToFile + " contains no readable grid or variable for '" + pathToData + "'");
     }
 
     NetcdfDataReader(DataReaderBuilder builder) {
@@ -56,10 +54,10 @@ abstract class NetcdfDataReader extends DataReader {
     }
 
     @Override
-    public abstract List<VortexData> getDtos();
+    public abstract List<VortexData> getDtos() throws DataReadException;
 
     @Override
-    public abstract VortexData getDto(int idx);
+    public abstract VortexData getDto(int idx) throws DataReadException;
 
     @Override
     public abstract int getDtoCount();
@@ -85,12 +83,12 @@ abstract class NetcdfDataReader extends DataReader {
     }
 
     /* Helpers */
-    private static NetcdfDataset getNetcdfDataset(String pathToFile) {
+    private static NetcdfDataset openDataset(String pathToFile) throws DataReadException {
         try {
             return NetcdfDatasets.openDataset(pathToFile);
         } catch (IOException e) {
-            logger.severe(e.getMessage());
-            return null;
+            throw DataReadException.ioError(pathToFile, null,
+                    "Could not open NetCDF dataset at " + pathToFile + ": " + e.getMessage(), e);
         }
     }
 

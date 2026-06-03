@@ -73,7 +73,7 @@ class NormalizerTest {
     }
 
     @Test
-    void NormalizerPassesRegression() {
+    void NormalizerPassesRegression() throws Exception {
         String source = new File(getClass().getResource("/normalizer/qpe.dss").getFile()).toString();
         String normals = new File(getClass().getResource("/normalizer/prism.dss").getFile()).toString();
 

@@ -9,10 +9,12 @@ import mil.army.usace.hec.vortex.convert.DataConverter;
 import mil.army.usace.hec.vortex.geo.GeographicProcessor;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -28,6 +30,14 @@ class NetcdfBatchImporter extends BatchImporter {
 
     @Override
     public void process() {
+        try {
+            processChecked();
+        } catch (DataReadException e) {
+            DataReadExceptions.reportTo(logger, support, e);
+        }
+    }
+
+    private void processChecked() throws DataReadException {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
@@ -41,9 +51,13 @@ class NetcdfBatchImporter extends BatchImporter {
         String messageBegin = Message.format("import_begin", totalCount);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageBegin);
 
-        Stream<VortexDataInterval> sortedRecordStream = dataReaders.parallelStream()
-                .map(DataReader::getDataIntervals)
+        // Read intervals from all readers in parallel; materialize so that any
+        // read failure surfaces here rather than from inside a lazy stream.
+        List<VortexDataInterval> allIntervals = unwrapDataRead(() -> dataReaders.parallelStream()
+                .map(NetcdfBatchImporter::dataIntervalsUnchecked)
                 .flatMap(Collection::stream)
+                .toList());
+        Stream<VortexDataInterval> sortedRecordStream = allIntervals.stream()
                 .distinct()
                 .sorted(Comparator.comparing(VortexDataInterval::startTime));
         NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(dataReaders, geoOptions), sortedRecordStream);
@@ -53,14 +67,14 @@ class NetcdfBatchImporter extends BatchImporter {
 
         // Buffered Read and Process
         Consumer<Stream<VortexData>> bufferProcessFunction = stream -> writeBufferedData(destination, writeOptions, stream);
-        dataReaders.parallelStream()
-                .map(DataReader::getDtos)
+        unwrapDataReadVoid(() -> dataReaders.parallelStream()
+                .map(NetcdfBatchImporter::dtosUnchecked)
                 .flatMap(Collection::stream)
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .map(geoProcessor::process)
                 .map(DataConverter::convert)
-                .forEach(grid -> bufferedDataWriter.addAndProcessWhenFull(grid, bufferProcessFunction, false));
+                .forEach(grid -> bufferedDataWriter.addAndProcessWhenFull(grid, bufferProcessFunction, false)));
         bufferedDataWriter.processBufferAndClear(bufferProcessFunction, true);
 
         stopwatch.end();
@@ -72,6 +86,40 @@ class NetcdfBatchImporter extends BatchImporter {
 
         String messageTime = Message.format("import_time", stopwatch);
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
+    }
+
+    private static List<VortexDataInterval> dataIntervalsUnchecked(DataReader r) {
+        try {
+            return r.getDataIntervals();
+        } catch (DataReadException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static List<VortexData> dtosUnchecked(DataReader r) {
+        try {
+            return r.getDtos();
+        } catch (DataReadException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static <T> T unwrapDataRead(Supplier<T> work) throws DataReadException {
+        try {
+            return work.get();
+        } catch (UncheckedIOException e) {
+            if (e.getCause() instanceof DataReadException dre) throw dre;
+            throw e;
+        }
+    }
+
+    private static void unwrapDataReadVoid(Runnable work) throws DataReadException {
+        try {
+            work.run();
+        } catch (UncheckedIOException e) {
+            if (e.getCause() instanceof DataReadException dre) throw dre;
+            throw e;
+        }
     }
 
     private void writeBufferedData(Path destination, Map<String, String> writeOptions, Stream<VortexData> bufferedData) {
@@ -97,13 +145,30 @@ class NetcdfBatchImporter extends BatchImporter {
         logger.info(() -> "Completed Buffered Write Count: " + bufferedDataList.size());
     }
 
-    private static VortexGridCollection representativeCollection(List<DataReader> readers, Map<String, String> geoOptions) {
+    private static VortexGridCollection representativeCollection(List<DataReader> readers, Map<String, String> geoOptions) throws DataReadException {
         GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
         Set<String> seenVariables = new HashSet<>();
 
-        List<VortexGrid> processedFirstGrids = readers.stream()
-                .filter(reader -> isUniqueVariableReader(seenVariables, reader))
-                .map(r -> r.getDto(0))
+        // Uniqueness check is intentionally sequential — seenVariables is not
+        // thread-safe and the order of "first encounter" must be deterministic.
+        List<DataReader> uniqueReaders = new ArrayList<>();
+        for (DataReader r : readers) {
+            if (isUniqueVariableReader(seenVariables, r)) {
+                uniqueReaders.add(r);
+            }
+        }
+
+        List<VortexData> firstDtos = unwrapDataRead(() -> uniqueReaders.stream()
+                .map(r -> {
+                    try {
+                        return r.getDto(0);
+                    } catch (DataReadException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .toList());
+
+        List<VortexGrid> processedFirstGrids = firstDtos.stream()
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)
                 .map(geoProcessor::process)

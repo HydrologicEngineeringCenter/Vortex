@@ -17,7 +17,7 @@ class AscZipDataReader extends DataReader implements VirtualFileSystem {
     AscZipDataReader(DataReaderBuilder builder) { super(builder); }
 
     @Override
-    public List<VortexData> getDtos() {
+    public List<VortexData> getDtos() throws DataReadException {
         String vPath = getVirtualPath(path);
 
         Vector fileList = gdal.ReadDir(vPath);
@@ -52,7 +52,7 @@ class AscZipDataReader extends DataReader implements VirtualFileSystem {
     } // Extended getDtoCount(): Asc
 
     @Override
-    public VortexData getDto(int idx) {
+    public VortexData getDto(int idx) throws DataReadException {
         String vPath = getVirtualPath(path);
 
         Vector fileList = gdal.ReadDir(vPath);
@@ -60,8 +60,7 @@ class AscZipDataReader extends DataReader implements VirtualFileSystem {
         for (Object o : fileList) {
             String fileName = o.toString();
             if (fileName.endsWith(".asc")) {
-                count++;
-                if (count - 1 == idx) {
+                if (count == idx) {
                     DataReader reader = DataReader.builder()
                             .path(vPath + fileName)
                             .variable(variableName)
@@ -69,13 +68,14 @@ class AscZipDataReader extends DataReader implements VirtualFileSystem {
 
                     return reader.getDto(0);
                 }
+                count++;
             }
         }
-        return null;
+        throw new IndexOutOfBoundsException("idx=" + idx + " but only " + count + " .asc entries in " + path);
     } // Extended getDto(): Asc Zip
 
     @Override
-    public List<VortexDataInterval> getDataIntervals() {
+    public List<VortexDataInterval> getDataIntervals() throws DataReadException {
         return getDtos().stream()
                 .map(VortexDataInterval::of)
                 .toList();

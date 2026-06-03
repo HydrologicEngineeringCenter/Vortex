@@ -1,13 +1,20 @@
 package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.Options;
+import mil.army.usace.hec.vortex.io.DataReadException;
+import mil.army.usace.hec.vortex.io.DataReadExceptions;
 import mil.army.usace.hec.vortex.io.DataReader;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class BatchTransposer {
+    private static final Logger LOGGER = Logger.getLogger(BatchTransposer.class.getName());
+
     private final String pathToInput;
     private final Set<String> variables;
     private final double angle;
@@ -16,6 +23,8 @@ public class BatchTransposer {
     private final Double scaleFactor;
     private final Path destination;
     private final Map<String, String> writeOptions;
+
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
 
     private BatchTransposer(Builder builder){
         pathToInput = builder.pathToInput;
@@ -26,6 +35,14 @@ public class BatchTransposer {
         scaleFactor = builder.scaleFactor;
         destination = builder.destination;
         writeOptions = builder.writeOptions;
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener pcl) {
+        support.addPropertyChangeListener(pcl);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener pcl) {
+        support.removePropertyChangeListener(pcl);
     }
 
     public static class Builder {
@@ -109,29 +126,37 @@ public class BatchTransposer {
         return new Builder();
     }
 
-    public void process(){
+    public void process() throws DataReadException {
+        // Catalog the source once — getVariables can do a full DSS catalog
+        // scan, so calling it inside the per-variable loop was an O(N²) hot
+        // spot for sources with many records.
+        Set<String> availableVariables = DataReader.getVariables(pathToInput);
         List<TransposableUnit> units = new ArrayList<>();
-        variables.forEach(variable -> {
-            if (DataReader.getVariables(pathToInput).contains(variable)) {
-
-                DataReader reader = DataReader.builder()
-                        .path(pathToInput)
-                        .variable(variable)
-                        .build();
-
-                TransposableUnit unit = TransposableUnit.builder()
-                        .reader(reader)
-                        .angle(angle)
-                        .stormCenterX(stormCenterX)
-                        .stormCenterY(stormCenterY)
-                        .scaleFactor(scaleFactor)
-                        .destination(destination)
-                        .writeOptions(writeOptions)
-                        .build();
-
-                units.add(unit);
+        for (String variable : variables) {
+            if (!availableVariables.contains(variable)) {
+                continue;
+            }
+            DataReader reader = DataReader.builder()
+                    .path(pathToInput)
+                    .variable(variable)
+                    .build();
+            TransposableUnit unit = TransposableUnit.builder()
+                    .reader(reader)
+                    .angle(angle)
+                    .stormCenterX(stormCenterX)
+                    .stormCenterY(stormCenterY)
+                    .scaleFactor(scaleFactor)
+                    .destination(destination)
+                    .writeOptions(writeOptions)
+                    .build();
+            units.add(unit);
+        }
+        units.parallelStream().forEach(unit -> {
+            try {
+                unit.process();
+            } catch (DataReadException e) {
+                DataReadExceptions.reportTo(LOGGER, support, e);
             }
         });
-        units.parallelStream().forEach(TransposableUnit::process);
     }
 }

@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.math;
 
 import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.io.DataReadException;
 import mil.army.usace.hec.vortex.io.DataReader;
 
 import java.time.Duration;
@@ -30,7 +31,7 @@ class TimeStepFiller extends LinearInterpGapFiller {
     }
 
     @Override
-    protected GridMetadata analyzeGridData(DataReader reader) {
+    protected GridMetadata analyzeGridData(DataReader reader) throws DataReadException {
         GridMetadata metadata = new GridMetadata();
 
         int dtoCount = reader.getDtoCount();

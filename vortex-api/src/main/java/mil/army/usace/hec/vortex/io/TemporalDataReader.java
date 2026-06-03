@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import hec.heclib.util.Heclib;
+import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Grid;
@@ -20,24 +21,23 @@ public class TemporalDataReader implements AutoCloseable {
     private final VortexGrid baseGrid;
 
     /* Constructor */
-    private TemporalDataReader(DataReader dataReader) {
+    private TemporalDataReader(DataReader dataReader) throws DataReadException {
         this.dataReader = dataReader;
-        this.baseGrid = Optional.ofNullable(dataReader.getDto(0))
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
-                .orElse(null);
-
-        if (baseGrid != null) {
-            VortexDataType dataType = baseGrid.dataType();
-            List<VortexDataInterval> timeIntervals = this.dataReader.getDataIntervals();
-            recordIndexQuery = RecordIndexQuery.of(dataType, timeIntervals);
-        } else {
-            recordIndexQuery = RecordIndexQuery.of(VortexDataType.UNDEFINED, Collections.emptyList());
+        if (dataReader.getDtoCount() == 0) {
+            this.baseGrid = null;
+            this.recordIndexQuery = RecordIndexQuery.of(VortexDataType.UNDEFINED, Collections.emptyList());
+            return;
         }
+        // TemporalDataReader is grid-specific by contract; a non-VortexGrid
+        // here is a wiring error and surfaces as ClassCastException.
+        this.baseGrid = (VortexGrid) dataReader.getDto(0);
+        VortexDataType dataType = baseGrid.dataType();
+        List<VortexDataInterval> timeIntervals = dataReader.getDataIntervals();
+        this.recordIndexQuery = RecordIndexQuery.of(dataType, timeIntervals);
     }
 
     /* Factory */
-    public static TemporalDataReader create(DataReader dataReader) {
+    public static TemporalDataReader create(DataReader dataReader) throws DataReadException {
         return new TemporalDataReader(dataReader);
     }
 
@@ -50,7 +50,7 @@ public class TemporalDataReader implements AutoCloseable {
      * @return An Optional containing a VortexGrid with data for the specified time range,
      * or an empty Optional if no data is found.
      */
-    public Optional<VortexGrid> read(ZonedDateTime startTime, ZonedDateTime endTime) {
+    public Optional<VortexGrid> read(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         if (baseGrid == null) {
             return Optional.empty();
         }
@@ -86,16 +86,13 @@ public class TemporalDataReader implements AutoCloseable {
      * @return an {@link Optional} containing the best-matched {@link VortexGrid},
      *         or {@code Optional.empty()} if no grids are available
      */
-    public Optional<VortexGrid> readNearest(ZonedDateTime queryTime) {
+    public Optional<VortexGrid> readNearest(ZonedDateTime queryTime) throws DataReadException {
         if (baseGrid == null) {
             return Optional.empty();
         }
 
-        return recordIndexQuery.queryNearest(queryTime).stream()
-                .map(dataReader::getDto)
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
-                .min(nearestComparator(queryTime));
+        List<VortexGrid> candidates = readGrids(recordIndexQuery.queryNearest(queryTime));
+        return candidates.stream().min(nearestComparator(queryTime));
     }
 
     private Comparator<VortexGrid> nearestComparator(ZonedDateTime queryTime) {
@@ -131,7 +128,7 @@ public class TemporalDataReader implements AutoCloseable {
      * and the second element is the maximum grid for the specified time range.
      * Returns an empty array if no data is found.
      */
-    public VortexGrid[] getMinMaxGridData(ZonedDateTime startTime, ZonedDateTime endTime) {
+    public VortexGrid[] getMinMaxGridData(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         if (baseGrid == null) return new VortexGrid[0];
         VortexDataType dataType = baseGrid.dataType();
         return getMinMaxGridData(dataType, startTime, endTime);
@@ -196,7 +193,7 @@ public class TemporalDataReader implements AutoCloseable {
     }
 
     /* Read Methods */
-    private VortexGrid read(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) {
+    private VortexGrid read(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         if (startTime == null || endTime == null) {
             return baseGrid;
         }
@@ -209,23 +206,20 @@ public class TemporalDataReader implements AutoCloseable {
         };
     }
 
-    private VortexGrid readAccumulationData(ZonedDateTime startTime, ZonedDateTime endTime) {
+    private VortexGrid readAccumulationData(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         List<VortexGrid> relevantGrids = getGridsForPeriod(startTime, endTime);
         float[] data = TemporalDataCalculator.calculateWeightedAccumulation(relevantGrids, startTime, endTime);
         return TemporalDataCalculator.buildGrid(baseGrid, startTime, endTime, data);
     }
 
-    private VortexGrid readAverageData(ZonedDateTime startTime, ZonedDateTime endTime) {
+    private VortexGrid readAverageData(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         List<VortexGrid> relevantGrids = getGridsForPeriod(startTime, endTime);
         float[] data = TemporalDataCalculator.calculateWeightedAverage(relevantGrids, startTime, endTime);
         return TemporalDataCalculator.buildGrid(baseGrid, startTime, endTime, data);
     }
 
-    private VortexGrid readInstantaneousData(ZonedDateTime startTime, ZonedDateTime endTime) {
-        List<VortexGrid> relevantGrids = recordIndexQuery.query(startTime, endTime).stream()
-                .map(dataReader::getDto)
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
+    private VortexGrid readInstantaneousData(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
+        List<VortexGrid> relevantGrids = readGrids(recordIndexQuery.query(startTime, endTime)).stream()
                 .filter(grid -> grid.startTime() != null)
                 .sorted(Comparator.comparing(VortexGrid::startTime))
                 .toList();
@@ -240,7 +234,7 @@ public class TemporalDataReader implements AutoCloseable {
     }
 
     /* Get Min & Max Methods */
-    private VortexGrid[] getMinMaxGridData(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) {
+    private VortexGrid[] getMinMaxGridData(VortexDataType dataType, ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         return switch (dataType) {
             case ACCUMULATION, AVERAGE -> getMinMaxForPeriodGrids(startTime, endTime);
             case INSTANTANEOUS -> getMinMaxForInstantaneousGrids(startTime, endTime);
@@ -248,24 +242,16 @@ public class TemporalDataReader implements AutoCloseable {
         };
     }
 
-    private VortexGrid[] getMinMaxForPeriodGrids(ZonedDateTime startTime, ZonedDateTime endTime) {
-        List<Integer> indices = new ArrayList<>(recordIndexQuery.query(startTime, endTime));
-        List<VortexGrid> relevantGrids = indices.stream()
-                .map(dataReader::getDto)
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
-                .toList();
+    private VortexGrid[] getMinMaxForPeriodGrids(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
+        List<VortexGrid> relevantGrids = readGrids(recordIndexQuery.query(startTime, endTime));
         return buildMinMaxGrids(relevantGrids, startTime, endTime);
     }
 
-    private VortexGrid[] getMinMaxForInstantaneousGrids(ZonedDateTime startTime, ZonedDateTime endTime) {
+    private VortexGrid[] getMinMaxForInstantaneousGrids(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         List<Integer> indices = new ArrayList<>(recordIndexQuery.query(startTime, endTime));
         indices.remove(indices.size() - 1); // Drop last index
 
-        List<VortexGrid> relevantGrids = indices.stream()
-                .map(dataReader::getDto)
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
+        List<VortexGrid> relevantGrids = readGrids(indices).stream()
                 .filter(grid -> grid.startTime() != null)
                 .filter(g -> g.startTime().toEpochSecond() >= startTime.toEpochSecond())
                 .toList();
@@ -290,16 +276,12 @@ public class TemporalDataReader implements AutoCloseable {
         return new VortexGrid[]{minGrid, maxGrid};
     }
 
-    private List<VortexGrid> getGridsForPeriod(ZonedDateTime startTime, ZonedDateTime endTime) {
+    private List<VortexGrid> getGridsForPeriod(ZonedDateTime startTime, ZonedDateTime endTime) throws DataReadException {
         List<VortexGrid> relevantGrids = new ArrayList<>();
         VortexDataInterval coveredInterval = VortexDataInterval.UNDEFINED;
 
-        List<Integer> indices = recordIndexQuery.query(startTime, endTime);
-        List<VortexGrid> overlappingGrids = indices.stream()
-                .map(dataReader::getDto)
+        List<VortexGrid> overlappingGrids = readGrids(recordIndexQuery.query(startTime, endTime)).stream()
                 .filter(d -> d.endTime().isAfter(d.startTime())) // Filter out instantaneous grids
-                .filter(VortexGrid.class::isInstance)
-                .map(VortexGrid.class::cast)
                 .sorted(gridPrioritizationComparator())
                 .toList();
 
@@ -317,6 +299,20 @@ public class TemporalDataReader implements AutoCloseable {
         }
 
         return relevantGrids;
+    }
+
+    /**
+     * Reads grids for the given record indices, in order. The reader's
+     * contract guarantees grid-shaped data (validated at construction), so
+     * a non-grid return here is a wiring error and surfaces as a
+     * {@link ClassCastException}.
+     */
+    private List<VortexGrid> readGrids(List<Integer> indices) throws DataReadException {
+        List<VortexGrid> grids = new ArrayList<>(indices.size());
+        for (Integer idx : indices) {
+            grids.add((VortexGrid) dataReader.getDto(idx));
+        }
+        return grids;
     }
 
     /* Grid Selection/Prioritization Logic */

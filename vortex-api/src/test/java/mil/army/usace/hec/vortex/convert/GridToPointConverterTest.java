@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class GridToPointConverterTest {
 
     @Test
-    void QpeGridsConvertToPoint() {
+    void QpeGridsConvertToPoint() throws Exception {
         String pathToGrids = new File(getClass().getResource(
                 "/truckee/truckee_river_qpe.dss").getFile()).toString();
 
@@ -65,7 +65,7 @@ class GridToPointConverterTest {
     }
 
     @Test
-    void PrismGridsConvertToPoint() {
+    void PrismGridsConvertToPoint() throws Exception {
         String pathToGrids = new File(getClass().getResource(
                 "/canyon/Canyon_PRISM.dss").getFile()).toString();
 
@@ -113,7 +113,7 @@ class GridToPointConverterTest {
     }
 
     @Test
-    void CpcTmaxGridsConvertToPoint() {
+    void CpcTmaxGridsConvertToPoint() throws Exception {
         String pathToGrids = new File(getClass().getResource(
                 "/truckee/truckee_temperature.dss").getFile()).toString();
 

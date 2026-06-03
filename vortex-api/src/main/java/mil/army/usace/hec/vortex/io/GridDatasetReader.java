@@ -102,7 +102,7 @@ class GridDatasetReader extends NetcdfDataReader {
 
     /* Public */
     @Override
-    public List<VortexData> getDtos() {
+    public List<VortexData> getDtos() throws DataReadException {
         Dimension timeDim = gridDatatype.getTimeDimension();
         Dimension endDim = gridDatatype.getEnsembleDimension();
         Dimension rtDim = gridDatatype.getRunTimeDimension();
@@ -117,7 +117,8 @@ class GridDatasetReader extends NetcdfDataReader {
     }
 
     @Override
-    public VortexData getDto(int timeIndex) {
+    public VortexData getDto(int timeIndex) throws DataReadException {
+        Objects.checkIndex(timeIndex, getDtoCount());
         return createGridFromDataSlice(0, 0, timeIndex);
     }
 
@@ -138,15 +139,13 @@ class GridDatasetReader extends NetcdfDataReader {
     }
 
     /* Grid Data Helpers */
-    private List<VortexData> getMultiDimensionGrids(Dimension timeDim, Dimension endDim, Dimension rtDim) {
+    private List<VortexData> getMultiDimensionGrids(Dimension timeDim, Dimension endDim, Dimension rtDim) throws DataReadException {
         List<VortexData> gridList = new ArrayList<>();
 
         for (int rtIndex = 0; rtIndex < rtDim.getLength(); rtIndex++) {
             for (int endIndex = 0; endIndex < endDim.getLength(); endIndex++) {
                 for (int timeIndex = 0; timeIndex < timeDim.getLength(); timeIndex++) {
-                    VortexGrid vortexGrid = createGridFromDataSlice(rtIndex, endIndex, timeIndex);
-                    // Note: still add to list even if vortexGrid is null
-                    gridList.add(vortexGrid);
+                    gridList.add(createGridFromDataSlice(rtIndex, endIndex, timeIndex));
                 }
             }
         }
@@ -154,31 +153,28 @@ class GridDatasetReader extends NetcdfDataReader {
         return gridList;
     }
 
-    private List<VortexData> getTemporalGrids() {
+    private List<VortexData> getTemporalGrids() throws DataReadException {
         List<VortexData> gridList = new ArrayList<>();
         for (int i = 0; i < timeBounds.size(); i++) {
-            VortexData vortexGrid = getDto(i);
-            gridList.add(vortexGrid);
+            gridList.add(getDto(i));
         }
         return gridList;
     }
 
-    private List<VortexData> getStaticGrid() {
-        VortexData staticGrid = createGridFromDataSlice(0, 0, 0);
-        return staticGrid != null ? List.of(staticGrid) : Collections.emptyList();
+    private List<VortexData> getStaticGrid() throws DataReadException {
+        return List.of(createGridFromDataSlice(0, 0, 0));
     }
 
     /**
-     * Creates a VortexGrid object by reading a specific data slice and assembling it into a grid.
-     * This method retrieves a slice of data based on specified indices for runtime, ensemble, and time dimensions,
-     * converts the raw data into a float array, and then builds a grid using the processed data and associated time record.
+     * Reads a single grid slice from the underlying NetCDF dataset.
      *
      * @param rtIndex   the runtime dimension index. If < 0, all runtimes are included.
      * @param endIndex  the ensemble dimension index. If < 0, all ensembles are included.
      * @param timeIndex the time dimension index. Specifies a particular time slice to include.
-     * @return a VortexGrid object representing the specified data slice, or null if an IOException occurs.
+     * @return a VortexGrid object representing the specified data slice.
+     * @throws DataReadException if the underlying read fails.
      */
-    private VortexGrid createGridFromDataSlice(int rtIndex, int endIndex, int timeIndex) {
+    private VortexGrid createGridFromDataSlice(int rtIndex, int endIndex, int timeIndex) throws DataReadException {
         try {
             Array array = gridDatatype.readDataSlice(rtIndex, endIndex, timeIndex, -1, -1, -1);
             float[] slice = getFloatArray(array);
@@ -186,8 +182,10 @@ class GridDatasetReader extends NetcdfDataReader {
             VortexDataInterval timeRecord = (timeIndex < timeBounds.size()) ? timeBounds.get(timeIndex) : VortexDataInterval.UNDEFINED;
             return buildGrid(data, timeRecord);
         } catch (IOException e) {
-            logger.severe(e.getMessage());
-            return null;
+            String slicePath = "rt=" + rtIndex + ",ens=" + endIndex + ",t=" + timeIndex;
+            throw DataReadException.ioError(path, slicePath,
+                    "Failed to read NetCDF grid slice [" + path + " : " + slicePath + "]: " + e.getMessage(),
+                    e);
         }
     }
 

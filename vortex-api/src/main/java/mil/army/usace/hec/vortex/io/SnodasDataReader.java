@@ -24,9 +24,13 @@ class SnodasDataReader extends DataReader {
     SnodasDataReader(DataReaderBuilder builder) {super(builder);}
 
     @Override
-    public List<VortexData> getDtos() {
+    public List<VortexData> getDtos() throws DataReadException {
         // Read in raster using Gdal
         Dataset in = gdal.Open(this.path);
+        if (in == null) {
+            throw DataReadException.ioError(this.path, null,
+                    "GDAL could not open SNODAS raster at " + this.path + ": " + gdal.GetLastErrorMsg());
+        }
         Vector options = gdal.ParseCommandLine("-of MEM -a_srs \"+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs\" -a_nodata -9999 -a_ullr  -124.73333333 52.87500000 -66.94166667 24.95000000");
         TranslateOptions translateOptions = new TranslateOptions(options);
         Dataset raster = gdal.Translate("raster", in, translateOptions);
@@ -51,15 +55,13 @@ class SnodasDataReader extends DataReader {
     } // getDtoCount()
 
     @Override
-    public VortexData getDto(int idx) {
-        if (idx == 0)
-            return getDtos().get(0);
-        else
-            return null;
+    public VortexData getDto(int idx) throws DataReadException {
+        Objects.checkIndex(idx, 1);
+        return getDtos().get(0);
     } // getDto()
 
     @Override
-    public List<VortexDataInterval> getDataIntervals() {
+    public List<VortexDataInterval> getDataIntervals() throws DataReadException {
         return getDtos().stream()
                 .map(VortexDataInterval::of)
                 .toList();

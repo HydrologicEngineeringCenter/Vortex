@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.geo;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.io.DataReadException;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 import org.locationtech.jts.geom.Envelope;
@@ -90,7 +91,7 @@ public class SubsettableUnit {
         return new Builder();
     }
 
-    public void process() {
+    public void process() throws DataReadException {
         List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).toList();
 
         for (VortexGrid grid : grids) {

@@ -21,7 +21,7 @@ class ZonalStatisticsCalculatorTest {
     }
 
     @Test
-    void ZonalStatisticsCalculationValidates(){
+    void ZonalStatisticsCalculationValidates() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
@@ -60,7 +60,7 @@ class ZonalStatisticsCalculatorTest {
     }
 
     @Test
-    void CreateZoneMasksCreatesZoneMasks(){
+    void CreateZoneMasksCreatesZoneMasks() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/truckee/truckee_river_qpe.dss").getFile()).toString();
         Set<String> variables = DataReader.getVariables(inFile);

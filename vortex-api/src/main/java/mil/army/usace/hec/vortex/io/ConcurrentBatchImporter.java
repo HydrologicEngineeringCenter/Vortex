@@ -16,6 +16,14 @@ class ConcurrentBatchImporter extends BatchImporter {
 
     @Override
     public void process() {
+        try {
+            processChecked();
+        } catch (DataReadException e) {
+            DataReadExceptions.reportTo(logger, support, e);
+        }
+    }
+
+    private void processChecked() throws DataReadException {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
@@ -30,7 +38,11 @@ class ConcurrentBatchImporter extends BatchImporter {
 
         importableUnits.parallelStream().forEach(importableUnit -> {
             importableUnit.addPropertyChangeListener(propertyChangeListener());
-            importableUnit.process();
+            try {
+                importableUnit.process();
+            } catch (DataReadException e) {
+                DataReadExceptions.reportTo(logger, support, e);
+            }
         });
 
         stopwatch.end();

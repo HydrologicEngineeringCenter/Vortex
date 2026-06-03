@@ -32,7 +32,7 @@ class TemporalDataReaderTest {
 
     /* Set Up */
     @BeforeAll
-    static void setUp() {
+    static void setUp() throws Exception {
         tempDssFile = TestUtil.createTempFile("TemporalDataReaderTest.dss");
 
         writeAccumulationData();
@@ -46,7 +46,7 @@ class TemporalDataReaderTest {
 
     /* Getter Tests */
     @Test
-    void getAccumulationMinMaxGridData() {
+    void getAccumulationMinMaxGridData() throws Exception {
         ZonedDateTime startTime = buildTestTime(2, 0);
         ZonedDateTime endTime = buildTestTime(4, 15);
         float[] expectedMin = buildTestData(0f);
@@ -57,7 +57,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void getAverageMinMaxGridData() {
+    void getAverageMinMaxGridData() throws Exception {
         ZonedDateTime startTime = buildTestTime(1, 30);
         ZonedDateTime endTime = buildTestTime(3, 20);
         float[] expectedMin = buildTestData(7.5f);
@@ -68,7 +68,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void getInstantMinMaxGridData() {
+    void getInstantMinMaxGridData() throws Exception {
         ZonedDateTime startTime = buildTestTime(3, 0);
         ZonedDateTime endTime = buildTestTime(5, 30);
         float[] expectedMin = buildTestData(18f);
@@ -79,7 +79,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void getGridDefinition() {
+    void getGridDefinition() throws Exception {
         String expectedWkt = WktFactory.getShg();
 
         Optional<Grid> actualAccumulationGridDefinition = accumulationReader.getGridDefinition();
@@ -93,7 +93,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void getStartAndEndTime() {
+    void getStartAndEndTime() throws Exception {
         ZonedDateTime expectedAccumulationStartTime = TimeConverter.toZonedDateTime("01JAN2020:0100");
         ZonedDateTime expectedAccumulationEndTime = TimeConverter.toZonedDateTime("01JAN2020:0600");
         Optional<ZonedDateTime> actualAccumulationStartTime = accumulationReader.getStartTime();
@@ -123,7 +123,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void getDataUnits() {
+    void getDataUnits() throws Exception {
         String expectedAccumulationUnits = "MM";
         assertEquals(expectedAccumulationUnits, accumulationReader.getDataUnits().orElse(null));
 
@@ -136,7 +136,7 @@ class TemporalDataReaderTest {
 
     /* Accumulation Tests */
     @Test
-    void readAccumulationSingleGridOverlap() {
+    void readAccumulationSingleGridOverlap() throws Exception {
         TemporalDataReader reader = accumulationReader;
         ZonedDateTime start = buildTestTime(2, 0);
         ZonedDateTime end = buildTestTime(3, 0);
@@ -149,7 +149,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAccumulationFullDataOverlap() {
+    void readAccumulationFullDataOverlap() throws Exception {
         TemporalDataReader reader = accumulationReader;
         ZonedDateTime start = buildTestTime(1, 0);
         ZonedDateTime end = buildTestTime(6, 0);
@@ -162,7 +162,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAccumulationPartialFirstGridOverlap() {
+    void readAccumulationPartialFirstGridOverlap() throws Exception {
         TemporalDataReader reader = accumulationReader;
         ZonedDateTime start = buildTestTime(1, 30);
         ZonedDateTime end = buildTestTime(3, 0);
@@ -175,7 +175,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAccumulationPartialMultipleGridsOverlap() {
+    void readAccumulationPartialMultipleGridsOverlap() throws Exception {
         TemporalDataReader reader = accumulationReader;
         ZonedDateTime start = buildTestTime(1, 15);
         ZonedDateTime end = buildTestTime(3, 15);
@@ -188,7 +188,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAccumulationBeforeStart() {
+    void readAccumulationBeforeStart() throws Exception {
         TemporalDataReader reader = accumulationReader;
         ZonedDateTime start = buildTestTime(0, 15);
         ZonedDateTime end = buildTestTime(3, 0);
@@ -200,7 +200,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAccumulationTimeAfterEnd() {
+    void readAccumulationTimeAfterEnd() throws Exception {
         TemporalDataReader reader = accumulationReader;
         ZonedDateTime start = buildTestTime(4, 30);
         ZonedDateTime end = buildTestTime(6, 15);
@@ -213,7 +213,7 @@ class TemporalDataReaderTest {
 
     /* Average Tests */
     @Test
-    void readAverageNoOverlap() {
+    void readAverageNoOverlap() throws Exception {
         TemporalDataReader reader = averageReader;
         ZonedDateTime start = buildTestTime(7, 0);
         ZonedDateTime end = buildTestTime(8, 0);
@@ -225,7 +225,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAverageSingleGridOverlap() {
+    void readAverageSingleGridOverlap() throws Exception {
         TemporalDataReader reader = averageReader;
         ZonedDateTime start = buildTestTime(1, 0);
         ZonedDateTime end = buildTestTime(2, 0);
@@ -238,7 +238,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAverageFullDataOverlap() {
+    void readAverageFullDataOverlap() throws Exception {
         TemporalDataReader reader = averageReader;
         ZonedDateTime start = buildTestTime(1, 0);
         ZonedDateTime end = buildTestTime(6, 0);
@@ -251,7 +251,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAveragePartialFirstGridOverlap() {
+    void readAveragePartialFirstGridOverlap() throws Exception {
         TemporalDataReader reader = averageReader;
         ZonedDateTime start = buildTestTime(1, 30);
         ZonedDateTime end = buildTestTime(3, 0);
@@ -264,7 +264,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readAveragePartialMultipleGridsOverlap() {
+    void readAveragePartialMultipleGridsOverlap() throws Exception {
         TemporalDataReader reader = averageReader;
         ZonedDateTime start = buildTestTime(1, 15);
         ZonedDateTime end = buildTestTime(3, 15);
@@ -278,7 +278,7 @@ class TemporalDataReaderTest {
 
     /* Point Instant Tests */
     @Test
-    void readPointInstantSingleGridOverlap() {
+    void readPointInstantSingleGridOverlap() throws Exception {
         TemporalDataReader reader = instantReader;
         ZonedDateTime time = buildTestTime(2, 0);
 
@@ -290,7 +290,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readPointInstantInBetweenGrids() {
+    void readPointInstantInBetweenGrids() throws Exception {
         TemporalDataReader reader = instantReader;
         ZonedDateTime time = buildTestTime(1, 15);
 
@@ -302,7 +302,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readPointInstantBeforeStart() {
+    void readPointInstantBeforeStart() throws Exception {
         TemporalDataReader reader = instantReader;
         ZonedDateTime time = buildTestTime(0, 15);
 
@@ -313,7 +313,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readPointInstantAfterEnd() {
+    void readPointInstantAfterEnd() throws Exception {
         TemporalDataReader reader = instantReader;
         ZonedDateTime time = buildTestTime(5, 30);
 
@@ -325,7 +325,7 @@ class TemporalDataReaderTest {
 
     /* Period Instant Tests */
     @Test
-    void readPeriodInstantPartialMultipleGrids() {
+    void readPeriodInstantPartialMultipleGrids() throws Exception {
         TemporalDataReader reader = instantReader;
         ZonedDateTime start = buildTestTime(2, 15);
         ZonedDateTime end = buildTestTime(4, 50);
@@ -338,7 +338,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readPeriodInstantMissingSomeDataBeforeStart() {
+    void readPeriodInstantMissingSomeDataBeforeStart() throws Exception {
         TemporalDataReader reader = instantReader;
         ZonedDateTime start = buildTestTime(0, 30);
         ZonedDateTime end = buildTestTime(1, 0);
@@ -350,7 +350,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readPeriodInstantMissingSomeDataAfterEnd() {
+    void readPeriodInstantMissingSomeDataAfterEnd() throws Exception {
         TemporalDataReader reader = instantReader;
         ZonedDateTime start = buildTestTime(5, 0);
         ZonedDateTime end = buildTestTime(6, 15);
@@ -368,7 +368,7 @@ class TemporalDataReaderTest {
     //
 
     @Test
-    void readNearestAccumulation_exactMatchOnStart() {
+    void readNearestAccumulation_exactMatchOnStart() throws Exception {
         // query exactly at start of the [3–4] interval
         ZonedDateTime query = buildTestTime(3, 0);
         Optional<VortexGrid> opt = accumulationReader.readNearest(query);
@@ -379,7 +379,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readNearestAccumulation_midpointTieBreakToEarliestEnd() {
+    void readNearestAccumulation_midpointTieBreakToEarliestEnd() throws Exception {
         // 2:30 is exactly 0.5h from both start=2 and start=3;
         // tie‐breaker on endTime -> picks the one ending sooner ([2–3])
         ZonedDateTime query = buildTestTime(2, 30);
@@ -389,7 +389,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readNearestAccumulation_beforeFirstStarts() {
+    void readNearestAccumulation_beforeFirstStarts() throws Exception {
         // 00:30 is closest to the first interval start at 01:00
         ZonedDateTime query = buildTestTime(0, 30);
         Optional<VortexGrid> opt = accumulationReader.readNearest(query);
@@ -403,7 +403,7 @@ class TemporalDataReaderTest {
     //
 
     @Test
-    void readNearestAverage_exactMatchOnStart() {
+    void readNearestAverage_exactMatchOnStart() throws Exception {
         ZonedDateTime query = buildTestTime(4, 0);
         Optional<VortexGrid> opt = averageReader.readNearest(query);
         assertTrue(opt.isPresent());
@@ -411,7 +411,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readNearestAverage_tieBetween2and3ResolvesTo2() {
+    void readNearestAverage_tieBetween2and3ResolvesTo2() throws Exception {
         // 2:30 -> 0.5h from start=2 and start=3; ends at 3 < 4 so pick [2–3]
         ZonedDateTime query = buildTestTime(2, 30);
         Optional<VortexGrid> opt = averageReader.readNearest(query);
@@ -420,7 +420,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readNearestAverage_afterLastEnds() {
+    void readNearestAverage_afterLastEnds() throws Exception {
         // 06:30 is closest to the interval starting at 05:00 (last)
         ZonedDateTime query = buildTestTime(6, 30);
         Optional<VortexGrid> opt = averageReader.readNearest(query);
@@ -434,7 +434,7 @@ class TemporalDataReaderTest {
     //
 
     @Test
-    void readNearestInstant_exactHit() {
+    void readNearestInstant_exactHit() throws Exception {
         // exact hit at 04:00
         ZonedDateTime query = buildTestTime(4, 0);
         Optional<VortexGrid> opt = instantReader.readNearest(query);
@@ -443,7 +443,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readNearestInstant_midpointTieEarlierWins() {
+    void readNearestInstant_midpointTieEarlierWins() throws Exception {
         // 3:30 is 0.5h from both 3 and 4; earlier (3) should win → value=18
         ZonedDateTime query = buildTestTime(3, 30);
         Optional<VortexGrid> opt = instantReader.readNearest(query);
@@ -452,7 +452,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readNearestInstant_beforeFirstPoint() {
+    void readNearestInstant_beforeFirstPoint() throws Exception {
         // before 1:00 → nearest is 1:00
         ZonedDateTime query = buildTestTime(0, 15);
         Optional<VortexGrid> opt = instantReader.readNearest(query);
@@ -461,7 +461,7 @@ class TemporalDataReaderTest {
     }
 
     @Test
-    void readNearestInstant_afterLastPoint() {
+    void readNearestInstant_afterLastPoint() throws Exception {
         // after 5:00 → nearest is 5:00
         ZonedDateTime query = buildTestTime(6, 45);
         Optional<VortexGrid> opt = instantReader.readNearest(query);
@@ -522,7 +522,7 @@ class TemporalDataReaderTest {
         dataWriter.write();
     }
 
-    private static TemporalDataReader createTemporalDataReader(VortexDataType type) {
+    private static TemporalDataReader createTemporalDataReader(VortexDataType type) throws DataReadException {
         String variableName = getTestGridDataName(type);
         String pathToData = String.format("///%s/*/*//", variableName);
         DataReader dataReader = DataReader.builder().path(tempDssFile).variable(pathToData).build();
