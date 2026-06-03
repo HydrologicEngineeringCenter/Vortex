@@ -26,7 +26,7 @@ class WktFactoryTest {
 
     @Disabled //because this test was taking a really long time
     @Test
-    void MrmsPrecipWktPassesRegression() {
+    void MrmsPrecipWktPassesRegression() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
 
@@ -53,7 +53,7 @@ class WktFactoryTest {
     }
 
     @Test
-    void RtmaTemperatureWktPassesRegression() {
+    void RtmaTemperatureWktPassesRegression() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/201701021200_TMPK.grib2").getFile()).toString();
 

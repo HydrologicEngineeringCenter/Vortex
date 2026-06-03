@@ -21,10 +21,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static hec.heclib.dss.HecDSSDataAttributes.*;
 
 class DssDataReader extends DataReader {
+    private static final Logger logger = Logger.getLogger(DssDataReader.class.getName());
+
     private final List<DSSPathname> catalogPathnameList;
 
     DssDataReader(DataReaderBuilder builder) {
@@ -46,18 +50,29 @@ class DssDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexData> getDtos() {
-        List<VortexData> dtos = new ArrayList<>();
-        catalogPathnameList.forEach(path -> {
-            GridData gridData = retrieveGriddedData(this.path, path.getPathname());
-            if (gridData != null) {
-                dtos.add(dssToDto(gridData, path.getPathname()));
+    public List<VortexData> getDtos() throws DataReadException {
+        List<VortexData> dtos = new ArrayList<>(catalogPathnameList.size());
+        for (DSSPathname pathname : catalogPathnameList) {
+            GridData gridData;
+            try {
+                gridData = retrieveGriddedData(this.path, pathname.getPathname());
+            } catch (DataReadException e) {
+                // Bulk catalog reads silently skip records that don't exist
+                // (MISSING_RECORD) or aren't grids (UNSUPPORTED) — matching
+                // the pre-DataReadException behavior where null grids were
+                // dropped. Only genuine I/O failures escape.
+                if (e.getKind() == DataReadException.Kind.IO_ERROR) {
+                    throw e;
+                }
+                logger.log(Level.FINE, e, e::getMessage);
+                continue;
             }
-        });
+            dtos.add(dssToDto(gridData, pathname.getPathname()));
+        }
         return dtos;
     }
 
-    private static GridData retrieveGriddedData(String dssFileName, String dssPathname) {
+    private static GridData retrieveGriddedData(String dssFileName, String dssPathname) throws DataReadException {
         int[] status = new int[1];
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(dssFileName);
@@ -66,16 +81,55 @@ class DssDataReader extends DataReader {
 
         try {
             griddedData.retrieveGriddedData(true, gridData, status);
-            if (status[0] != 0) {
-                return null;
-            }
         } catch (Exception e) {
-            return null;
+            throw DataReadException.ioError(dssFileName, dssPathname,
+                    "Failed to read DSS grid record [" + dssFileName + " : " + dssPathname + "]: " + e.getMessage(),
+                    e);
         } finally {
             griddedData.done();
         }
 
+        if (status[0] != 0) {
+            throw dssFailure(dssFileName, dssPathname, status[0]);
+        }
+
         return gridData;
+    }
+
+    /**
+     * Maps a HEC-DSS {@code retrieveGridFromDss} / {@code retrieveGriddedData}
+     * status code to a {@link DataReadException} with an appropriate
+     * {@link DataReadException.Kind}. Centralizes the only place that needs
+     * to know what specific DSS status codes mean.
+     *
+     * <p>Known mappings (see {@code GridUtilities.retrieveGridFromDss}):
+     * <ul>
+     *   <li>{@code -1} — set-file or set-pathname failed → {@code IO_ERROR}</li>
+     *   <li>{@code -2} — record does not exist → {@code MISSING_RECORD}</li>
+     *   <li>{@code -3} — record exists but isn't a grid type → {@code UNSUPPORTED}</li>
+     *   <li>{@code 0} with null payload — native success status but no data
+     *       returned, almost certainly a JNI-level failure → {@code IO_ERROR}</li>
+     *   <li>Other negative — native retrieve failure → {@code IO_ERROR}</li>
+     * </ul>
+     */
+    // Package-private so the classification table can be pinned down by a
+    // unit test; the method itself is otherwise an implementation detail.
+    static DataReadException dssFailure(String dssFileName, String dssPathname, int statusCode) {
+        DataReadException.Kind kind = switch (statusCode) {
+            case -2 -> DataReadException.Kind.MISSING_RECORD;
+            case -3 -> DataReadException.Kind.UNSUPPORTED;
+            default -> DataReadException.Kind.IO_ERROR;
+        };
+        // Status 0 conventionally means success in HEC-DSS; reaching this
+        // method with status 0 means the native call returned no data despite
+        // reporting success — surface that explicitly instead of an opaque
+        // "status=0".
+        String detail = statusCode == 0
+                ? "native call returned no data despite status=0 (likely JNI-level failure)"
+                : "status=" + statusCode;
+        String message = "Failed to read DSS grid record [" + dssFileName + " : " + dssPathname
+                + "], " + detail + ", kind=" + kind;
+        return DataReadException.of(kind, dssFileName, dssPathname, statusCode, message, null);
     }
 
     private VortexGrid dssToDto(GridData gridData, String pathname){
@@ -209,18 +263,23 @@ class DssDataReader extends DataReader {
     }
 
     @Override
-    public VortexData getDto(int idx) {
-        if (idx < 0 || idx >= catalogPathnameList.size()) {
-            return null;
-        }
+    public VortexData getDto(int idx) throws DataReadException {
+        Objects.checkIndex(idx, catalogPathnameList.size());
 
         String dssPath = catalogPathnameList.get(idx).pathname();
         int[] status = new int[1];
-        GridData gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
-        if (gridData != null) {
-            return dssToDto(gridData, dssPath);
+        GridData gridData;
+        try {
+            gridData = GridUtilities.retrieveGridFromDss(this.path, dssPath, status);
+        } catch (Exception e) {
+            throw DataReadException.ioError(this.path, dssPath,
+                    "Failed to read DSS grid record [" + this.path + " : " + dssPath + "]: " + e.getMessage(),
+                    e);
         }
-        return null;
+        if (gridData == null) {
+            throw dssFailure(this.path, dssPath, status[0]);
+        }
+        return dssToDto(gridData, dssPath);
     }
 
     @Override

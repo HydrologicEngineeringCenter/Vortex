@@ -35,9 +35,13 @@ class BilDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexData> getDtos() {
+    public List<VortexData> getDtos() throws DataReadException {
 
         Dataset in = gdal.Open(path);
+        if (in == null) {
+            throw DataReadException.ioError(path, null,
+                    "GDAL could not open BIL raster at " + path + ": " + gdal.GetLastErrorMsg());
+        }
         ArrayList<String>  options =  new ArrayList<>();
         options.add("-of");
         options.add("MEM");
@@ -265,16 +269,13 @@ class BilDataReader extends DataReader {
     }
 
     @Override
-    public VortexData getDto(int idx) {
-        if (idx == 0)
-            return getDtos().get(0);
-        else {
-            return null;
-        }
+    public VortexData getDto(int idx) throws DataReadException {
+        Objects.checkIndex(idx, 1);
+        return getDtos().get(0);
     }
 
     @Override
-    public List<VortexDataInterval> getDataIntervals() {
+    public List<VortexDataInterval> getDataIntervals() throws DataReadException {
         return getDtos().stream()
                 .map(VortexDataInterval::of)
                 .toList();

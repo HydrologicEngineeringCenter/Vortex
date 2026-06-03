@@ -3,6 +3,8 @@ package mil.army.usace.hec.vortex.math;
 import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.io.DataReadException;
+import mil.army.usace.hec.vortex.io.DataReadExceptions;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 
@@ -124,35 +126,38 @@ public class BatchSanitizer implements Runnable {
 
     @Override
     public void run() {
-        process();
+        try {
+            process();
+        } catch (DataReadException e) {
+            DataReadExceptions.reportTo(LOGGER, support, e);
+        }
     }
 
-    public void process(){
+    public void process() throws DataReadException {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
+        Set<String> availableVariables = DataReader.getVariables(pathToInput);
         List<SanitizableUnit> units = new ArrayList<>();
-        variables.forEach(variable -> {
-            if (DataReader.getVariables(pathToInput).contains(variable)) {
-
-                DataReader reader = DataReader.builder()
-                        .path(pathToInput)
-                        .variable(variable)
-                        .build();
-
-                SanitizableUnit unit = SanitizableUnit.builder()
-                        .reader(reader)
-                        .minimumThreshold(minimumThreshold)
-                        .minimumReplacementValue(minimumReplacementValue)
-                        .maximumThreshold(maximumThreshold)
-                        .maximumReplacementValue(maximumReplacementValue)
-                        .destination(destination)
-                        .writeOptions(writeOptions)
-                        .build();
-
-                units.add(unit);
+        for (String variable : variables) {
+            if (!availableVariables.contains(variable)) {
+                continue;
             }
-        });
+            DataReader reader = DataReader.builder()
+                    .path(pathToInput)
+                    .variable(variable)
+                    .build();
+            SanitizableUnit unit = SanitizableUnit.builder()
+                    .reader(reader)
+                    .minimumThreshold(minimumThreshold)
+                    .minimumReplacementValue(minimumReplacementValue)
+                    .maximumThreshold(maximumThreshold)
+                    .maximumReplacementValue(maximumReplacementValue)
+                    .destination(destination)
+                    .writeOptions(writeOptions)
+                    .build();
+            units.add(unit);
+        }
 
         AtomicInteger processed = new AtomicInteger();
         int totalCount = units.size();
@@ -166,7 +171,11 @@ public class BatchSanitizer implements Runnable {
                 support.firePropertyChange("progress", null, newValue);
             });
 
-            unit.process();
+            try {
+                unit.process();
+            } catch (DataReadException e) {
+                DataReadExceptions.reportTo(LOGGER, support, e);
+            }
         });
 
         stopwatch.end();

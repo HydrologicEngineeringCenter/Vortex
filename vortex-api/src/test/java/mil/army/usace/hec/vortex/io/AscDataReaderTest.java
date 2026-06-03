@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 
 import java.io.File;
 import java.time.ZoneId;
@@ -9,11 +10,13 @@ import java.time.ZonedDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class AscDataReaderTest {
 
     @Test
-    void PrismImportPassesRegression() {
+    void PrismImportPassesRegression() throws Exception {
 
         String path = new File(getClass().getResource(
                 "/regression/io/asc_reader/PRISM_ppt_stable_4kmD2_20170101_asc.asc").getFile()).toString();
@@ -37,7 +40,7 @@ class AscDataReaderTest {
     }
 
     @Test
-    void QpfHourlyImport(){
+    void QpfHourlyImport() throws Exception {
         String path = new File(getClass().getResource("/QPF_1HR_AZ_19121900.asc").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -50,7 +53,7 @@ class AscDataReaderTest {
     }
 
     @Test
-    void Atlas14Import(){
+    void Atlas14Import() throws Exception {
         String path = new File(getClass().getResource("/orb100yr24ha/orb100yr24ha.asc").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -63,7 +66,7 @@ class AscDataReaderTest {
     }
 
     @Test
-    void TwoIsoDatesImport(){
+    void TwoIsoDatesImport() throws Exception {
         String path = new File(getClass().getResource("/2000-01-01T0000_2000-01-01T0100.tif").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -77,7 +80,32 @@ class AscDataReaderTest {
     }
 
     @Test
-    void OneIsoDateImport(){
+    void missingFile_surfacesAsDataReadException() throws Exception {
+        // A non-existent .asc path is routed to AscDataReader; GDAL fails to
+        // open it. The reader should surface that as a DataReadException with
+        // Kind.IO_ERROR and the path embedded in the message — not silently
+        // return an empty list as it did before this branch.
+        DataReader reader = DataReader.builder()
+                .path("/does/not/exist/missing.asc")
+                .variable("ppt")
+                .build();
+
+        try {
+            reader.getDtos();
+            fail("expected DataReadException for missing .asc but got no exception");
+        } catch (DataReadException e) {
+            assertEquals(DataReadException.Kind.IO_ERROR, e.getKind());
+            assertTrue(e.getMessage().contains("missing.asc"),
+                    "expected path in message but got: " + e.getMessage());
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+            // GDAL native lib not available in this environment — the test
+            // can't exercise the GDAL failure path. Skip rather than fail.
+            Assumptions.abort("GDAL native library not available: " + e.getMessage());
+        }
+    }
+
+    @Test
+    void OneIsoDateImport() throws Exception {
         String path = new File(getClass().getResource("/2000-01-01T0000.tif").getFile()).toString();
 
         DataReader reader = DataReader.builder()

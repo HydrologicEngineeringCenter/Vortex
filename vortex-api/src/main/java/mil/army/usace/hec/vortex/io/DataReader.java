@@ -10,6 +10,39 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * Base class for all Vortex data readers.
+ *
+ * <h2>API migration: checked read failures</h2>
+ *
+ * As of this release, the read methods declare a checked
+ * {@link DataReadException}:
+ * <ul>
+ *   <li>{@link #getDtos()}</li>
+ *   <li>{@link #getDto(int)}</li>
+ *   <li>{@link #getDataIntervals()}</li>
+ *   <li>{@link DataReaderBuilder#build()}</li>
+ *   <li>{@link #copy(DataReader)}</li>
+ * </ul>
+ *
+ * <p>Previously these methods silently returned {@code null} on failure;
+ * callers had no way to distinguish a missing record from an I/O error.
+ * Now read failures surface as {@link DataReadException}, which carries a
+ * {@link DataReadException.Kind Kind} so callers can decide whether to skip
+ * the record or abort the operation.
+ *
+ * <p>Migration for downstream consumers:
+ * <ul>
+ *   <li>{@code DataReadException} extends {@link java.io.IOException}, so
+ *       callers that already declare {@code throws IOException} or catch
+ *       {@code IOException} continue to compile unchanged.</li>
+ *   <li>Callers that previously checked for {@code null} from
+ *       {@code getDto(int)} or filtered nulls out of {@code getDtos()} should
+ *       now either let the exception propagate or catch
+ *       {@code DataReadException} and switch on
+ *       {@link DataReadException#getKind()}.</li>
+ * </ul>
+ */
 public abstract class DataReader implements AutoCloseable {
     private static final Pattern SUPPORTED_ARCHIVE_PATTERN = Pattern.compile(
             "snodas.*\\.tar$|bil\\.zip$|asc\\.zip$",
@@ -48,7 +81,7 @@ public abstract class DataReader implements AutoCloseable {
             return this;
         } // Get variable()
 
-        public DataReader build() {
+        public DataReader build() throws DataReadException {
             if (path == null) {
                 throw new IllegalStateException("DataReader requires a path to data source file.");
             }
@@ -93,14 +126,22 @@ public abstract class DataReader implements AutoCloseable {
         return new DataReaderBuilder();
     }
 
-    public static DataReader copy(DataReader dataReader) {
+    public static DataReader copy(DataReader dataReader) throws DataReadException {
         return DataReader.builder()
                 .path(dataReader.path)
                 .variable(dataReader.variableName)
                 .build();
     }
 
-    public abstract List<VortexData> getDtos();
+    /**
+     * Reads every record this reader can produce.
+     *
+     * @return all records in catalog order; never {@code null}.
+     * @throws DataReadException if the underlying source cannot be read or
+     *         a record fails to decode. The reader does not return a partial
+     *         result on failure.
+     */
+    public abstract List<VortexData> getDtos() throws DataReadException;
 
     public static Set<String> getVariables(String path) {
         String fileName = new File(path).getName().toLowerCase();
@@ -118,11 +159,33 @@ public abstract class DataReader implements AutoCloseable {
         }
     } // builder()
 
+    /**
+     * Number of records this reader exposes — equivalent to {@code getDtos().size()}
+     * but without paying the cost of reading every record's payload.
+     */
     public abstract int getDtoCount();
 
-    public abstract VortexData getDto(int idx);
+    /**
+     * Reads a single record by zero-based index.
+     *
+     * @param idx record index in catalog order, in {@code [0, getDtoCount())}.
+     * @return the record at {@code idx}; never {@code null}.
+     * @throws IndexOutOfBoundsException if {@code idx} is outside
+     *         {@code [0, getDtoCount())}. Out-of-range is a programmer error,
+     *         not a read failure.
+     * @throws DataReadException if the record exists in the catalog but the
+     *         underlying read fails (status code, JNI failure, decoder error).
+     */
+    public abstract VortexData getDto(int idx) throws DataReadException;
 
-    public abstract List<VortexDataInterval> getDataIntervals();
+    /**
+     * Returns the time intervals associated with this reader's records, in
+     * the same order as {@link #getDto(int)} would return them. Implementations
+     * that can derive intervals from metadata alone may avoid reading record
+     * payloads; implementations that can't will load records and thus may
+     * fail with {@link DataReadException}.
+     */
+    public abstract List<VortexDataInterval> getDataIntervals() throws DataReadException;
 
     public static boolean isVariableRequired(String pathToFile) {
         String fileName = new File(pathToFile).getName().toLowerCase();

@@ -37,7 +37,7 @@ import static tech.units.indriya.unit.Units.METRE;
 class NetcdfDataReaderTest {
 
     @Test
-    void Sresa1bPrecipRateImport(){
+    void Sresa1bPrecipRateImport() throws Exception {
         String inFile = new File(getClass().getResource("/sresa1b_ncar_ccsm3-example.nc").getFile()).toString();
         String variableName = "pr";
 
@@ -52,7 +52,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void GpcpPrecipImport(){
+    void GpcpPrecipImport() throws Exception {
         String inFile = new File(getClass().getResource("/gpcp_cdr_v23rB1_y2019_m01.nc").getFile()).toString();
         String variableName = "precip";
 
@@ -67,7 +67,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void CpcTmaxImport(){
+    void CpcTmaxImport() throws Exception {
         String inFile = new File(getClass().getResource("/tmax.2017.nc").getFile()).toString();
         String variableName = "tmax";
 
@@ -82,7 +82,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void CpcPrecipImport(){
+    void CpcPrecipImport() throws Exception {
         String inFile = new File(getClass().getResource("/precip.2017.nc").getFile()).toString();
         String variableName = "precip";
 
@@ -97,7 +97,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void EcmwfEra40Import(){
+    void EcmwfEra40Import() throws Exception {
         String inFile = new File(getClass().getResource("/ECMWF_ERA-40_subset.nc").getFile()).toString();
         String variableName = "p2t";
 
@@ -112,7 +112,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void Sfav2Import(){
+    void Sfav2Import() throws Exception {
         String inFile = new File(getClass().getResource("/sfav2_CONUS_24h_2010030112.nc").getFile()).toString();
         String variableName = "Data";
 
@@ -128,7 +128,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void AorcTempImport(){
+    void AorcTempImport() throws Exception {
         String inFile = new File(getClass().getResource("/AORC_TMP_MARFC_1984010100.nc4").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -143,7 +143,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void AorcPrecipImport(){
+    void AorcPrecipImport() throws Exception {
         String inFile = new File(getClass().getResource("/AORC_APCP_MARFC_1984010100.nc4").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -158,7 +158,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void ArizonaSweDaily(){
+    void ArizonaSweDaily() throws Exception {
         String inFile = new File(getClass().getResource("/01.nc").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -173,7 +173,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void GCIP_EOP_Stage_IV(){
+    void GCIP_EOP_Stage_IV() throws Exception {
         String inFile = new File(getClass().getResource("/ST4.2005010100.01h").getFile()).toString();
 
         Set<String> variables = DataReader.getVariables(inFile);
@@ -182,7 +182,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void NLDAS_Forcing_APCP(){
+    void NLDAS_Forcing_APCP() throws Exception {
         String inFile = new File(getClass().getResource("/NLDAS_FORA0125_H.A19820101.0000.002.grb.SUB.nc4").getFile()).toString();
 
         //from NLDAS documentation: precipitation is backward-accumulated (over the entire previous hour before the time listed in the dataset)
@@ -199,7 +199,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void NLDAS_Forcing_TMP(){
+    void NLDAS_Forcing_TMP() throws Exception {
         String inFile = new File(getClass().getResource("/NLDAS_FORA0125_H.A19820101.0000.002.grb.SUB.nc4").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -214,7 +214,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void MRMS_RadarOnly_QPE(){
+    void MRMS_RadarOnly_QPE() throws Exception {
         String inFile = new File(getClass().getResource("/RadarOnly_QPE_01H_00.00_20210706-000000.grib2").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -229,7 +229,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void MRMS_MultiSensor_QPE(){
+    void MRMS_MultiSensor_QPE() throws Exception {
         String inFile = new File(getClass().getResource("/MultiSensor_QPE_01H_Pass2_00.00_20210706-000000.grib2").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -244,7 +244,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void MRMS_PrecipRate(){
+    void MRMS_PrecipRate() throws Exception {
         String inFile = new File(getClass().getResource("/PrecipRate_00.00_20210706-000000.grib2").getFile()).toString();
 
         DataReader reader = DataReader.builder()
@@ -261,7 +261,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void cmip() {
+    void cmip() throws Exception {
         URL inUrl = Objects.requireNonNull(getClass().getResource(
                 "/cmip/Extraction_pr.nc"));
 
@@ -308,7 +308,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void gefs() {
+    void gefs() throws Exception {
         URL url = getClass().getResource("/gefs/gep01.t06z.pgrb2s.0p25.f000.grb2");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -363,7 +363,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void cordex() {
+    void cordex() throws Exception {
         URL inUrl = Objects.requireNonNull(getClass().getResource(
                 "/cordex/precip.nc"));
 
@@ -435,7 +435,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void prmsl() {
+    void prmsl() throws Exception {
         URL url = getClass().getResource("/prmsl/prmsl.nc");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -486,7 +486,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void gfs() {
+    void gfs() throws Exception {
         URL url = getClass().getResource("/gfs/GFS.nc");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -571,7 +571,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void hrrr() {
+    void hrrr() throws Exception {
         URL url = getClass().getResource("/hrrr/HRRR.nc");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -656,7 +656,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void nam() {
+    void nam() throws Exception {
         URL url = getClass().getResource("/nam/NAM.nc");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -741,7 +741,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void rtma() {
+    void rtma() throws Exception {
         URL url = getClass().getResource("/rtma/RTMA.nc");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -826,7 +826,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void GpmHourSub(){
+    void GpmHourSub() throws Exception {
         URL url = getClass().getResource("/3B-HHR.MS.MRG.3IMERG.20170103-S110000-E112959.0660.V06B.HDF5.SUB.hdf5");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -896,7 +896,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void gpmDay() {
+    void gpmDay() throws Exception {
         URL url = getClass().getResource("/3B-DAY.MS.MRG.3IMERG.20010130-S000000-E235959.V07B.nc4");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
@@ -960,7 +960,7 @@ class NetcdfDataReaderTest {
     }
 
     @Test
-    void julianCalendarDates() {
+    void julianCalendarDates() throws Exception {
         URL url = getClass().getResource("/3B-HHR-L.MS.MRG.3IMERG.20250701-S000000-E002959.0000.V07B.HDF5");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();

@@ -4,6 +4,9 @@ import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.io.DataReadException;
+import mil.army.usace.hec.vortex.io.DataReadExceptions;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 import mil.army.usace.hec.vortex.util.Stopwatch;
@@ -21,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -137,31 +141,22 @@ public class Normalizer implements Runnable {
 
     @Override
     public void run() {
-        normalize();
+        try {
+            normalize();
+        } catch (DataReadException e) {
+            DataReadExceptions.reportTo(logger, support, e);
+        }
     }
 
-    public void normalize(){
+    public void normalize() throws DataReadException {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
         String messageBegin = Message.format("normalizer_begin");
         logger.info(() -> messageBegin);
 
-        List<VortexData> source = new ArrayList<>();
-        sourceVariables.forEach(variable -> source.addAll(
-                DataReader.builder()
-                        .path(pathToSource)
-                        .variable(variable)
-                        .build()
-                        .getDtos()));
-
-        List<VortexData> normals = new ArrayList<>();
-        normalsVariables.forEach(variable -> normals.addAll(
-                DataReader.builder()
-                        .path(pathToNormals)
-                        .variable(variable)
-                        .build()
-                        .getDtos()));
+        List<VortexData> source = readAll(pathToSource, sourceVariables);
+        List<VortexData> normals = readAll(pathToNormals, normalsVariables);
 
         AtomicReference<ZonedDateTime> intervalStart = new AtomicReference<>();
         intervalStart.set(startTime);
@@ -287,6 +282,29 @@ public class Normalizer implements Runnable {
         });
 
         return output;
+    }
+
+    /**
+     * Reads all DTOs across the given variables of one source file. Each
+     * reader is closed after its records are collected to avoid leaking
+     * native handles (notably matters for NetCDF). Close failures are
+     * logged but do not abort the batch — the data has already been read.
+     */
+    private static List<VortexData> readAll(String path, Set<String> variables) throws DataReadException {
+        List<VortexData> dtos = new ArrayList<>();
+        for (String variable : variables) {
+            DataReader reader = DataReader.builder().path(path).variable(variable).build();
+            try {
+                dtos.addAll(reader.getDtos());
+            } finally {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, e, () -> "Failed to close reader for " + variable);
+                }
+            }
+        }
+        return dtos;
     }
 
     private static boolean validate(List<VortexGrid> source, List<VortexGrid> normals){

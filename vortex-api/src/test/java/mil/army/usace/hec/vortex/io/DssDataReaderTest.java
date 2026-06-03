@@ -33,7 +33,7 @@ class DssDataReaderTest {
     }
 
     @Test
-    void TrinityXMRG2DSSImport() {
+    void TrinityXMRG2DSSImport() throws Exception {
         String pathToDss = new File(getClass().getResource("/TrinityXMRG2DSS.dss").getFile()).toString();
 
         DataReader reader = DataReader.builder()

@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.math;
 import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.io.DataReadException;
 import mil.army.usace.hec.vortex.io.DataReader;
 
 import java.time.ZonedDateTime;
@@ -88,7 +89,7 @@ class LinearInterpGapFiller extends BatchGapFiller {
         }
     }
 
-    private int processGrids(DataReader reader, GridMetadata metadata) {
+    private int processGrids(DataReader reader, GridMetadata metadata) throws DataReadException {
         String variable = reader.getVariableName();
         int variableIndex = variables.indexOf(variable);
         float variableProgress = (float) variableIndex / variables.size();
@@ -130,7 +131,7 @@ class LinearInterpGapFiller extends BatchGapFiller {
     }
 
     private VortexGrid fillGridGaps(VortexGrid grid, int gridIndex,
-                                    GridMetadata metadata, DataReader reader) {
+                                    GridMetadata metadata, DataReader reader) throws DataReadException {
         float[] data = grid.data().clone();
         byte[] noDataFlags = metadata.isNoData.get(gridIndex);
         long currentEpoch = grid.startTime().toEpochSecond();
@@ -218,7 +219,7 @@ class LinearInterpGapFiller extends BatchGapFiller {
                 .build();
     }
 
-    protected GridMetadata analyzeGridData(DataReader reader) {
+    protected GridMetadata analyzeGridData(DataReader reader) throws DataReadException {
         int dtoCount = reader.getDtoCount();
         GridMetadata metadata = new GridMetadata();
 

@@ -34,7 +34,7 @@ class AscDataReader extends DataReader {
     }
 
     @Override
-    public List<VortexData> getDtos() {
+    public List<VortexData> getDtos() throws DataReadException {
 
         String fileName = new File(path).getName().toLowerCase();
         String shortName;
@@ -242,6 +242,10 @@ class AscDataReader extends DataReader {
         }
 
         Dataset dataset = gdal.Open(path);
+        if (dataset == null) {
+            throw DataReadException.ioError(path, null,
+                    "GDAL could not open ASCII grid at " + path + ": " + gdal.GetLastErrorMsg());
+        }
 
         double[] geoTransform = dataset.GetGeoTransform();
         double dx = geoTransform[1];
@@ -320,16 +324,13 @@ class AscDataReader extends DataReader {
     }
 
     @Override
-    public VortexData getDto(int idx) {
-        if (idx == 0)
-            return getDtos().get(0);
-        else {
-            return null;
-        }
+    public VortexData getDto(int idx) throws DataReadException {
+        Objects.checkIndex(idx, 1);
+        return getDtos().get(0);
     }
 
     @Override
-    public List<VortexDataInterval> getDataIntervals() {
+    public List<VortexDataInterval> getDataIntervals() throws DataReadException {
         return getDtos()
                 .stream()
                 .map(VortexDataInterval::of)

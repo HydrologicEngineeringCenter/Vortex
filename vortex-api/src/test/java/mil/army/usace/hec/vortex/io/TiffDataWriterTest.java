@@ -13,7 +13,7 @@ class TiffDataWriterTest {
     private final String tempDir = System.getProperty("java.io.tmpdir");
 
     @Test
-    void TiffDataWriterWritesGribFile(){
+    void TiffDataWriterWritesGribFile() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";
@@ -36,7 +36,7 @@ class TiffDataWriterTest {
     }
 
     @Test
-    void TiffDataWriterWritesDssFile(){
+    void TiffDataWriterWritesDssFile() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/normalizer/qpe.dss").getFile()).toString();
         String variableName = "///PRECIPITATION/02JAN2017:1200/02JAN2017:1300//";
@@ -59,7 +59,7 @@ class TiffDataWriterTest {
     }
 
     @Test
-    void TiffDataWriterWritesSnodasFile() {
+    void TiffDataWriterWritesSnodasFile() throws Exception {
         String inFile = new File(getClass().getResource("/regression/io/snodas_reader/SNODAS_20191101.tar").getFile()).toString();
 
         DataReader reader = DataReader.builder()

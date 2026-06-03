@@ -111,36 +111,29 @@ public abstract class BatchImporter {
 
     public abstract void process();
 
-    List<DataReader> getDataReaders() {
+    List<DataReader> getDataReaders() throws DataReadException {
         List<DataReader> readers = new ArrayList<>();
-
-        inFiles.forEach(file -> {
+        for (String file : inFiles) {
             if (DataReader.isVariableRequired(file)) {
                 Set<String> availableVariables = new HashSet<>(DataReader.getVariables(file));
-
-                variables.forEach(variable -> {
+                for (String variable : variables) {
                     if (availableVariables.contains(variable)) {
-                        DataReader reader = DataReader.builder()
+                        readers.add(DataReader.builder()
                                 .path(file)
                                 .variable(variable)
-                                .build();
-
-                        readers.add(reader);
+                                .build());
                     }
-                });
+                }
             } else {
-                DataReader reader = DataReader.builder()
+                readers.add(DataReader.builder()
                         .path(file)
-                        .build();
-
-                readers.add(reader);
+                        .build());
             }
-        });
-
+        }
         return readers;
     }
 
-    List<ImportableUnit> getImportableUnits() {
+    List<ImportableUnit> getImportableUnits() throws DataReadException {
         return getDataReaders().stream()
                 .map(reader -> ImportableUnit.builder()
                         .reader(reader)

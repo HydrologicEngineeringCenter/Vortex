@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DataReaderTest {
 
     @Test
-    void ExtentsOfMrmsGridAreCorrect() {
+    void ExtentsOfMrmsGridAreCorrect() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();
         String variableName = "GaugeCorrQPE01H_altitude_above_msl";

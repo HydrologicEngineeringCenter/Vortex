@@ -17,7 +17,7 @@ class Hdf5DataWriterTest {
     private final String tempDir = System.getProperty("java.io.tmpdir");
 
     @Test
-    void Hdf5DataWriterWritesDssFile() {
+    void Hdf5DataWriterWritesDssFile() throws Exception {
         String inFile = new File(getClass().getResource(
                 "/normalizer/qpe.dss").getFile()).toString();
         String variableName = "///PRECIPITATION/02JAN2017:1200/02JAN2017:1300//";
@@ -44,7 +44,7 @@ class Hdf5DataWriterTest {
 
 
     @Test
-    void Hdf5RasPrecipDataWriterWritesDssFileMultipleTs() {
+    void Hdf5RasPrecipDataWriterWritesDssFileMultipleTs() throws Exception {
 
         String inFile = new File(getClass().getResource("/normalizer/qpe.dss").getFile()).toString();
 
@@ -80,7 +80,7 @@ class Hdf5DataWriterTest {
      4) when the buffer reaches bufsize, write the buffer and clear it out
     */
     @Test
-    void Hdf5RasPrecipDataWriterWritesDssFileMultipleTsBatched() {
+    void Hdf5RasPrecipDataWriterWritesDssFileMultipleTsBatched() throws Exception {
 
         String inFile = new File(getClass().getResource("/normalizer/qpe.dss").getFile()).toString();
 

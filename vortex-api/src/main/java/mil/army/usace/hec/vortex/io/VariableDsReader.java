@@ -35,7 +35,7 @@ class VariableDsReader extends NetcdfDataReader {
     private final List<VortexDataInterval> timeBounds;
 
     /* Constructor */
-    public VariableDsReader(NetcdfDataset ncd, VariableDS variableDS, String variableName) {
+    public VariableDsReader(NetcdfDataset ncd, VariableDS variableDS, String variableName) throws DataReadException {
         super(new DataReaderBuilder().path(variableDS.getDatasetLocation()).variable(variableName));
         this.ncd = ncd;
         this.variableDS = getVariableDS(ncd, variableName);
@@ -56,18 +56,17 @@ class VariableDsReader extends NetcdfDataReader {
 
     /* Public Methods */
     @Override
-    public List<VortexData> getDtos() {
+    public List<VortexData> getDtos() throws DataReadException {
         List<VortexData> dataList = new ArrayList<>();
         for (int i = 0; i < getDtoCount(); i++) {
-            VortexData data = getDto(i);
-            dataList.add(data);
+            dataList.add(getDto(i));
         }
-
         return dataList;
     }
 
     @Override
-    public VortexGrid getDto(int index) {
+    public VortexGrid getDto(int index) throws DataReadException {
+        Objects.checkIndex(index, getDtoCount());
         return getTimeAxis() != null ? buildGridWithTimeAxis(index) : buildGridWithoutTimeAxis();
     }
 
@@ -97,7 +96,7 @@ class VariableDsReader extends NetcdfDataReader {
     }
 
     @Override
-    public List<VortexDataInterval> getDataIntervals() {
+    public List<VortexDataInterval> getDataIntervals() throws DataReadException {
         if (!(ncd.findCoordinateAxis(AxisType.Time) instanceof CoordinateAxis1D timeAxis)) {
             return Collections.emptyList();
         }
@@ -134,7 +133,7 @@ class VariableDsReader extends NetcdfDataReader {
         return ZonedDateTime.of(0, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
     }
 
-    private List<VortexDataInterval> getTimeBounds() {
+    private List<VortexDataInterval> getTimeBounds() throws DataReadException {
         CoordinateAxis1D timeAxis = getTimeAxis();
         if (timeAxis == null) return Collections.emptyList();
 
@@ -178,14 +177,14 @@ class VariableDsReader extends NetcdfDataReader {
         return VortexDataInterval.of(undefinedStartTime, undefinedEndTime);
     }
 
-    private VortexGrid buildGridWithTimeAxis(int timeIndex) {
+    private VortexGrid buildGridWithTimeAxis(int timeIndex) throws DataReadException {
         int dimensionIndex = getTimeDimensionIndex();
         float[] data = readSlicedData(dimensionIndex, timeIndex);
         VortexDataInterval timeRecord = timeBounds.get(timeIndex);
         return buildGrid(data, timeRecord);
     }
 
-    private VortexGrid buildGridWithoutTimeAxis() {
+    private VortexGrid buildGridWithoutTimeAxis() throws DataReadException {
         float[] data = readAllData();
         return buildGrid(data, undefinedTimeRecord());
     }
@@ -203,17 +202,18 @@ class VariableDsReader extends NetcdfDataReader {
         return timeDimension;
     }
 
-    private float[] readAllData() {
+    private float[] readAllData() throws DataReadException {
         try {
             Array array = variableDS.read();
             return getFloatArray(array);
         } catch (IOException e) {
-            logger.severe(e.getMessage());
-            return new float[0];
+            throw DataReadException.ioError(ncd.getLocation(), variableDS.getFullName(),
+                    "Failed to read NetCDF variable [" + ncd.getLocation() + " : "
+                            + variableDS.getFullName() + "]: " + e.getMessage(), e);
         }
     }
 
-    private float[] readSlicedData(int timeDimension, int timeIndex) {
+    private float[] readSlicedData(int timeDimension, int timeIndex) throws DataReadException {
         if (timeDimension < 0) {
             return readAllData();
         }
@@ -222,8 +222,10 @@ class VariableDsReader extends NetcdfDataReader {
             Array array = variableDS.slice(timeDimension, timeIndex).read();
             return getFloatArray(array);
         } catch (IOException | InvalidRangeException e) {
-            logger.severe("Error reading sliced data: " + e.getMessage());
-            return new float[0];
+            String slicePath = variableDS.getFullName() + "[time=" + timeIndex + "]";
+            throw DataReadException.ioError(ncd.getLocation(), slicePath,
+                    "Failed to read NetCDF slice [" + ncd.getLocation() + " : " + slicePath + "]: "
+                            + e.getMessage(), e);
         }
     }
 

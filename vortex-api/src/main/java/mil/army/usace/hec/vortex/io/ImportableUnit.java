@@ -92,7 +92,7 @@ public class ImportableUnit {
 
     public static Builder builder() {return new Builder();}
 
-    public void process() {
+    public void process() throws DataReadException {
         GeographicProcessor geoProcessor = new GeographicProcessor(geoOptions);
 
         reader.addPropertyChangeListener(support::firePropertyChange);

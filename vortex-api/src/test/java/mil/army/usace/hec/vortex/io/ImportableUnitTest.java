@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ImportableUnitTest {
 
     @Test
-    void MrmsPrecipPassesRegression() {
+    void MrmsPrecipPassesRegression() throws Exception {
 
         String inFile = new File(getClass().getResource(
                 "/MRMS_GaugeCorr_QPE_01H_00.00_20170102-120000.grib2").getFile()).toString();

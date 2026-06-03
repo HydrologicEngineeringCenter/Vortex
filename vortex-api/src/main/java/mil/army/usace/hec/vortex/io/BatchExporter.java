@@ -81,6 +81,14 @@ public class BatchExporter implements Runnable {
 
     @Override
     public void run() {
+        try {
+            exportAll();
+        } catch (DataReadException e) {
+            DataReadExceptions.reportTo(LOGGER, support, e);
+        }
+    }
+
+    private void exportAll() throws DataReadException {
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 

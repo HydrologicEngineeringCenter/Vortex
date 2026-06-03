@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.math;
 import mil.army.usace.hec.vortex.Options;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.io.DataReadException;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.DataWriter;
 
@@ -105,7 +106,7 @@ public class SanitizableUnit {
         return new Builder();
     }
 
-    public void process() {
+    public void process() throws DataReadException {
         List<VortexGrid> grids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
 
         grids.forEach(grid -> {

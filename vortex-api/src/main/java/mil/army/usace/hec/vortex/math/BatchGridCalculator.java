@@ -6,6 +6,8 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
 import mil.army.usace.hec.vortex.geo.Resampler;
 import mil.army.usace.hec.vortex.geo.ResamplingMethod;
+import mil.army.usace.hec.vortex.io.DataReadException;
+import mil.army.usace.hec.vortex.io.DataReadExceptions;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.util.Stopwatch;
 import org.locationtech.jts.geom.Envelope;
@@ -122,10 +124,17 @@ public class BatchGridCalculator implements Runnable {
 
     @Override
     public void run() {
-        process();
+        try {
+            process();
+        } catch (DataReadException e) {
+            DataReadExceptions.reportTo(logger, support, e);
+        }
     }
 
-    public void process(){
+    public void process() throws DataReadException {
+        if (variables.isEmpty()) {
+            return;
+        }
         Stopwatch stopwatch = new Stopwatch();
         stopwatch.start();
 
@@ -133,25 +142,23 @@ public class BatchGridCalculator implements Runnable {
         VortexGrid raster = getRaster();
 
         List<GridCalculatableUnit> units = new ArrayList<>();
-        variables.forEach(variable -> {
-            if (sourceVariables.contains(variable)) {
-
-                DataReader reader = DataReader.builder()
-                        .path(pathToInput)
-                        .variable(variable)
-                        .build();
-
-                GridCalculatableUnit unit = GridCalculatableUnit.builder()
-                        .reader(reader)
-                        .raster(raster)
-                        .operation(operation)
-                        .destination(destination)
-                        .writeOptions(writeOptions)
-                        .build();
-
-                units.add(unit);
+        for (String variable : variables) {
+            if (!sourceVariables.contains(variable)) {
+                continue;
             }
-        });
+            DataReader reader = DataReader.builder()
+                    .path(pathToInput)
+                    .variable(variable)
+                    .build();
+            GridCalculatableUnit unit = GridCalculatableUnit.builder()
+                    .reader(reader)
+                    .raster(raster)
+                    .operation(operation)
+                    .destination(destination)
+                    .writeOptions(writeOptions)
+                    .build();
+            units.add(unit);
+        }
         AtomicInteger processed = new AtomicInteger();
         int totalCount = units.size();
 
@@ -164,7 +171,11 @@ public class BatchGridCalculator implements Runnable {
                 support.firePropertyChange("progress", null, newValue);
             });
 
-            unit.process();
+            try {
+                unit.process();
+            } catch (DataReadException e) {
+                DataReadExceptions.reportTo(logger, support, e);
+            }
         });
 
         stopwatch.end();
@@ -178,10 +189,7 @@ public class BatchGridCalculator implements Runnable {
         support.firePropertyChange(VortexProperty.STATUS.toString(), null, messageTime);
     }
 
-    private VortexGrid getRaster() {
-        if (variables.isEmpty())
-            return null;
-
+    private VortexGrid getRaster() throws DataReadException {
         String variable = variables.iterator().next();
 
         DataReader inputReader = DataReader.builder()
