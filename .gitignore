@@ -23,10 +23,13 @@
 !gradlew
 !gradlew.bat
 !gradle.properties
+!AGENTS.md
+!CLAUDE.md
 !CITATION.cff
 !CONTRIBUTORS.md
 !CONTRIBUTING.md
 !INTENT.md
 !LICENSE.md
 !README.md
+!STANDARDS.md
 !settings.gradle
