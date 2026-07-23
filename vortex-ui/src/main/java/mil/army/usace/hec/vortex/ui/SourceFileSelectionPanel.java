@@ -211,7 +211,7 @@ public class SourceFileSelectionPanel extends JPanel {
         // Configuring fileChooser dialog
         fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilter acceptableExtension = new FileNameExtensionFilter("All recognized files",
-                "nc", "nc4", "hdf", "h5", "grib", "gb2", "grb2", "grib2", "grb", "asc", "tif", "tiff", "dss");
+                "nc", "nc4", "hdf", "h5", "rt-h5", "grib", "gb2", "grb2", "grib2", "grb", "asc", "tif", "tiff", "dss");
         fileChooser.addChoosableFileFilter(acceptableExtension);
 
         // Pop up fileChooser dialog

@@ -306,14 +306,14 @@ public class NormalizerWizard extends ProcessingWizard {
         List<FileNameExtensionFilterEnhanced> filterList = new ArrayList<>();
 
         FileNameExtensionFilterEnhanced recognizedFilter = new FileNameExtensionFilterEnhanced(
-                "All recognized files", ".nc", ".hdf", ".grib", ".gb2", ".grb2", ".grib2", ".grb", ".asc", ".dss");
+                "All recognized files", ".nc", ".hdf", ".rt-h5", ".grib", ".gb2", ".grb2", ".grib2", ".grb", ".asc", ".dss");
         filterList.add(recognizedFilter);
 
         FileNameExtensionFilterEnhanced ncFilter = new FileNameExtensionFilterEnhanced(
                 "netCDF datasets", ".nc");
         filterList.add(ncFilter);
         FileNameExtensionFilterEnhanced hdfFilter = new FileNameExtensionFilterEnhanced(
-                "HDF datasets", ".hdf");
+                "HDF datasets", ".hdf", ".rt-h5");
         filterList.add(hdfFilter);
         FileNameExtensionFilterEnhanced gribFilter = new FileNameExtensionFilterEnhanced(
                 "GRIB datasets", ".grib", ".gb2", ".grb2", ".grib2", ".grb");

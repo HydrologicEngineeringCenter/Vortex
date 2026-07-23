@@ -734,7 +734,7 @@ public class ImportMetWizard extends ProcessingWizard {
 
         fileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilterEnhanced recognizedFilter = new FileNameExtensionFilterEnhanced(
-                "All recognized files", ".nc", ".nc4", ".hdf", ".hdf5", ".h5",
+                "All recognized files", ".nc", ".nc4", ".hdf", ".hdf5", ".h5", ".rt-h5",
                 ".grib", ".gb2", ".grb2", ".grib2", ".grb",
                 ".asc", ".bil", "*bil.zip", ".dss", ".tif", ".tiff", ".dat", ".tar", "bil.zip");
         fileChooser.addChoosableFileFilter(recognizedFilter);
@@ -742,7 +742,7 @@ public class ImportMetWizard extends ProcessingWizard {
                 "netCDF datasets", ".nc", ".nc4");
         fileChooser.addChoosableFileFilter(ncFilter);
         FileNameExtensionFilterEnhanced hdfFilter = new FileNameExtensionFilterEnhanced(
-                "HDF datasets", ".hdf", ".hdf5");
+                "HDF datasets", ".hdf", ".hdf5", ".rt-h5");
         fileChooser.addChoosableFileFilter(hdfFilter);
         FileNameExtensionFilterEnhanced gribFilter = new FileNameExtensionFilterEnhanced(
                 "GRIB datasets", ".grib", ".gb2", ".grb2", ".grib2", ".grb");

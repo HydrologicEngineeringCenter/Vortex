@@ -7,6 +7,7 @@ import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GriddedData;
 import hec.heclib.util.Heclib;
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Resampler;
 import mil.army.usace.hec.vortex.geo.WktFactory;
@@ -984,5 +985,93 @@ class NetcdfDataReaderTest {
 
         Assertions.assertEquals(startTime, dto0.startTime());
         Assertions.assertEquals(endTime, dto0.endTime());
+    }
+
+    @Test
+    void gpmHalfHourV07C() throws Exception {
+        URL url = getClass().getResource("/3B-HHR-E.MS.MRG.3IMERG.20260721-S000000-E002959.0000.V07C.RT-H5");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        List<VortexGrid> grids;
+        try (DataReader reader = DataReader.builder()
+                .path(file)
+                .variable("Grid/precipitation")
+                .build()) {
+            grids = reader.getDtos().stream().map(grid -> (VortexGrid) grid).collect(Collectors.toList());
+        }
+
+        assertEquals(1, grids.size());
+
+        VortexGrid grid = grids.get(0);
+
+        // IMERG is a 0.1-degree global grid: 3600 columns x 1800 rows.
+        assertEquals(3600, grid.nx());
+        assertEquals(1800, grid.ny());
+        assertEquals(3600 * 1800, grid.data().length);
+
+        // Precipitation accumulates over the interval -> PER-CUM when written to DSS.
+        assertEquals(VortexDataType.ACCUMULATION, grid.dataType());
+        assertEquals("PER-CUM", grid.dataType().getDssString());
+
+        // Half-hour accumulation window encoded in the filename (S000000-E002959).
+        assertEquals(ZonedDateTime.of(2026, 7, 21, 0, 0, 0, 0, ZoneOffset.ofHours(0)), grid.startTime());
+        assertEquals(ZonedDateTime.of(2026, 7, 21, 0, 30, 0, 0, ZoneOffset.ofHours(0)), grid.endTime());
+    }
+
+    @Test
+    void gpmHalfHourV07C_precipitationUncal() throws Exception {
+        URL url = getClass().getResource("/3B-HHR-E.MS.MRG.3IMERG.20260721-S000000-E002959.0000.V07C.RT-H5");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        // The uncalibrated field lives under the Intermediate group.
+        VortexGrid grid;
+        try (DataReader reader = DataReader.builder()
+                .path(file)
+                .variable("Grid/Intermediate/precipitationUncal")
+                .build()) {
+            grid = (VortexGrid) reader.getDto(0);
+        }
+
+        // Same 0.1-degree global grid as the calibrated field.
+        assertEquals(3600, grid.nx());
+        assertEquals(1800, grid.ny());
+        assertEquals(3600 * 1800, grid.data().length);
+
+        // precipitationUncal carries no accumulation cell_methods, so its type is inferred
+        // from the variable name. VortexVariable recognizes it as PRECIPITATION, so over a
+        // non-zero interval it is treated as ACCUMULATION -> PER-CUM in DSS, matching the
+        // calibrated "Grid/precipitation" field.
+        assertEquals(VortexDataType.ACCUMULATION, grid.dataType());
+        assertEquals("PER-CUM", grid.dataType().getDssString());
+
+        // Same half-hour window as the calibrated field.
+        assertEquals(ZonedDateTime.of(2026, 7, 21, 0, 0, 0, 0, ZoneOffset.ofHours(0)), grid.startTime());
+        assertEquals(ZonedDateTime.of(2026, 7, 21, 0, 30, 0, 0, ZoneOffset.ofHours(0)), grid.endTime());
+    }
+
+    @Test
+    void gpmHalfHourV07C_intermediatePrecipFields() throws Exception {
+        URL url = getClass().getResource("/3B-HHR-E.MS.MRG.3IMERG.20260721-S000000-E002959.0000.V07C.RT-H5");
+        if (url == null) Assertions.fail();
+        String file = new File(url.getFile()).toString();
+
+        // The IR- and microwave-derived precipitation fields live under the Intermediate group.
+        // Like precipitationUncal, they carry no accumulation cell_methods, so their type is
+        // inferred from the variable name; VortexVariable recognizes them as PRECIPITATION and
+        // they are treated as ACCUMULATION -> PER-CUM in DSS.
+        for (String variable : List.of("Grid/Intermediate/IRprecipitation", "Grid/Intermediate/MWprecipitation")) {
+            VortexGrid grid;
+            try (DataReader reader = DataReader.builder()
+                    .path(file)
+                    .variable(variable)
+                    .build()) {
+                grid = (VortexGrid) reader.getDto(0);
+            }
+
+            assertEquals(VortexDataType.ACCUMULATION, grid.dataType(), variable);
+            assertEquals("PER-CUM", grid.dataType().getDssString(), variable);
+        }
     }
 }
