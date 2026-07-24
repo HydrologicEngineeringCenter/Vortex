@@ -1,26 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Maven descriptor required by TeamCity's portable (versioned) Kotlin DSL.
-  It lets you edit and compile settings.kts in an IDE against the TeamCity
-  configuration DSL. TeamCity itself reads settings.kts directly.
+  Maven descriptor for TeamCity's portable (versioned) Kotlin DSL.
 
-  Version must match the TeamCity server (teamcity.hecdev.net, currently 2026.1).
+  The TeamCity server runs Maven against this file to compile settings.kts, so
+  the DSL dependencies below are required, not merely a convenience for IDE
+  autocompletion. Without them the server reports "unresolved supertypes" for
+  every DSL class and the whole script fails to compile.
+
+  The parent is resolved as 1.0-SNAPSHOT from the server's own
+  dsl-plugins-repository, which supplies the kotlin.version and
+  teamcity.dsl.version properties used below. Resolving it from the server is
+  what keeps this in step with whatever TeamCity version is deployed.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <name>Vortex Config DSL Script</name>
+    <groupId>mil.army.usace.hec</groupId>
+    <artifactId>vortex-teamcity-config</artifactId>
+    <version>1.0-SNAPSHOT</version>
 
     <parent>
         <groupId>org.jetbrains.teamcity</groupId>
         <artifactId>configs-dsl-kotlin-parent</artifactId>
-        <version>2026.1.0</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
-
-    <groupId>mil.army.usace.hec</groupId>
-    <artifactId>vortex-teamcity-config</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
 
     <repositories>
         <repository>
@@ -41,11 +46,74 @@
 
     <pluginRepositories>
         <pluginRepository>
-            <id>jetbrains-all</id>
+            <id>JetBrains</id>
             <url>https://download.jetbrains.com/teamcity-repository</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </pluginRepository>
     </pluginRepositories>
+
+    <build>
+        <sourceDirectory>${basedir}</sourceDirectory>
+        <plugins>
+            <plugin>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <version>${kotlin.version}</version>
+
+                <configuration/>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jetbrains.teamcity</groupId>
+                <artifactId>teamcity-configs-maven-plugin</artifactId>
+                <version>${teamcity.dsl.version}</version>
+                <configuration>
+                    <format>kotlin</format>
+                    <dstDir>target/generated-configs</dstDir>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.teamcity</groupId>
+            <artifactId>configs-dsl-kotlin</artifactId>
+            <version>${teamcity.dsl.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.teamcity</groupId>
+            <artifactId>configs-dsl-kotlin-plugins</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-script-runtime</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 </project>
