@@ -135,6 +135,10 @@ object VortexVcs : GitVcsRoot({
     // builds and lets the agent check the tag out onto HEAD (so nebula's
     // useLastTag can read it). The (v*) capture names the logical branch.
     branchSpec = "+:refs/tags/(v*)"
+    // Required for the branchSpec above to match anything: TeamCity only reports
+    // tag revisions when tags are treated as branches. Without it the Package
+    // fan-out never triggers, because no tag ever appears as a logical branch.
+    useTagsAsBranches = true
     userNameStyle = GitVcsRoot.UserNameStyle.NAME
     authMethod = password {
         userName = "%github.user%"
