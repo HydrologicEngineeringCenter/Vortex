@@ -3,6 +3,7 @@
 /**/out
 /**/%SystemDrive%
 !/.run
+!/.teamcity
 !/calculator
 !/clipper
 !/examples
