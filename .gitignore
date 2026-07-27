@@ -3,6 +3,10 @@
 /**/out
 /**/%SystemDrive%
 !/.run
+!/.teamcity
+# Maven output from compiling the TeamCity DSL locally; /**/build above does not
+# cover it, and /.teamcity is allowlisted, so it needs ignoring explicitly.
+/.teamcity/target
 !/calculator
 !/docker
 !/clipper

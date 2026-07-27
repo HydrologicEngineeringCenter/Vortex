@@ -105,8 +105,17 @@ tasks.test {
         // Named "proj" in the Linux bundle, unlike "projlib" on Windows.
         environment("PROJ_LIB", "${rootProject.projectDir}/bin/gdal/proj")
     } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+        // bin itself has to be on the path: the macOS javaHeclib archive holds a
+        // single flat libjavaHeclib.dylib, so it extracts straight into bin and
+        // there is no bin/javaHeclib directory to find it in. Without this the
+        // dylib is never loaded, hec.heclib.util.Heclib fails to initialise, and
+        // every DSS-backed test fails — 31 of them, plus the assertions that
+        // then read zero grids. bin/hdf is correct, as that archive does have
+        // its own directory.
         jvmArgs(
-            "-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/hdf:${rootProject.projectDir}/bin/javaHeclib",
+            "-Djava.library.path=${rootProject.projectDir}/bin" +
+                    ":${rootProject.projectDir}/bin/gdal" +
+                    ":${rootProject.projectDir}/bin/hdf",
             "-Djava.io.tmpdir=${System.getenv("TMPDIR")}"
         )
         environment = mapOf(

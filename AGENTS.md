@@ -27,6 +27,30 @@ Project-specific notes for working in this repository.
   of two equal grids can still differ in `fileName` separators and time-zone
   rendering — neither is compared, so don't read a diff of them as the cause.
 
+## TeamCity configuration
+
+- The pipeline lives in `.teamcity/settings.kts` (portable Kotlin DSL). The
+  server compiles it by running Maven against `.teamcity/pom.xml`, so that pom
+  must declare the DSL dependencies — it is not just IDE scaffolding.
+- **Validate locally before pushing.** The server only reports compile errors
+  after a commit, so verifying on the server means committing a patch per
+  error. Instead run:
+
+      mvn -f .teamcity/pom.xml teamcity-configs:generate
+
+  Success writes the generated XML under `.teamcity/target/generated-configs`
+  (git-ignored). This is exactly what the server does, so a clean run here
+  means a clean import there.
+- The pom depends on `configs-dsl-kotlin-latest`, not `configs-dsl-kotlin`.
+  The latter ships the versioned `...configs.kotlin.v2019_2` API; `settings.kts`
+  uses the modern unversioned `jetbrains.buildServer.configs.kotlin` package,
+  and mixing them fails with "unresolved supertypes" on every DSL class.
+- `settings.kts` is a *script*, not a regular Kotlin file. Two consequences:
+  top-level `const val` is rejected outright, and a plain top-level `val`
+  referenced from an `object ... : BuildType({ ... })` fails with "captures the
+  script class instance". Put shared literals as `const val` inside a named
+  object (see `Config`), which inlines them at each use site.
+
 ## Git
 
 - **Root-level files are git-ignored by default.** `.gitignore` starts with
