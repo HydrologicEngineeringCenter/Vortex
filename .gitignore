@@ -4,6 +4,7 @@
 /**/%SystemDrive%
 !/.run
 !/calculator
+!/docker
 !/clipper
 !/examples
 !/grid-to-point-converter

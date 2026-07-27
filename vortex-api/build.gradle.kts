@@ -26,9 +26,15 @@ dependencies {
     }
     implementation("mil.army.usace.hec:hec-nucleus-data:2.+")
     implementation("mil.army.usace.hec:hec-nucleus-metadata:2.+")
-    implementation("org.gdal:gdal:3.2.0")
+    // The Java binding must match the native GDAL that getNatives extracts for
+    // this platform (see the root build.gradle.kts): 3.2.1 on Linux and Windows,
+    // 3.5.0_1 on macOS. Declare exactly one version — an unconditional
+    // declaration alongside these would win wherever it is higher, because
+    // Gradle resolves version conflicts by taking the highest, and a binding
+    // ahead of its native fails at runtime on a symbol the native lacks.
+    // This mirrors hec-hms, which pairs the same versions.
     if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        implementation("org.gdal:gdal:3.0.0")
+        implementation("org.gdal:gdal:3.2.0")
     } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
         implementation("org.gdal:gdal:3.5.0")
     } else {
@@ -74,9 +80,30 @@ tasks.test {
         )
     } else if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
         jvmArgs(
-            "-Djava.library.path=/usr/lib/jni",
+            "-Djava.library.path=${rootProject.projectDir}/bin" +
+                    ":${rootProject.projectDir}/bin/gdal" +
+                    ":/usr/lib/jni",
+            // netcdf-java finds the netCDF C library through JNA, which reads
+            // jna.library.path and not java.library.path. Point it at the GDAL
+            // bundle, where getNatives leaves a libnetcdf.so symlink, so the
+            // netCDF and curl/nghttp2 libraries all come from the one set that
+            // was built together.
+            "-Djna.library.path=${rootProject.projectDir}/bin/gdal",
             "-Djava.io.tmpdir=/var/tmp"
         )
+        // Deliberately no LD_LIBRARY_PATH. It is not needed —
+        // libgdalalljni.so carries $ORIGIN in its search path and so finds its
+        // siblings relative to itself — and it is actively risky, because
+        // LD_LIBRARY_PATH takes precedence over the default search path rather
+        // than acting as a fallback. Setting it to bin/gdal against the older
+        // 3.0.4 bundle, which shipped its own glibc, resolved the test JVM's
+        // libc to GDAL's copy and the JVM failed to start with exit 127. The
+        // 3.2.1 bundle no longer ships a glibc, but the precedence remains, so
+        // do not reintroduce it. Note macOS below uses the fallback variable,
+        // DYLD_FALLBACK_LIBRARY_PATH, for exactly this reason.
+        environment("GDAL_DATA", "${rootProject.projectDir}/bin/gdal/gdal-data")
+        // Named "proj" in the Linux bundle, unlike "projlib" on Windows.
+        environment("PROJ_LIB", "${rootProject.projectDir}/bin/gdal/proj")
     } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
         jvmArgs(
             "-Djava.library.path=${rootProject.projectDir}/bin/gdal:${rootProject.projectDir}/bin/hdf:${rootProject.projectDir}/bin/javaHeclib",

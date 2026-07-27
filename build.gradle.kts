@@ -1,4 +1,8 @@
 import org.gradle.internal.os.OperatingSystem
+// Imported because inside this script `java` resolves to the Java plugin
+// extension, which shadows the java.* package and makes java.nio.file.* fail.
+import java.nio.file.Files
+import java.nio.file.Paths
 
 plugins {
     java
@@ -39,7 +43,7 @@ dependencies {
     windows_x64 ("org.hdfgroup:hdf:1.14.0-win-x64@zip")
     linux_x64("net.adoptium:jre:21.0.9_10:linux-x64@tar.gz")
     linux_x64("mil.army.usace.hec:javaHeclib:7-IR-6-linux-x86_64@tar.gz")
-    linux_x64("org.gdal:gdal:3.0.4:linux@tar.gz")
+    linux_x64("org.gdal:gdal:3.2.1:linux@tar.gz")
     linux_x64("org.hdfgroup:hdf:2.14.0-linux64@tar.gz")
     macOS_x64("net.adoptium:jre:21.0.9_10:macOS-x64@zip")
     macOS_x64("org.gdal:gdal:3.5.0_1:macOS-x64@zip")
@@ -127,6 +131,28 @@ tasks.register<Copy>("getNatives") {
         }
     }
 
+    doLast {
+        if (OperatingSystem.current().isLinux()) {
+            // netcdf-java asks JNA for a library named "netcdf", which resolves
+            // to an unversioned libnetcdf.so. GDAL's Linux bundle ships only a
+            // versioned libnetcdf.so.<n>, so add the unversioned name alongside
+            // it and let the tests point jna.library.path here.
+            //
+            // Using GDAL's copy rather than the distribution's is the point.
+            // GDAL loads its own libnghttp2.so.14 into the process via $ORIGIN,
+            // and the distribution's libnetcdf pulls in the system libcurl,
+            // which needs a symbol added in a later nghttp2 than that. The two
+            // share a soname, GDAL's loads first, and the netCDF load then
+            // fails on the undefined symbol. Everything under bin/gdal was
+            // built together and is consistent with itself.
+            val gdalDir = file("$projectDir/bin/gdal")
+            val versioned = gdalDir.listFiles { f: File -> f.name.startsWith("libnetcdf.so.") }?.firstOrNull()
+            val link = File(gdalDir, "libnetcdf.so")
+            if (versioned != null && !link.exists()) {
+                Files.createSymbolicLink(link.toPath(), Paths.get(versioned.name))
+            }
+        }
+    }
 }
 
 tasks.register<Delete>("refreshNatives") {
