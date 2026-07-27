@@ -488,7 +488,7 @@ class NetcdfDataReaderTest {
 
     @Test
     void gfs() throws Exception {
-        URL url = getClass().getResource("/gfs/GFS.nc");
+        URL url = getClass().getResource("/gfs/gfs.nc");
         if (url == null) Assertions.fail();
         String file = new File(url.getFile()).toString();
 
