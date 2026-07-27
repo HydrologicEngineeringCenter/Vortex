@@ -18,9 +18,14 @@ Project-specific notes for working in this repository.
   Confirm results in `vortex-api/build/test-results/test/*.xml` (or the HTML
   report under `vortex-api/build/reports/tests/`).
 - Tests run with `-Djava.io.tmpdir=C:/Temp` on Windows.
-- `NetcdfDataWriterTest.IntervalTimeCircleTest` has a pre-existing,
-  environmental failure (path-separator and timezone rendering differences).
-  It fails independently of local changes — do not treat it as a regression.
+- `VortexGrid.equals`/`hashCode` compare the *resolved* data type, `dataType()`,
+  not the raw field. The getter infers a type for grids built as `UNDEFINED`
+  (non-zero interval + a known variable name), and the NetCDF writer persists
+  that inferred value as `cell_methods`, so a grid written as `UNDEFINED` reads
+  back with a concrete type. Comparing the raw field made those two unequal and
+  broke `NetcdfDataWriterTest.IntervalTimeCircleTest`. Note that the `toString`
+  of two equal grids can still differ in `fileName` separators and time-zone
+  rendering — neither is compared, so don't read a diff of them as the cause.
 
 ## Git
 

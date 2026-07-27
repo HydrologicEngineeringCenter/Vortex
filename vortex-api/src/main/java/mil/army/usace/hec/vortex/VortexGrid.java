@@ -381,7 +381,13 @@ public class VortexGrid implements VortexData, Serializable {
         if (!startTime.isEqual(that.startTime)) return false;
         if (!endTime.isEqual(that.endTime)) return false;
         if (!Objects.equals(interval, that.interval)) return false;
-        return dataType == that.dataType;
+        // Compare the resolved type, not the raw field. dataType() infers a type
+        // for grids built as UNDEFINED, and every other consumer — including the
+        // NetCDF writer, which persists it as cell_methods — sees that inferred
+        // value. Comparing the field instead would report two grids as unequal
+        // when nothing observable about them differs: a grid declared UNDEFINED
+        // and the same grid read back after a write, its type now resolved.
+        return dataType() == that.dataType();
     }
 
     @Override
@@ -398,7 +404,9 @@ public class VortexGrid implements VortexData, Serializable {
         result = 31 * result + (startTime != null ? startTime.hashCode() : 0);
         result = 31 * result + (endTime != null ? endTime.hashCode() : 0);
         result = 31 * result + (interval != null ? interval.hashCode() : 0);
-        result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
+        // Must match equals: the resolved type, not the raw field. dataType()
+        // never returns null, so no guard is needed here.
+        result = 31 * result + dataType().hashCode();
         return result;
     }
 
