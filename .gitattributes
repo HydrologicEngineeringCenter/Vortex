@@ -1,2 +1,20 @@
 * linguist-vendored
 *.java linguist-vendored=false
+
+# Line endings are pinned per file type rather than left to core.autocrlf, which
+# the Git for Windows installer sets to true system-wide. The repository stores
+# LF throughout and the build agents check out LF, so nothing shipped is affected
+# today; what autocrlf changes is the Windows working copy, where every script
+# arrives as CRLF. Git Bash tolerates "#!/bin/bash\r" and macOS and Linux do not,
+# so a script edited or run from a Windows checkout is a script whose line
+# endings depend on who last touched it. Pinning them removes the question.
+#
+# This is the same shape of defect as the executable bit: invisible on Windows,
+# and carried into files that run somewhere else.
+*.sh    text eol=lf
+gradlew text eol=lf
+
+# The mirror case. cmd.exe is the consumer, so these want CRLF wherever they are
+# checked out, not only where autocrlf happens to supply it.
+*.bat text eol=crlf
+*.cmd text eol=crlf
