@@ -36,16 +36,13 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
-    windows_x64("net.adoptium:jre:21.0.9_10:win-x64@zip")
     windows_x64("mil.army.usace.hec:javaHeclib:7-IR-6-win-x86_64@zip")
     windows_x64("org.gdal:gdal:3.2.1-win-x64@zip")
     windows_x64("edu.ucar:netcdf:4.9.2:win-x64@zip")
     windows_x64 ("org.hdfgroup:hdf:1.14.0-win-x64@zip")
-    linux_x64("net.adoptium:jre:21.0.9_10:linux-x64@tar.gz")
     linux_x64("mil.army.usace.hec:javaHeclib:7-IR-6-linux-x86_64@tar.gz")
     linux_x64("org.gdal:gdal:3.2.1:linux@tar.gz")
     linux_x64("org.hdfgroup:hdf:2.14.0-linux64@tar.gz")
-    macOS_x64("net.adoptium:jre:21.0.9_10:macOS-x64@zip")
     // These three move together. The macOS gdal zip is dylibs only, where the
     // Windows and Linux archives carry their data inside, and PROJ 7 data is not
     // interchangeable with PROJ 9's.
