@@ -46,9 +46,12 @@ dependencies {
     linux_x64("org.gdal:gdal:3.2.1:linux@tar.gz")
     linux_x64("org.hdfgroup:hdf:2.14.0-linux64@tar.gz")
     macOS_x64("net.adoptium:jre:21.0.9_10:macOS-x64@zip")
-    macOS_x64("org.gdal:gdal:3.5.0_1:macOS-x64@zip")
-    macOS_x64("org.gdal:gdal-data:3.5.0_1@zip")
-    macOS_x64("org.proj:proj-db:9.0.1@zip")
+    // These three move together. The macOS gdal zip is dylibs only, where the
+    // Windows and Linux archives carry their data inside, and PROJ 7 data is not
+    // interchangeable with PROJ 9's.
+    macOS_x64("org.gdal:gdal:3.2.1:macOS-x64@zip")
+    macOS_x64("org.gdal:gdal-data:3.2.1@zip")
+    macOS_x64("org.proj:proj-db:7.2.1@zip")
     macOS_x64("mil.army.usace.hec:javaHeclib:7-IR-6-macOS-x86_64@zip")
     macOS_x64("org.hdfgroup:hdf:1.14.0:macOS-x64@zip")
 }

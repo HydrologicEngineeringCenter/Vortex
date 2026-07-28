@@ -26,20 +26,10 @@ dependencies {
     }
     implementation("mil.army.usace.hec:hec-nucleus-data:2.+")
     implementation("mil.army.usace.hec:hec-nucleus-metadata:2.+")
-    // The Java binding must match the native GDAL that getNatives extracts for
-    // this platform (see the root build.gradle.kts): 3.2.1 on Linux and Windows,
-    // 3.5.0_1 on macOS. Declare exactly one version — an unconditional
-    // declaration alongside these would win wherever it is higher, because
-    // Gradle resolves version conflicts by taking the highest, and a binding
-    // ahead of its native fails at runtime on a symbol the native lacks.
-    // This mirrors hec-hms, which pairs the same versions.
-    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        implementation("org.gdal:gdal:3.2.0")
-    } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        implementation("org.gdal:gdal:3.5.0")
-    } else {
-        implementation("org.gdal:gdal:3.2.0")
-    }
+    // Exactly one declaration, matching the native GDAL getNatives extracts.
+    // Gradle takes the highest version on conflict, and a binding ahead of its
+    // native fails at runtime on a symbol the native does not have.
+    implementation("org.gdal:gdal:3.2.0")
     implementation("org.locationtech.jts:jts-core:1.19.0")
     implementation("tech.units:indriya:2.1.4")
     implementation("systems.uom:systems-common:2.1")
@@ -116,6 +106,10 @@ tasks.test {
             "-Djava.library.path=${rootProject.projectDir}/bin" +
                     ":${rootProject.projectDir}/bin/gdal" +
                     ":${rootProject.projectDir}/bin/hdf",
+            // netcdf-java loads the netCDF C library through JNA, which reads
+            // jna.library.path and ignores java.library.path above. Without it
+            // a netCDF write silently produces an empty file.
+            "-Djna.library.path=${rootProject.projectDir}/bin/gdal",
             "-Djava.io.tmpdir=${System.getenv("TMPDIR")}"
         )
         environment = mapOf(

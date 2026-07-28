@@ -17,18 +17,10 @@ repositories {
 
 dependencies {
     implementation(project(":vortex-api"))
-    // Must match vortex-api and the native GDAL for this platform. The root
-    // project resolves both modules together when assembling the distribution,
-    // so a single unconditional version here would win wherever it is higher
-    // and put a binding ahead of its native into the shipped lib directory —
-    // without any test noticing, since this does not reach vortex-api's tests.
-    if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
-        implementation("org.gdal:gdal:3.2.0")
-    } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        implementation("org.gdal:gdal:3.5.0")
-    } else {
-        implementation("org.gdal:gdal:3.2.0")
-    }
+    // Keep in step with vortex-api. The root project resolves both together, so
+    // the higher declaration wins and can ship a binding ahead of its native —
+    // which no test here would catch.
+    implementation("org.gdal:gdal:3.2.0")
     implementation("com.formdev:flatlaf:3.1.1")
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
