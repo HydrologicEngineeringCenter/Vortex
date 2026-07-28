@@ -261,6 +261,76 @@ fun jpackageBaseCommand(
 }
 
 // ---------------------------------------------------------------------------
+// jlink: builds a trimmed runtime image for --runtime-image instead of
+// bundling the full downloaded Adoptium JRE. Uses jmods from whatever JDK is
+// running the current Gradle build (matching the mil.army.usace.hec:hec-hms
+// build's own `System.getProperty("java.home") + "/jmods"` pattern for its
+// ProGuard step) rather than fetching a platform-classified JDK artifact --
+// no net.adoptium:jdk exists on the internal Nexus for macOS at all, and the
+// Linux one is a different patch version than the JRE this project pins, so
+// this sidesteps both gaps. Trade-off: the exact runtime patch version now
+// depends on whichever JDK built each platform, rather than being pinned by
+// a downloaded artifact.
+//
+// The module list below was derived empirically, not just from jdeps'
+// automatic output -- see below for what that took:
+//  - jdeps' own module-graph resolution hard-fails on si-units-2.1.jar and
+//    systems-common-2.1.jar, which declare `requires java.annotation`, a
+//    module removed in JDK 11+. Harmless on a real classpath at runtime
+//    (module requirements aren't enforced there), but both had to be
+//    excluded from the jdeps scan itself.
+//  - The resulting module list still missed java.logging even though
+//    hec-monolith directly references java.util.logging.Logger -- caught by
+//    grepping jdeps' own per-class verbose output, not by trusting the
+//    summary. A stale/incomplete list here means a silent runtime failure,
+//    not just a missed size optimization, so this was verified end-to-end
+//    (GUI launch, a full netCDF-read/DSS-write pipeline, and an HTTPS/TLS
+//    connection to catch SPI-loaded crypto providers jdeps can't see
+//    statically) before being wired in here.
+// If the app's dependencies change, this list should be re-derived:
+//   jdeps --multi-release 21 -s --class-path "<jpackage input dir>/*" <jars> \
+//     | grep -oE '-> (java\.[a-z.]+|jdk\.[a-zA-Z.]+)( |$)'
+val jlinkModules = listOf(
+    "java.base", "java.compiler", "java.datatransfer", "java.desktop",
+    "java.logging", "java.management", "java.naming", "java.prefs",
+    "java.rmi", "java.security.jgss", "java.sql", "java.xml",
+    "jdk.unsupported", "jdk.crypto.ec", "jdk.crypto.cryptoki",
+    "jdk.charsets", "jdk.zipfs"
+).joinToString(",")
+
+fun jlinkExecutable(): String {
+    return Jvm.current().getExecutable("jlink").absolutePath
+}
+
+fun jlinkModulePath(): String {
+    return "${Jvm.current().javaHome}/jmods"
+}
+
+fun registerJlinkRuntimeTask(name: String, outputDir: Provider<Directory>): TaskProvider<Exec> {
+    return tasks.register<Exec>(name) {
+        group = "distribution"
+        description = "Builds a jlink-trimmed runtime image for jpackage's --runtime-image."
+        outputs.dir(outputDir)
+
+        doFirst {
+            delete(outputDir)
+        }
+
+        commandLine(
+            jlinkExecutable(),
+            "--module-path", jlinkModulePath(),
+            "--add-modules", jlinkModules,
+            "--strip-debug", "--no-header-files", "--no-man-pages", "--strip-native-commands",
+            "--output", outputDir.get().asFile.absolutePath
+        )
+
+        doLast {
+            clearReadOnly(outputDir.get().asFile)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Windows
 // ---------------------------------------------------------------------------
 
@@ -274,6 +344,9 @@ val jpackageIconWindows = "$projectDir/package/windows/vortex_black.ico".replace
 val jpackageInputDirWindows = layout.buildDirectory.dir("jpackage/windows/input")
 val jpackageLaunchersDirWindows = layout.buildDirectory.dir("jpackage/windows/launchers")
 val jpackageOutputDirWindows = layout.buildDirectory.dir("jpackage/windows/output")
+val jlinkRuntimeDirWindows = layout.buildDirectory.dir("jlink/windows")
+
+val jlinkRuntimeWindows = registerJlinkRuntimeTask("jlinkRuntimeWindows", jlinkRuntimeDirWindows)
 
 val jpackageStageWindows = tasks.register<Copy>("jpackageStageWindows") {
     group = "distribution"
@@ -291,8 +364,9 @@ val jpackageStageWindows = tasks.register<Copy>("jpackageStageWindows") {
 tasks.register<Exec>("jpackageWindows") {
     group = "distribution"
     description = "Builds the Windows wizard launcher .exe files with jpackage."
-    dependsOn(jpackageStageWindows)
+    dependsOn(jpackageStageWindows, jlinkRuntimeWindows)
     inputs.dir(jpackageInputDirWindows)
+    inputs.dir(jlinkRuntimeDirWindows)
     outputs.dir(jpackageOutputDirWindows)
 
     doFirst {
@@ -310,7 +384,7 @@ tasks.register<Exec>("jpackageWindows") {
             jpackageOutputDirWindows.get().asFile,
             jarName,
             jpackageIconWindows,
-            "${rootProject.projectDir}/bin/jre"
+            jlinkRuntimeDirWindows.get().asFile.absolutePath
         )
         javaOptions.forEach { command += listOf("--java-options", it) }
 
@@ -336,6 +410,9 @@ val jpackageIconLinux = "$projectDir/src/main/resources/images/vortex_black.png"
 val jpackageInputDirLinux = layout.buildDirectory.dir("jpackage/linux/input")
 val jpackageLaunchersDirLinux = layout.buildDirectory.dir("jpackage/linux/launchers")
 val jpackageOutputDirLinux = layout.buildDirectory.dir("jpackage/linux/output")
+val jlinkRuntimeDirLinux = layout.buildDirectory.dir("jlink/linux")
+
+val jlinkRuntimeLinux = registerJlinkRuntimeTask("jlinkRuntimeLinux", jlinkRuntimeDirLinux)
 
 val jpackageStageLinux = tasks.register<Copy>("jpackageStageLinux") {
     group = "distribution"
@@ -352,8 +429,9 @@ val jpackageStageLinux = tasks.register<Copy>("jpackageStageLinux") {
 tasks.register<Exec>("jpackageLinux") {
     group = "distribution"
     description = "Builds the Linux wizard launchers with jpackage."
-    dependsOn(jpackageStageLinux)
+    dependsOn(jpackageStageLinux, jlinkRuntimeLinux)
     inputs.dir(jpackageInputDirLinux)
+    inputs.dir(jlinkRuntimeDirLinux)
     outputs.dir(jpackageOutputDirLinux)
 
     doFirst {
@@ -371,7 +449,7 @@ tasks.register<Exec>("jpackageLinux") {
             jpackageOutputDirLinux.get().asFile,
             jarName,
             jpackageIconLinux,
-            "${rootProject.projectDir}/bin/jre"
+            jlinkRuntimeDirLinux.get().asFile.absolutePath
         )
         javaOptions.forEach { command += listOf("--java-options", it) }
 
@@ -397,6 +475,9 @@ val jpackageIconMacOS = "$projectDir/package/macOS/vortex_black.icns".replace("\
 val jpackageInputDirMacOS = layout.buildDirectory.dir("jpackage/macOS/input")
 val jpackageLaunchersDirMacOS = layout.buildDirectory.dir("jpackage/macOS/launchers")
 val jpackageOutputDirMacOS = layout.buildDirectory.dir("jpackage/macOS/output")
+val jlinkRuntimeDirMacOS = layout.buildDirectory.dir("jlink/macOS")
+
+val jlinkRuntimeMacOS = registerJlinkRuntimeTask("jlinkRuntimeMacOS", jlinkRuntimeDirMacOS)
 
 val jpackageStageMacOS = tasks.register<Copy>("jpackageStageMacOS") {
     group = "distribution"
@@ -437,8 +518,9 @@ val jpackageFixMacRpaths = tasks.register("jpackageFixMacRpaths") {
 tasks.register<Exec>("jpackageMacOS") {
     group = "distribution"
     description = "Builds the macOS wizard launchers with jpackage."
-    dependsOn(jpackageFixMacRpaths)
+    dependsOn(jpackageFixMacRpaths, jlinkRuntimeMacOS)
     inputs.dir(jpackageInputDirMacOS)
+    inputs.dir(jlinkRuntimeDirMacOS)
     outputs.dir(jpackageOutputDirMacOS)
 
     doFirst {
@@ -456,7 +538,7 @@ tasks.register<Exec>("jpackageMacOS") {
             jpackageOutputDirMacOS.get().asFile,
             jarName,
             jpackageIconMacOS,
-            "${rootProject.projectDir}/bin/jre/Contents/Home"
+            jlinkRuntimeDirMacOS.get().asFile.absolutePath
         )
         javaOptions.forEach { command += listOf("--java-options", it) }
 
