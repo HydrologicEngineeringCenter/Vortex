@@ -98,6 +98,7 @@ project {
     // creates — so tag-push rights in GitHub are a second lock on releasing.
     subProject(CiProject)
     subProject(ReleaseProject)
+    subProject(ToolsProject)
 }
 
 /**
@@ -136,6 +137,19 @@ object ReleaseProject : Project({
     description = "Restricted: mints + publishes a semantic version"
 
     buildType(Release)
+})
+
+/**
+ * Tools sub-project: builds that produce inputs to the pipeline rather than
+ * being part of it. Nothing here runs on a commit, and nothing else depends on
+ * these builds — they are run by hand when an artifact needs regenerating.
+ */
+object ToolsProject : Project({
+    id("Tools")
+    name = "Tools"
+    description = "Occasional builds that produce native artifacts, run by hand"
+
+    buildType(BuildGdalMacOS)
 })
 
 /**
@@ -547,6 +561,89 @@ object PackageMacOS : BuildType({
 
     params { param("gradle.extraGradleParams", Config.USE_LAST_TAG) }
     triggers { vcs { branchFilter = Config.TAG_BRANCH_FILTER } }
+    requirements {
+        contains("teamcity.agent.jvm.os.name", "Mac OS X")
+        exists("env.JDK_21_0_x64")
+    }
+})
+
+// ----------------------------------------------------------------------------
+// Tools — not part of the pipeline. Run by hand when an artifact needs rebuilding.
+// ----------------------------------------------------------------------------
+
+/**
+ * Builds native GDAL 3.2.1 with Java bindings for macOS, from source.
+ *
+ * Windows and Linux have always built against native GDAL 3.2.1. macOS ran
+ * 3.5.0_1 because no macOS 3.2 build was published anywhere, and three tests
+ * disagreed as a result. This produced the missing artifact, which is now on
+ * the Nexus as org.gdal:gdal:3.2.1:macOS-x64, so all three platforms match.
+ *
+ * It stays here because the artifact may need rebuilding — for a new GDAL
+ * version, or for arm64. See build-scripts/gdal-macos/build-gdal-macos.sh for
+ * what it does and for what it had to work around.
+ *
+ * The output is not consumed automatically. The zips are published as build
+ * artifacts and someone uploads them to the Nexus by hand, after which
+ * build.gradle.kts points the macOS natives at them. The script prints the
+ * coordinates and the repository to use when it finishes.
+ */
+object BuildGdalMacOS : BuildType({
+    id("Build_Gdal_macOS")
+    name = "Build GDAL 3.2.1 — macOS (x64)"
+    description = "Compiles GDAL + PROJ from source with Java bindings; run by hand"
+
+    params {
+        // Kept outside the checkout so the GDAL and PROJ clones survive between
+        // runs: the VCS root cleans all untracked files, which would otherwise
+        // discard roughly a gigabyte of sources on every build.
+        param("gdal.build.root", "%env.HOME%/gdal-build")
+    }
+
+    vcs {
+        root(VortexVcs)
+        checkoutMode = CheckoutMode.ON_AGENT
+    }
+
+    steps {
+        script {
+            name = "Build GDAL from source"
+            workingDir = "."
+            scriptContent = """
+                set -e
+                # Clear the artifact directory here rather than in the collect
+                # step, because that step is skipped when this one fails while
+                # publishing still runs. Build 9 failed in its first minute and
+                # published build 8's three zips regardless, which is how a
+                # bundle with no netCDF driver ends up looking like the output of
+                # a build that never produced one.
+                rm -rf "%teamcity.build.checkoutDir%/artifacts"
+                mkdir -p "%gdal.build.root%"
+                cd "%gdal.build.root%"
+                "%teamcity.build.checkoutDir%/build-scripts/gdal-macos/build-gdal-macos.sh"
+            """.trimIndent()
+        }
+        script {
+            name = "Collect artifacts"
+            scriptContent = """
+                set -e
+                mkdir -p artifacts
+                cp -f "%gdal.build.root%/Output/"*.zip artifacts/
+                ls -lh artifacts/
+            """.trimIndent()
+        }
+    }
+
+    artifactRules = "artifacts/*.zip"
+
+    failureConditions {
+        // Two source builds plus SWIG; the first run also clones GDAL and PROJ.
+        executionTimeoutMin = 180
+    }
+
+    // macOS on x86_64: build-macOS is the Intel agent, and mac-studio-01-vm has
+    // only an ARM64 JDK. The script's JAVA_HOME requirement is what the JDK
+    // capability satisfies, and it defaults to building x86_64 to match.
     requirements {
         contains("teamcity.agent.jvm.os.name", "Mac OS X")
         exists("env.JDK_21_0_x64")
