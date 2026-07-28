@@ -56,41 +56,49 @@ dependencies {
     macOS_x64("org.hdfgroup:hdf:1.14.0:macOS-x64@zip")
 }
 
-tasks.register<Copy>("copyRuntimeLibs") {
-    from(configurations.runtimeClasspath)
-    include("*.jar")
-    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/lib"))
+// All three platforms' wizard launchers are now built by jpackage (see
+// vortex-ui/build.gradle.kts) instead of being copied from committed
+// Launch4j output (Windows) or shell scripts (macOS/Linux). jpackage's
+// app-image bundles the jars, runtime, and GDAL natives itself, so there's
+// no separate lib/bin/jre copy step for any OS anymore.
+fun jpackagePlatformDir(): String {
+    return when {
+        OperatingSystem.current().isWindows() -> "windows"
+        OperatingSystem.current().isMacOsX() -> "macOS"
+        else -> "linux"
+    }
 }
 
-tasks.register<Copy>("copyVortexUi") {
-    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
-    into("lib") {
-        from(project(":vortex-ui").layout.buildDirectory.dir("libs"))
-        include("*.jar")
-    }
-    into("bin") {
-        if (OperatingSystem.current().isWindows()) {
-            from(
-                project(":vortex-ui").projectDir.toString()
-                        + "/package/windows"
-            )
-            include("*.bat", "*.exe")
-        } else if (OperatingSystem.current().isLinux()) {
-            from(
-                project(":vortex-ui").projectDir.toString()
-                        + "/package/linux"
-            )
-            include("*.sh")
-        } else if (OperatingSystem.current().isMacOsX()) {
-            from(
-                project(":vortex-ui").projectDir.toString()
-                        + "/package/macOS"
-            )
-            include("*.sh")
-        }
+fun jpackageTaskName(): String {
+    return when {
+        OperatingSystem.current().isWindows() -> "jpackageWindows"
+        OperatingSystem.current().isMacOsX() -> "jpackageMacOS"
+        else -> "jpackageLinux"
     }
 }
-tasks.getByPath(":copyVortexUi").dependsOn(":vortex-ui:build")
+
+// jpackage app-image names its output "vortex-ui" everywhere except macOS,
+// where app-image output is always a "<name>.app" bundle.
+fun jpackageAppImageName(): String {
+    return if (OperatingSystem.current().isMacOsX()) "vortex-ui.app" else "vortex-ui"
+}
+
+tasks.register<Copy>("copyJpackageLaunchers") {
+    dependsOn(":vortex-ui:build", ":vortex-ui:${jpackageTaskName()}")
+    from(project(":vortex-ui").layout.buildDirectory.dir("jpackage/${jpackagePlatformDir()}/output/${jpackageAppImageName()}")) {
+        // macOS only. from(dir) copies what is inside dir, which is right for
+        // the Windows and Linux app images -- their launchers and app/ and
+        // runtime/ are meant to sit at the top of the distribution. On macOS the
+        // app image is a .app bundle, and a bundle is a directory the operating
+        // system presents as a single file, so copying its contents leaves a
+        // bare Contents/ in the distribution and nothing that will launch.
+        // Nest it back under its own name to keep the bundle intact.
+        if (OperatingSystem.current().isMacOsX()) {
+            into(jpackageAppImageName())
+        }
+    }
+    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
+}
 
 tasks.register<Copy>("copyLicense") {
     from(project.rootDir) {
@@ -104,16 +112,6 @@ tasks.register<Copy>("copyFatJar") {
         include("${rootProject.name}-all-${project.version}")
     }
     into(layout.buildDirectory.dir("distributions"))
-}
-
-tasks.register<Copy>("copyStartScripts") {
-    if (OperatingSystem.current().isLinux()) {
-        from("$projectDir/package/linux")
-        into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/bin"))
-    } else if (OperatingSystem.current().isMacOsX()) {
-        from("$projectDir/package/macOS")
-        into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/bin"))
-    }
 }
 
 tasks.register<Copy>("getNatives") {
@@ -166,19 +164,6 @@ tasks.register<Delete>("refreshNatives") {
 }
 tasks.getByName("refreshNatives") { finalizedBy("getNatives") }
 
-tasks.register<Copy>("copyNatives") {
-    from("$projectDir/bin")
-    exclude("jre")
-    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/bin"))
-}
-
-tasks.getByName("copyNatives") { dependsOn("refreshNatives", "getNatives") }
-
-tasks.register<Copy>("copyJre") {
-    from("$projectDir/bin/jre")
-    into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}/jre"))
-}
-
 tasks.register<Tar>("zipLinux") {
     archiveFileName.set("${rootProject.name}-${project.version}-linux-x64" + ".tar.gz")
     destinationDirectory.set(layout.buildDirectory.dir("distributions").get().asFile)
@@ -211,20 +196,13 @@ tasks.register("zip") {
     }
 }
 
-tasks.getByName("copyJre").dependsOn("refreshNatives", "getNatives")
-
-tasks.getByName("build").dependsOn("copyJre")
-tasks.getByName("build").dependsOn("copyRuntimeLibs")
-tasks.getByName("build").dependsOn("copyNatives")
-tasks.getByName("build").dependsOn("copyVortexUi")
+tasks.getByName("build").dependsOn("copyJpackageLaunchers")
 tasks.getByName("build").dependsOn("copyLicense")
-tasks.getByName("build").dependsOn("copyStartScripts")
 tasks.getByName("build").dependsOn("vortex-api:fatJar")
 tasks.getByName("build").dependsOn("copyFatJar")
 tasks.getByName("build").finalizedBy("zip")
 val distributionInputs = listOf(
-    "copyJre", "copyRuntimeLibs", "copyNatives", "copyVortexUi",
-    "copyLicense", "copyStartScripts", "copyFatJar"
+    "copyJpackageLaunchers", "copyLicense", "copyFatJar"
 )
 listOf("zipWin", "zipLinux", "zipMacOS").forEach { zipTask ->
     tasks.getByName(zipTask).dependsOn(distributionInputs)
