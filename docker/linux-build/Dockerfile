@@ -54,6 +54,22 @@ RUN apt-get update \
 # throwaway build container whose only repository is the one just checked out.
 RUN git config --system --add safe.directory '*'
 
+# nebula.release creates an annotated tag, and an annotated tag records a tagger,
+# so it refuses to run at all without an identity -- "Git user.name is not set",
+# raised while applying the plugin, before any task. The agent has one; this
+# container does not, and the release build runs here. A service identity rather
+# than a person's: the tag is made by the pipeline, and GitHub already attributes
+# the push itself to the account whose token the VCS root carries.
+#
+# Set globally as well as system-wide. nebula reads git through JGit, which finds
+# $HOME/.gitconfig reliably and is less predictable about /etc/gitconfig, and the
+# cost of a redundant config file is nothing next to another release cycle spent
+# discovering it did not take.
+RUN git config --system user.name "Vortex CI" \
+    && git config --system user.email "vortex-ci@hecdev.net" \
+    && git config --global user.name "Vortex CI" \
+    && git config --global user.email "vortex-ci@hecdev.net"
+
 # Gradle is supplied by the wrapper in the repository, so nothing to install.
 # JAVA_HOME comes from the base image, which is why the TeamCity Gradle runner
 # leaves jdkHome empty for the containerised steps.

@@ -3,6 +3,8 @@ import jetbrains.buildServer.configs.kotlin.buildFeatures.perfmon
 import jetbrains.buildServer.configs.kotlin.buildSteps.GradleBuildStep
 import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.buildSteps.script
+import jetbrains.buildServer.configs.kotlin.failureConditions.BuildFailureOnText
+import jetbrains.buildServer.configs.kotlin.failureConditions.failOnText
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
 
@@ -25,9 +27,9 @@ import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
  *
  *   2. Release (nebula): runs `final`/`candidate`, which computes the next
  *      semantic version and CREATES + PUSHES a git tag (e.g. v1.2.1). It
- *      publishes the vortex/vortex-ui libraries to Nexus ONLY for
- *      `final`/`candidate` (never `snapshot`). This is the only place a tag is
- *      minted, so it runs on ONE agent.
+ *      publishes the vortex/vortex-ui libraries to Nexus ONLY for `final`; a
+ *      candidate is tagged and packaged but not published. This is the only
+ *      place a tag is minted, so it runs on ONE agent.
  *
  *   3. Package builds (Package — Linux/Windows/macOS): triggered by the tag that
  *      Release pushes. The VCS root's branchSpec exposes every v* tag as a
@@ -431,8 +433,10 @@ object BuildMacOS : BuildType({
  * The tag this pushes is what triggers the Package fan-out below. This build
  * itself does NOT assemble installers: `-x build` skips the OS-specific
  * distribution (which cannot be cross-built anyway). Nexus publishing is a
- * separate, conditional step that runs ONLY for `final` and `candidate` — not
- * for `snapshot`. The per-OS installers come from the Package builds.
+ * separate, conditional step that runs for `final` alone. A candidate gets a
+ * tag and, through it, the per-OS installers from the Package builds, which is
+ * what there is to test; putting one on a release repository would spend the
+ * coordinate on a version that may never be released.
  */
 object Release : BuildType({
     id("Release")
@@ -450,7 +454,26 @@ object Release : BuildType({
             description = "nebula.release task to run",
             options = listOf("final", "candidate", "snapshot")
         )
-        // Optional extra args, e.g. -Prelease.scope=minor to force a minor bump.
+        // Which part of the version nebula increments. Left at the default it
+        // infers the bump from the commits since the last tag.
+        //
+        // The option values are the flag itself rather than the bare word, so
+        // that the default can contribute nothing to the command line. Passing
+        // an empty -Prelease.scope= is not the same as omitting it, and this is
+        // the one build where getting the version wrong means a pushed tag.
+        select(
+            "release.scope", "",
+            label = "Version bump",
+            description = "Part of the version to increment",
+            options = listOf(
+                "infer from commits" to "",
+                "major" to "-Prelease.scope=major",
+                "minor" to "-Prelease.scope=minor",
+                "patch" to "-Prelease.scope=patch"
+            )
+        )
+        // Anything else to pass to the release task, for the cases the two
+        // parameters above do not cover.
         param("release.gradleParams", "")
     }
 
@@ -472,13 +495,32 @@ object Release : BuildType({
             name = "Build the Linux toolchain image"
             scriptContent = "docker build -t ${Config.LINUX_IMAGE} docker/linux-build"
         }
+        // Give the checkout a pushable origin. TeamCity authenticates its own
+        // git calls by passing a credential helper per invocation, which is not
+        // written into .git/config, so it does not reach the `git push` nebula
+        // runs from inside the container -- build 3 tagged locally and then
+        // failed with "could not read Password for https://tombrauer@github.com".
+        //
+        // Writing the token into the remote URL keeps it out of the process
+        // arguments nebula constructs, and the checkout is deleted before every
+        // run (cleanCheckout), so it does not outlive the build. TeamCity masks
+        // the parameter in the log.
+        script {
+            name = "Authenticate the origin remote"
+            scriptContent = """
+                set -e
+                git remote set-url origin \
+                  "https://%github.user%:%github.token%@github.com/HydrologicEngineeringCenter/Vortex.git"
+            """.trimIndent()
+        }
         // Mint + push the tag only. Publishing is excluded here so that it is
-        // driven entirely by the conditional step below (final/candidate only);
-        // -x build also skips the OS-specific distribution.
+        // driven entirely by the conditional step below (final only); -x build
+        // also skips the OS-specific distribution.
         gradle {
             name = "Release / tag (%release.task%)"
             tasks = "%release.task%"
-            gradleParams = "-x build -x :vortex-api:publish -x :vortex-ui:publish %release.gradleParams%"
+            gradleParams =
+                "-x build -x :vortex-api:publish -x :vortex-ui:publish %release.scope% %release.gradleParams%"
             useGradleWrapper = true
             gradleWrapperPath = ""
             // Empty: JAVA_HOME comes from the image, as for the other builds.
@@ -500,14 +542,31 @@ object Release : BuildType({
             dockerImage = Config.LINUX_IMAGE
             dockerImagePlatform = GradleBuildStep.ImagePlatform.Linux
             conditions {
-                // Runs for release.task == final OR candidate; skipped for snapshot.
-                matches("release.task", "final|candidate")
+                // Final only. A candidate is for testing the installers the
+                // Package builds produce from its tag, and those come from the
+                // artifacts, not from Nexus — publishing one puts a version on a
+                // release repository that cannot be withdrawn if the candidate is
+                // rejected, and maven-releases refuses redeployment, so the
+                // coordinate is spent either way.
+                equals("release.task", "final")
             }
         }
     }
 
     failureConditions {
         executionTimeoutMin = 60
+        // nebula reports a failed tag push as a warning and exits zero, so build
+        // 3 was green having created the tag only on the agent, which is then
+        // deleted by the next clean checkout. A release that mints nothing is
+        // the one outcome this build must not call success, and it is worse than
+        // an ordinary failure: the Package builds wait on a tag that never
+        // arrives, so the symptom appears somewhere else entirely.
+        failOnText {
+            conditionType = BuildFailureOnText.ConditionType.CONTAINS
+            pattern = "Failed to push tag"
+            failureMessage = "The tag was created locally but not pushed, so nothing will trigger the Package builds. Check the origin credentials."
+            reverse = false
+        }
     }
 
     // Pinned to Linux for determinism, and to Docker rather than to a JDK
