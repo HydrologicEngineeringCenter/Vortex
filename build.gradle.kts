@@ -97,6 +97,19 @@ tasks.register<Copy>("copyJpackageLaunchers") {
     into(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
 }
 
+// macOS produces a disk image rather than a directory to be archived, so it does
+// not go through copyJpackageLaunchers and the zip tasks at all. jpackage names
+// the file after the app and its app-version; rename it to the convention the
+// other platforms use, which is also what the TeamCity artifact rules match.
+tasks.register<Copy>("copyMacOSInstaller") {
+    dependsOn(":vortex-ui:build", ":vortex-ui:jpackageMacOS")
+    from(project(":vortex-ui").layout.buildDirectory.dir("jpackage/macOS/output")) {
+        include("*.dmg")
+        rename { "${rootProject.name}-${project.version}-macOS-x64.dmg" }
+    }
+    into(layout.buildDirectory.dir("distributions"))
+}
+
 tasks.register<Copy>("copyLicense") {
     from(project.rootDir) {
         include("LICENSE.md")
@@ -176,32 +189,33 @@ tasks.register<Zip>("zipWin") {
     into("${rootProject.name}-${project.version}")
 }
 
-tasks.register<Zip>("zipMacOS") {
-    archiveFileName.set("${rootProject.name}-${project.version}-macOS-x64" + ".zip")
-    destinationDirectory.set(layout.buildDirectory.dir("distributions").get().asFile)
-    from(layout.buildDirectory.dir("distributions/${rootProject.name}-${project.version}"))
-    into("${rootProject.name}-${project.version}")
-}
-
 tasks.register("zip") {
     if (OperatingSystem.current().isWindows()) {
         dependsOn("zipWin")
     } else if (OperatingSystem.current().isLinux()) {
         dependsOn("zipLinux")
-    } else if (OperatingSystem.current().isMacOsX()) {
-        dependsOn("zipMacOS")
     }
+    // macOS has nothing to archive. jpackage built the disk image and
+    // copyMacOSInstaller has already put it in build/distributions.
 }
 
-tasks.getByName("build").dependsOn("copyJpackageLaunchers")
-tasks.getByName("build").dependsOn("copyLicense")
+// macOS assembles nothing: the disk image jpackage produced is the deliverable,
+// and copyMacOSInstaller puts it beside the other platforms' archives. The
+// licence travels inside the bundle for that platform, staged by
+// jpackageStageMacOS, since there is no directory here to place it next to.
+if (OperatingSystem.current().isMacOsX()) {
+    tasks.getByName("build").dependsOn("copyMacOSInstaller")
+} else {
+    tasks.getByName("build").dependsOn("copyJpackageLaunchers")
+    tasks.getByName("build").dependsOn("copyLicense")
+}
 tasks.getByName("build").dependsOn("vortex-api:fatJar")
 tasks.getByName("build").dependsOn("copyFatJar")
 tasks.getByName("build").finalizedBy("zip")
 val distributionInputs = listOf(
     "copyJpackageLaunchers", "copyLicense", "copyFatJar"
 )
-listOf("zipWin", "zipLinux", "zipMacOS").forEach { zipTask ->
+listOf("zipWin", "zipLinux").forEach { zipTask ->
     tasks.getByName(zipTask).dependsOn(distributionInputs)
 }
 

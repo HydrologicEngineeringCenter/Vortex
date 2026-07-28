@@ -220,10 +220,15 @@ object Builders {
    */
   fun platformBuild(bt: BuildTypeSettings, image: String) = with(bt) {
     // Per-OS build.gradle.kts produces exactly one of these into build/distributions:
-    //   vortex-<version>-win-x64.zip / -linux-x64.tar.gz / -macOS-x64.zip
+    //   vortex-<version>-win-x64.zip / -linux-x64.tar.gz / -macOS-x64.dmg
+    //
+    // macOS is a disk image rather than an archive because jpackage builds it
+    // directly: a .app carries symlinks, permissions and an ad-hoc signature
+    // that a generic archiver does not preserve.
     artifactRules = """
         build/distributions/vortex-*-*.zip
         build/distributions/vortex-*-*.tar.gz
+        build/distributions/vortex-*-*.dmg
     """.trimIndent()
 
     params {

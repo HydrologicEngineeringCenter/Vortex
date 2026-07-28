@@ -241,17 +241,25 @@ fun writeJpackageLauncherProperties(
 
 // The primary launcher (vortex-ui[.exe]) gets no wizard argument, which falls
 // through to VortexUi's AnyWizard picker; every wizard is an --add-launcher.
+// Windows and Linux take the app-image, an ordinary directory that the root
+// project archives. macOS takes "dmg" and lets jpackage build the disk image
+// itself: the app-image there is a .app bundle carrying symlinks, permissions
+// and the ad-hoc signature jpackage applies, and a generic archiver preserves
+// none of those. A bundle rebuilt from such an archive is one macOS may refuse
+// to open, and it would say so as a damaged application rather than as anything
+// this build reported.
 fun jpackageBaseCommand(
     name: String,
     inputDir: File,
     destDir: File,
     jarName: String,
     icon: String,
-    runtimeImage: String
+    runtimeImage: String,
+    type: String = "app-image"
 ): MutableList<String> {
     return mutableListOf(
         jpackageExecutable(),
-        "--type", "app-image",
+        "--type", type,
         "--name", name,
         "--input", inputDir.absolutePath,
         "--dest", destDir.absolutePath,
@@ -492,6 +500,11 @@ val jpackageStageMacOS = tasks.register<Copy>("jpackageStageMacOS") {
     from(tasks.jar)
     from(configurations.runtimeClasspath) { include("*.jar") }
     from("${rootProject.projectDir}/bin/libjavaHeclib.dylib")
+    // Staged into the app rather than copied alongside it. On Windows and Linux
+    // copyLicense puts LICENSE.md in the distribution directory that gets
+    // archived; macOS ships a disk image holding the bundle and has no such
+    // directory, so the licence travels inside the bundle instead.
+    from("${rootProject.projectDir}/LICENSE.md")
     into("gdal") { from("${rootProject.projectDir}/bin/gdal") }
     into("gdal-data") { from("${rootProject.projectDir}/bin/gdal-data") }
     into("proj-db") { from("${rootProject.projectDir}/bin/proj-db") }
@@ -550,7 +563,7 @@ val jpackageFixMacRpaths = tasks.register("jpackageFixMacRpaths") {
 
 tasks.register<Exec>("jpackageMacOS") {
     group = "distribution"
-    description = "Builds the macOS wizard launchers with jpackage."
+    description = "Builds the macOS disk image with jpackage."
     dependsOn(jpackageFixMacRpaths, jlinkRuntimeMacOS)
     inputs.dir(jpackageInputDirMacOS)
     inputs.dir(jlinkRuntimeDirMacOS)
@@ -571,7 +584,8 @@ tasks.register<Exec>("jpackageMacOS") {
             jpackageOutputDirMacOS.get().asFile,
             jarName,
             jpackageIconMacOS,
-            jlinkRuntimeDirMacOS.get().asFile.absolutePath
+            jlinkRuntimeDirMacOS.get().asFile.absolutePath,
+            type = "dmg"
         )
         javaOptions.forEach { command += listOf("--java-options", it) }
 
