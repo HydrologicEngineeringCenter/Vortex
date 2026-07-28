@@ -571,6 +571,11 @@ object PackageLinux : BuildType({
     description = "Build the Linux release installer from the pushed tag"
 
     params { param("gradle.extraGradleParams", Config.USE_LAST_TAG) }
+    // Filter the configuration, not just the trigger. The trigger decides what
+    // starts a build; this decides which branches the configuration watches at
+    // all. Without it the build still tracks master, whose commits it will never
+    // build, so they accumulate as pending changes that nothing can ever clear.
+    vcs { branchFilter = Config.TAG_BRANCH_FILTER }
     triggers { vcs { branchFilter = Config.TAG_BRANCH_FILTER } }
     requirements {
         contains("teamcity.agent.jvm.os.name", "Linux")
@@ -585,6 +590,11 @@ object PackageWindows : BuildType({
     description = "Build the Windows release installer from the pushed tag"
 
     params { param("gradle.extraGradleParams", Config.USE_LAST_TAG) }
+    // Filter the configuration, not just the trigger. The trigger decides what
+    // starts a build; this decides which branches the configuration watches at
+    // all. Without it the build still tracks master, whose commits it will never
+    // build, so they accumulate as pending changes that nothing can ever clear.
+    vcs { branchFilter = Config.TAG_BRANCH_FILTER }
     triggers { vcs { branchFilter = Config.TAG_BRANCH_FILTER } }
     requirements {
         contains("teamcity.agent.jvm.os.name", "Windows")
@@ -599,6 +609,11 @@ object PackageMacOS : BuildType({
     description = "Build the macOS release installer from the pushed tag"
 
     params { param("gradle.extraGradleParams", Config.USE_LAST_TAG) }
+    // Filter the configuration, not just the trigger. The trigger decides what
+    // starts a build; this decides which branches the configuration watches at
+    // all. Without it the build still tracks master, whose commits it will never
+    // build, so they accumulate as pending changes that nothing can ever clear.
+    vcs { branchFilter = Config.TAG_BRANCH_FILTER }
     triggers { vcs { branchFilter = Config.TAG_BRANCH_FILTER } }
     requirements {
         contains("teamcity.agent.jvm.os.name", "Mac OS X")
