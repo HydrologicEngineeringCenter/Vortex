@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
 import com.formdev.flatlaf.FlatLightLaf;
+import mil.army.usace.hec.vortex.ui.dss.Dss7MigratorWizard;
 
 import javax.swing.JOptionPane;
 import java.awt.event.WindowAdapter;
@@ -48,6 +49,8 @@ public class VortexUi {
             wizard = new TimeShifterWizard(null);
         } else if (set.contains("-time-step-resampler")) {
             wizard = new TimeStepResamplerWizard(null);
+        } else if (set.contains("-dss7-migrator")) {
+            wizard = new Dss7MigratorWizard(null);
         } else {
             wizard = new AnyWizard(null);
         }

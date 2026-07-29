@@ -1,5 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
+import mil.army.usace.hec.vortex.ui.dss.Dss7MigratorWizard;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -16,6 +18,7 @@ public class AnyWizard extends VortexWizard {
     private JRadioButton sanitizerButton;
     private JRadioButton timeShifterButton;
     private JRadioButton timeStepResamplerButton;
+    private JRadioButton dss7MigratorButton;
 
     AnyWizard(Frame frame) {
         super();
@@ -53,6 +56,7 @@ public class AnyWizard extends VortexWizard {
         sanitizerButton = new JRadioButton(Text.format("AnyWiz_Sanitizer_L"));
         timeShifterButton = new JRadioButton(Text.format("AnyWiz_TimeShifter_L"));
         timeStepResamplerButton = new JRadioButton(Text.format("AnyWiz_TimeStepResampler_L"));
+        dss7MigratorButton = new JRadioButton(Text.format("AnyWiz_Dss7Migrator_L"));
 
         // Select importer by default
         importerButton.setSelected(true);
@@ -67,6 +71,7 @@ public class AnyWizard extends VortexWizard {
         buttonGroup.add(sanitizerButton);
         buttonGroup.add(timeShifterButton);
         buttonGroup.add(timeStepResamplerButton);
+        buttonGroup.add(dss7MigratorButton);
 
         Box buttonBox = Box.createVerticalBox();
         buttonBox.add(importerButton);
@@ -78,6 +83,7 @@ public class AnyWizard extends VortexWizard {
         buttonBox.add(sanitizerButton);
         buttonBox.add(timeShifterButton);
         buttonBox.add(timeStepResamplerButton);
+        buttonBox.add(dss7MigratorButton);
 
         add(buttonBox, BorderLayout.CENTER);
     }
@@ -140,6 +146,8 @@ public class AnyWizard extends VortexWizard {
             return new TimeShifterWizard(frame);
         else if (timeStepResamplerButton.isSelected())
             return new TimeStepResamplerWizard(frame);
+        else if (dss7MigratorButton.isSelected())
+            return new Dss7MigratorWizard(frame);
         else
             return new ImportMetWizard(frame);
     }

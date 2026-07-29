@@ -70,8 +70,13 @@ tasks.test {
         )
     } else if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
         jvmArgs(
+            // javaHeclib's "-full" archive (7-IU-16+) bundles libgcc_s,
+            // libquadmath, and libgfortran alongside libjavaHeclib.so inside a
+            // javaHeclib/ directory rather than extracting flat, so that
+            // directory has to be on the path too.
             "-Djava.library.path=${rootProject.projectDir}/bin" +
                     ":${rootProject.projectDir}/bin/gdal" +
+                    ":${rootProject.projectDir}/bin/javaHeclib" +
                     ":/usr/lib/jni",
             // netcdf-java finds the netCDF C library through JNA, which reads
             // jna.library.path and not java.library.path. Point it at the GDAL
@@ -95,16 +100,17 @@ tasks.test {
         // Named "proj" in the Linux bundle, unlike "projlib" on Windows.
         environment("PROJ_LIB", "${rootProject.projectDir}/bin/gdal/proj")
     } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-        // bin itself has to be on the path: the macOS javaHeclib archive holds a
-        // single flat libjavaHeclib.dylib, so it extracts straight into bin and
-        // there is no bin/javaHeclib directory to find it in. Without this the
-        // dylib is never loaded, hec.heclib.util.Heclib fails to initialise, and
-        // every DSS-backed test fails — 31 of them, plus the assertions that
-        // then read zero grids. bin/hdf is correct, as that archive does have
-        // its own directory.
+        // javaHeclib's "-full" archive (7-IU-16+) bundles libgcc_s, libquadmath,
+        // and libgfortran alongside libjavaHeclib.dylib inside a javaHeclib/
+        // directory rather than extracting flat, so that directory has to be on
+        // the path. Without it the dylib is never loaded, hec.heclib.util.Heclib
+        // fails to initialise, and every DSS-backed test fails — 31 of them,
+        // plus the assertions that then read zero grids. bin/hdf is correct, as
+        // that archive does have its own directory.
         jvmArgs(
             "-Djava.library.path=${rootProject.projectDir}/bin" +
                     ":${rootProject.projectDir}/bin/gdal" +
+                    ":${rootProject.projectDir}/bin/javaHeclib" +
                     ":${rootProject.projectDir}/bin/hdf",
             // netcdf-java loads the netCDF C library through JNA, which reads
             // jna.library.path and ignores java.library.path above. Without it

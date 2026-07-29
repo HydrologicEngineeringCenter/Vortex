@@ -93,8 +93,13 @@ class BatchImporterTest {
 
         float[] persistedData = persistedGridData.getData();
 
+        // 1E-2, not tighter: the persisted record was written into a DSS 6
+        // destination, which stores gridded values rounded to 0.01, and the
+        // fresh one goes to a DSS 7 destination, which keeps full float
+        // precision. The two differ by up to half of that -- 0.1351626 against
+        // a persisted 0.14, the same number rounded.
         for (int i = 0; i < data.length; i++) {
-            assertEquals(data[i], persistedData[i], 1E-4);
+            assertEquals(data[i], persistedData[i], 1E-2);
         }
 
         griddedData.done();

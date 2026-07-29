@@ -65,6 +65,18 @@ public class ImportMetWizard extends ProcessingWizard {
     }
 
     @Override
+    protected Collection<String> pathsInUse() {
+        // Sources are the added-files list rather than a single field, and any
+        // of them may be DSS. getItemsInList returns null before the list is
+        // built, which the check treats as nothing to look at.
+        List<String> paths = new ArrayList<>();
+        List<String> added = getItemsInList(addFilesList);
+        if (added != null) paths.addAll(added);
+        paths.add(pathIn(destinationSelectionPanel));
+        return paths;
+    }
+
+    @Override
     protected boolean validateStep(int stepIndex) {
         return switch (stepIndex) {
             case 0 -> validateStepOne();

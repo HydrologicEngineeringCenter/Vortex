@@ -12,6 +12,7 @@ import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +67,11 @@ public class CalculatorWizard extends ProcessingWizard {
     @Override
     protected int getLastInteractiveStep() {
         return 3;
+    }
+
+    @Override
+    protected Collection<String> pathsInUse() {
+        return List.of(pathIn(sourceFileSelectionPanel), pathIn(destinationSelectionPanel));
     }
 
     @Override
