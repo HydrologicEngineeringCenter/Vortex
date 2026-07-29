@@ -64,6 +64,11 @@ public class GapFillerWizard extends ProcessingWizard {
     }
 
     @Override
+    protected Collection<String> pathsInUse() {
+        return List.of(pathIn(sourceFileSelectionPanel), pathIn(destinationSelectionPanel));
+    }
+
+    @Override
     protected boolean validateStep(int stepIndex) {
         return switch (stepIndex) {
             case 0 -> sourceFileSelectionPanel.validateInput();

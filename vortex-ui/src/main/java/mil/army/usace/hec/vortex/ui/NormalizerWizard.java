@@ -62,6 +62,16 @@ public class NormalizerWizard extends ProcessingWizard {
     }
 
     @Override
+    protected Collection<String> pathsInUse() {
+        // Three, not two: the normal dataset is a second source alongside the
+        // grids being normalized.
+        return List.of(
+                pathIn(sourceFileSelectionPanel),
+                normalFileTextField == null ? "" : normalFileTextField.getText(),
+                pathIn(destinationSelectionPanel));
+    }
+
+    @Override
     protected boolean validateStep(int stepIndex) {
         return switch (stepIndex) {
             case 0 -> validateStepOne();

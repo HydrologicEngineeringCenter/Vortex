@@ -115,6 +115,9 @@ public abstract class DataReader implements AutoCloseable {
             }
 
             if (path.matches(".*\\.dss")) {
+                // Before the constructor, which catalogs the file and would
+                // upgrade a version 6 in place on open.
+                DssVersion.requireNotDss6ForRead(path);
                 return new DssDataReader(this);
             }
 

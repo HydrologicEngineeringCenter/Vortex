@@ -28,6 +28,17 @@ dependencies {
     // which no test here would catch.
     implementation("org.gdal:gdal:3.2.0")
     implementation("com.formdev:flatlaf:3.1.1")
+    // Engine behind the DSS 7 migration wizard, and the source of its file
+    // discovery, batch progress and result tally. Same version HEC-HMS uses, so
+    // the two applications migrate a file identically.
+    implementation("mil.army.usace.hec:hec-dss-migrator:1.4.0")
+    // For HecDSSFileAccess.closeAllFiles() before a migration run -- the host's
+    // own open handles, which the migrator's isolated heclib cannot reach.
+    // vortex-api declares this too, but as `implementation`, so it does not
+    // reach here. Same coordinates and same isTransitive as there.
+    implementation("mil.army.usace.hec:hec-monolith:3.+") {
+        isTransitive = false
+    }
     testImplementation("org.junit.jupiter:junit-jupiter:5.4.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
@@ -108,7 +119,8 @@ fun applicationTasks(): Map<String,String> {
         "normalizer" to "-normalizer",
         "sanitizer" to "-sanitizer",
         "time-shifter" to "-time-shifter",
-        "time-step-resampler" to "-time-step-resampler"
+        "time-step-resampler" to "-time-step-resampler",
+        "dss7-migrator" to "-dss7-migrator"
     )
 }
 
@@ -165,7 +177,8 @@ fun jpackageWizards(): Map<String, String> {
         "normalizer" to "-normalizer",
         "sanitizer" to "-sanitizer",
         "time-shifter" to "-time-shifter",
-        "time-step-resampler" to "-time-step-resampler"
+        "time-step-resampler" to "-time-step-resampler",
+        "dss7-migrator" to "-dss7-migrator"
     )
 }
 
@@ -187,7 +200,7 @@ fun jpackageJavaOptionsWindows(): List<String> {
 
 fun jpackageJavaOptionsLinux(): List<String> {
     return listOf(
-        "-Djava.library.path=\$APPDIR:\$APPDIR/gdal:/usr/lib/jni",
+        "-Djava.library.path=\$APPDIR:\$APPDIR/gdal:\$APPDIR/javaHeclib:/usr/lib/jni",
         "--add-opens=java.desktop/sun.awt.shell=ALL-UNNAMED",
         "-Dvortex.gdal.data=\$APPDIR/gdal/gdal-data",
         "-Dvortex.proj.lib=\$APPDIR/gdal/proj"
@@ -196,7 +209,7 @@ fun jpackageJavaOptionsLinux(): List<String> {
 
 fun jpackageJavaOptionsMacOS(): List<String> {
     return listOf(
-        "-Djava.library.path=\$APPDIR:\$APPDIR/gdal",
+        "-Djava.library.path=\$APPDIR:\$APPDIR/gdal:\$APPDIR/javaHeclib",
         "--add-opens=java.desktop/sun.awt.shell=ALL-UNNAMED",
         "-Dvortex.gdal.data=\$APPDIR/gdal-data",
         "-Dvortex.proj.lib=\$APPDIR/proj-db"
@@ -434,8 +447,8 @@ val jpackageStageLinux = tasks.register<Copy>("jpackageStageLinux") {
     into(jpackageInputDirLinux)
     from(tasks.jar)
     from(configurations.runtimeClasspath) { include("*.jar") }
-    from("${rootProject.projectDir}/bin/libjavaHeclib.so")
     into("gdal") { from("${rootProject.projectDir}/bin/gdal") }
+    into("javaHeclib") { from("${rootProject.projectDir}/bin/javaHeclib") }
 }
 
 tasks.register<Exec>("jpackageLinux") {
@@ -499,7 +512,6 @@ val jpackageStageMacOS = tasks.register<Copy>("jpackageStageMacOS") {
     into(jpackageInputDirMacOS)
     from(tasks.jar)
     from(configurations.runtimeClasspath) { include("*.jar") }
-    from("${rootProject.projectDir}/bin/libjavaHeclib.dylib")
     // Staged into the app rather than copied alongside it. On Windows and Linux
     // copyLicense puts LICENSE.md in the distribution directory that gets
     // archived; macOS ships a disk image holding the bundle and has no such
@@ -508,6 +520,7 @@ val jpackageStageMacOS = tasks.register<Copy>("jpackageStageMacOS") {
     into("gdal") { from("${rootProject.projectDir}/bin/gdal") }
     into("gdal-data") { from("${rootProject.projectDir}/bin/gdal-data") }
     into("proj-db") { from("${rootProject.projectDir}/bin/proj-db") }
+    into("javaHeclib") { from("${rootProject.projectDir}/bin/javaHeclib") }
 }
 
 // A dylib that names its siblings as @rpath/libfoo.dylib needs an LC_RPATH of
@@ -530,12 +543,12 @@ val jpackageStageMacOS = tasks.register<Copy>("jpackageStageMacOS") {
 // Requires the Xcode Command Line Tools: otool, install_name_tool and codesign.
 val jpackageFixMacRpaths = tasks.register("jpackageFixMacRpaths") {
     group = "distribution"
-    description = "Ensures the staged macOS gdal dylibs carry an @loader_path rpath."
+    description = "Ensures the staged macOS gdal and javaHeclib dylibs carry an @loader_path rpath."
     dependsOn(jpackageStageMacOS)
 
     doLast {
-        fileTree(jpackageInputDirMacOS.get().asFile.resolve("gdal")) {
-            include("*.dylib")
+        fileTree(jpackageInputDirMacOS.get().asFile) {
+            include("gdal/*.dylib", "javaHeclib/*.dylib")
         }.forEach { dylib ->
             val loadCommands = ByteArrayOutputStream()
             exec {

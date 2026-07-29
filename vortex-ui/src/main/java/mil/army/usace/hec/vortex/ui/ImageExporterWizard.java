@@ -46,6 +46,12 @@ public class ImageExporterWizard extends ProcessingWizard {
     }
 
     @Override
+    protected Collection<String> pathsInUse() {
+        // Source only: this wizard's destination is a directory of images.
+        return List.of(pathIn(sourceFileSelectionPanel));
+    }
+
+    @Override
     protected boolean validateStep(int stepIndex) {
         return switch (stepIndex) {
             case 0 -> sourceFileSelectionPanel.validateInput();

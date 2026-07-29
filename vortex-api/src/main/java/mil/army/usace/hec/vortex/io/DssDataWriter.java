@@ -40,6 +40,11 @@ class DssDataWriter extends DataWriter {
 
     @Override
     public void write() {
+        // An existing version 6 destination would be upgraded in place by the
+        // first write. Refuse instead; a destination that does not exist yet is
+        // created as version 7 and is not affected.
+        DssVersion.requireNotDss6(destination);
+
         List<VortexGrid> grids = data.stream()
                 .filter(VortexGrid.class::isInstance)
                 .map(VortexGrid.class::cast)

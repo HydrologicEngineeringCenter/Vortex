@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.io.DataReader;
+import mil.army.usace.hec.vortex.ui.dss.Dss7MigrationCheck;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -223,6 +224,13 @@ public class SourceFileSelectionPanel extends JPanel {
             File selectedFile = fileChooser.getSelectedFile();
             sourceFileTextField.setText(selectedFile.getAbsolutePath());
             fileBrowseButton.setPersistedBrowseLocation(selectedFile);
+
+            /* Say so here rather than let getVariables below throw: cataloging
+             * a version 6 file is what would upgrade it, and the wizard's own
+             * check does not run until Next. */
+            if (Dss7MigrationCheck.blockIfDss6(this, List.of(selectedFile.toString()))) {
+                return;
+            }
 
             /* Populate variables for available source grids list */
             Set<String> variables = DataReader.getVariables(selectedFile.toString());

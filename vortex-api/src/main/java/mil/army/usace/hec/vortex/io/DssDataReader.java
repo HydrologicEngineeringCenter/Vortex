@@ -226,6 +226,9 @@ class DssDataReader extends DataReader {
     }
 
     public static Set<String> getVariables(String pathToDss){
+        // Cataloging opens the file, which upgrades a version 6 in place.
+        DssVersion.requireNotDss6(pathToDss);
+
         HecDSSDataAttributes attributes = new HecDSSDataAttributes();
         attributes.setDSSFileName(pathToDss);
         String[] dssPathnames = attributes.getCatalog(false, null);

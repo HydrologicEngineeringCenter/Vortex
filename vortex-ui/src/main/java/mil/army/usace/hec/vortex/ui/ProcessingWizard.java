@@ -1,12 +1,14 @@
 package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.ui.dss.Dss7MigrationCheck;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,6 +64,26 @@ abstract class ProcessingWizard extends VortexWizard {
     protected abstract void showSaveResult();
 
     // --- Hook methods subclasses may override ---
+
+    /**
+     * Paths this wizard is about to read or write, for the DSS 6 check in
+     * {@link #nextAction()}. Return everything currently entered, in any order;
+     * blanks, non-DSS files and files that do not exist yet are filtered out by
+     * {@link Dss7MigrationCheck}. The default is empty, so a wizard that never
+     * touches DSS needs no override.
+     */
+    protected Collection<String> pathsInUse() {
+        return List.of();
+    }
+
+    /** Null-safe path reads for {@link #pathsInUse()} overrides. */
+    protected static String pathIn(SourceFileSelectionPanel panel) {
+        return panel == null ? "" : panel.getSourceFileTextField().getText();
+    }
+
+    protected static String pathIn(DestinationSelectionPanel panel) {
+        return panel == null ? "" : panel.getDestinationTextField().getText();
+    }
 
     protected void onBackAction(int newCardNumber) {
         // Default: no-op. Override for wizard-specific back behavior.
@@ -129,6 +151,11 @@ abstract class ProcessingWizard extends VortexWizard {
 
     protected void nextAction() {
         if (!validateStep(cardNumber)) return;
+        // Checked on every step rather than only the one that names the file:
+        // a wizard may read a DSS source early and write a DSS destination
+        // several steps later, and stopping at the first opportunity spares the
+        // user filling in the rest of the wizard before being turned away.
+        if (Dss7MigrationCheck.blockIfDss6(this, pathsInUse())) return;
         submitStep(cardNumber);
         cardNumber++;
         updateButtonState();
