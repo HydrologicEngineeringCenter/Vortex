@@ -36,11 +36,11 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.4.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
-    windows_x64("mil.army.usace.hec:javaHeclib:7-IR-6-win-x86_64@zip")
+    windows_x64("mil.army.usace.hec:javaHeclib:7-IU-16-win-x86_64@zip")
     windows_x64("org.gdal:gdal:3.2.1-win-x64@zip")
     windows_x64("edu.ucar:netcdf:4.9.2:win-x64@zip")
     windows_x64 ("org.hdfgroup:hdf:1.14.0-win-x64@zip")
-    linux_x64("mil.army.usace.hec:javaHeclib:7-IR-6-linux-x86_64@tar.gz")
+    linux_x64("mil.army.usace.hec:javaHeclib:7-IU-16-linux-x86_64-full@tar.gz")
     linux_x64("org.gdal:gdal:3.2.1:linux@tar.gz")
     linux_x64("org.hdfgroup:hdf:2.14.0-linux64@tar.gz")
     // These three move together. The macOS gdal zip is dylibs only, where the
@@ -49,7 +49,7 @@ dependencies {
     macOS_x64("org.gdal:gdal:3.2.1:macOS-x64@zip")
     macOS_x64("org.gdal:gdal-data:3.2.1@zip")
     macOS_x64("org.proj:proj-db:7.2.1@zip")
-    macOS_x64("mil.army.usace.hec:javaHeclib:7-IR-6-macOS-x86_64@zip")
+    macOS_x64("mil.army.usace.hec:javaHeclib:7-IU-16-macOS-x86_64-full@zip")
     macOS_x64("org.hdfgroup:hdf:1.14.0:macOS-x64@zip")
 }
 
