@@ -162,6 +162,19 @@ tasks.register<Copy>("getNatives") {
             if (versioned != null && !link.exists()) {
                 Files.createSymbolicLink(link.toPath(), Paths.get(versioned.name))
             }
+        } else if (OperatingSystem.current().isMacOsX()) {
+            // The javaHeclib macOS archive is self-inconsistent: its
+            // libjavaHeclib.dylib asks for @rpath/libgfortran.dylib but only
+            // libgfortran.5.dylib is packaged, so dlopen fails and every
+            // DSS-backed test dies. Add the name it asks for. A symlink, not a
+            // copy: Gradle's Copy dereferences it into the jpackage bundle, so
+            // the shipped app still gets a real file under both names.
+            val heclibDir = file("$projectDir/bin/javaHeclib")
+            val versioned = heclibDir.listFiles { f: File -> f.name.startsWith("libgfortran.") }?.firstOrNull()
+            val link = File(heclibDir, "libgfortran.dylib")
+            if (versioned != null && !link.exists()) {
+                Files.createSymbolicLink(link.toPath(), Paths.get(versioned.name))
+            }
         }
     }
 }
