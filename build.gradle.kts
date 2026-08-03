@@ -51,6 +51,9 @@ dependencies {
     macOS_x64("org.proj:proj-db:7.2.1@zip")
     macOS_x64("mil.army.usace.hec:javaHeclib:7-IU-16-macOS-x86_64-full@zip")
     macOS_x64("org.hdfgroup:hdf:1.14.0:macOS-x64@zip")
+    // EXPERIMENT — DO NOT MERGE. Pulled in only for its libgfortran; see the
+    // macOS branch of getNatives below. Vortex has no use for Open MPI itself.
+    macOS_x64("org.open-mpi:open-mpi:4.1.4:macOS-x64@zip")
 }
 
 // All three platforms' wizard launchers are now built by jpackage (see
@@ -163,17 +166,37 @@ tasks.register<Copy>("getNatives") {
                 Files.createSymbolicLink(link.toPath(), Paths.get(versioned.name))
             }
         } else if (OperatingSystem.current().isMacOsX()) {
-            // The javaHeclib macOS archive is self-inconsistent: its
-            // libjavaHeclib.dylib asks for @rpath/libgfortran.dylib but only
-            // libgfortran.5.dylib is packaged, so dlopen fails and every
-            // DSS-backed test dies. Add the name it asks for. A symlink, not a
-            // copy: Gradle's Copy dereferences it into the jpackage bundle, so
-            // the shipped app still gets a real file under both names.
+            // ***** EXPERIMENT — DO NOT MERGE *****
+            //
+            // Tests one question: are the two macOS javaHeclib 7-IU-16 failures
+            // (library will not load; every DSS open fails once it does) both
+            // caused by the archive packaging a libgfortran the library was not
+            // built against?
+            //
+            // Master symlinks libgfortran.dylib -> the archive's own
+            // libgfortran.5.dylib. That satisfies the link, but every DSS open
+            // then fails. HEC-HMS runs this same javaHeclib with DSS working,
+            // and the libgfortran it ends up loading is Open MPI's -- which
+            // carries the unversioned name libjavaHeclib actually asks for, so
+            // it is likely what the library was linked against.
+            //
+            // So point at Open MPI's copy instead. Green DSS tests confirm the
+            // packaged libgfortran is the culprit; still-failing DSS tests mean
+            // issue 2 is an independent bug in the 7-IU-16 macOS build. Either
+            // answer goes to the javaHeclib maintainer, and this branch is
+            // thrown away -- Vortex has no other use for Open MPI.
+            //
+            // Both libraries are needed: Open MPI's libgfortran.dylib asks for
+            // @rpath/libquadmath.dylib and has an @loader_path rpath, so its
+            // libquadmath has to sit beside it. The archive's own libgfortran.5,
+            // libquadmath.0 and libgcc_s.1.1 stay in the directory but go
+            // unreferenced -- nothing asks for those names.
             val heclibDir = file("$projectDir/bin/javaHeclib")
-            val versioned = heclibDir.listFiles { f: File -> f.name.startsWith("libgfortran.") }?.firstOrNull()
-            val link = File(heclibDir, "libgfortran.dylib")
-            if (versioned != null && !link.exists()) {
-                Files.createSymbolicLink(link.toPath(), Paths.get(versioned.name))
+            listOf("libgfortran.dylib", "libquadmath.dylib").forEach { name ->
+                val link = File(heclibDir, name)
+                if (!link.exists()) {
+                    Files.createSymbolicLink(link.toPath(), Paths.get("../open-mpi/$name"))
+                }
             }
         }
     }
