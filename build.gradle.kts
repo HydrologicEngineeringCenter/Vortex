@@ -194,9 +194,16 @@ tasks.register<Copy>("getNatives") {
             val heclibDir = file("$projectDir/bin/javaHeclib")
             listOf("libgfortran.dylib", "libquadmath.dylib").forEach { name ->
                 val link = File(heclibDir, name)
-                if (!link.exists()) {
-                    Files.createSymbolicLink(link.toPath(), Paths.get("../open-mpi/$name"))
-                }
+                // Recreate unconditionally. The CI test step runs `clean
+                // getNatives`, and clean removes build/ but not bin/, so a
+                // symlink left by an earlier build survives -- and a stale
+                // libgfortran.dylib pointing at the archive's copy makes this
+                // run reproduce the previous result exactly while looking like
+                // it tested something. Log the target so the build log says
+                // which libgfortran was actually loaded.
+                Files.deleteIfExists(link.toPath())
+                Files.createSymbolicLink(link.toPath(), Paths.get("../open-mpi/$name"))
+                logger.lifecycle("EXPERIMENT: javaHeclib/$name -> ../open-mpi/$name")
             }
         }
     }
