@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.Grid;
 import mil.army.usace.hec.vortex.geo.ReferenceUtils;
@@ -148,6 +149,16 @@ class VariableDsReader extends NetcdfDataReader {
         return timeAxis instanceof CoordinateAxis1D axis ? axis : null;
     }
 
+    private String getTimeAxisName() {
+        CoordinateAxis1D timeAxis = getTimeAxis();
+        return timeAxis != null ? timeAxis.getShortName() : null;
+    }
+
+    @Override
+    VortexDataType getDeclaredDataType() {
+        return getVortexDataType(variableDS, getTimeAxisName());
+    }
+
     private List<VortexDataInterval> getYearMonthTimeRecords(CoordinateAxis1D timeAxis) {
         List<VortexDataInterval> timeRecords = new ArrayList<>();
         for (int i = 0; i < getDtoCount(); i++) {
@@ -249,7 +260,7 @@ class VariableDsReader extends NetcdfDataReader {
                 .startTime(timeRecord.startTime())
                 .endTime(timeRecord.endTime())
                 .interval(timeRecord.getRecordDuration())
-                .dataType(getVortexDataType(variableDS))
+                .dataType(getDeclaredDataType())
                 .build();
     }
 
