@@ -263,9 +263,20 @@ final class NetcdfWriterPrep {
                     .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
                     .addAttribute(new Attribute(CF.MISSING_VALUE, (float) vortexGrid.noDataValue()))
                     .addAttribute(new Attribute(CF._FILLVALUE, (float) vortexGrid.noDataValue()))
-                    .addAttribute(new Attribute(CF.CELL_METHODS, vortexGrid.dataType().getNcString()));
+                    .addAttribute(new Attribute(CF.CELL_METHODS, getCellMethods(vortexGrid)));
         }
 
+    }
+
+    /**
+     * Builds the CF cell_methods attribute for a grid. CF-1.11 §7.3 requires each entry to name the
+     * dimension the method was applied to, so the method is keyed on the time dimension this writer
+     * creates. Earlier versions wrote the bare method ("mean", "sum", "point"); NetcdfDataReader still
+     * reads that form, so files written before this change keep resolving to the same data type.
+     */
+    private static String getCellMethods(VortexGrid vortexGrid) {
+        String method = vortexGrid.dataType().getNcString();
+        return method.isBlank() ? method : CF.TIME + ": " + method;
     }
 
     private static void addGlobalAttributes(NetcdfFormatWriter.Builder writerBuilder) {

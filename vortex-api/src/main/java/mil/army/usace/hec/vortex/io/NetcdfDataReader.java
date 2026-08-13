@@ -24,12 +24,16 @@ import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 abstract class NetcdfDataReader extends DataReader {
     private static final Logger logger = Logger.getLogger(NetcdfDataReader.class.getName());
 
     private static final PathMatcher NC_MATCHER = FileSystems.getDefault().getPathMatcher("regex:(?i).*\\.nc4?");
     private static final String TIME_BOUNDS = "time_bnds";
+    private static final Pattern CELL_METHODS_QUALIFIER = Pattern.compile("\\([^)]*\\)");
+    private static final Pattern TIME_CELL_METHOD = compileCellMethodPattern(CF.TIME);
 
     /* Factory Method */
     public static NetcdfDataReader createInstance(String pathToFile, String pathToData) throws DataReadException {
@@ -154,28 +158,98 @@ abstract class NetcdfDataReader extends DataReader {
         }
     }
 
-    static VortexDataType getVortexDataType(VariableDS variableDS) {
+    /**
+     * Resolves a variable's data type from its CF {@code cell_methods} attribute.
+     *
+     * @param timeAxisName the short name of the time coordinate variable, or null when it is unknown.
+     *                     CF allows a cell_methods entry to be keyed on the time coordinate variable's
+     *                     own name rather than the literal "time"; both are accepted.
+     */
+    static VortexDataType getVortexDataType(VariableDS variableDS, String timeAxisName) {
         String cellMethods = variableDS.findAttributeString(CF.CELL_METHODS, "");
-        return VortexDataType.fromString(cellMethods);
+        return VortexDataType.fromString(parseTimeCellMethod(cellMethods, timeAxisName));
+    }
+
+    /**
+     * Extracts the method applied to the time coordinate from a CF cell_methods string. CF-1.11 §7.3
+     * defines the attribute as a blank-separated list of "name: method [(qualifiers)]" entries, so the
+     * method has to be pulled out before it can be mapped to a {@link VortexDataType}. A string with no
+     * "name:" entry is returned unchanged, so the bare tokens written by {@link NetcdfWriterPrep}
+     * before it emitted CF-conformant output ("mean", "sum", "point") keep resolving as they always have.
+     *
+     * @return the method applied to the time coordinate, or an empty string when the attribute declares
+     * no method for it (a cell_methods of "area: mean" says nothing about how time was reduced).
+     */
+    static String parseTimeCellMethod(String cellMethods, String timeAxisName) {
+        if (cellMethods == null || cellMethods.isBlank()) return "";
+
+        // Qualifiers are dropped first: "(interval: 1 day)" contains a colon of its own.
+        String stripped = CELL_METHODS_QUALIFIER.matcher(cellMethods).replaceAll(" ");
+        if (!stripped.contains(":")) return stripped.trim();
+
+        Matcher matcher = timeCellMethodPattern(timeAxisName).matcher(stripped);
+        return matcher.find() ? matcher.group(1) : "";
+    }
+
+    private static Pattern timeCellMethodPattern(String timeAxisName) {
+        boolean isDefaultName = timeAxisName == null || timeAxisName.isBlank() || timeAxisName.equalsIgnoreCase(CF.TIME);
+        if (isDefaultName) return TIME_CELL_METHOD;
+        return compileCellMethodPattern(CF.TIME + "|" + Pattern.quote(timeAxisName));
+    }
+
+    private static Pattern compileCellMethodPattern(String names) {
+        return Pattern.compile("(?:^|\\s)(?:" + names + ")\\s*:\\s*([A-Za-z_]+)", Pattern.CASE_INSENSITIVE);
     }
 
     @Override
     public Validation isValid() {
+        List<String> messages = new ArrayList<>();
+
         try (NetcdfDataset dataset = NetcdfDatasets.openDataset(path)) {
             Path pathToFile = Path.of(path);
             if (NC_MATCHER.matches(pathToFile)) {
                 Variable variable = dataset.findVariable(TIME_BOUNDS);
                 if (variable == null) {
-                    String message = Message.format("warn_nc_time_bnds");
-                    return Validation.of(true, message);
+                    messages.add(Message.format("warn_nc_time_bnds"));
                 }
             }
         } catch (IOException e) {
             String message = Message.format("error_invalid_file", path);
             return Validation.of(false, message);
         }
-        return Validation.of(true);
+
+        if (hasSpanningInstantaneousRecords()) {
+            messages.add(Message.format("warn_nc_instantaneous_span", variableName));
+        }
+
+        return messages.isEmpty() ? Validation.of(true) : Validation.of(true, messages);
     }
+
+    /**
+     * Reports whether the variable declares itself instantaneous while its time bounds span a period.
+     * Such records cannot be indexed as instants and are dropped, which leaves the reader with no time
+     * range and every read empty. Without this check the condition is invisible until compute time.
+     */
+    private boolean hasSpanningInstantaneousRecords() {
+        if (getDeclaredDataType() != VortexDataType.INSTANTANEOUS) {
+            return false;
+        }
+
+        try {
+            return getDataIntervals().stream()
+                    .filter(VortexDataInterval::isDefined)
+                    .anyMatch(interval -> !interval.isInstantaneous());
+        } catch (DataReadException e) {
+            logger.log(Level.INFO, e, e::getMessage);
+            return false;
+        }
+    }
+
+    /**
+     * The data type declared by the source variable's CF cell_methods attribute, before any inference
+     * {@link mil.army.usace.hec.vortex.VortexGrid#dataType()} applies on top of it.
+     */
+    abstract VortexDataType getDeclaredDataType();
 
     abstract double getNoDataValue();
 }
