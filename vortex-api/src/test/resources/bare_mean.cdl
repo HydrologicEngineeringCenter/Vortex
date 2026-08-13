@@ -1,0 +1,48 @@
+netcdf bare_mean {
+dimensions:
+	time = 3 ;
+	y = 2 ;
+	x = 2 ;
+	nv = 2 ;
+variables:
+	double time(time) ;
+		time:units = "days since 1970-01-01" ;
+		time:calendar = "standard" ;
+		time:bounds = "time_bnds" ;
+		time:standard_name = "time" ;
+		time:axis = "T" ;
+	double time_bnds(time, nv) ;
+	double x(x) ;
+		x:units = "m" ;
+		x:standard_name = "projection_x_coordinate" ;
+		x:axis = "X" ;
+	double y(y) ;
+		y:units = "m" ;
+		y:standard_name = "projection_y_coordinate" ;
+		y:axis = "Y" ;
+	int crs ;
+		crs:grid_mapping_name = "transverse_mercator" ;
+		crs:longitude_of_central_meridian = 75. ;
+		crs:latitude_of_projection_origin = 0. ;
+		crs:scale_factor_at_central_meridian = 0.9996 ;
+		crs:false_easting = 500000. ;
+		crs:false_northing = 0. ;
+		crs:semi_major_axis = 6378137. ;
+		crs:inverse_flattening = 298.257223563 ;
+		crs:GeoTransform = "177000.0 1000.0 0 4722000.0 0 -1000.0" ;
+	float SWE_Post(time, y, x) ;
+		SWE_Post:units = "mm" ;
+		SWE_Post:grid_mapping = "crs" ;
+		SWE_Post:standard_name = "lwe_thickness_of_surface_snow_amount" ;
+		SWE_Post:cell_methods = "mean" ;
+
+// global attributes:
+		:Conventions = "CF-1.11" ;
+data:
+ time = 11961.5, 11962.5, 11963.5 ;
+ time_bnds = 11961, 11962, 11962, 11963, 11963, 11964 ;
+ x = 177500, 178500 ;
+ y = 4721500, 4720500 ;
+ crs = 1 ;
+ SWE_Post = 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ;
+}

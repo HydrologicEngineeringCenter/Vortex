@@ -24,6 +24,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -1072,6 +1073,79 @@ class NetcdfDataReaderTest {
 
             assertEquals(VortexDataType.ACCUMULATION, grid.dataType(), variable);
             assertEquals("PER-CUM", grid.dataType().getDssString(), variable);
+        }
+    }
+
+    @Test
+    void parseTimeCellMethodReadsCfSyntax() {
+        // CF-1.11 section 7.3: a blank-separated list of "name: method [(qualifiers)]" entries.
+        assertEquals("mean", NetcdfDataReader.parseTimeCellMethod("time: mean", null));
+        assertEquals("sum", NetcdfDataReader.parseTimeCellMethod("time: sum", null));
+        assertEquals("point", NetcdfDataReader.parseTimeCellMethod("time: point", null));
+
+        // The time entry is found wherever it appears in the list.
+        assertEquals("maximum", NetcdfDataReader.parseTimeCellMethod("area: mean time: maximum", null));
+
+        // Qualifiers are dropped, including the colon inside them.
+        assertEquals("mean", NetcdfDataReader.parseTimeCellMethod("time: mean (interval: 1 day)", null));
+
+        // Climatological statistics list several time entries; the first method wins.
+        assertEquals("mean", NetcdfDataReader.parseTimeCellMethod("time: mean within days time: mean over days", null));
+
+        // Nothing was declared about time, so nothing is claimed about it.
+        assertEquals("", NetcdfDataReader.parseTimeCellMethod("area: mean", null));
+
+        // Bare tokens, the form vortex itself wrote before it emitted CF-conformant output.
+        assertEquals("mean", NetcdfDataReader.parseTimeCellMethod("mean", null));
+        assertEquals("sum", NetcdfDataReader.parseTimeCellMethod("sum", null));
+        assertEquals("point", NetcdfDataReader.parseTimeCellMethod("point", null));
+
+        // Absent or empty attribute.
+        assertEquals("", NetcdfDataReader.parseTimeCellMethod("", null));
+        assertEquals("", NetcdfDataReader.parseTimeCellMethod("   ", null));
+        assertEquals("", NetcdfDataReader.parseTimeCellMethod(null, null));
+
+        // CF permits the entry to name the time coordinate variable instead of the literal "time".
+        assertEquals("mean", NetcdfDataReader.parseTimeCellMethod("valid_time: mean", "valid_time"));
+        assertEquals("", NetcdfDataReader.parseTimeCellMethod("valid_time: mean", null));
+        assertEquals("mean", NetcdfDataReader.parseTimeCellMethod("time: mean", "valid_time"));
+    }
+
+    @Test
+    void parseTimeCellMethodMapsToDataType() {
+        assertEquals(VortexDataType.AVERAGE, VortexDataType.fromString(NetcdfDataReader.parseTimeCellMethod("time: mean", null)));
+        assertEquals(VortexDataType.ACCUMULATION, VortexDataType.fromString(NetcdfDataReader.parseTimeCellMethod("time: sum", null)));
+        assertEquals(VortexDataType.INSTANTANEOUS, VortexDataType.fromString(NetcdfDataReader.parseTimeCellMethod("time: point", null)));
+        assertEquals(VortexDataType.UNDEFINED, VortexDataType.fromString(NetcdfDataReader.parseTimeCellMethod("area: mean", null)));
+        assertEquals(VortexDataType.AVERAGE, VortexDataType.fromString(NetcdfDataReader.parseTimeCellMethod("mean", null)));
+    }
+
+    /**
+     * cf_style.nc and bare_mean.nc are identical but for the cell_methods attribute: the first declares
+     * CF's "time: mean", the second the bare "mean" that vortex used to write. Both must classify the
+     * same, and their records must be reachable through TemporalDataReader.
+     */
+    @Test
+    void cellMethodsVariantsReadTheSame() throws Exception {
+        for (String resource : List.of("/cf_style.nc", "/bare_mean.nc")) {
+            String file = new File(Objects.requireNonNull(getClass().getResource(resource)).getFile()).toString();
+
+            try (DataReader reader = DataReader.builder().path(file).variable("SWE_Post").build()) {
+                VortexGrid grid = (VortexGrid) reader.getDtos().get(0);
+                assertEquals(VortexDataType.AVERAGE, grid.dataType(), resource);
+
+                // Each step spans a day, per time_bnds.
+                assertEquals(Instant.parse("2002-10-01T00:00:00Z"), grid.startTime().toInstant(), resource);
+                assertEquals(Instant.parse("2002-10-02T00:00:00Z"), grid.endTime().toInstant(), resource);
+
+                TemporalDataReader temporal = TemporalDataReader.create(reader);
+                assertEquals(Instant.parse("2002-10-01T00:00:00Z"),
+                        temporal.getStartTime().orElseThrow().toInstant(), resource);
+                // A period type reports the end of the last interval, not the last timestamp.
+                assertEquals(Instant.parse("2002-10-04T00:00:00Z"),
+                        temporal.getEndTime().orElseThrow().toInstant(), resource);
+                assertTrue(temporal.readNearest(ZonedDateTime.parse("2002-10-01T12:00Z")).isPresent(), resource);
+            }
         }
     }
 }
