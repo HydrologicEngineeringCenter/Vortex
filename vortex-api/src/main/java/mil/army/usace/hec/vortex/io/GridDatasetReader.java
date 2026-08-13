@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexData;
+import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.*;
 import mil.army.usace.hec.vortex.util.UnitUtil;
@@ -235,7 +236,7 @@ class GridDatasetReader extends NetcdfDataReader {
                 .startTime(timeRecord.startTime())
                 .endTime(timeRecord.endTime())
                 .interval(timeRecord.getRecordDuration())
-                .dataType(getVortexDataType(variableDS))
+                .dataType(getDeclaredDataType())
                 .build();
     }
 
@@ -414,6 +415,16 @@ class GridDatasetReader extends NetcdfDataReader {
         };
 
         return VortexDataInterval.of(adjustedStart, adjustedEnd);
+    }
+
+    private String getTimeAxisName() {
+        CoordinateAxis timeAxis = gridCoordSystem.getTimeAxis();
+        return timeAxis != null ? timeAxis.getShortName() : null;
+    }
+
+    @Override
+    VortexDataType getDeclaredDataType() {
+        return getVortexDataType(variableDS, getTimeAxisName());
     }
 
     private boolean isSpecialTimeBounds() {

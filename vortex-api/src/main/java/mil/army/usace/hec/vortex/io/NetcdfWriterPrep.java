@@ -232,7 +232,7 @@ final class NetcdfWriterPrep {
         }
 
         // Adding CRS WKT for Grid's Coordinate System information
-        // CF Conventions: https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#use-of-the-crs-well-known-text-format
+        // CF Conventions: https://cfconventions.org/Data/cf-conventions/cf-conventions-1.10/cf-conventions.html#use-of-the-crs-well-known-text-format
         variableBuilder.addAttribute(new Attribute("crs_wkt", gridCollection.getWkt()));
 
     }
@@ -263,9 +263,21 @@ final class NetcdfWriterPrep {
                     .addAttribute(new Attribute(CF.COORDINATES, "latitude longitude"))
                     .addAttribute(new Attribute(CF.MISSING_VALUE, (float) vortexGrid.noDataValue()))
                     .addAttribute(new Attribute(CF._FILLVALUE, (float) vortexGrid.noDataValue()))
-                    .addAttribute(new Attribute(CF.CELL_METHODS, vortexGrid.dataType().getNcString()));
+                    .addAttribute(new Attribute(CF.CELL_METHODS, getCellMethods(vortexGrid)));
         }
 
+    }
+
+    /**
+     * Builds the CF cell_methods attribute for a grid. CF-1.10 §7.3 requires each entry to name the
+     * dimension the method was applied to, so the method is keyed on the time dimension this writer
+     * creates, and the file declares "CF-1.10" globally. Earlier versions wrote the bare method
+     * ("mean", "sum", "point"); NetcdfDataReader still reads that form, so files written before this
+     * change keep resolving to the same data type.
+     */
+    private static String getCellMethods(VortexGrid vortexGrid) {
+        String method = vortexGrid.dataType().getNcString();
+        return method.isBlank() ? method : CF.TIME + ": " + method;
     }
 
     private static void addGlobalAttributes(NetcdfFormatWriter.Builder writerBuilder) {

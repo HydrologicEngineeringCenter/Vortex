@@ -327,10 +327,13 @@ public class VortexGrid implements VortexData, Serializable {
     private VortexDataType inferDataType() {
         if (interval == null || interval.isZero()) return VortexDataType.INSTANTANEOUS;
 
+        // Only a non-zero interval reaches here, so the record spans a period by definition. Naming it a
+        // point type would make it self-contradictory, and InstantaneousRecordIndexQuery would then drop
+        // every such record from its index. AVERAGE is the safe period type for an unrecognized variable:
+        // ACCUMULATION would imply the values are summable over the interval, which is not knowable here.
         return switch (VortexVariable.fromName(shortName)) {
             case PRECIPITATION -> VortexDataType.ACCUMULATION;
-            case TEMPERATURE, SHORTWAVE_RADIATION, WINDSPEED, PRESSURE -> VortexDataType.AVERAGE;
-            default -> VortexDataType.INSTANTANEOUS;
+            default -> VortexDataType.AVERAGE;
         };
     }
 

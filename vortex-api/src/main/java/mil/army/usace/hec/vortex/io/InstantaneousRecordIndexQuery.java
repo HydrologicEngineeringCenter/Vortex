@@ -91,17 +91,45 @@ final class InstantaneousRecordIndexQuery implements RecordIndexQuery {
     private static NavigableMap<ZonedDateTime, Integer> initInstantaneousDataTree(List<VortexDataInterval> recordList) {
         TreeMap<ZonedDateTime, Integer> treeMap = new TreeMap<>();
 
+        int undefinedCount = 0;
+        int spanningCount = 0;
+
         for (int i = 0; i < recordList.size(); i++) {
             VortexDataInterval timeRecord = recordList.get(i);
-            boolean isUndefined = !VortexDataInterval.isDefined(timeRecord);
 
-            if (isUndefined || !timeRecord.isInstantaneous()) {
+            if (!VortexDataInterval.isDefined(timeRecord)) {
+                undefinedCount++;
+                continue;
+            }
+
+            if (!timeRecord.isInstantaneous()) {
+                spanningCount++;
                 continue;
             }
 
             treeMap.put(timeRecord.startTime(), i);
         }
 
+        logSkippedRecords(recordList.size(), undefinedCount, spanningCount);
+
         return Collections.unmodifiableNavigableMap(treeMap);
+    }
+
+    /**
+     * A record that spans a period cannot be indexed as an instant, so it is dropped. That is a
+     * classification defect — the data was typed INSTANTANEOUS but its start and end times differ — and
+     * dropping every record leaves the reader with no time range at all. Report it rather than let the
+     * caller discover it as an empty read.
+     */
+    private static void logSkippedRecords(int total, int undefinedCount, int spanningCount) {
+        if (spanningCount > 0) {
+            logger.warning(() -> "Skipped " + spanningCount + " of " + total + " instantaneous records "
+                    + "with differing start and end times. Data typed as instantaneous must not span a "
+                    + "period; check the source's cell_methods and time bounds.");
+        }
+
+        if (undefinedCount > 0) {
+            logger.info(() -> "Skipped " + undefinedCount + " of " + total + " instantaneous records with undefined times.");
+        }
     }
 }
