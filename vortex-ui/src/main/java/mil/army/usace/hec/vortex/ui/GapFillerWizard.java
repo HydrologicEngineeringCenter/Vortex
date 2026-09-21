@@ -27,6 +27,7 @@ public class GapFillerWizard extends ProcessingWizard {
 
     private static final String FOCAL_MEAN_LABEL = Text.format("GapFillerWiz_FocalMean_L");
     private static final String REGRESSION_LABEL = Text.format("GapFillerWiz_Regression_L");
+    private static final String KRIGING_LABEL = Text.format("GapFillerWiz_Kriging_L");
     private static final String LINEAR_INTERP_LABEL = Text.format("GapFillerWiz_LinearInterp_L");
     private static final String INSERT_TIME_STEPS_LABEL = Text.format("GapFillerWiz_TimeSteps_L");
 
@@ -219,6 +220,11 @@ public class GapFillerWizard extends ProcessingWizard {
         methodButtonGroup.add(regressionButton);
         spatiotemporalFillPanel.add(regressionButton);
 
+        JRadioButton krigingButton = new JRadioButton(KRIGING_LABEL);
+        krigingButton.setToolTipText(Text.format("GapFillerWiz_Kriging_TT"));
+        methodButtonGroup.add(krigingButton);
+        spatiotemporalFillPanel.add(krigingButton);
+
         return spatiotemporalFillPanel;
     }
 
@@ -385,6 +391,7 @@ public class GapFillerWizard extends ProcessingWizard {
     private static GapFillMethod fromString(String str) {
         if (FOCAL_MEAN_LABEL.equals(str)) return GapFillMethod.FOCAL_MEAN;
         if (REGRESSION_LABEL.equals(str)) return GapFillMethod.REGRESSION;
+        if (KRIGING_LABEL.equals(str)) return GapFillMethod.KRIGING;
         if (LINEAR_INTERP_LABEL.equals(str)) return GapFillMethod.LINEAR_INTERPOLATION;
         return GapFillMethod.UNDEFINED;
     }

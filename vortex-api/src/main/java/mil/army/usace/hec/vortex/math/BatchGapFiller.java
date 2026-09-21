@@ -101,6 +101,7 @@ public class BatchGapFiller implements Runnable {
             return switch (method) {
                 case LINEAR_INTERPOLATION -> new LinearInterpGapFiller(this);
                 case REGRESSION -> new RegressionGapFiller(this);
+                case KRIGING -> new KrigingGapFiller(this);
                 case TIME_STEP -> new TimeStepFiller(this);
                 default -> new BatchGapFiller(this);
             };
