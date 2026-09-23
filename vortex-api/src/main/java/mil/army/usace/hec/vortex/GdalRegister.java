@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex;
 
 import org.gdal.gdal.gdal;
+import org.gdal.osr.osr;
 
 public enum GdalRegister {
     INSTANCE;
@@ -39,9 +40,12 @@ public enum GdalRegister {
             gdal.SetConfigOption("GDAL_DATA", gdalData);
         }
 
+        // PROJ reads PROJ_LIB only from the OS environment; GDAL 3.2 does not
+        // forward a PROJ_LIB config option to it, so SetConfigOption would leave
+        // PROJ unable to find proj.db. Hand PROJ the search path directly.
         String projLib = System.getProperty(PROJ_LIB_PROPERTY);
         if (projLib != null && !projLib.isEmpty()) {
-            gdal.SetConfigOption("PROJ_LIB", projLib);
+            osr.SetPROJSearchPath(projLib);
         }
     }
 }
