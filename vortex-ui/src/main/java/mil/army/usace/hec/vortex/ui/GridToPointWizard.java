@@ -238,7 +238,7 @@ public class GridToPointWizard extends ProcessingWizard {
             return false;
         }
 
-        return true;
+        return ProjectionValidation.validateVector(this, pathToShp.toString());
     }
 
     private JPanel stepThreePanel() {

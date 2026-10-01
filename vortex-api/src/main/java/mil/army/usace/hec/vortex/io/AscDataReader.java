@@ -339,7 +339,7 @@ class AscDataReader extends DataReader {
 
     @Override
     public Validation isValid() {
-        return Validation.of(true);
+        return RasterProjectionValidation.validateRaster(path);
     }
 
     @Override

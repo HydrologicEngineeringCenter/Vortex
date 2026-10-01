@@ -3,12 +3,35 @@ package mil.army.usace.hec.vortex.geo;
 import hec.heclib.grid.AlbersInfo;
 import hec.heclib.grid.GridInfo;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ReferenceUtilsTest {
+
+    @ParameterizedTest
+    @ValueSource(ints = {4267, 4326, 32610})
+    void ValidatesGeographicAndProjectedCoordinateSystems(int epsg) {
+        assertTrue(ReferenceUtils.isValidProjection(WktFactory.fromEpsg(epsg)));
+    }
+
+    @Test
+    void ValidatesEsriProjectionWkt() {
+        assertTrue(ReferenceUtils.isValidProjection("GEOGCS[\"GCS_North_American_1927\","
+                + "DATUM[\"D_North_American_1927\",SPHEROID[\"Clarke_1866\",6378206.4,294.978698213898]],"
+                + "PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]]"));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" \t", "not a projection", "GEOGCS[\"Incomplete\"]"})
+    void RejectsMissingAndInvalidProjectionDefinitions(String wkt) {
+        assertFalse(ReferenceUtils.isValidProjection(wkt));
+    }
 
     @Test
     void IsShgReturnsTrueForShgWithProjectionUnitsM(){

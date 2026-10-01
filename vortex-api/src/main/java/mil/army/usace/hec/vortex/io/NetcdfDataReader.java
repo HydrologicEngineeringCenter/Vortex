@@ -75,6 +75,9 @@ abstract class NetcdfDataReader extends DataReader {
     @Override
     public abstract int getDtoCount();
 
+    /** Returns the CRS derived from coordinate metadata, without reading or resampling grid values. */
+    abstract String getCrs();
+
     public static Set<String> getVariables(String path) {
         try (NetcdfDataset ncd = NetcdfDatasets.openDataset(path)) {
             List<Variable> variables = ncd.getVariables();

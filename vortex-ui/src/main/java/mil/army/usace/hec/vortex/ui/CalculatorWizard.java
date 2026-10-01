@@ -208,12 +208,12 @@ public class CalculatorWizard extends ProcessingWizard {
 
     private boolean validateRasterParameters() {
         Path pathToRaster = Path.of(rasterTextField.getText());
-        if (Files.isRegularFile(pathToRaster) && Files.notExists(pathToRaster)) {
+        if (!Files.isRegularFile(pathToRaster)) {
             JOptionPane.showMessageDialog(this, Text.format("CalculatorWiz_RasterNotExist"),
                     ERROR_TITLE, JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        return true;
+        return ProjectionValidation.validateRaster(this, pathToRaster.toString());
     }
 
     private JPanel constantCalculationPanel() {

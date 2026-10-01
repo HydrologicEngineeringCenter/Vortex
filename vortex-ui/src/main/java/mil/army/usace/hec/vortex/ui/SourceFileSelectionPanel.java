@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.ui;
 
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.ui.dss.Dss7MigrationCheck;
+import mil.army.usace.hec.vortex.util.DssUtil;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -260,6 +261,15 @@ public class SourceFileSelectionPanel extends JPanel {
     }
 
     public boolean validateInput() {
+        return validateInput(false);
+    }
+
+    /** Use when processing expands selected DSS records into complete series. */
+    public boolean validateSeriesInput() {
+        return validateInput(true);
+    }
+
+    private boolean validateInput(boolean validateFullDssSeries) {
         /* Popup Alert of Missing Inputs */
         if(sourceFileTextField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, Text.format("Error_InputRequired"),
@@ -276,7 +286,12 @@ public class SourceFileSelectionPanel extends JPanel {
             return false;
         }
 
-        return true;
+        String source = sourceFileTextField.getText().trim();
+        Collection<String> variables = Collections.list(chosenGridsModel.elements());
+        if (validateFullDssSeries) {
+            variables = DssUtil.condenseVariables(source, new LinkedHashSet<>(variables));
+        }
+        return ProjectionValidation.validateSource(this, source, variables);
     }
 
     public void clear() {

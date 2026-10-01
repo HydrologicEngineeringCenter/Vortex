@@ -71,7 +71,7 @@ public class GapFillerWizard extends ProcessingWizard {
     @Override
     protected boolean validateStep(int stepIndex) {
         return switch (stepIndex) {
-            case 0 -> sourceFileSelectionPanel.validateInput();
+            case 0 -> sourceFileSelectionPanel.validateSeriesInput();
             case 1 -> validateMethod();
             case 3 -> validateDestination();
             default -> true;

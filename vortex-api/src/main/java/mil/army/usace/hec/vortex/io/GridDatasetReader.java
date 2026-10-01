@@ -130,6 +130,11 @@ class GridDatasetReader extends NetcdfDataReader {
     }
 
     @Override
+    String getCrs() {
+        return gridDefinition.getCrs();
+    }
+
+    @Override
     public List<VortexDataInterval> getDataIntervals() {
         return timeBounds;
     }

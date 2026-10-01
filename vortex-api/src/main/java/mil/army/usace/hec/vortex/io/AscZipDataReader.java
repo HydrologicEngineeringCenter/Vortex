@@ -83,7 +83,7 @@ class AscZipDataReader extends DataReader implements VirtualFileSystem {
 
     @Override
     public Validation isValid() {
-        return Validation.of(true);
+        return RasterProjectionValidation.validateArchive(getVirtualPath(path), ".asc");
     }
 
     @Override

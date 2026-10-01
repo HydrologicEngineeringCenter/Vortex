@@ -181,7 +181,8 @@ public class NormalizerWizard extends ProcessingWizard {
             return false;
         }
 
-        return true;
+        return ProjectionValidation.validateSource(this, normalFileTextField.getText(),
+                Collections.list(chosenGridsModel.elements()));
     }
 
     private JPanel stepTwoNormalFilePanel() {

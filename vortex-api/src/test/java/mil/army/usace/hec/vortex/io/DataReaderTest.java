@@ -38,8 +38,10 @@ class DataReaderTest {
     void isVariableRequiredForReader() {
         assertFalse(DataReader.isVariableRequired("file.asc"));
         assertFalse(DataReader.isVariableRequired("file.asc.zip"));
+        assertFalse(DataReader.isVariableRequired("rasters_asc.zip"));
         assertFalse(DataReader.isVariableRequired("file.bil"));
         assertFalse(DataReader.isVariableRequired("file.bil.zip"));
+        assertFalse(DataReader.isVariableRequired("rasters_bil.zip"));
         assertFalse(DataReader.isVariableRequired("file.tif"));
         assertFalse(DataReader.isVariableRequired("file.tiff"));
         assertTrue(DataReader.isVariableRequired("file.nc4"));

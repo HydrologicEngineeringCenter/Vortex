@@ -51,7 +51,7 @@ public class TimeStepResamplerWizard extends ProcessingWizard {
     @Override
     protected boolean validateStep(int stepIndex) {
         return switch (stepIndex) {
-            case 0 -> sourceFileSelectionPanel.validateInput();
+            case 0 -> sourceFileSelectionPanel.validateSeriesInput();
             case 1 -> validateTimeStep();
             case 2 -> validateDestination();
             default -> true;

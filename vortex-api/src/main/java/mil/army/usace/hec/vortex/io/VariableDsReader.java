@@ -84,6 +84,11 @@ class VariableDsReader extends NetcdfDataReader {
     }
 
     @Override
+    String getCrs() {
+        return gridDefinition.getCrs();
+    }
+
+    @Override
     double getNoDataValue() {
         Attribute missingValueAttr = variableDS.findAttribute("missing_value");
         if (missingValueAttr != null) {

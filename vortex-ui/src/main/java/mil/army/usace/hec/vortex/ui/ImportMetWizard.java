@@ -3,6 +3,7 @@ package mil.army.usace.hec.vortex.ui;
 import com.formdev.flatlaf.FlatLightLaf;
 import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexProperty;
+import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import mil.army.usace.hec.vortex.io.BatchImporter;
 import mil.army.usace.hec.vortex.io.DataReader;
 import mil.army.usace.hec.vortex.io.Validation;
@@ -186,6 +187,32 @@ public class ImportMetWizard extends ProcessingWizard {
             return false;
         }
 
+        // Raster projection metadata is available before variables are selected.
+        // Check every source now, before populating the next step or creating output files.
+        Set<String> rasterMessages = new LinkedHashSet<>();
+        boolean rastersValid = true;
+        for (String file : files) {
+            String path = file.trim();
+            if (DataReader.isVariableRequired(path)) {
+                continue;
+            }
+            try (DataReader reader = DataReader.builder().path(path).build()) {
+                Validation validation = reader.isValid();
+                rastersValid &= validation.isValid();
+                rasterMessages.addAll(validation.getMessages());
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, e, e::getMessage);
+                JOptionPane.showMessageDialog(this, e.getMessage(), Text.format("Error_Title"),
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+        if (!rastersValid) {
+            JOptionPane.showMessageDialog(this, String.join(System.lineSeparator(), rasterMessages),
+                    Text.format("Warning_Title"), JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
         return true;
     }
 
@@ -201,10 +228,30 @@ public class ImportMetWizard extends ProcessingWizard {
             return false;
         }
 
+        List<String> selected = Collections.list(defaultListModel.elements());
+        for (String file : getItemsInList(addFilesList)) {
+            Set<String> available = DataReader.getVariables(file.trim());
+            List<String> variables = selected.stream().filter(available::contains).toList();
+            if (!variables.isEmpty() && !ProjectionValidation.validateSource(this, file, variables)) {
+                return false;
+            }
+        }
         return true;
     }
 
-    private boolean validateStepThree() { return true; }
+    private boolean validateStepThree() {
+        String boundary = dataSourceTextField.getText();
+        if (!boundary.isBlank() && !ProjectionValidation.validateVector(this, boundary)) {
+            return false;
+        }
+        String targetWkt = targetWktTextArea.getText();
+        if (!targetWkt.isBlank() && !ReferenceUtils.isValidProjection(targetWkt)) {
+            JOptionPane.showMessageDialog(this, Text.format("Error_InvalidProjection"),
+                    Text.format("Warning_Title"), JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
 
     private boolean validateStepFour() {
         String destinationPath = destinationSelectionPanel.getDestinationTextField().getText();
@@ -250,11 +297,14 @@ public class ImportMetWizard extends ProcessingWizard {
         for (String file : files) {
             Set<String> availableVariables = DataReader.getVariables(file.trim());
             for (String variable : variables) {
-                if (!availableVariables.contains(variable))
+                if (!availableVariables.contains(variable)) {
                     continue;
+                }
                 try (DataReader reader = DataReader.builder().path(file.trim()).variable(variable).build()) {
                     Validation validation = reader.isValid();
-                    if (!validation.isValid()) isValid = false;
+                    if (!validation.isValid()) {
+                        isValid = false;
+                    }
                     messages.addAll(validation.getMessages());
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, e, e::getMessage);

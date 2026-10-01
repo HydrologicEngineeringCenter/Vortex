@@ -193,7 +193,7 @@ public abstract class DataReader implements AutoCloseable {
     public static boolean isVariableRequired(String pathToFile) {
         String fileName = new File(pathToFile).getName().toLowerCase();
 
-        return !fileName.matches(".*\\.(asc|tif|tiff|bil|bil.zip|asc.zip)$");
+        return !FilenameUtil.endsWithExtensions(fileName, ".asc", ".tif", ".tiff", ".bil", "bil.zip", "asc.zip");
     }
 
     public static boolean isArchive(String pathToFile) {

@@ -1,5 +1,6 @@
 package mil.army.usace.hec.vortex.geo;
 
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexGrid;
 import org.locationtech.jts.geom.Envelope;
 import tech.units.indriya.quantity.Quantities;
@@ -12,10 +13,16 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import static tech.units.indriya.unit.Units.METRE;
 
 public class GeographicProcessor {
+    private static final Logger logger = Logger.getLogger(GeographicProcessor.class.getName());
+    private final Set<String> warnedProjectionPaths = ConcurrentHashMap.newKeySet();
     private final boolean isEmpty;
     private final Envelope env;
     private final String envWkt;
@@ -71,8 +78,16 @@ public class GeographicProcessor {
     }
 
     public VortexGrid process(VortexGrid input) {
-        if (isEmpty)
+        if (input.wkt() == null || input.wkt().isBlank()) {
+            String path = Objects.toString(input.fileName(), "Unknown source");
+            // Batch imports can process many records from the same source in parallel.
+            if (warnedProjectionPaths.add(path)) {
+                logger.warning(Message.format("warn_raster_missing_projection", path));
+            }
+        }
+        if (isEmpty) {
             return input;
+        }
 
         return Resampler.builder()
                 .grid(input)

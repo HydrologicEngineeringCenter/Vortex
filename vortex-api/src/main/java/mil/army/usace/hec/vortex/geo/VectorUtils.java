@@ -1,6 +1,8 @@
 package mil.army.usace.hec.vortex.geo;
 
 import mil.army.usace.hec.vortex.GdalRegister;
+import mil.army.usace.hec.vortex.Message;
+import mil.army.usace.hec.vortex.io.Validation;
 import org.gdal.ogr.*;
 import org.gdal.osr.SpatialReference;
 import org.locationtech.jts.geom.Envelope;
@@ -16,6 +18,46 @@ public class VectorUtils {
     }
 
     private VectorUtils(){}
+
+    /** Validates each layer's projection without reading feature geometry. */
+    public static Validation validateProjection(Path path) {
+        DataSource source = null;
+        try {
+            source = ogr.Open(path.toString(), 0);
+            if (source == null || source.GetLayerCount() == 0) {
+                return Validation.of(false, Message.format("error_invalid_file", path));
+            }
+            for (int i = 0; i < source.GetLayerCount(); i++) {
+                Layer layer = source.GetLayer(i);
+                try {
+                    SpatialReference srs = layer.GetSpatialRef();
+                    if (srs == null) {
+                        return Validation.of(false, Message.format("warn_vector_missing_projection", path));
+                    }
+                    try {
+                        String wkt = srs.ExportToWkt();
+                        if (wkt == null || wkt.isBlank()) {
+                            return Validation.of(false, Message.format("warn_vector_missing_projection", path));
+                        }
+                        if (!ReferenceUtils.isValidProjection(wkt)) {
+                            return Validation.of(false, Message.format("warn_vector_invalid_projection", path));
+                        }
+                    } finally {
+                        srs.delete();
+                    }
+                } finally {
+                    layer.delete();
+                }
+            }
+            return Validation.of(true);
+        } catch (RuntimeException e) {
+            return Validation.of(false, Message.format("error_projection_read", path, e.getMessage()));
+        } finally {
+            if (source != null) {
+                source.delete();
+            }
+        }
+    }
 
     public static String getWkt(Path pathToShp){
         Driver driver = ogr.GetDriverByName("ESRI Shapefile");

@@ -53,6 +53,7 @@ public class ClipperWizard extends ProcessingWizard {
     protected boolean validateStep(int stepIndex) {
         return switch (stepIndex) {
             case 0 -> sourceFileSelectionPanel.validateInput();
+            case 1 -> ProjectionValidation.validateVector(this, dataSourceTextField.getText());
             case 2 -> validateDestination();
             default -> true;
         };

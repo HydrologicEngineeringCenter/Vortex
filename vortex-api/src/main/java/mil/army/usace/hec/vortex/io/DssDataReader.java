@@ -5,7 +5,9 @@ import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
 import hec.heclib.grid.GriddedData;
+import hec.heclib.grid.SpecifiedGridInfo;
 import hec.heclib.util.Heclib;
+import mil.army.usace.hec.vortex.Message;
 import mil.army.usace.hec.vortex.VortexData;
 import mil.army.usace.hec.vortex.VortexDataType;
 import mil.army.usace.hec.vortex.VortexGrid;
@@ -73,6 +75,11 @@ class DssDataReader extends DataReader {
     }
 
     private static GridData retrieveGriddedData(String dssFileName, String dssPathname) throws DataReadException {
+        return retrieveGriddedData(dssFileName, dssPathname, true);
+    }
+
+    private static GridData retrieveGriddedData(String dssFileName, String dssPathname, boolean retrieveData)
+            throws DataReadException {
         int[] status = new int[1];
         GriddedData griddedData = new GriddedData();
         griddedData.setDSSFileName(dssFileName);
@@ -80,7 +87,7 @@ class DssDataReader extends DataReader {
         GridData gridData = new GridData();
 
         try {
-            griddedData.retrieveGriddedData(true, gridData, status);
+            griddedData.retrieveGriddedData(retrieveData, gridData, status);
         } catch (Exception e) {
             throw DataReadException.ioError(dssFileName, dssPathname,
                     "Failed to read DSS grid record [" + dssFileName + " : " + dssPathname + "]: " + e.getMessage(),
@@ -295,7 +302,23 @@ class DssDataReader extends DataReader {
 
     @Override
     public Validation isValid() {
-        return Validation.of(true);
+        List<String> messages = new ArrayList<>();
+        for (DSSPathname pathname : catalogPathnameList) {
+            String record = pathname.getPathname();
+            String source = path + " : " + record;
+            try {
+                // Projections can differ between records in the same series. Read only the headers.
+                GridInfo info = retrieveGriddedData(path, record, false).getGridInfo();
+                // Preserve missing or malformed WKT so validation can report it before decoding fails.
+                String wkt = info instanceof SpecifiedGridInfo
+                        ? info.getSpatialReferenceSystem() : WktFactory.fromGridInfo(info);
+                messages.addAll(RasterProjectionValidation.validateProjection(wkt, source).getMessages());
+            } catch (Exception e) {
+                logger.log(Level.FINE, e, e::getMessage);
+                messages.add(Message.format("error_projection_read", source, e.getMessage()));
+            }
+        }
+        return Validation.of(messages.isEmpty(), messages);
     }
 
     @Override

@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 import static javax.measure.MetricPrefix.KILO;
+import static org.gdal.ogr.ogrConstants.OGRERR_NONE;
 import static systems.uom.common.USCustomary.DEGREE_ANGLE;
 import static systems.uom.common.USCustomary.FOOT;
 import static tech.units.indriya.unit.Units.METRE;
@@ -23,6 +24,28 @@ public class ReferenceUtils {
     }
 
     private ReferenceUtils(){}
+
+    /** Returns whether GDAL can parse and validate the supplied projection WKT. */
+    public static boolean isValidProjection(String wkt) {
+        if (wkt == null || wkt.isBlank()) {
+            return false;
+        }
+        SpatialReference srs = new SpatialReference();
+        try {
+            if (srs.ImportFromWkt(wkt) != OGRERR_NONE) {
+                return false;
+            }
+            if (srs.MorphFromESRI() != OGRERR_NONE) {
+                return false;
+            }
+            return srs.Validate() == OGRERR_NONE;
+        } catch (RuntimeException e) {
+            logger.fine(e::getMessage);
+            return false;
+        } finally {
+            srs.delete();
+        }
+    }
 
     public static Unit<?> getLinearUnits(String wkt) {
         if (wkt == null)
