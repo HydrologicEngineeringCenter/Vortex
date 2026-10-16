@@ -71,7 +71,7 @@ class TimeStepFiller extends LinearInterpGapFiller {
         int readerIndex = 0;
         boolean hasMissingSteps = false;
 
-        for (ZonedDateTime time = first; time.isBefore(last); time = time.plus(interval)) {
+        for (ZonedDateTime time = first; !time.isAfter(last); time = time.plus(interval)) {
             if (existingTimes.contains(time)) {
                 metadata.indices.add(readerIndex++);
                 metadata.isNoData.add(validFlags);
