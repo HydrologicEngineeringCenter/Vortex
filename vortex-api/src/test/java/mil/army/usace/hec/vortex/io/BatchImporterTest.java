@@ -6,6 +6,7 @@ import hec.heclib.grid.GridData;
 import hec.heclib.grid.GridInfo;
 import hec.heclib.grid.GridUtilities;
 import hec.heclib.grid.GriddedData;
+import mil.army.usace.hec.vortex.TestUtil;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -338,6 +339,65 @@ class BatchImporterTest {
             Files.deleteIfExists(pathToDestination);
         } catch (IOException e) {
             Logger.getAnonymousLogger().log(Level.SEVERE, e, e::getMessage);
+        }
+    }
+
+    /**
+     * An import writes its buffers to the destination one after another, so a NetCDF destination has to
+     * hold every variable of the import and every time step of it. The variables of an import do not have
+     * to share time steps: the file holds one record dimension, which is every time step of the import,
+     * and each variable is written to the records of that dimension that it has data for.
+     */
+    @Test
+    void netcdfDestinationHoldsEveryVariableAndTimeStep() throws Exception {
+        URL url = Objects.requireNonNull(getClass().getResource("/gfs/gfs.nc"));
+        String inFile = new File(url.getFile()).toString();
+
+        String destination = TestUtil.createTempFile("BatchImporterNetcdfDestination.nc");
+        Assertions.assertNotNull(destination);
+
+        BatchImporter importer = BatchImporter.builder()
+                .inFiles(Collections.singletonList(inFile))
+                .variables(List.of("Precipitation_rate_surface", "Temperature_surface"))
+                .destination(destination)
+                .build();
+
+        importer.process();
+
+        Map<String, String> variables = Map.of("Precipitation_rate_surface", "precipitation",
+                "Temperature_surface", "temperature");
+        Assertions.assertEquals(new HashSet<>(variables.values()), DataReader.getVariables(destination));
+
+        Set<VortexDataInterval> sourceIntervals = new HashSet<>();
+        for (String sourceVariable : variables.keySet()) {
+            List<VortexDataInterval> intervals = getIntervals(inFile, sourceVariable);
+            Assertions.assertTrue(intervals.size() > 1, "the source must have more than one time step to import");
+            sourceIntervals.addAll(intervals);
+        }
+
+        for (String importedVariable : variables.values()) {
+            Assertions.assertEquals(sourceIntervals.size(), getDtoCount(destination, importedVariable),
+                    importedVariable + " must be readable at every time step of the import");
+        }
+
+        Files.deleteIfExists(Path.of(destination));
+    }
+
+    private static int getDtoCount(String file, String variable) throws Exception {
+        try (DataReader reader = DataReader.builder()
+                .path(file)
+                .variable(variable)
+                .build()) {
+            return reader.getDtoCount();
+        }
+    }
+
+    private static List<VortexDataInterval> getIntervals(String file, String variable) throws Exception {
+        try (DataReader reader = DataReader.builder()
+                .path(file)
+                .variable(variable)
+                .build()) {
+            return reader.getDataIntervals();
         }
     }
 
