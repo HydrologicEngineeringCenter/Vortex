@@ -2,24 +2,17 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexProperty;
-import ucar.nc2.write.Nc4Chunking;
-import ucar.nc2.write.Nc4ChunkingStrategy;
-import ucar.nc2.write.NetcdfFileFormat;
 import ucar.nc2.write.NetcdfFormatWriter;
 
 import java.beans.PropertyChangeListener;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 class NetcdfDataWriter extends DataWriter {
-    private final List<VortexGrid> vortexGridList;
+    /** Option that replaces the destination instead of adding this batch's time steps to it. */
+    static final String OVERWRITE_OPTION = "isOverwrite";
 
-    // NetCDF4 Settings
-    public static final Nc4Chunking.Strategy CHUNKING_STRATEGY = Nc4Chunking.Strategy.standard;
-    public static final int DEFLATE_LEVEL = 9;
-    public static final boolean SHUFFLE = false;
-    public static final NetcdfFileFormat NETCDF_FORMAT = NetcdfFileFormat.NETCDF4;
+    private final List<VortexGrid> vortexGridList;
 
     /* Constructor */
     NetcdfDataWriter(Builder builder) {
@@ -33,29 +26,45 @@ class NetcdfDataWriter extends DataWriter {
     /* Write */
     @Override
     public void write() {
-        VortexGridCollection collection = VortexGridCollection.of(vortexGridList);
-        Stream<VortexDataInterval> timeRecordStream = vortexGridList.stream()
-                .map(VortexDataInterval::of)
-                .sorted(Comparator.comparing(VortexDataInterval::startTime));
-        NetcdfWriterPrep.initializeForAppend(destination.toString(), collection, timeRecordStream);
-        appendData();
+        VortexGridCollection gridCollection = VortexGridCollection.of(vortexGridList);
+        NetcdfTimeAxis timeAxis = NetcdfWriterPrep.prepareForWriting(destination.toString(), gridCollection,
+                getTimeRecords(), getOverwritePreference(options));
+        appendData(timeAxis);
     }
 
-    public void appendData() {
-        NetcdfFormatWriter.Builder writerBuilder = initAppendWriterBuilder(destination.toString());
+    /**
+     * Writes this batch's grids to the records {@code timeAxis} says they belong to. Package visible
+     * because {@link NetcdfBatchImporter} prepares a destination once, with every time step of the
+     * import, and then writes the import through here one buffer at a time.
+     */
+    void appendData(NetcdfTimeAxis timeAxis) {
+        NetcdfFormatWriter.Builder writerBuilder = NetcdfWriterPrep.appendingWriterBuilder(destination.toString());
 
         NetcdfGridWriter gridWriter = NetcdfGridWriter.create(vortexGridList);
         gridWriter.addListener(writerPropertyListener());
-        gridWriter.appendData(writerBuilder);
+        gridWriter.appendData(writerBuilder, timeAxis, destination.toString());
     }
 
-    private static NetcdfFormatWriter.Builder initAppendWriterBuilder(String ncDestination) {
-        Nc4Chunking chunker = Nc4ChunkingStrategy.factory(CHUNKING_STRATEGY, DEFLATE_LEVEL, SHUFFLE);
-        return NetcdfFormatWriter.builder()
-                .setNewFile(false)
-                .setFormat(NETCDF_FORMAT)
-                .setLocation(ncDestination)
-                .setChunker(chunker);
+    /**
+     * The time steps of this batch. Grids of different variables share a time step, so the steps repeat
+     * here as often as there are variables; the destination holds one record for each.
+     */
+    private List<VortexDataInterval> getTimeRecords() {
+        return vortexGridList.stream()
+                .map(VortexDataInterval::of)
+                .filter(VortexDataInterval::isDefined)
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * Whether the destination is replaced rather than extended. Absent means extend: replacing on every
+     * write is what left an export with only its last batch of time steps, so a caller that wants it has
+     * to ask for it by name. A batched export that asks for it asks for it on every batch, and so keeps
+     * only the last one.
+     */
+    static boolean getOverwritePreference(Map<String, String> options) {
+        return Boolean.parseBoolean(options.get(OVERWRITE_OPTION));
     }
 
     private PropertyChangeListener writerPropertyListener() {

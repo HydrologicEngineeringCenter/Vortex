@@ -57,16 +57,15 @@ class NetcdfBatchImporter extends BatchImporter {
                 .map(NetcdfBatchImporter::dataIntervalsUnchecked)
                 .flatMap(Collection::stream)
                 .toList());
-        Stream<VortexDataInterval> sortedRecordStream = allIntervals.stream()
-                .distinct()
-                .sorted(Comparator.comparing(VortexDataInterval::startTime));
-        NetcdfWriterPrep.initializeForAppend(destination.toString(), representativeCollection(dataReaders, geoOptions), sortedRecordStream);
+        NetcdfTimeAxis timeAxis = NetcdfWriterPrep.prepareForWriting(destination.toString(),
+                representativeCollection(dataReaders, geoOptions), allIntervals,
+                NetcdfDataWriter.getOverwritePreference(writeOptions));
 
         // Buffered Data Writer
         WriteDataBuffer<VortexData> bufferedDataWriter = WriteDataBuffer.of(WriteDataBuffer.Type.MEMORY_DYNAMIC);
 
         // Buffered Read and Process
-        Consumer<Stream<VortexData>> bufferProcessFunction = stream -> writeBufferedData(destination, writeOptions, stream);
+        Consumer<Stream<VortexData>> bufferProcessFunction = stream -> writeBufferedData(destination, writeOptions, stream, timeAxis);
         unwrapDataReadVoid(() -> dataReaders.parallelStream()
                 .map(NetcdfBatchImporter::dtosUnchecked)
                 .flatMap(Collection::stream)
@@ -122,7 +121,7 @@ class NetcdfBatchImporter extends BatchImporter {
         }
     }
 
-    private void writeBufferedData(Path destination, Map<String, String> writeOptions, Stream<VortexData> bufferedData) {
+    private void writeBufferedData(Path destination, Map<String, String> writeOptions, Stream<VortexData> bufferedData, NetcdfTimeAxis timeAxis) {
         Comparator<VortexData> comparator = Comparator.comparing(VortexData::startTime).thenComparing(VortexData::endTime);
         List<VortexData> bufferedDataList = bufferedData.sorted(comparator).toList();
 
@@ -136,7 +135,7 @@ class NetcdfBatchImporter extends BatchImporter {
             return;
         }
 
-        netcdfDataWriter.appendData();
+        netcdfDataWriter.appendData(timeAxis);
 
         // Update Progress
         double doneCount = doneDataCount.addAndGet(bufferedDataList.size());

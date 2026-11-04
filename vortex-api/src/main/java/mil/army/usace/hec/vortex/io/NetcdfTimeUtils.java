@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 class NetcdfTimeUtils {
     private static final ZoneId ORIGIN_ZONE_ID = ZoneId.of("UTC");
@@ -14,15 +13,22 @@ class NetcdfTimeUtils {
         return intervalUnit.between(ORIGIN_TIME, dateTime);
     }
 
-    static ChronoUnit getMinimumDeltaTimeUnit(List<VortexDataInterval> timeRecords) {
-        ChronoUnit minimum = ChronoUnit.DAYS;
-        for (VortexDataInterval timeRecord : timeRecords) {
-            ChronoUnit unit = getDeltaTimeUnit(timeRecord.getRecordDuration());
-            if (unit.getDuration().toSeconds() < minimum.getDuration().toSeconds()) {
-                minimum = unit;
-            }
-        }
-        return minimum;
+    /** The inverse of {@link #getNumIntervalsFromBaseTime}. */
+    static ZonedDateTime addToBaseTime(long intervals, ChronoUnit intervalUnit) {
+        return ORIGIN_TIME.plus(intervals, intervalUnit);
+    }
+
+    /**
+     * The unit a CF time variable is encoded with, read from the units attribute written by
+     * {@link VortexGridCollection#getTimeUnits()} ("MINUTES since 1900-01-01 00:00:00 +0000").
+     *
+     * @throws IllegalArgumentException if the attribute does not lead with a {@link ChronoUnit} name
+     */
+    static ChronoUnit getDeclaredTimeUnit(String units) {
+        String attribute = units == null ? "" : units.trim();
+        int sinceIndex = attribute.toLowerCase().indexOf(" since ");
+        String unitToken = sinceIndex < 0 ? attribute : attribute.substring(0, sinceIndex);
+        return ChronoUnit.valueOf(unitToken.trim().toUpperCase());
     }
 
     static ChronoUnit getDeltaTimeUnit(Duration duration) {
