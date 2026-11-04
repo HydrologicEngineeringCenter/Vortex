@@ -143,6 +143,8 @@ class KrigingGapFiller extends BatchGapFiller {
                 VortexGrid next2Grid = cachedGetGrid(i + 2, metadata, reader, cache);
 
                 VortexGrid filled = fillGridGaps(grid, i, size, prevGrid, nextGrid, prev2Grid, next2Grid);
+                filled = TemporalGapFallback.fill(filled, i, metadata.isNoData,
+                        neighbor -> (VortexGrid) reader.getDto(metadata.indices.get(neighbor)));
                 writeGrid(filled);
                 processedCount++;
             } else if (!isSourceEqualToDestination) {
