@@ -94,8 +94,8 @@ public class WktFactory {
                     in.getParallelTwo(),
                     in.getOriginLat(),
                     in.getOriginLon(),
-                    in.getFalseEasting(),
-                    in.getFalseNorthing()
+                    in.getFalseEasting() * 1000.0,
+                    in.getFalseNorthing() * 1000.0
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
 
@@ -114,8 +114,8 @@ public class WktFactory {
                     in.getParallelTwo(),
                     in.getOriginLat(),
                     in.getOriginLon(),
-                    in.getFalseEasting(),
-                    in.getFalseNorthing()
+                    in.getFalseEasting() * 1000.0,
+                    in.getFalseNorthing() * 1000.0
             );
             srs.SetLinearUnits(SRS_UL_METER, 1.0);
 

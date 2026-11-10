@@ -93,8 +93,8 @@ public class WktParser {
                 getCenterLongitude(srs),
                 getStandardParallel1(srs),
                 getStandardParallel2(srs),
-                getFalseEasting(srs),
-                getFalseNorthing(srs),
+                getFalseEasting(srs) * srs.GetLinearUnits() / 1000.0,
+                getFalseNorthing(srs) * srs.GetLinearUnits() / 1000.0,
                 getEarth(srs)
         );
     }
@@ -105,8 +105,8 @@ public class WktParser {
                 getCenterLongitude(srs),
                 getStandardParallel1(srs),
                 getStandardParallel2(srs),
-                getFalseEasting(srs),
-                getFalseNorthing(srs),
+                getFalseEasting(srs) * srs.GetLinearUnits() / 1000.0,
+                getFalseNorthing(srs) * srs.GetLinearUnits() / 1000.0,
                 getRadiusKm(srs)
         );
     }
