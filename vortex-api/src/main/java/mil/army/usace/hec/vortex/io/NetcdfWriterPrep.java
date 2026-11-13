@@ -2,6 +2,7 @@ package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.VortexVariable;
+import mil.army.usace.hec.vortex.geo.ReferenceUtils;
 import ucar.ma2.Array;
 import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
@@ -186,7 +187,7 @@ final class NetcdfWriterPrep {
         boolean sameShape = storedY.length == gridCollection.getNy() && storedX.length == gridCollection.getNx();
         boolean sameLocation = Arrays.equals(storedY, gridCollection.getYCoordinates())
                 && Arrays.equals(storedX, gridCollection.getXCoordinates());
-        boolean sameProjection = file.findVariable(gridCollection.getProjectionName()) != null;
+        Variable projection = file.findVariable(gridCollection.getProjectionName());
 
         if (!sameShape || !sameLocation) {
             throw DataWriteException.of(destination,
@@ -195,9 +196,19 @@ final class NetcdfWriterPrep {
                             + " grid being written (delete it or choose another destination)");
         }
 
-        if (!sameProjection) {
+        if (projection == null) {
             throw DataWriteException.of(destination,
                     "it does not hold the '" + gridCollection.getProjectionName() + "' projection of the grids"
+                            + " being written (delete it or choose another destination)");
+        }
+
+        String storedWkt = projection.findAttributeString("crs_wkt", null);
+        String incomingWkt = gridCollection.getWkt();
+        if (storedWkt == null || storedWkt.isBlank()
+                || incomingWkt == null || incomingWkt.isBlank()
+                || !ReferenceUtils.equals(storedWkt, incomingWkt)) {
+            throw DataWriteException.of(destination,
+                    "its '" + gridCollection.getProjectionName() + "' projection differs from the grids"
                             + " being written (delete it or choose another destination)");
         }
     }

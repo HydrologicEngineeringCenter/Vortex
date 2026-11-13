@@ -7,6 +7,8 @@ import mil.army.usace.hec.vortex.VortexGrid;
 import mil.army.usace.hec.vortex.geo.WktFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import ucar.nc2.NetcdfFile;
+import ucar.nc2.NetcdfFiles;
 import ucar.unidata.geoloc.projection.proj4.LambertConformalConicEllipse;
 import ucar.unidata.geoloc.projection.LatLonProjection;
 
@@ -355,6 +357,31 @@ class NetcdfDataWriterTest {
         Assertions.assertTrue(error.getMessage().contains(outputPath), error.getMessage());
 
         Assertions.assertEquals(3, readGrids(outputPath, "swe").size(), "the refused write must leave the file alone");
+        delete(outputPath);
+    }
+
+    @Test
+    void DifferentProjectedCrsIsRefusedTest() throws IOException {
+        String outputPath = TestUtil.createTempFile("DifferentProjectedCrsIsRefusedTest.nc");
+        Assertions.assertNotNull(outputPath);
+
+        String firstWkt = WktFactory.fromEpsg(32610);
+        String secondWkt = WktFactory.fromEpsg(32611);
+        List<VortexData> first = intervalGrids("swe", List.of(0), 3, firstWkt, 0);
+        List<VortexData> second = intervalGrids("swe", List.of(1), 3, secondWkt, 0);
+        Assertions.assertEquals(
+                VortexGridCollection.of(List.of((VortexGrid) first.get(0))).getProjectionName(),
+                VortexGridCollection.of(List.of((VortexGrid) second.get(0))).getProjectionName());
+
+        write(outputPath, first);
+
+        DataWriteException error = Assertions.assertThrows(DataWriteException.class,
+                () -> write(outputPath, second));
+        Assertions.assertTrue(error.getMessage().contains("projection differs"), error.getMessage());
+        try (NetcdfFile file = NetcdfFiles.open(outputPath)) {
+            Assertions.assertEquals(1, file.findDimension("time").getLength(),
+                    "a rejected CRS must not append a time record");
+        }
         delete(outputPath);
     }
 
