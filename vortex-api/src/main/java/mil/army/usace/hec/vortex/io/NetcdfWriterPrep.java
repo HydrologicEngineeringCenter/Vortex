@@ -235,7 +235,8 @@ final class NetcdfWriterPrep {
 
     private static void verifyVariables(String destination, NetcdfFile file, VortexGridCollection gridCollection) {
         Set<String> missing = new TreeSet<>();
-        for (String variableName : gridCollection.getVariableNames()) {
+        for (VortexGrid grid : gridCollection.getRepresentativeGridNameMap().values()) {
+            String variableName = VortexGridCollection.getVariableName(grid);
             Variable variable = file.findVariable(variableName);
             if (variable == null) {
                 missing.add(variableName);
@@ -246,6 +247,19 @@ final class NetcdfWriterPrep {
                 throw DataWriteException.of(destination, "its '" + variableName + "' variable holds "
                         + variable.getRank() + " dimensions, not the time, y and x this write needs");
             }
+
+            String storedUnits = variable.findAttributeString(CF.UNITS, null);
+            if (storedUnits == null || !storedUnits.equals(grid.units())) {
+                throw DataWriteException.of(destination, "its '" + variableName + "' variable has units '"
+                        + storedUnits + "', not '" + grid.units() + "' as required by the grids being written");
+            }
+
+            float noDataValue = (float) grid.noDataValue();
+            if (!matchesNumericAttribute(variable, CF._FILLVALUE, noDataValue)
+                    || !matchesNumericAttribute(variable, CF.MISSING_VALUE, noDataValue)) {
+                throw DataWriteException.of(destination, "its '" + variableName
+                        + "' variable has a different no-data value from the grids being written");
+            }
         }
 
         if (!missing.isEmpty()) {
@@ -255,6 +269,12 @@ final class NetcdfWriterPrep {
                             + " first write to this destination, or choose another destination"
                             + " (it does hold " + variablesOf(file) + ")");
         }
+    }
+
+    private static boolean matchesNumericAttribute(Variable variable, String name, float expected) {
+        Attribute attribute = variable.findAttribute(name);
+        Number value = attribute == null ? null : attribute.getNumericValue();
+        return value != null && Float.compare(value.floatValue(), expected) == 0;
     }
 
     private static String variablesOf(NetcdfFile file) {

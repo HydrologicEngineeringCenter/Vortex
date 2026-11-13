@@ -385,6 +385,42 @@ class NetcdfDataWriterTest {
         delete(outputPath);
     }
 
+    @Test
+    void DifferentVariableUnitsAreRefusedTest() throws IOException {
+        String outputPath = TestUtil.createTempFile("DifferentVariableUnitsAreRefusedTest.nc");
+        Assertions.assertNotNull(outputPath);
+
+        write(outputPath, intervalGrids("swe", List.of(0)));
+        VortexGrid next = (VortexGrid) intervalGrids("swe", List.of(1)).get(0);
+        VortexGrid changedUnits = VortexGrid.toBuilder(next).units("cm").build();
+
+        DataWriteException error = Assertions.assertThrows(DataWriteException.class,
+                () -> write(outputPath, List.of(changedUnits)));
+        Assertions.assertTrue(error.getMessage().contains("units"), error.getMessage());
+        try (NetcdfFile file = NetcdfFiles.open(outputPath)) {
+            Assertions.assertEquals(1, file.findDimension("time").getLength());
+        }
+        delete(outputPath);
+    }
+
+    @Test
+    void DifferentVariableNoDataValueIsRefusedTest() throws IOException {
+        String outputPath = TestUtil.createTempFile("DifferentVariableNoDataValueIsRefusedTest.nc");
+        Assertions.assertNotNull(outputPath);
+
+        write(outputPath, intervalGrids("swe", List.of(0)));
+        VortexGrid next = (VortexGrid) intervalGrids("swe", List.of(1)).get(0);
+        VortexGrid changedNoDataValue = VortexGrid.toBuilder(next).noDataValue(-1).build();
+
+        DataWriteException error = Assertions.assertThrows(DataWriteException.class,
+                () -> write(outputPath, List.of(changedNoDataValue)));
+        Assertions.assertTrue(error.getMessage().contains("no-data value"), error.getMessage());
+        try (NetcdfFile file = NetcdfFiles.open(outputPath)) {
+            Assertions.assertEquals(1, file.findDimension("time").getLength());
+        }
+        delete(outputPath);
+    }
+
     /**
      * A projected grid is stored against x and y instead of latitude and longitude, and is written in
      * batches the same way.
