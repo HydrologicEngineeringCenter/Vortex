@@ -68,12 +68,19 @@ final class NetcdfWriterPrep {
     }
 
     /**
-     * Makes {@code destination} able to hold {@code gridCollection} at {@code batchRecords} and returns
-     * the record axis of the destination as it now stands, which is what the grid data is indexed
-     * against.
+     * Creates or extends a destination so it can hold the variables described by
+     * {@code gridCollection} at every time step in {@code batchRecords}. Returns the resulting
+     * record axis for indexing grid writes.
      *
-     * @param overwrite when true the destination is replaced instead of extended, whatever it holds.
-     * @throws DataWriteException if the destination exists and cannot hold the batch
+     * @param destination path of the NetCDF file to create or extend; an existing file must be
+     *                    compatible with the supplied grid collection unless {@code overwrite} is true
+     * @param gridCollection representative grids for every variable to write, with the geometry,
+     *                       projection, and time encoding required by the destination; it need not
+     *                       contain a grid for every time step
+     * @param batchRecords all time intervals to be written by this operation, including intervals
+     *                     absent from {@code gridCollection}; order and uniqueness are not required
+     * @param overwrite whether to replace an existing destination instead of extending it
+     * @throws DataWriteException if the destination cannot be created or cannot hold the batch
      */
     static NetcdfTimeAxis prepareForWriting(String destination, VortexGridCollection gridCollection,
                                             Collection<VortexDataInterval> batchRecords, boolean overwrite) {
