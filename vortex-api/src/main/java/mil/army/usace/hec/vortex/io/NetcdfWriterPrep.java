@@ -547,9 +547,15 @@ final class NetcdfWriterPrep {
     }
 
     /**
-     * Writes the records at {@code origin} of the destination's time axis. The destination declares the
-     * unit its times are encoded in, once, when it is created, and {@code timeAxis} reads that unit from
-     * it, so a batch appended later is encoded the same way as the records already there.
+     * Writes time coordinates and, when present, their bounds starting at {@code origin}. The axis
+     * uses the destination's time unit so appended records have the same encoding as existing records.
+     *
+     * @param writer open destination writer used to write the time and bounds variables
+     * @param timeAxis destination axis that supplies the time unit and whether bounds are present
+     * @param records records to write: the entire axis when creating a file, or only new records when
+     *                extending one; their order determines their positions in the file
+     * @param origin first time record index to write, zero for a new file or the existing record count
+     *               when appending
      */
     private static void writeTimeRecords(NetcdfFormatWriter writer, NetcdfTimeAxis timeAxis,
                                          List<VortexDataInterval> records, int origin) throws InvalidRangeException, IOException {
