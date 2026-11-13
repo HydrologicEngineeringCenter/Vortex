@@ -59,9 +59,10 @@ final class NetcdfTimeAxis {
     /* Factory */
     static NetcdfTimeAxis of(ChronoUnit unit, boolean hasBounds, Collection<VortexDataInterval> records) {
         List<VortexDataInterval> stored = new ArrayList<>();
+        Set<VortexDataInterval> seen = new HashSet<>();
         for (VortexDataInterval record : records) {
             VortexDataInterval quantized = quantize(record, unit);
-            if (quantized != null) {
+            if (quantized != null && seen.add(quantized)) {
                 stored.add(quantized);
             }
         }
