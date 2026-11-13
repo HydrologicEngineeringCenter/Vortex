@@ -1,6 +1,7 @@
 package mil.army.usace.hec.vortex.io;
 
 import mil.army.usace.hec.vortex.VortexGrid;
+import mil.army.usace.hec.vortex.VortexVariable;
 import mil.army.usace.hec.vortex.geo.WktParser;
 import ucar.nc2.constants.CF;
 import ucar.unidata.geoloc.Projection;
@@ -14,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -108,6 +111,24 @@ class VortexGridCollection {
         return vortexGridList.stream().collect(Collectors.toMap(VortexGrid::shortName, g -> g, (existing, replacement) -> existing));
     }
 
+    /**
+     * The name of the CF variable a grid is written under. Writing and checking a file have to resolve
+     * the name the same way the file was built, so every caller goes through here.
+     */
+    static String getVariableName(VortexGrid vortexGrid) {
+        return VortexVariable.fromGrid(vortexGrid).getShortName();
+    }
+
+    String getVariableName() {
+        return getVariableName(defaultGrid);
+    }
+
+    Set<String> getVariableNames() {
+        return getRepresentativeGridNameMap().values().stream()
+                .map(VortexGridCollection::getVariableName)
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
     String getShortName() {
         return defaultGrid.shortName();
     }
@@ -168,6 +189,6 @@ class VortexGridCollection {
 
     private Duration getBaseDuration() {
         Duration interval = getInterval();
-        return interval.isZero() ? Duration.ofMinutes(1) : interval;
+        return interval == null || interval.isZero() ? Duration.ofMinutes(1) : interval;
     }
 }
